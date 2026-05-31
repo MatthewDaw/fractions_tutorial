@@ -62,16 +62,13 @@ property of the objects, not just the narration.
 | L5 bare + ghost backdrop | problem text; the room's objects faded behind, non-interactive | bare math, objects only as a memory anchor | **write answer with stylus** | symbols stand alone; the backdrop then dissolves |
 | L6 bare slate | problem text only, empty slate | no manipulatives at all | **write answer with stylus** | nothing but the symbols remain |
 
-*(Exception — the COUNT room has no bare-math levels. A count with no objects to count is
-not a question, so R0a ends on its hardest real count instead; see `01_R0a_count.md`.)*
-
 ### 4.5 Problem Progression (operation × unknown position)
 
 **Every problem is an equation with exactly one blank, and the blank can sit in any
 part — an operand or the answer.** The child always fills the one unknown. Two things
 vary: the **operation** (add vs. subtract) and the **position of the blank**.
 
-**For rooms that do addition** (R0b, R1, R2, and the kitchen), the room runs an
+**For rooms that do addition** (R1, R2, and the kitchen), the room runs an
 explicit four-stage progression — each stage one step harder than the last:
 
 1. **Addition, blank = answer** — forward addition (`3 + 2 = ?`).
@@ -83,7 +80,7 @@ explicit four-stage progression — each stage one step harder than the last:
 4. **Subtraction, blank = a part** — missing minuend/subtrahend (`5 − ? = 2`,
    `? − 2 = 3`).
 
-**For non-addition rooms** (R0a count, R3 simplify, R4 improper→mixed) there is no
+**For non-addition rooms** (R3 simplify, R4 improper→mixed) there is no
 subtraction stage; the blank's two positions instead give the forward skill and the
 room's reverse transform (see each room's §4.5).
 
@@ -122,7 +119,7 @@ responds Y"), showing support fading. This is the §4 objects/mechanics *in moti
   is GONE. The screen shows only the problem and an empty slate. The child solves it as a
   plain arithmetic question and **writes the answer by hand with the stylus** — no
   dragging, no tapping a pad, no manipulatives of any kind. This is the same terminal
-  state for every room (except COUNT): the scaffolding has fully left the screen and lives
+  state for every room: the scaffolding has fully left the screen and lives
   only in the child's head. (The recognized handwriting is checked by the same verifier;
   this is the app's "on paper" end state from the philosophy doc.)
 - **Feel:** the juice — the small wins, the satisfying snaps.

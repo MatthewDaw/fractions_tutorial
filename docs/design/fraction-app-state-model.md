@@ -89,9 +89,8 @@ how events become a `MasteryEstimate` are in **`student-state-measurement.md` §
 
 - **D1 — Adaptive from day one.** A real per-skill mastery model drives
   sequencing, not completion bars.
-- **D2 — Full curriculum + prerequisite rooms.** Kitchen + 4 fraction rooms,
-  plus 2 new prerequisite rooms (counting, adding whole numbers). We do not
-  assume the child already counts and adds.
+- **D2 — Full curriculum.** Kitchen hub + 4 fraction rooms (R1–R4). The root
+  learning room is `ADD_SAME_DEN`.
 - **D3 — Full multimodal set.** *Action* inputs: drag-to-stack, tap/type,
   handwriting. *Signal* inputs: an affect/attention camera (emotion, engagement,
   on-task attention) plus the passive behavioral signals (idle, oscillation).
@@ -129,14 +128,13 @@ structure the philosophy doc describes ("a mental graph rooted at the goal").
 ```
                          [GOAL: cook with mom]   ← kitchen hub (not a skill node;
                                    │                the place walls are thrown)
-        ┌──────────────────────────┼───────────────────────────────┐
-        │ prerequisite layer        │ core fraction layer            │
-        ▼                           ▼                                ▼
-  R0a COUNT ──► R0b ADD_WHOLE ──► R1 ADD_SAME_DEN ──► R2 ADD_UNLIKE_DEN
-                                                              │
-                                          ┌───────────────────┤
-                                          ▼                   ▼
-                                    R3 SIMPLIFY        R4 IMPROPER_TO_MIXED
+                                   │ core fraction layer
+                                   ▼
+              R1 ADD_SAME_DEN ──► R2 ADD_UNLIKE_DEN
+                                          │
+                          ┌───────────────┤
+                          ▼               ▼
+                    R3 SIMPLIFY    R4 IMPROPER_TO_MIXED
 ```
 
 **Edge semantics.** Solid edges are *hard prerequisites* (you cannot be assessed
@@ -166,7 +164,7 @@ Sub-skills (the philosophy doc's "recognize what digits are divisible by what",
 "translate block representation to numeric") start **folded into their node** and
 are split into their own node only when a wall ever needs to route to them
 (premise 4; the philosophy doc's "a concept gets a room only once a gap is
-actually constraining progress"). Start coarse: 6 nodes. Split on demand.
+actually constraining progress"). Start coarse: 4 nodes. Split on demand.
 
 Edges are prerequisites, not a fixed path. The path a child takes is chosen at
 runtime by the brain (§5) from their mastery estimates. That is what makes it
@@ -215,8 +213,8 @@ room or kitchen attempt, the **problem machine** (the lifecycle of one problem).
    not-yet-mastered skill → next `WALL_HIT` → next room. If it needs only
    mastered skills → the child advances the curriculum in the kitchen itself.
 3. If the room was entered via **diagnostic skip-ahead** (no pending kitchen wall,
-   e.g. confirming a strong child already has COUNT) → advance directly to the
-   next unmastered node or back to the kitchen, whichever the brain selects.
+   e.g. confirming a strong child already has `ADD_SAME_DEN`) → advance directly to
+   the next unmastered node or back to the kitchen, whichever the brain selects.
 
 Plain-language walk-through of one full loop (kitchen → R2 → kitchen):
 
@@ -228,9 +226,9 @@ Plain-language walk-through of one full loop (kitchen → R2 → kitchen):
 2. **KITCHEN raises the bar: predict-the-sum.** Mom hands two piles, asks for the
    combined total *in fraction form before stacking*. Eye-matching no longer
    works. If a required skill is not yet mastered → `WALL_HIT`.
-3. **Wall diagnosis** (§5): which skill is binding. First wall = `ADD_SAME_DEN`;
-   an unlike-base recipe makes `ADD_UNLIKE_DEN` binding. If the child also lacks
-   `ADD_WHOLE` or `COUNT`, the wall routes to the most upstream unmastered node.
+3. **Wall diagnosis** (§5): which skill is binding. First wall = `ADD_SAME_DEN`
+   (the root skill); an unlike-base recipe makes `ADD_UNLIKE_DEN` binding. The wall
+   routes to the most upstream unmastered node among the recipe's required skills.
 4. **ROOM.** Drill that one skill with deliberately unfamiliar bases (5ths,
    7ths) so it is real addition, not recall. Scaffold fades within the room (§3).
    Stay until the **mastery gate** passes (§4.5).
@@ -406,8 +404,8 @@ A recipe requires skill set S.
 predicted_success = Π_{s ∈ S} P_known(s)
 WALL_HIT  ⟺  predicted_success < θ   (default θ = 0.6)   OR   an actual attempt fails.
 binding skill = the MOST UPSTREAM unmastered node among S
-               (furthest from the goal / deepest foundation — i.e. COUNT before
-                ADD_WHOLE before ADD_SAME_DEN). The brain then RouteToRoom it.
+               (furthest from the goal / deepest foundation — i.e. ADD_SAME_DEN
+                before ADD_UNLIKE_DEN). The brain then RouteToRoom it.
 ```
 
 (Fluency is intentionally **not** folded into wall detection; it gates mastery,
@@ -622,9 +620,8 @@ not a cut):
    representation to the numeric representation" sub-skill, and it is the
    memory-palace thesis applied: the handwritten symbol is an anchor connected to
    a vivid concrete thing (the stack), so the count-↔-number association sticks.
-   It is most useful in **R0a COUNT** and at the **L1/L2 scaffold rungs** of every
-   room, where blocks and numerals coexist and the act of writing the number does
-   the binding. Pedagogically this is *why* handwriting beats tapping for early
+   It is most useful at the **L1/L2 scaffold rungs** of every room, where blocks
+   and numerals coexist and the act of writing the number does the binding. Pedagogically this is *why* handwriting beats tapping for early
    encoding: forming the glyph by hand is a richer, more durable anchor than
    selecting it. (Tapping is fine once the association is already automatic.)
 
@@ -666,8 +663,8 @@ verifiers remain the cage.
 - **M3 — Full gate + R2 + deterministic brain.** The 4-D gate, scaffold ladder, transfer
   probes, and the §5 deterministic policy over the structured state.
   *Exit: the complete adaptive magic trick, twice.*
-- **M4 — Fan out rooms.** R0a count, R0b add-whole, R3 simplify, R4 mixed-number.
-  *Exit: full curriculum, prerequisite routing + skip-ahead live.*
+- **M4 — Fan out rooms.** R3 simplify, R4 mixed-number.
+  *Exit: full curriculum, multi-room routing + skip-ahead live.*
 - **M5 — Modalities.** Spoken tutor → voice prediction → handwriting → affect
   camera (the affect camera is a signal source and can be developed in parallel,
   but ships behind the action inputs since the game must run without it).
@@ -681,7 +678,8 @@ verifiers remain the cage.
 **Primary**
 - A child moves from a felt wall to a defended mastery signal on ≥2 skills.
 - The §4.5 gate passes only when all dimensions hold (fluency soft pre-calibration).
-- Skip-ahead demonstrably fires for a strong learner on prerequisite rooms.
+- Skip-ahead demonstrably fires for a strong learner who already has an upstream
+  room (e.g. `ADD_SAME_DEN`), routing them past it.
 - A transfer moment exists per node and is logged.
 - Every T3 change carries a recorded, child-visible rationale.
 
@@ -739,7 +737,7 @@ handwriting (answer entry + symbol-binding, §10.1), affect/attention camera
 
 1. **Age band for fluency.** What latency target per skill counts as fluent? Needs
    a pilot; fluency is a soft gate until then (§4.2).
-2. **How fine to split sub-skills.** Start coarse (6 nodes); split `SIMPLIFY` into
+2. **How fine to split sub-skills.** Start coarse (4 nodes); split `SIMPLIFY` into
    factor-finding / shared-factors / divide only when a wall routes there.
 3. **LLM call cost/latency at problem boundaries.** Acceptable per P5, but measure;
    cache legal-move enumeration; consider a small fast model for routing and a
@@ -766,7 +764,7 @@ handwriting (answer entry + symbol-binding, §10.1), affect/attention camera
 
 ## Risks
 
-- **Scope (highest).** Six rooms + five modalities + LLM brain + harness is large.
+- **Scope (highest).** Four rooms + five modalities + LLM brain + harness is large.
   Mitigation: strict dependency order (M0→M6); each milestone is independently
   demoable, so the demo degrades gracefully if later milestones slip.
 - **LLM brain correctness/latency.** Mitigation: the §5.2 cage + §5.4 fallback;
@@ -806,10 +804,9 @@ underspecified — fix it on paper, not in code.
   one constraint you'd self-imposed ("dirt simple"). That is a builder who has
   decided the ceiling is the target, not the floor. Fine — the design now assumes
   it, and the only discipline I kept is build-order, which costs you nothing.
-- The prerequisite-rooms catch ("I don't want to assume counting and adding") was
-  the best idea in the session and it was yours. It turned an assumption in the
-  source philosophy into the feature that makes your diagnosis real and gives
-  skip-ahead a home.
+- Treating the "wall" as a diagnostic event rather than a script trigger was the
+  best idea in the session and it was yours. Routing to the most upstream unmastered
+  skill is the feature that makes your diagnosis real and gives skip-ahead a home.
 - You reached for the LLM brain over the safe deterministic one. The right instinct
   *if* you cage it. The whole of §5.2 and §9 exists because the interesting version
   of your choice is "LLM proposes, math certifies," not "LLM decides." Hold that

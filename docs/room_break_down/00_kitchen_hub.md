@@ -108,8 +108,7 @@ the rooms drill:
   familiar win.
 - **Game B — Predict-the-Sum (the bar rises).** Mom hands two same-block piles, the
   answer slot demands the total *first*. The old eye-match move no longer answers it.
-  Name it → advance; can't → WALL_HIT → routed to the missing-skill room (further
-  upstream if even counting/adding the blocks is the gap).
+  Name it → advance; can't → WALL_HIT → routed to the missing-skill room.
 - **Across returns:** recipes return with less scaffolding each time; the child *feels*
   the blocks fall away.
 - **Penultimate Phase — bare math, kitchen behind.** The workspace clears to just the

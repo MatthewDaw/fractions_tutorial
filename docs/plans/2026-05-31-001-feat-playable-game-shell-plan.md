@@ -61,7 +61,7 @@ implementation is a static script and whose Phase-2 implementation reads mastery
 
 **What "done" looks like:** a child can start in the kitchen, hit a (scripted) wall, get
 sent to a room, play its beats from blocks-lead through the bare slate, and return — for
-every room (R0a count, R0b add-whole, R1, R2, R3, R4) — with responsive feel (drag, snap,
+every room (R1, R2, R3, R4) — with responsive feel (drag, snap,
 glow, shake). The server-side event log for a full playthrough is inspectable and the engine
 is unit-tested by replaying scripted event sequences in pure Python.
 
@@ -80,7 +80,6 @@ These plans treat the existing design docs as the requirements source.
 | R5 — session machine (KITCHEN↔ROOM) + problem machine lifecycle | state-model §2 | U2 machines; U8 wires them |
 | R6 — scaffold ladder per room incl. ghost-backdrop + bare slate | room_break_down §4.4/§5 (rewritten) | U7 beat sequencing |
 | R7 — every room's objects/mechanics/verbs as specified | room_break_down/*.md §4 | U7 |
-| R8 — R0a special terminal (no bare math; mixed scatter) | docs/room_break_down/01_R0a_count.md | U7 |
 | R9 — R2 over-slice star tiers; R4 whole-units/ruler (no liquid) | R2 §4.6; R4 (rewritten) | U3 verifier/scoring, U7 |
 | R10 — theme-swappable assets by functional ID | docs/room_break_down/ASSET_CATALOG.md | U6 asset registry |
 | R11 — `Policy` seam so Phase 2 swaps in mastery-driven routing | state-model §5.1/§5.4 | U4 protocol + ScriptedPolicy |
@@ -258,15 +257,15 @@ engine/                      # pure Python package — NO web deps
     session.py               # KITCHEN↔ROOM transitions
     problem.py               # PRESENT→…→JUDGED lifecycle
   skills/
-    graph.py                 # SkillNode DAG (COUNT…IMPROPER_TO_MIXED)
+    graph.py                 # SkillNode DAG (ADD_SAME_DEN…IMPROPER_TO_MIXED)
     generators.py            # per-node deterministic problem generators
     verifier.py              # exact verifier + scoring (R2 stars, R4 trap)
   policy/
     policy.py                # Policy Protocol + Decision union
     scripted.py              # ScriptedPolicy (Phase 1)
 content/
-  rooms/                     # kitchen.py r0a_count.py r0b_add_whole.py
-                             #   r1_same_den.py r2_unlike_den.py r3_simplify.py r4_improper_mixed.py
+  rooms/                     # kitchen.py r1_same_den.py r2_unlike_den.py
+                             #   r3_simplify.py r4_improper_mixed.py
   room_spec.py               # RoomSpec (objects, mechanics, beats, ladder)
   curriculum.py              # static order used by ScriptedPolicy
 server/
@@ -397,7 +396,7 @@ verifier — including R2's over-slice star tiers and R4's exact-whole trap.
 `engine/skills/verifier.py`, `tests/engine/test_verifier.py`,
 `tests/engine/test_generators.py`.
 
-**Approach:** `graph.py` encodes the DAG (COUNT → ADD_WHOLE → ADD_SAME_DEN →
+**Approach:** `graph.py` encodes the DAG (ADD_SAME_DEN →
 ADD_UNLIKE_DEN → {SIMPLIFY, IMPROPER_TO_MIXED}) with each node's `transfer_forms` and a
 `problem_generator` (state-model §1). Generators are seeded and pure. Exact rational
 arithmetic uses Python's stdlib `fractions.Fraction` (server) and `fraction.js` (client) —
@@ -426,8 +425,6 @@ never hand-rolled gcd/lcm/reduce; the verifier builds only the **domain logic** 
 - `14/7` → `2` (empty leftover) → correct; `2 0/7` (forced leftover) → wrong,
   `error_signature = forced_leftover`.
 - `9/7` → `1 2/7` → correct.
-- R0a count: answer matching the placed-piece count of a given type → correct; mixed scatter
-  scored per-type independently.
 - Generators deterministic given a seed; `transfer_forms` produce structurally distinct
   surface forms.
 
@@ -561,10 +558,9 @@ and round-trips one action; registry covers all IDs.
 ### U7. Manipulable components + room beat rendering (the block→number fade)
 
 **Goal:** Render every room's objects/mechanics/verbs and play its beats L0→L6 (incl. the
-ghost-backdrop penultimate beat and bare slate), with R0a's special no-bare-math terminal —
-backed by Python room specs.
+ghost-backdrop penultimate beat and bare slate) — backed by Python room specs.
 
-**Requirements:** R6, R7, R8, R9, R12.
+**Requirements:** R6, R7, R9, R12.
 
 **Dependencies:** U3, U6; engine room content.
 
@@ -588,8 +584,6 @@ required: the binding beat renders the numeral adjacent to its quantity sharing 
 open (no bin/container — R12). The ghost-backdrop beat renders the room's objects as a faded,
 non-interactive layer behind the equation, then dissolves into the bare slate. Room
 specifics:
-- **R0a count:** no bare-math levels; terminal = mixed scatter (two+ object types, scattered
-  & intermixed, counted per type).
 - **R1:** denominator-locked padlock; merge adds tops only.
 - **R2:** slicer + common-size guide; over-slice allowed (U3 scoring); ghost-backdrop uses
   bars.
@@ -601,8 +595,7 @@ specifics:
 rewritten this session); ASSET_CATALOG asset states.
 
 **Test scenarios:**
-- (engine) Each room advances L0→L6 on scripted-correct answers; R0a advances L0→L5 (mixed
-  scatter) with no bare-slate level.
+- (engine) Each room advances L0→L6 on scripted-correct answers.
 - (engine) R1 denominator slot locked across all beats; an attempt to change it is rejected.
 - (engine) R4 exact-whole trap forbids a forced leftover; R2 records over-slice star tiers.
 - (web) A drag-drop gesture emits exactly one `place_block` action (mocked dispatch).
@@ -660,7 +653,7 @@ kitchen behind" beat; state-model §3.2/§7.
 - (web) Hint affordance steps H1→H4 with fixed copy and never re-lays-out active
   manipulatives (stability).
 - (e2e) A full scripted playthrough completes; every room reaches its terminal beat (bare
-  slate, or mixed scatter for R0a); the server event log is non-empty and replayable.
+  slate); the server event log is non-empty and replayable.
 - (e2e) Reconnecting mid-room and re-folding the persisted log restores the same state
   (proves R3 end-to-end across the transport).
 
@@ -674,7 +667,7 @@ room feels responsive (T1 snap/glow/shake present).
 ### In scope (Phase 1)
 The pure Python engine spine, the verifier + generators, ScriptedPolicy, the FastAPI/WebSocket
 server + session manager, the TypeScript web client (socket, generated types, store, themeable
-DOM/SVG render layer with T1 feedback), the slate/HUD with tap/type answers, all six rooms +
+DOM/SVG render layer with T1 feedback), the slate/HUD with tap/type answers, all four rooms +
 kitchen, and a full playable scripted curriculum with a replayable server-side event log.
 
 ### Deferred to Phase 2 (next plan)

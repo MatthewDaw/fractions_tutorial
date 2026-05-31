@@ -78,7 +78,7 @@ AGE_TARGET:        ~5–9 year olds
 - `scene.room_generic` — states: `intro`, `drilling`, `mastered_exit`
 - `scene.bare_slate` — states: `blank`, `answer_pending`, `correct`, `incorrect`
 - `scene.help_handoff` — states: `entering`, `waiting_for_human`
-- `room_motif` — one accent variant per room: `count`, `add_whole`, `same_den`,
+- `room_motif` — one accent variant per room: `same_den`,
   `unlike_den`, `simplify`, `improper_mixed`
 
 ### B. Characters
@@ -113,7 +113,6 @@ AGE_TARGET:        ~5–9 year olds
 - `common_size_guide` — states: `shown`, `matched`
 - `leftover_tray` — states: `empty`, `holding`
 - `mixed_number_slots` — states: `whole_blank`, `fraction_blank`, `solved`
-- `arrangement_frame` — states: `stack`, `row`, `scatter`, `ring`
 - `merge_zone` — states: `idle`, `merging`
 - `slate` — states: `blank`, `ink_active`, `recognized`, `correct`, `incorrect`
 

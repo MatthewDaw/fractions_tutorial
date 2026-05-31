@@ -308,7 +308,7 @@ raw events ─[1]─► attempt ─[2]─► Observation vector ─[3]─► rou
 3. **Route — credit assignment across the DAG is unsolved.** BKT assumes one skill
    per item; the prerequisite DAG (companion §1) breaks that. A wrong unlike-
    denominator answer is evidence about `ADD_UNLIKE_DEN` *or* the underlying
-   `ADD_SAME_DEN` step *or* counting beneath it. Which chain(s) an observation
+   `ADD_SAME_DEN` step. Which chain(s) an observation
    updates, and how blame is split, must be decided. (First-pass option: update the
    binding node, and propagate a discounted update to a prereq only when the
    `error_signature` implicates it.)

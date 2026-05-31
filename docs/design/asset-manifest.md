@@ -101,8 +101,6 @@ Full-screen layouts/backdrops. Each is one piece per state.
 - [ ] **`room_motif`** — a per-room accent set (palette + ornament) layered on
   `scene.room_generic` so rooms feel distinct within one theme. Produce **one variant per
   room**:
-  - [ ] `motif.r0a_count` (Counting Room)
-  - [ ] `motif.r0b_add_whole` (Combining Room)
   - [ ] `motif.r1_same_den` (Same-Pieces Room)
   - [ ] `motif.r2_unlike_den` (Matching-Sizes Room)
   - [ ] `motif.r3_simplify` (Tidying Room)
@@ -227,11 +225,7 @@ Each is the signature interactive object of its room.
 - [ ] **`leftover_tray`** (R4) — holds the remainder blocks after whole units fill. (Open
   holder, not a closed container — leftover blocks stay visible.) States:
   - [ ] `empty` · [ ] `holding`
-- [ ] **`arrangement_frame`** (R0a) — the layout pieces sit in for count-transfer. Not a
-  container; just a layout. Communicate the four arrangements (count is the same regardless
-  of shape). States:
-  - [ ] `stack` · [ ] `row` · [ ] `scatter` · [ ] `ring`
-- [ ] **`merge_zone`** (R0b, R1, R2) — the gap where two stacks fuse (addition). States:
+- [ ] **`merge_zone`** (R1, R2) — the gap where two stacks fuse (addition). States:
   - [ ] `idle` · [ ] `merging`
 - [ ] **`slate`** — the stylus/answer writing surface (handwriting in Phase 3; tap/type pad
   in Phase 1). Communicate: writable, "do it by hand." States:
@@ -276,24 +270,7 @@ Each is the signature interactive object of its room.
 
 ---
 
-## 9. Per-room object types for counting (R0a)
-
-R0a teaches counting across **different kinds of object** (count squares, count triangles),
-including mixed and scattered. You need at least **3 visually distinct countable shapes**
-that are all clearly "one each" and equally easy to count. These are `block`-role reskins
-(same idle/picked_up/snapped/ghost states), distinct silhouettes/colors:
-
-- [ ] `count_type_a` (e.g., square) — full block states
-- [ ] `count_type_b` (e.g., triangle) — full block states
-- [ ] `count_type_c` (e.g., circle/star) — full block states
-
-They must be **distinguishable at a glance when intermixed and scattered** (the room's
-mastery beat counts each type separately out of a jumble), so pick clearly different
-silhouettes AND colors.
-
----
-
-## 10. Recommended (optional) — from the pedagogy review
+## 9. Recommended (optional) — from the pedagogy review
 
 Not core to shipping, but flagged because it serves the "make the structure visible to the
 child" gap. Draw only if you pursue it:
@@ -304,29 +281,28 @@ child" gap. Draw only if you pursue it:
 
 ---
 
-## 11. Production summary (rough art counts)
+## 10. Production summary (rough art counts)
 
 Count = distinct art states to produce (transitions/animations are separate effort).
 
 | Group | Assets | Approx. states to draw |
 |-------|--------|------------------------|
-| Scenes & backdrops | 4 scenes + 6 room motifs | ~17 + 6 motif sets |
+| Scenes & backdrops | 4 scenes + 4 room motifs | ~17 + 4 motif sets |
 | Characters | 2 | 8 |
 | Core manipulables | 7 | ~29 |
 | Symbolic / numeric | 7 | ~24 |
-| Room tools | 9 | ~26 |
+| Room tools | 8 | ~24 |
 | Feedback & control | 10 | ~30 |
-| R0a count types | 3 | ~12 |
 | Optional skill_map | 1 | ~5 |
 
 Priority order for a playable wireframe→art path: **core manipulables (§5) → symbolic
-(§6) → room tools (§7) → feedback/control (§8) → characters (§4) → scenes (§3) → count
-types (§9)**. The game is fully playable in a wireframe Skin (boxes, lines, system font)
-before any of this art exists; each group above can be swapped in incrementally.
+(§6) → room tools (§7) → feedback/control (§8) → characters (§4) → scenes (§3)**. The game
+is fully playable in a wireframe Skin (boxes, lines, system font) before any of this art
+exists; each group above can be swapped in incrementally.
 
 ---
 
-## 12. Hand-off checklist (per asset, before it's "done")
+## 11. Hand-off checklist (per asset, before it's "done")
 
 For every asset above, the art is complete when:
 

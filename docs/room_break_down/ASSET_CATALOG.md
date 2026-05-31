@@ -86,8 +86,7 @@ obscure a piece. Loose groups sit in the open as a `pile`; counted groups are bu
 | `common_size_guide` | Faint shared grid both bars must reach before merge unlocks | `[shown]` `[matched]` | R2 |
 | `leftover_tray` | Holds the remainder `block`s after whole units fill | `[empty]` `[holding]` | R4 |
 | `mixed_number_slots` | Separate slots for whole part + leftover fraction | `[whole_blank]` `[fraction_blank]` `[solved]` | R4 |
-| `arrangement_frame` | Layout pieces sit in (stack/row/scatter/ring) for count transfer | `[stack]` `[row]` `[scatter]` `[ring]` | R0a |
-| `merge_zone` | The gap where two stacks fuse (addition) | `[idle]` `[merging]` | R0b, R1, R2 |
+| `merge_zone` | The gap where two stacks fuse (addition) | `[idle]` `[merging]` | R1, R2 |
 | `slate` | The stylus writing surface (handwriting input) | `[blank]` `[ink_active]` `[recognized]` `[correct]` `[incorrect]` | all (final phase) |
 
 ## F. Feedback & control (UI furniture)

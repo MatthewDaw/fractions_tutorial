@@ -355,7 +355,7 @@ binding skill or a prerequisite.
 **Approach:** First-pass rule (measurement §4.7.4 step 3): update the **binding node** fully;
 propagate a **discounted** update to a prerequisite **only** when the `error_signature`
 implicates it (e.g. an unlike-denominator miss whose signature is "added the tops wrong"
-implicates `ADD_SAME_DEN`; a count-shaped error implicates `COUNT`). Discount factor in
+implicates `ADD_SAME_DEN`). Discount factor in
 `params.py`. Correct answers credit the binding node (optional small prereq bump — config-
 gated, default off to avoid inflation).
 
@@ -387,8 +387,8 @@ unmastered skill to route to.
 
 **Approach:** For a recipe requiring skill set S: `predicted_success = Π_{s∈S} P_known(s)`;
 `WALL_HIT ⟺ predicted_success < θ (0.6) OR an actual attempt fails`. `binding = the
-most-upstream unmastered node in S` (deepest foundation first: COUNT before ADD_WHOLE before
-ADD_SAME_DEN). Fluency is intentionally **not** in wall detection (it gates mastery, not
+most-upstream unmastered node in S` (deepest foundation first: ADD_SAME_DEN before
+ADD_UNLIKE_DEN). Fluency is intentionally **not** in wall detection (it gates mastery, not
 wall-firing). Pure functions over the `MasteryEstimate` map + graph.
 
 **Patterns to follow:** state-model §5.3 (verbatim).
@@ -397,8 +397,8 @@ wall-firing). Pure functions over the `MasteryEstimate` map + graph.
 - A recipe needing two weak skills (`Π P_known < 0.6`) fires `WALL_HIT`; one needing only
   strong skills does not.
 - An actual failed attempt fires `WALL_HIT` even when predicted_success ≥ θ.
-- Binding selection returns the deepest unmastered prereq (with COUNT and ADD_SAME_DEN both
-  weak, routes to COUNT first).
+- Binding selection returns the deepest unmastered prereq (with ADD_SAME_DEN and
+  ADD_UNLIKE_DEN both weak, routes to ADD_SAME_DEN first).
 - A mastered prereq is skipped in binding selection.
 - Threshold `θ` is config-driven (KTD7).
 

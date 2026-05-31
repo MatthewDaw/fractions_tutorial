@@ -12,7 +12,8 @@
 ## 1. Snapshot
 
 - **Skill node:** `ADD_SAME_DEN`
-- **Comes after / leads to:** after `ADD_WHOLE` → `ADD_UNLIKE_DEN`.
+- **Comes after / leads to:** the first/root learning room (after the kitchen hub) →
+  `ADD_UNLIKE_DEN`.
 - **Concept in one line:** when pieces are the same size, add how many you have and keep
   the size.
 - **What the child can do after:** name a same-denominator sum at a glance (2/7 + 3/7 =
@@ -55,7 +56,7 @@ top number (how many) grows.
   by the lock.
 
 ### 4.3 Interactions (player verbs)
-- **Merge stacks** (merge_stacks) — carried from R0b, now on fraction pieces (addition).
+- **Merge stacks** (merge_stacks) — combining two stacks into one, on fraction pieces (addition).
 - **Remove same-size pieces** (remove_pieces) — the take-away verb for subtraction (see
   §4.5), bottom still locked.
 - **Write the sum or difference** (write_fraction) — fills the top while the bottom is

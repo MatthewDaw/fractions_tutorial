@@ -98,9 +98,9 @@ reduces and the Phase-3 synthetic harness emits).
 
 | Primitive | Gesture | Targets | Emits action | Used by |
 |-----------|---------|---------|--------------|---------|
-| **place** | drag a `block`/`pile` piece → a drop zone | `drop_target` (build zone, stack, arrangement) | `place_block` | R0a, R0b, R1, kitchen |
-| **remove** | drag a piece off a stack | `draggable` on a stack's pieces | `remove_block` / `remove_pieces` | R0b, R1, R2, kitchen |
-| **merge** | drag one stack → another (merge zone) | `drop_target` (merge zone) | `merge_stacks` | R0b, R1, R2 |
+| **place** | drag a `block`/`pile` piece → a drop zone | `drop_target` (build zone, stack, arrangement) | `place_block` | R1, R2, kitchen |
+| **remove** | drag a piece off a stack | `draggable` on a stack's pieces | `remove_block` / `remove_pieces` | R1, R2, kitchen |
+| **merge** | drag one stack → another (merge zone) | `drop_target` (merge zone) | `merge_stacks` | R1, R2 |
 | **slice** | drag the `slicer_tool` across a bar | `draggable` tool over a bar | `slice_bar` | R2 |
 | **fuse** | select K pieces / drag the `fuse_tool` | grouping on a stack | `fuse_by_k` | R3 |
 | **group-wholes** | stack pieces against the ruler until a whole locks | build zone + ruler | `group_wholes` | R4 |
@@ -177,9 +177,6 @@ This replaces a fixed symbol column and makes the fade visible in the layout its
 | L5 bare + ghost backdrop | faded backdrop only (fade-on-demand) | dominant | "I barely need the blocks" |
 | L6 bare slate | gone | slate = 100% | "I've got it" |
 
-(R0a counting has no L5/L6: objects never leave, because a count with nothing to count is
-not a question. Its terminal beat is the mixed scatter filling the play space.)
-
 ### 4.1 Complexity budget (one-glance readability)
 
 A child must parse the screen in one glance. Cap what is **visible and active** at any beat:
@@ -202,7 +199,7 @@ Requirements on layers 2–3, not optional polish:
 
 1. **Voice-first, low-text goal.** The goal and the current action are communicated by the
    `tutor_guide`'s voice plus a visual cue **first**. On-screen text is minimal and **never
-   required to play** — the Counting and Add-whole rooms target pre/early readers, so a
+   required to play** — the game targets pre/early readers, so a
    child who can't read must still know what to do. Text supports; it never gates.
 2. **Spatial contiguity: the numeral lives next to its quantity.** During binding beats
    (L0–L2) the numeral/label that names a quantity renders **attached to that quantity** in
@@ -351,24 +348,6 @@ attached to its quantity during binding, voice-first goal, contextual chrome.
 - **One action:** stack to the mark (or fill the answer, then check).
 - **Emphasis:** the target mark.
 
-### R0a Counting Room
-- **Goal cue:** "How many?" (spoken; visual point at the group). No reading required.
-- **Play space:** pieces of one type loose in the open + a forming `stack`; live
-  `tally_readout` (the one foregrounded count). Terminal beat: two+ object types scattered
-  and intermixed, counted per type.
-- **Symbol:** the numeral, written on the `slate` **beside the group** at L1 (binding).
-- **HUD:** check, progress.
-- **One action:** place a piece (count by doing) / write the count.
-- **Emphasis:** the piece being counted / the climbing tally.
-
-### R0b Combining Room (Add-whole)
-- **Goal cue:** "How many altogether?" (spoken).
-- **Play space:** two labeled `stack`s + the `merge_zone` gap; the `+` lives in the gap.
-- **Symbol:** count-up readout; the total numeral attaches to the merged stack at L1.
-- **HUD:** check, progress.
-- **One action:** drag the two stacks together.
-- **Emphasis:** the merge gap (the `+`).
-
 ### R1 Same-Pieces Room (Add-same-denominator)
 - **Goal cue:** "two sevenths plus three sevenths" (spoken; the equation shown small).
 - **Play space:** two same-size stacks of sevenths + `ruler` + `merge_zone`; the
@@ -408,7 +387,7 @@ attached to its quantity during binding, voice-first goal, contextual chrome.
 - **One action:** group pieces into a whole against the ruler (repeat for the overflow).
 - **Emphasis:** the overflow crossing one whole on the ruler.
 
-### Shared terminal — bare slate (L6, every room except R0a)
+### Shared terminal — bare slate (L6, every room)
 - **Goal cue:** the equation, top.
 - **Play space → slate:** the slate fills the stage; the child writes the answer by hand.
 - **HUD:** check.

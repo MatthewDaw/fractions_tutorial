@@ -7,7 +7,6 @@ This document collects the expanded, build-ready spec sections produced during t
 1. [Engine wire/state schema reference (Action/Signal/Event/GameState/Decision)](#engine-wirestate-schema-reference-actionsignaleventgamestatedecision)
 2. [RoomSpec / Beat / ScaffoldLevel data schema + R1 authored as data](#roomspec--beat--scaffoldlevel-data-schema--r1-authored-as-data)
 3. [ScriptedPolicy curriculum table + error_signature vocabulary + per-attempt metadata contract](#scriptedpolicy-curriculum-table--error_signature-vocabulary--per-attempt-metadata-contract)
-4. [Phase-1 goal-communication channel for non-readers (voice-first contradiction)](#phase-1-goal-communication-channel-for-non-readers-voice-first-contradiction)
 5. [Headless test-driver contract: state snapshot, selector grammar, settle hook, dispatch + session seeding](#headless-test-driver-contract-state-snapshot-selector-grammar-settle-hook-dispatch--session-seeding)
 6. [Client/server reconciliation, in-flight model, and WebSocket lifecycle](#clientserver-reconciliation-in-flight-model-and-websocket-lifecycle)
 7. [Game-loop / timing model and responsiveness budget](#game-loop--timing-model-and-responsiveness-budget)
@@ -72,10 +71,10 @@ class ActionBase(BaseModel):
 
 | `type` | Payload fields (beyond `ActionBase`) | Reducer effect | Emitted by primitive (§3) | Rooms |
 |--------|--------------------------------------|----------------|---------------------------|-------|
-| `place_block` | `target_key: str` (stack/build-zone/arrangement `instanceKey`); `denominator: int` (piece size, `1` for whole-number pieces); `type_id: str = "default"` (R0a object kind) | append a `block` to the target manipulable; `+1` its count; spawn the block's `instanceKey`; tick `tally` | **place** | R0a, R0b, R1, kitchen |
-| `remove_block` | `target_key: str`; `count: int = 1` | retire `count` blocks from the target (take-away / subtraction); `−count` | **remove** | R0b, R1, R2, kitchen |
+| `place_block` | `target_key: str` (stack/build-zone/arrangement `instanceKey`); `denominator: int` (piece size) | append a `block` to the target manipulable; `+1` its count; spawn the block's `instanceKey`; tick `tally` | **place** | R1, kitchen |
+| `remove_block` | `target_key: str`; `count: int = 1` | retire `count` blocks from the target (take-away / subtraction); `−count` | **remove** | R1, R2, kitchen |
 | `remove_pieces` | `target_key: str`; `count: int` | semantic alias of `remove_block` for fraction pieces (subtraction stage); kept distinct for the event log's readability and per-room verbs | **remove** | R1, R2 |
-| `merge_stacks` | `source_key: str`; `dest_key: str` | combine source into dest at the `merge_zone`; numerator/count adds; **legality-gated** (R1 same-size only; R2 rejected until sizes match) | **merge** | R0b, R1, R2 |
+| `merge_stacks` | `source_key: str`; `dest_key: str` | combine source into dest at the `merge_zone`; numerator/count adds; **legality-gated** (R1 same-size only; R2 rejected until sizes match) | **merge** | R1, R2 |
 | `slice_bar` | `target_key: str`; `factor: int` (the ×N) | cut each piece of the bar into `factor` equal pieces: `n→n*factor, d→d*factor`; **value unchanged**; record ×N on top and bottom | **slice** | R2 |
 | `fuse_by_k` | `target_key: str`; `k: int` | group every `k` pieces into one: `n→n/k, d→d/k`; **only legal if both divide evenly** else no-op + `shake_reject`; record ÷K | **fuse** | R3 |
 | `group_wholes` | `target_key: str` (the overflow stack) | lock off one whole-unit (one `ruler` length) from the stack onto the `whole_unit_row`; increment `whole_count`; move remainder to `leftover_tray` | **group-wholes** | R4 |
@@ -150,8 +149,7 @@ class Manipulable(BaseModel):
                   "mixed_number_slots","fraction_label","tally_readout"]
     # quantity (size-bearing kinds):
     count: int = 0                      # number of unit pieces (stack/pile/bar height)
-    denominator: int = 1                # piece size; 1 = whole-number unit (R0a/R0b)
-    type_id: str = "default"            # R0a object kind (squares vs triangles)
+    denominator: int = 1                # piece size
     # state flags owned by the engine (presentation §2: "state owned by engine, never skin"):
     flags: ManipulableFlags
     # structural links:
@@ -195,11 +193,11 @@ class ProgressState(BaseModel):
 class ProblemState(BaseModel):
     problem_seq: int
     node: NodeId                        # the skill being exercised (or KITCHEN_HUB)
-    scaffold: Scaffold                  # L0..L6 (R0a has no L5/L6)
+    scaffold: Scaffold                  # L0..L6
     surface_form: str                   # transfer-form id (§6); ≥2 distinct per node
     recipe_id: str | None               # set for kitchen attempts
     lifecycle: Literal["PRESENT","OBSERVING","HINTING","SUBMITTED","JUDGED","ABANDONED"]
-    operation: Literal["add","subtract","convert","reduce","count","measure"]
+    operation: Literal["add","subtract","convert","reduce","measure"]
     blank: Literal["answer","operand_a","operand_b","whole","fraction"]  # unknown position (room §4.5)
     target: AnswerValue | None          # the generator's known correct answer (server-only; NOT sent to client)
     hint_rung: Literal[0,1,2,3,4]       # H0..H4 (state-model §3.2)
@@ -257,11 +255,11 @@ class HandoffPacket(BaseModel):         # Phase 3; typed now, populated later (s
 
 ```python
 AnswerValue = Annotated[
-    WholeAnswer | FractionAnswer | MixedAnswer | PerTypeCountAnswer,
+    WholeAnswer | FractionAnswer | MixedAnswer,
     Field(discriminator="kind"),
 ]
 
-class WholeAnswer(BaseModel):           # R0a count, R0b add-whole, exact-whole R4
+class WholeAnswer(BaseModel):           # kitchen whole-total predict; exact-whole R4
     kind: Literal["whole"] = "whole"
     value: int
 
@@ -273,19 +271,12 @@ class MixedAnswer(BaseModel):           # R4 improper→mixed
     kind: Literal["mixed"] = "mixed"
     whole: int
     fraction: Rational | None           # None == exact whole; an empty (None/0) leftover is REQUIRED for 14/7=2
-
-class PerTypeCountAnswer(BaseModel):    # R0a mixed-scatter terminal: one count per object kind
-    kind: Literal["per_type_count"] = "per_type_count"
-    counts: dict[str, int]              # type_id -> count, e.g. {"square": 5, "triangle": 3}
 ```
 
 ### 5.1 Answer-shape selection (which `kind` per room/beat)
 
 | Room / beat | `AnswerValue` kind | Verifier rule (U3) | Worked example |
 |-------------|--------------------|--------------------|----------------|
-| R0a count (single type) | `whole` | `value == placed_count(type)` | place 5 → `{kind:"whole", value:5}` ✓ |
-| R0a mixed scatter | `per_type_count` | each `counts[type] == placed_count(type)`; scored **per type independently** | `{kind:"per_type_count", counts:{square:5, triangle:3}}` |
-| R0b add-whole | `whole` | `value == a + b` (or the blank part) | `3+2` → `{kind:"whole", value:5}` |
 | R1 same-denominator | `fraction` | `value` equals the exact sum, **denominator must match the locked one** | `2/7+3/7` → `{kind:"fraction", value:{n:5,d:7}}` ✓; `{n:5,d:14}` → wrong, `error_signature="add_denominators"` |
 | R2 unlike-denominator | `fraction` | **any** valid common denominator correct; `star_tier=full` iff `d`==LCD, `reduced` iff a larger valid multiple, `none`/wrong otherwise (R2 §4.6) | `1/2+1/3` → `{n:5,d:6}` full ✓; `{n:10,d:12}` reduced ✓ (over-slice, **correct**); `{n:2,d:5}` wrong, `error_signature="add_across_unlike"` |
 | R3 simplify | `fraction` | `value` equals the input **in lowest terms** (n,d coprime) | `6/8` → `{n:3,d:4}` ✓; `{n:3,d:4}` from `{n:6,d:8}` checked by value-equality **and** gcd==1 |
@@ -301,16 +292,16 @@ class Judgement(BaseModel):
     error_signature: ErrorSignature | None     # only when correct is False (or over-slice → reduced)
 ```
 
-`ErrorSignature = Literal["add_denominators", "add_across_unlike", "scaled_bottom_only", "forced_leftover", "different_top_bottom_divisor", "pooled_types", "unknown"]` — the named misconceptions from the room docs (R1/R2/R3/R4 §6 "shallow tells"; plan-001 U3). `unknown` is the fallback so the union is closed and the Phase-2 featurizer never crashes on a novel wrong answer (measurement §4.7.4 step 2; credit-assignment falls back to binding-node-only on `unknown`, plan-002 U5).
+`ErrorSignature = Literal["add_denominators", "add_across_unlike", "scaled_bottom_only", "forced_leftover", "different_top_bottom_divisor", "unknown"]` — the named misconceptions from the room docs (R1/R2/R3/R4 §6 "shallow tells"; plan-001 U3). `unknown` is the fallback so the union is closed and the Phase-2 featurizer never crashes on a novel wrong answer (measurement §4.7.4 step 2; credit-assignment falls back to binding-node-only on `unknown`, plan-002 U5).
 
 ---
 
 ## 6. Shared enums (closed)
 
 ```python
-NodeId = Literal["KITCHEN_HUB","COUNT","ADD_WHOLE","ADD_SAME_DEN",
+NodeId = Literal["KITCHEN_HUB","ADD_SAME_DEN",
                  "ADD_UNLIKE_DEN","SIMPLIFY","IMPROPER_TO_MIXED"]
-Scaffold = Literal["L0","L1","L2","L3","L4","L5","L6"]   # R0a stops at L5 (mixed scatter); others reach L6 bare slate
+Scaffold = Literal["L0","L1","L2","L3","L4","L5","L6"]   # every room reaches L6 bare slate
 Modality = Literal["drag","tap","type","voice","handwriting","system"]
 RejectReason = Literal["unlike_sizes","denominator_locked","uneven_fuse",
                        "out_of_order","slot_not_filled","over_target","none"]
@@ -360,10 +351,10 @@ This is the state-model "Assignment" hand-trace, expressed in these schemas (abb
 
 A developer can write `engine/events.py`, `engine/state.py`, and `engine/policy/policy.py` directly from this doc with no further invention. Specifically:
 
-1. **Closed unions.** `Action.type` (12), `Signal.type` (4), `AnswerValue.kind` (4), `Decision.type` (9), `ErrorSignature` (7), `NodeId` (7), `Scaffold` (7) are each enumerated and closed; an unknown member in any of them is logged-and-ignored, never a crash (plan-001 U2 "out-of-order are no-ops and logged").
+1. **Closed unions.** `Action.type` (12), `Signal.type` (4), `AnswerValue.kind` (3), `Decision.type` (9), `ErrorSignature` (6), `NodeId` (5), `Scaffold` (7) are each enumerated and closed; an unknown member in any of them is logged-and-ignored, never a crash (plan-001 U2 "out-of-order are no-ops and logged").
 2. **Reducer contract.** Folding a fixed `list[Event]` is deterministic and idempotent on repeat (`fold(fold-input) == fold(fold-input)`); Signals leave `GameState` unchanged but appear in the log; illegal Actions are no-ops with a `RejectReason` in the reply (U2 tests).
 3. **`instanceKey` stability.** Across a `place_block` / `merge_stacks` sequence, surviving manipulables keep their `instanceKey` (merge keeps the dest key); the client reconciles ghosts by key with no remount (presentation §2). A property test: for any action sequence, no `instanceKey` is ever reused after retirement within a session.
-4. **Answer-shape coverage.** Every room's verifier case in plan-001 U3's scenario list (`5/6` full, `10/12` reduced, `2/5` wrong, `5/14` wrong, `14/7=2` empty-leftover, `2 0/7` forced-leftover, `9/7=1 2/7`, R0a per-type) round-trips through the matching `AnswerValue` kind.
+4. **Answer-shape coverage.** Every room's verifier case in plan-001 U3's scenario list (`5/6` full, `10/12` reduced, `2/5` wrong, `5/14` wrong, `14/7=2` empty-leftover, `2 0/7` forced-leftover, `9/7=1 2/7`) round-trips through the matching `AnswerValue` kind.
 5. **Decision parity.** The full §5.1 enum (plus `AdvanceBeat`/`RoomCleared`) is present as Pydantic types in Phase 1; swapping `ScriptedPolicy → MasteryPolicy` (Phase 2) changes no wire shape (plan-001 U4, plan-002 U7 swap test).
 6. **Codegen.** `pydantic.json_schema()` over `Event`, `GameState`, `Decision` produces a JSON schema that `json-schema-to-typescript` turns into `types.gen.ts` with discriminated unions intact; a CI staleness check fails if hand-edited (KTD4, plan-001 U6).
 7. **No leakage.** `GameState` contains no pixel coordinates and the wire DTO strips `ProblemState.target` (the answer); `engine/` imports nothing from `server`/`web` (KTD1 import-linter).
@@ -381,7 +372,7 @@ _Expands: plan-001 U7 (content/room_spec.py); room_break_down/*.md §4.4; presen
 > Consistency contract honored here (does not contradict APPROVED decisions; extends them):
 > - The engine stores **counts / sizes / slots / beat / locked flags — no pixels** (state-model premise 1; plan-001 KTD9; scene-arch §1 layer 1). `RoomSpec` therefore declares *logical* present-object sets and *which* scene region / emphasis / link applies — never `x,y` pixels. Layout fractions are computed by the **web** selectors (scene-arch §2/§4), not stored here.
 > - The active mechanic/verb maps to the **fixed interaction-primitive set** (scene-arch §3). Rooms compose primitives; they never invent input handling.
-> - Scaffold ladder is L0–L6 with R0a's exception (no L5/L6) (state-model §3; scene-arch §4 space-trade; §4.4 tables).
+> - Scaffold ladder is L0–L6 (state-model §3; scene-arch §4 space-trade; §4.4 tables).
 > - Generators/verifier are the U3 asset and are *referenced by id* from beats, never re-implemented in content.
 
 ---
@@ -424,8 +415,6 @@ All enums are closed; an unknown member is a load-time validation error (fail fa
 
 ```python
 class SkillNodeId(str, Enum):
-    COUNT = "COUNT"
-    ADD_WHOLE = "ADD_WHOLE"
     ADD_SAME_DEN = "ADD_SAME_DEN"
     ADD_UNLIKE_DEN = "ADD_UNLIKE_DEN"
     SIMPLIFY = "SIMPLIFY"
@@ -439,7 +428,6 @@ class ScaffoldTier(str, Enum):          # the fade axis (state-model §3; scene-
     L4 = "L4"   # numbers, novel surface form           (transfer / "new dress")
     L5 = "L5"   # bare + ghost backdrop (faded non-interactive objects behind the equation)
     L6 = "L6"   # bare slate (no manipulatives)
-    # R0a exception: terminal MIXED_SCATTER replaces L5/L6 (see §2.1 terminal_kind)
 
 class Primitive(str, Enum):             # the FIXED interaction set (scene-arch §3)
     PLACE = "place"                     # place_block
@@ -477,21 +465,20 @@ class Affordance(str, Enum):           # scene-arch §2 — affordance is LOGIC,
     TAPPABLE = "tappable"; WRITABLE = "writable"; GHOST = "ghost"   # non-interactive faded
 
 class Operation(str, Enum):
-    ADD = "add"; SUBTRACT = "subtract"; NONE = "none"   # NONE for count/simplify/improper
+    ADD = "add"; SUBTRACT = "subtract"; NONE = "none"   # NONE for simplify/improper
 
 class BlankPosition(str, Enum):        # §4.5 "operation × unknown position"
-    ANSWER = "answer"; PART = "part"; SEQUENCE = "sequence"; PER_TYPE = "per_type"
+    ANSWER = "answer"; PART = "part"
 
 class TerminalKind(str, Enum):
-    BARE_SLATE = "bare_slate"          # every room except R0a (ends at L6)
-    MIXED_SCATTER = "mixed_scatter"    # R0a only (ends at L5 = mixed scatter, no bare math)
+    BARE_SLATE = "bare_slate"          # every room (ends at L6)
 
 class GeneratorId(str, Enum):          # references U3 engine/skills/generators.py
     same_den_add = "same_den_add"
     same_den_missing_part = "same_den_missing_part"
     same_den_sub = "same_den_sub"
     same_den_sub_missing_part = "same_den_sub_missing_part"
-    # ... unlike_den_add, simplify_fuse, improper_to_mixed, count_*, add_whole_* etc.
+    # ... unlike_den_add, simplify_fuse, improper_to_mixed etc.
 ```
 
 ### 2.1 `advance` and `dissolve_on` — the invariant encoded in the type
@@ -622,7 +609,7 @@ class RoomSpec:
     skill_node: SkillNodeId             # ADD_SAME_DEN
     title_key: str                      # voice/text key, e.g. "room.r1.title"
     denominator_family: str             # "odd_unfamiliar" → generator picks 5ths/7ths (state-model §3 "real addition")
-    terminal_kind: TerminalKind         # BARE_SLATE (R0a → MIXED_SCATTER)
+    terminal_kind: TerminalKind         # BARE_SLATE
     beats: tuple[Beat, ...]             # ordered; index == position
     advance: AdvancePolicy = AdvancePolicy.ON_JUDGED_CORRECT
     # room-level invariants the reducer enforces every beat:
@@ -631,7 +618,7 @@ class RoomSpec:
 ROOM_SPECS: dict[str, RoomSpec] = { "R1": R1_SPEC, ... }   # registry, keyed by room_id
 ```
 
-**Room-spec validators:** `beats[i].index == i`; the last beat's `scaffold.tier` is `L6` when `terminal_kind==BARE_SLATE`, else `L5`+`MIXED_SCATTER` for R0a; stages are non-decreasing across beats; no `emphasis` after a `bare_slate` beat (the problem is the only thing on screen, scene-arch §10).
+**Room-spec validators:** `beats[i].index == i`; the last beat's `scaffold.tier` is `L6` (`terminal_kind==BARE_SLATE`); stages are non-decreasing across beats; no `emphasis` after a `bare_slate` beat (the problem is the only thing on screen, scene-arch §10).
 
 **The `RoomState` slice the reducer maintains** (engine, no pixels):
 
@@ -812,7 +799,6 @@ A correct implementation of this schema + R1 spec must satisfy:
 - **AC-7 (complexity budget).** No R1 beat exposes two interactive room tools or two symbol targets; the selector-produced node set at each beat contains exactly one `symbol_target` and at most one active tool, plus check (scene-arch §4.1; plan-001 U7 test "every beat obeys the complexity budget").
 - **AC-8 (selector consumes spec).** Given a fixed `RoomState` (beat_index=1, addend_a=2 pieces, addend_b=3 pieces, denominator from family), the selector emits a `stack` node for `addend_a` with `props.count==2`, a `fraction_label` node in state `denominator_locked` sharing `link=="addend_a"` with the stack (goal-communication §5.2), and `emphasis==True` on the sum label only.
 - **AC-9 (generator/verifier reference, not reimplementation).** Each beat's `generator_id`/`verifier_id` resolve to U3 callables; `content/` contains no arithmetic, gcd/lcm, or answer-checking logic (KTD11 "build only the asset"; the verifier is canonical in U3).
-- **AC-10 (R0a exception representable).** The same schema expresses R0a with `terminal_kind=MIXED_SCATTER` and a terminal beat at `tier=L5` whose scaffold has neither `ghost_backdrop` nor `bare_slate` (its L5 is the mixed-scatter terminal), and **no** L6 beat — proving the ladder enum + `terminal_kind` cleanly cover the no-bare-math room (room_break_down R0a §4.4).
 
 ---
 
@@ -835,7 +821,6 @@ A correct implementation of this schema + R1 spec must satisfy:
 | `ScaffoldTier L0–L6` + canonical profiles | state-model §3 ladder; scene-arch §4 space-trade table; each room §4.4 |
 | `GhostBackdrop` (L5) | room §4.4 "L5 bare + ghost backdrop"; scene-arch §4 row L5; template §4.4 row L5 |
 | `bare_slate` (L6) | room §4.4 "L6 bare slate"; scene-arch §10 "Shared terminal — bare slate" |
-| `terminal_kind=MIXED_SCATTER` | R0a §4.4 "(No bare-slate level)"; scene-arch §4 "(R0a counting has no L5/L6)" |
 | `Primitive` enum | scene-arch §3 interaction-primitive table |
 | `PresentObject.region/affordance/link/emphasis` | scene-arch §2 `PresentationNode`; §5 goal-communication |
 | complexity-budget validator | scene-arch §4.1 |
@@ -875,7 +860,7 @@ class Recipe(BaseModel):
     order: int                    # 0-based position in the walk
     prompt: str                   # mom's ask, e.g. "I need 2/7 cup plus 3/7 cup — how much total?"
     operands: tuple[Fraction, ...]  # exact rationals the recipe poses (engine uses fractions.Fraction)
-    operation: Literal["count","add","subtract"]
+    operation: Literal["add","subtract"]
     required_skill: SkillId | None  # the binding node this recipe needs; None for the no-arithmetic opener
     walls: bool                   # True if Phase-1 scripts a WALL_HIT here on first encounter
     walled_room: SkillId | None   # which room WALL_HIT routes to (== required_skill in Phase 1); None if walls is False
@@ -883,14 +868,14 @@ class Recipe(BaseModel):
     return_recipe_id: str | None  # recipe id the child is dropped back onto after RoomCleared (felt payoff); == id for a self-return
 
 class Beat(BaseModel):
-    id: BeatId                    # e.g. "R1.L0", "R0a.L4"
+    id: BeatId                    # e.g. "R1.L0", "R2.L4"
     room: SkillId
-    scaffold_level: int           # 0..6 (0..5 for R0a); IS the Observation.scaffold_level source
-    is_terminal: bool             # last beat of the room (bare slate L6, or R0a mixed-scatter L5)
+    scaffold_level: int           # 0..6; IS the Observation.scaffold_level source
+    is_terminal: bool             # last beat of the room (bare slate L6)
     surface_form: str             # stable surface_form tag (Phase-2 transfer dimension reads this)
 ```
 
-`SkillId ∈ {COUNT, ADD_WHOLE, ADD_SAME_DEN, ADD_UNLIKE_DEN, SIMPLIFY, IMPROPER_TO_MIXED}` (the state-model §1 DAG node ids). `BeatId` is the `"<room>.L<n>"` string.
+`SkillId ∈ {ADD_SAME_DEN, ADD_UNLIKE_DEN, SIMPLIFY, IMPROPER_TO_MIXED}` (the state-model §1 DAG node ids). `BeatId` is the `"<room>.L<n>"` string.
 
 ### A.2 Per-room ordered beat lists (the room's scaffold ladder, from each room doc §4.4)
 
@@ -898,8 +883,6 @@ These are the `beats` a recipe's `walled_room` plays. Drawn verbatim from each r
 
 | Room (`SkillId`) | Ordered beats (`scaffold_level`, `surface_form`) | Terminal beat |
 |---|---|---|
-| **COUNT** (R0a) | `L0` blocks-lead (one type) · `L1` blocks+write · `L2` blocks-fade flash-then-dim · `L3` numbers-lead reverse-build · `L4` new-dress (row/scatter/ring + 2nd type) · `L5` **mixed-scatter** | `R0a.L5` (mixed scatter — **no bare slate**, per R0a §4.4 note) |
-| **ADD_WHOLE** (R0b) | `L0`…`L4` (blocks-lead → new-dress) · `L5` bare+ghost-backdrop · `L6` bare slate | `R0b.L6` |
 | **ADD_SAME_DEN** (R1) | `L0`…`L4` · `L5` bare+ghost-backdrop · `L6` bare slate | `R1.L6` |
 | **ADD_UNLIKE_DEN** (R2) | `L0`…`L4` · `L5` bare+ghost-backdrop · `L6` bare slate | `R2.L6` |
 | **SIMPLIFY** (R3) | `L0`…`L4` · `L5` bare+ghost-backdrop · `L6` bare slate | `R3.L6` |
@@ -909,21 +892,19 @@ These are the `beats` a recipe's `walled_room` plays. Drawn verbatim from each r
 
 ### A.3 The ordered recipe walk (Phase-1 scripted curriculum)
 
-This is `CURRICULUM: tuple[Recipe, ...]`. The order encodes the philosophy doc's progression: a no-math opener for the cold-start baseline (measurement §4.1), then each room is walled in DAG order, each followed by the felt-payoff return onto the exact stumping recipe. Prerequisite rooms (R0a, R0b) come first so the deepest foundation is taught before the fraction layer (state-model §5.3 "deepest foundation first").
+This is `CURRICULUM: tuple[Recipe, ...]`. The order encodes the philosophy doc's progression: a no-math opener for the cold-start baseline (measurement §4.1), then each room is walled in DAG order, each followed by the felt-payoff return onto the exact stumping recipe.
 
 | `order` | `id` | `prompt` (operands, op) | `required_skill` | `walls` | `walled_room` → terminal beat | `return_recipe_id` |
 |---|---|---|---|---|---|---|
 | 0 | `K0_match_height` | "Stack to the ¾ mark" — eye-match, no arithmetic (cold-start probe) | `None` | False | — | — |
-| 1 | `K1_count_pieces` | "How many pieces in this group?" (count) | `COUNT` | True | `COUNT` → `R0a.L5` | `K1_count_pieces` |
-| 2 | `K2_add_whole` | "3 cups then 2 cups — how many cups?" (`3+2`, add) | `ADD_WHOLE` | True | `ADD_WHOLE` → `R0b.L6` | `K2_add_whole` |
-| 3 | `K3_predict_same_den` | "2/7 cup plus 3/7 cup — total?" (`2/7+3/7`, add) | `ADD_SAME_DEN` | True | `ADD_SAME_DEN` → `R1.L6` | `K3_predict_same_den` |
-| 4 | `K4_predict_unlike_den` | "1/2 cup plus 1/3 cup — total?" (`1/2+1/3`, add) | `ADD_UNLIKE_DEN` | True | `ADD_UNLIKE_DEN` → `R2.L6` | `K4_predict_unlike_den` |
-| 5 | `K5_messy_answer` | "1/6 + 5/6 … that's 6/8 — tidy it" (`6/8` reduce) | `SIMPLIFY` | True | `SIMPLIFY` → `R3.L6` | `K5_messy_answer` |
-| 6 | `K6_over_one_whole` | "That's 9/7 — I can't ask for nine-sevenths" (`9/7`→mixed) | `IMPROPER_TO_MIXED` | True | `IMPROPER_TO_MIXED` → `R4.L6` | `K6_over_one_whole` |
-| 7 | `K7_bare_finale` | "1/2 + 1/3 on the slate" — all skills mastered, kitchen recedes | `ADD_UNLIKE_DEN` | False | — | — |
+| 1 | `K3_predict_same_den` | "2/7 cup plus 3/7 cup — total?" (`2/7+3/7`, add) | `ADD_SAME_DEN` | True | `ADD_SAME_DEN` → `R1.L6` | `K3_predict_same_den` |
+| 2 | `K4_predict_unlike_den` | "1/2 cup plus 1/3 cup — total?" (`1/2+1/3`, add) | `ADD_UNLIKE_DEN` | True | `ADD_UNLIKE_DEN` → `R2.L6` | `K4_predict_unlike_den` |
+| 3 | `K5_messy_answer` | "1/6 + 5/6 … that's 6/8 — tidy it" (`6/8` reduce) | `SIMPLIFY` | True | `SIMPLIFY` → `R3.L6` | `K5_messy_answer` |
+| 4 | `K6_over_one_whole` | "That's 9/7 — I can't ask for nine-sevenths" (`9/7`→mixed) | `IMPROPER_TO_MIXED` | True | `IMPROPER_TO_MIXED` → `R4.L6` | `K6_over_one_whole` |
+| 5 | `K7_bare_finale` | "1/2 + 1/3 on the slate" — all skills mastered, kitchen recedes | `ADD_UNLIKE_DEN` | False | — | — |
 
 Notes:
-- **`walled_room == required_skill` in Phase 1.** Phase 1 walls directly on the recipe's named skill; it does **not** route upstream (that is Phase-2 wall-detection, state-model §5.3 / plan-002 U6). The recipe table makes the upstream node *reachable* (R0a/R0b precede R1) but ScriptedPolicy itself routes one-to-one. This is the deliberate Phase-1 simplification; the seam (recipe carries `required_skill`) is what Phase-2 reads to route upstream.
+- **`walled_room == required_skill` in Phase 1.** Phase 1 walls directly on the recipe's named skill; it does **not** route upstream (that is Phase-2 wall-detection, state-model §5.3 / plan-002 U6). ScriptedPolicy routes one-to-one. This is the deliberate Phase-1 simplification; the seam (recipe carries `required_skill`) is what Phase-2 reads to route upstream.
 - **The return is a self-return** (`return_recipe_id == id`): on `RoomCleared`, ScriptedPolicy emits `ReturnToKitchen{recipe=return_recipe_id}` onto the exact recipe that walled (state-model §2 room-exit branch 1; plan-001 U8), then advances `order` by 1.
 - **`K0` collects the cold-start baseline** before any wall logic, exactly as measurement §4.1 requires ("the very first kitchen recipe is match-a-height … the first real arithmetic observation always lands after some baseline signal exists").
 - **`K7`** is the terminal "bare math, kitchen behind → bare slate" finale (kitchen_hub §5 final phase). It does not wall; ScriptedPolicy emits `ReturnToKitchen`/`PresentProblem` and then the session ends.
@@ -941,7 +922,6 @@ At each `JUDGED → policy call` boundary (state-model §2; plan-001 U4 "boundar
 ### A.5 Edge cases
 
 - **Manual "next"** (a `submit_answer`/advance with no answer, e.g. the child taps through) advances exactly as a correct answer for beats that are demonstrative (`scaffold_level <= 1`), per plan-001 KTD7 ("beats advance on correct or manual 'next'"). The recorded `judged.correct` for a manual-next is `True` with `error_signature=None` and a flag `manual_advance=True` (so Phase-2 can discount it; it is not a graded observation).
-- **R0a has no L6.** Its terminal is `R0a.L5`. Any code computing "terminal = L6" must special-case R0a to `L5` (the `is_terminal` flag is the safe source — never hardcode L6).
 - **The table is the single source of truth for `order`.** No room hardcodes its own progression (plan-001 R11/KTD7); the recipe walk is centralized here so Phase-2's `MasteryPolicy` swap touches only the policy, not the table.
 
 ---
@@ -954,12 +934,6 @@ At each `JUDGED → policy call` boundary (state-model §2; plan-001 U4 "boundar
 
 ```python
 class ErrorSignature(StrEnum):
-    # R0a COUNT
-    COUNT_MISCOUNT          = "count_miscount"           # off-by-n on a neat group
-    COUNT_POOLED_TYPES      = "count_pooled_types"        # summed two object types into one number (mixed scatter)
-    # R0b ADD_WHOLE
-    ADD_WHOLE_DIFFUSE       = "add_whole_diffuse"         # arithmetic slip, no signature pattern
-    ADD_WHOLE_BLANK_POS     = "add_whole_blank_position"  # solves blank=answer but not blank=operand/take-away
     # R1 ADD_SAME_DEN
     ADD_DENOMINATORS        = "add_denominators"          # 2/7 + 3/7 -> 5/14 (the target misconception)
     SAME_DEN_BLANK_POS      = "same_den_blank_position"   # forward only; stalls when blank moves / take-away
@@ -983,8 +957,6 @@ Every signature below is mined directly from the cited room §6 "shallow tells" 
 
 | Room | `error_signature` values | Source (room §6 shallow tell) | Verifier trigger (worked) |
 |---|---|---|---|
-| **R0a COUNT** | `count_miscount`, `count_pooled_types` | "only counts one familiar neat stack; falls apart when rearranged, **or pools two types into one number when intermixed**" | submitted count ≠ true per-type count (`miscount`); a single number submitted where two per-type counts were asked (`pooled_types`) |
-| **R0b ADD_WHOLE** | `add_whole_diffuse`, `add_whole_blank_position` | "solves only when the blank is the answer and stalls when it moves to an operand; or handles addition but not the take-away direction" | wrong on a blank-in-operand or subtract stage while correct on forward (`blank_position`); any other wrong (`diffuse`) |
 | **R1 ADD_SAME_DEN** | `add_denominators`, `same_den_blank_position`, `diffuse` | "adding/subtracting the bottoms too (2/7 + 3/7 → 5/14, **the target misconception**); solving only the forward direction and stalling when the blank moves; or addition but not take-away" | `a/d + b/d` submitted as `(a+b)/(2d)` → `add_denominators`; wrong on blank-operand/subtract while forward-correct → `same_den_blank_position`; else `diffuse` |
 | **R2 ADD_UNLIKE_DEN** | `add_across_unlike`, `scaled_bottom_only`, `unlike_blank_position`, `diffuse` | "adding/subtracting across unlike pieces without re-cutting (1/2 + 1/3 → 2/5); **scaling only the bottom**; or addition but not the take-away direction" | `a/b + c/d` → `(a+c)/(b+d)` → `add_across_unlike`; denominator scaled but numerator not → `scaled_bottom_only`; blank-operand/subtract miss → `unlike_blank_position`; else `diffuse`. **Over-slice is NOT an error** (R2 §4.6): a value-correct larger common denominator is `correct=True` with a reduced `StarTier`, `error_signature=None` |
 | **R3 SIMPLIFY** | `divided_uneven`, `partial_reduce`, `diffuse` | "dividing top and bottom by **different numbers**; or many small steps because they only **fuse by 2**" | submitted `p/q` where `top/p ≠ bottom/q` ratio broken → `divided_uneven`; a valid-but-not-lowest-terms result (e.g. `6/8 → 4/6`? no — reduced but not fully) where a larger shared factor existed → `partial_reduce`; else `diffuse` |
@@ -1009,10 +981,9 @@ Every graded room **does** name at least one misconception, so no graded room is
   | `scaled_bottom_only` (R2) | none (binding-node-only) |
   | `same_den_blank_position` (R1) | none |
   | `add_denominators` (R1) | none (a true misconception at the binding node) |
-  | `guessed_wholes` (R4) | `COUNT` (count-shaped error beneath) |
+  | `guessed_wholes` (R4) | none (binding-node-only) |
   | `partial_reduce` (R3) | none |
   | `divided_uneven` (R3) | none |
-  | `count_pooled_types` (R0a) | none |
   | `diffuse` / `*_diffuse` (any) | none — fall back to binding-node-only (measurement §4.7.4 step 3 conservative default) |
 
   This table is plan-002 U5's `implication_map`; Phase 1 only needs to *emit the signatures*, but the values are frozen here so the map is authorable now.
@@ -1055,7 +1026,7 @@ class Judged(BaseModel):              # appended to the log; reducer no-op on ga
     problem_present_ref: EventId      # the matching problem_present event (segmentation anchor, U1)
 ```
 
-`AnswerValue` is a union: `FractionValue{num,den}` | `MixedValue{whole, leftover_num, leftover_den}` (R4, slot-aware so `forced_leftover` is detectable) | `CountValue{by_type: dict[str,int]}` (R0a per-type). The verifier dispatches on the active beat's room.
+`AnswerValue` is a union: `FractionValue{num,den}` | `MixedValue{whole, leftover_num, leftover_den}` (R4, slot-aware so `forced_leftover` is detectable). The verifier dispatches on the active beat's room.
 
 This `Judged` record is **field-for-field the Phase-2 `Observation`** (measurement §4.7.4 step 2): `{correct, answer_value, error_signature, latency, hint_max_rung, self_corrections, scaffold_level, affect_window}`. The only Phase-2-only field is `affect_window`, which plan-002 U1 explicitly stubs as always-empty in Phase 2. **No re-instrumentation is needed: the Phase-1 `judged` record IS the Observation minus the stubbed affect slice.**
 
@@ -1127,10 +1098,9 @@ Phase-2 consumes this verbatim as `Observation{correct=False, answer_value=5/14,
 ## Acceptance criteria
 
 **(a) curriculum table**
-- [ ] `CURRICULUM` is an ordered `tuple[Recipe, ...]` of length 8 (`K0…K7`) with strictly increasing `order`.
+- [ ] `CURRICULUM` is an ordered `tuple[Recipe, ...]` of length 6 (`K0`, `K3…K7`) with strictly increasing `order`.
 - [ ] Each walling recipe's `walled_room` equals its `required_skill` and its `beats[-1].is_terminal is True`.
 - [ ] plan-001 U4 test passes: presenting `K3_predict_same_den` and judging it emits `RouteToRoom{node=ADD_SAME_DEN}`, then beats advance `R1.L0…R1.L6`, then `RoomCleared`, then `ReturnToKitchen{recipe="K3_predict_same_den"}`.
-- [ ] R0a's terminal is `R0a.L5` (no L6); a test asserts no `R0a.L6` beat exists.
 - [ ] No room hardcodes progression; ScriptedPolicy reads only `CURRICULUM` (import-linter/grep guard).
 
 **(b) error_signature enum**
@@ -1146,352 +1116,6 @@ Phase-2 consumes this verbatim as `Observation{correct=False, answer_value=5/14,
 - [ ] `scaffold_level` equals the active beat's declared level (`-1` for kitchen recipes); it is never derived from UI/render state.
 - [ ] `hint_max_rung == max(hint_shown.rung)` over the attempt, default 0.
 - [ ] A Phase-1 full-playthrough log, fed to a stub `segment()` (plan-002 U1), yields exactly one `Observation` per graded attempt with all fields populated (the cross-phase validity test).
-
----
-
-## Phase-1 goal-communication channel for non-readers (voice-first contradiction)
-
-_Expands: presentation-scene-architecture.md §5.1, §4; asset-manifest.md §8; contradicted by plan-001 'Deferred to Follow-Up: Audio/spoken-tutor output'_
-
-# Phase-1 goal-communication channel for non-readers (voice-first contradiction)
-
-## 0. The contradiction, stated precisely
-
-Three docs each commit to "voice-first, text never gates play," and one Phase-1 scope line removes the audio that would deliver it:
-
-- `presentation-scene-architecture.md` §4: the **Goal cue** region is "**Spoken first**, with a visual cue; on-screen text minimal."
-- `presentation-scene-architecture.md` §5.1: "**Voice-first, low-text goal** … a child who can't read must still know what to do. Text supports; it never gates."
-- `asset-manifest.md` §8: "remember the goal is **voice-first (§5.1)**: these controls support play, they don't carry the teaching."
-- `01_R0a_count.md` §3/§5 and `02_R0b_add_whole.md`: the first two rooms explicitly target children who cannot yet count or add **whole numbers** — i.e. pre/early readers by construction.
-- `plan-001` **Deferred to Follow-Up Work:** "**Audio/spoken-tutor output**" — Phase 1 ships no spoken tutor.
-
-So in Phase 1, the load-bearing channel (`tutor_guide` voice) is absent, on-screen text is mandated minimal and "never required to play," and the target users for R0a/R0b cannot read. **A pre-reader entering a fresh beat in Phase 1 has no channel telling them what to do.** The hint ladder H1–H4 has the same hole: `state-model §3.2` defines every rung as a **text quote** ("look at the bottom numbers — are they the same?"), with no non-reading form.
-
-This spec resolves the contradiction with a concrete, dual-channel decision and the data shapes, scene-grammar slot, hint-rung forms, acceptance tests, and worked examples to build it in Phase 1.
-
----
-
-## 1. Decision
-
-**Adopt BOTH, layered, with a non-audio fallback as the floor:**
-
-1. **(a) Pull minimal browser `SpeechSynthesis` TTS into Phase-1 scope** as the *primary* goal channel. This is explicitly pre-blessed by `plan-001` **KTD11** ("Buy … (later) voice via the browser Web Speech API") and the `Skin.sound?(event)` seam already exists (`presentation-scene-architecture.md` §7). It is ~40 lines of client code, zero new dependencies, zero server work, and **does not contradict** the "Deferred to Follow-Up: Audio/spoken-tutor output" line if we scope it as **client-side TTS of an already-existing goal-cue string**, not a "spoken-tutor" pipeline (no recorded VO, no audio asset production, no server audio). We re-scope the deferral line accordingly (§9).
-
-2. **(b) Ship a deterministic, audio-independent non-audio goal channel as the floor** — a **ghost-hand pantomime** demonstration plus a **tappable "ask-again" affordance** — that fully carries goal communication **with audio off, muted, unsupported, or not-yet-permitted.** This is the channel the U7 acceptance test (§7) certifies. TTS is an enhancement on top; the game must be 100% playable by a non-reader with `SpeechSynthesis` disabled.
-
-**Why both, not just (a):** browser TTS is unreliable for our exact users and contexts — autoplay/audio-gesture policies block first utterance until a user gesture; a tablet may be muted in a classroom; `SpeechSynthesis` voice lists load asynchronously and can be empty; a child cannot read an error toast saying "tap to enable sound." A voice-first design whose only non-text channel can silently fail has **not** satisfied "text never gates play." So the **pantomime is the contract** and TTS is the **preferred rendering of the same `GoalCue`**.
-
-**Layer placement (honors KTD10 three-layer model):** the *content* of the goal (the cue, its pantomime script, its hint forms) is **engine/presentation state** (layers 1–2, deterministic, skin-agnostic, harness-drivable). The *rendering* (which voice, what the ghost hand looks like, the chime) is the **Skin** (layer 3). The wireframe Skin pantomimes with a plain arrow/hand glyph and speaks with the default system voice; the kitchen Skin restyles both. **A Skin may not remove the pantomime or make text load-bearing** — that is added to the Skin "must" list (§8).
-
----
-
-## 2. The `GoalCue` data shape (engine/presentation, skin-agnostic)
-
-The goal cue becomes a first-class presentation object emitted by layer 2 for **every beat** of every room and the kitchen — not free text. One per active beat.
-
-```ts
-// Emitted by web/src/render/presentation/nodes.ts alongside PresentationNode[].
-// Pure function of GameState + RoomSpec. No pixels, no concrete art, no audio files.
-type GoalCue = {
-  cueId: string                 // stable id, e.g. 'r1.L0.merge', 'kitchen.predict_sum'
-  beatKey: string               // the beat this cue belongs to (re-fires pantomime on change)
-
-  // --- text layer (SUPPORT ONLY, never gating) ---
-  text: string                  // short caption, e.g. "Merge the two stacks"
-  speech: string                // the exact string handed to SpeechSynthesis (may differ
-                                //   from text: spoken-natural, e.g. "two sevenths plus
-                                //   three sevenths — put them together")
-
-  // --- non-audio channel (THE CONTRACT / floor) ---
-  pantomime: PantomimeScript    // the ghost-hand demo (§3). REQUIRED, non-empty.
-  pointAt: TargetRef[]          // node(s) the cue points at (deixis), e.g. the merge_zone
-  askVerb: AskVerb              // canonical action category → drives an icon (§4)
-
-  // --- replay affordance ---
-  replayable: true              // a persistent "ask-again" affordance re-runs voice+pantomime
-
-  // --- emphasis tie-in (existing §5.4) ---
-  emphasisRef?: TargetRef       // the one teaching-target node carrying `emphasis` this beat
-}
-
-type AskVerb =
-  | 'count'         // R0a: "how many?"
-  | 'combine'       // R0b/R1: "put together / how many altogether?"
-  | 'measure_to'    // kitchen: "stack to the mark"
-  | 'predict'       // kitchen predict-the-sum: "say the total first"
-  | 'slice'         // R2
-  | 'fuse'          // R3
-  | 'group_wholes'  // R4
-  | 'write_answer'  // bare beats: "write it"
-  | 'pick'          // faded picker beats
-
-type TargetRef =
-  | { kind: 'node'; instanceKey: string }            // an existing PresentationNode
-  | { kind: 'region'; region: RegionId }             // a whole region (rare)
-  | { kind: 'slot'; slotId: string }                 // an answer/symbol slot
-```
-
-**Source of truth:** `cueId`, `text`, `speech`, `askVerb`, and the `pantomime` *template id* live in the Python `RoomSpec` per beat (`content/rooms/*.py`, built in U7). Layer 2 binds the template to **live `instanceKey`s** (the actual stack/zone on screen this frame) so the pantomime points at the real objects. This keeps cue content deterministic and harness-inspectable (a Phase-3 synthetic persona can read `askVerb`/`pantomime` to know the demonstrated path) while letting the Skin own the look.
-
-**Invariant:** `pantomime` and `pointAt` are **never empty** for an interactive beat. A beat whose only action is "write the answer on the bare slate" still has a pantomime (a ghost hand miming a stylus stroke on the slate) and points at the slate. The bare-slate terminal beat is the *only* place where text alone might otherwise be assumed sufficient — it is not; it gets the write-pantomime.
-
----
-
-## 3. `PantomimeScript` — the non-audio goal channel (the contract)
-
-A pantomime is a short, **looping, deterministic, non-interactive** ghost-hand demonstration that shows the *gesture* the beat wants, performed on (a faint clone of) the real objects, ending in a reset so it can loop. It uses the **same interaction-primitive vocabulary** as §3 of the architecture doc, so "the demo shows exactly the move you make."
-
-```ts
-type PantomimeScript = {
-  templateId: string            // e.g. 'pant.merge', 'pant.place_to_mark', 'pant.count_tap'
-  steps: PantomimeStep[]        // played in order, then loops after `loopGapMs`
-  loopGapMs: number             // pause before repeat (default 900)
-  maxLoops: number | 'until_first_action'  // stop condition (§3.3)
-}
-
-type PantomimeStep =
-  | { op: 'point';   at: TargetRef; holdMs: number }                  // ghost hand taps/points
-  | { op: 'drag';    from: TargetRef; to: TargetRef; durMs: number }  // ghost hand drags a clone
-  | { op: 'tap';     at: TargetRef; count: number; gapMs: number }    // N taps (counting)
-  | { op: 'slice';   along: TargetRef; durMs: number }                // mime the slicer
-  | { op: 'fuse';    group: TargetRef[]; durMs: number }              // mime fusing K pieces
-  | { op: 'write';   at: TargetRef; glyphHint?: 'shape'|'none'; durMs: number } // mime a stylus stroke
-  | { op: 'settle';  at: TargetRef; durMs: number }                   // glow the result, then reset
-```
-
-**Rendering rules (layer 2 → Skin):**
-
-- The ghost hand drags a **ghost clone** of the real object (reuses the existing `block`/`stack` `ghost` state in `asset-manifest.md` §5), never the live, draggable object — so the child cannot confuse the demo with their turn, and the live object's state never changes.
-- The pantomime is **non-interactive** (`affordance: 'static'`): it cannot emit an action. Per §3 of the architecture doc, "gestures never mutate state" — the pantomime is not a gesture; it is presentation.
-- It respects the **§4.1 complexity budget**: the pantomime is the demo *of the same one action* the beat already exposes, so it adds no new on-screen element type beyond a ghost clone + the hand glyph.
-- It honors **emphasis (§5.4):** if the beat has an `emphasisRef`, the pantomime's final `settle`/`point` lands on it (e.g. R1's padlocked denominator).
-
-### 3.1 Template library (one per `askVerb`, parameterized by live nodes)
-
-| templateId | askVerb | What the ghost hand does | Anchors to |
-|---|---|---|---|
-| `pant.count_tap` | count | taps each loose piece in turn (`tap count=N`), tally ticks on each | R0a pieces + `tally_readout` |
-| `pant.combine_merge` | combine | drags ghost stack A → stack B across the `merge_zone`, they fuse, `settle` glow | R0b/R1 two stacks + merge gap (the `+`) |
-| `pant.place_to_mark` | measure_to | drags a ghost block from the pile up the ruler, snaps at the `target_mark`, `settle` | kitchen pile → ruler/target_mark |
-| `pant.predict_then` | predict | points at the answer slot, mimes a `write`, *then* points at the stacks | kitchen answer slot + stacks |
-| `pant.slice_bar` | slice | drags the ghost slicer across a bar, bar splits, ×N appears | R2 bar + slicer |
-| `pant.fuse_k` | fuse | circles K small ghost pieces, fuses them into one bigger piece | R3 messy bar + fuse target |
-| `pant.group_wholes` | group_wholes | stacks ghost pieces against the ruler until one whole locks, `settle` on the whole | R4 stack + ruler + whole_unit_row |
-| `pant.write_answer` | write_answer | mimes a stylus stroke on the slate (`write glyphHint:'none'`) | the `slate`/answer slot |
-| `pant.pick_one` | pick | points across the picker options, taps one, `settle` | R2/R3 picker tray |
-
-`glyphHint:'none'` is mandatory for `write_answer`: **the pantomime never mimes the actual answer digits** (that would give away the answer and corrupt the H-rung ladder, §5). It mimes *that you write here*, not *what*.
-
-### 3.2 When the pantomime plays (trigger rules)
-
-1. **On beat entry** (a new `beatKey`): play once immediately. This is the "start of each beat" gap the contradiction names.
-2. **On the `ask-again` affordance** (§4): replay on demand, any number of times.
-3. **On a T2-style idle** (Phase 1 client-local, no engine round-trip): if no legal action has been attempted for `IDLE_REPLAY_MS` (default 8000ms), auto-replay once. This is **UI-only and deterministic** (KTD3, T1-class) — it reads only "has the child acted since beat entry," never the model, and emits **no engine action**. (It does *not* advance the hint ladder; see §5.4.)
-4. **Never during a child gesture:** if the child is mid-drag/tapping, suppress/cancel an in-flight pantomime to avoid two hands moving at once (§6 edge case E3).
-
-### 3.3 Loop/stop policy
-
-- Default `maxLoops: 'until_first_action'`: loop with `loopGapMs` gaps until the child's **first legal action of the beat**, then stop (they've understood). Cap absolute loops at 3 even if idle, then go quiet until `ask-again` or idle-replay re-triggers — never a perpetually animating screen (respects §5.5 "nothing persistent competes with the play space," and the state-model §7 stability rule: the pantomime must **not re-lay-out** live manipulables — it runs in a non-reflowing overlay).
-
----
-
-## 4. Scene-grammar placement (amends architecture §4 Goal-cue region + §5.1)
-
-The **Goal cue region** (top, ~9%) and the **play space** jointly host the goal channel. Concretely, the goal cue region now contains three sub-slots, in priority order, all **big touch targets** (≥60px, §9 of arch doc):
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ GOAL CUE  ~9%                                                      │
-│  [askVerb ICON]   "Merge the two stacks"(caption, support)  [ ↻ ] │
-│   ▲ verb pictograph   ▲ minimal text (decorative for readers)  ▲   │
-│                                                      ask-again btn │
-├──────────────────────────────────────────────────────────────────┤
-│                    PLAY SPACE (~80%)                               │
-│        ┌─ ghost-hand pantomime plays HERE, over the real          │
-│        │  objects, pointing at the merge_zone (deixis) ───┐        │
-│        │  👻✋ drags ghost-stackA → stackB                  │        │
-│        └──────────────────────────────────────────────────┘        │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-**Goal-cue region sub-slots:**
-
-1. **`askVerb` icon (left, always present, non-text):** a fixed pictograph per `AskVerb` (count = "1,2,3…" dots; combine = two shapes sliding into one; measure_to = block rising to a line; slice = scissors-on-bar; fuse = K→1; group_wholes = pieces filling a box; write_answer = a pencil; predict = a thought-bubble-then-pencil; pick = a finger over choices). This is the **persistent, glanceable, language-free statement of "what kind of move."** It is a real asset state on a new `goal_cue_icon` role (§8).
-2. **caption text (center):** the `GoalCue.text`, **minimal and explicitly decorative** — readers get it, non-readers ignore it. Never the only channel.
-3. **`ask-again` affordance (right, `↻`, always present):** a ≥60px tappable that re-runs **both** the TTS (`speech`) and the pantomime. Iconographic (a curved replay arrow / mom's mouth), no text. This is the child's "tell me what to do again" button, usable by a non-reader. Maps to a new interaction primitive **`ask`** (§4.1).
-
-**Deixis (the pointing):** the pantomime runs **in the play space, on the real objects**, and `pointAt` draws a brief attention pulse at the target node(s). This satisfies §5.2 spatial-contiguity ("the demonstration happens where the action happens") and §5.4 signaling (it lands on the emphasis target).
-
-### 4.1 New interaction primitive: `ask`
-
-Add one row to the §3 interaction-primitives table:
-
-| Primitive | Gesture | Targets | Emits action | Used by |
-|---|---|---|---|---|
-| **ask** | tap the `ask-again` affordance | `tappable` (goal-cue region) | `request_goal_replay{cueId}` (Signal) | all rooms, all beats |
-
-`request_goal_replay` is a **Signal**, not an Action (`state-model §1.1` / measurement §1.1): it is logged (so Phase-2 can read "how often did this child re-ask the goal" as a comprehension/affect signal and the harness can drive it) but it is a **no-op on `GameState`** — re-asking the goal must never change game state, advance a beat, or count as a hint. The client may also handle it purely locally (re-trigger TTS + pantomime) without waiting for the round-trip, since it changes nothing authoritative.
-
----
-
-## 5. Hint ladder H1–H4 without reading
-
-The hint rungs (`state-model §3.2`, `asset-manifest §8` `hint_affordance` states `h1_attentional…h4_full_solution`) are currently **text quotes**. Each rung gets a defined **non-reading form**, escalating in *how much of the move it shows*, mirroring the pantomime vocabulary. The rung still records `hint_rung` exactly as the measurement model expects (the *form* changes, the *rung semantics* do not).
-
-```ts
-type HintRender = {
-  rung: 0 | 1 | 2 | 3 | 4
-  text: string                  // support caption (readers); never the only channel
-  speech: string                // TTS string for this rung
-  channel: HintNonReadingForm   // the non-reading delivery (THE contract)
-}
-
-type HintNonReadingForm =
-  | { kind: 'spotlight'; at: TargetRef[] }                 // H1: dim all but the target(s)
-  | { kind: 'pantomime'; script: PantomimeScript; reveals: 'procedure' } // H2: mime the next move, no values
-  | { kind: 'pantomime'; script: PantomimeScript; reveals: 'one_step' }  // H3: do ONE concrete sub-step on the real objects
-  | { kind: 'worked'; script: PantomimeScript; thenRequire: 'isomorph' } // H4: full demo, then a fresh isomorphic problem
-```
-
-| Rung | Reading form (existing) | Non-reading form (this spec) | Gives away |
-|---|---|---|---|
-| **H1 attentional** | "look at the bottom numbers — are they the same?" | **`spotlight`**: dim the whole play space except the relevant object(s) + a pulse on them (R1: the two denominators; R2: the two mismatched widths). No motion, no hand. Pairs with the existing **`emphasis`** treatment (§5.4). | nothing — just *where to look* |
-| **H2 procedural** | "make the bottoms match first" | **`pantomime reveals:'procedure'`**: the ghost hand mimes the *category* of move (R2: a single ghost slice across one bar) but **not the value** (not which N). Same as the beat's intro pantomime but slowed and re-pointed. | the *kind of move*, not the numbers |
-| **H3 worked step** | "one step done for them, child finishes" | **`pantomime reveals:'one_step'`**: actually perform **one concrete sub-step on the real objects** via a system-issued action (R2: slice the *first* bar to its correct N, leaving the child the second; R1: nothing to do — collapses to H2; R0b: merge-and-count the first two pieces). The child finishes. | one real step, with values |
-| **H4 full solution** | "shown, then a fresh isomorphic item is required" | **`worked`**: the ghost hand performs the **entire** solution on the real objects end-to-end (including the final `write` with the *actual* answer glyph this time), then the engine presents a **fresh isomorphic problem** the child must do unaided (`thenRequire:'isomorph'`). | the whole answer, on this item only |
-
-**Rules:**
-
-- **Only H4 ever mimes real answer digits.** H1–H3 use `glyphHint:'none'` writes and value-free slices/merges, preserving the diagnostic meaning of the rungs (a child who solves at H2 still demonstrated more independence than one who needed H3).
-- **H3/H4 "do a step" is a real engine action** issued by the policy with `actor: 'system'` (extends the existing `actor` field; defaults stay `human`), so the event log honestly records that the system, not the child, made that move — and `hint_rung` is set on the child's subsequent `answer_submit`. This keeps the measurement model's "successes must be at `hint_rung == 0`" gate (`state-model §3.2`, §4.3/§4.4) intact and audit-able.
-- **Rungs are requested non-verbally.** The `hint_affordance` surface is itself iconographic (a "?" / mom-leaning-in glyph, ≥60px); tapping it escalates one rung. There is no reading required to *ask for* help, matching "text never gates."
-- **TTS is additive on hints too:** each rung speaks its `speech`, but the `channel` form is the floor and must fully carry the rung with audio off.
-
----
-
-## 6. TTS integration (channel (a)) — behavior, edge cases
-
-Client-only, in the Skin's `sound?(event)` seam (`presentation-scene-architecture.md` §7). No server, no audio assets, no recorded VO.
-
-```ts
-// web/src/render/skin/voice.ts (used by both wireframe + kitchen Skins)
-interface GoalVoice {
-  speak(s: string, opts?: { interrupt?: boolean }): void  // SpeechSynthesisUtterance
-  available(): boolean      // synth exists AND a voice is loaded AND not muted-by-policy
-  cancel(): void
-}
-```
-
-**Behaviors:**
-
-- On beat entry and on `ask` / idle-replay, if `available()`, `speak(GoalCue.speech)`; **always** play the pantomime regardless of audio outcome.
-- **Audio-gesture gating (E1):** browsers block the first utterance until a user gesture. First `speak()` may be silently dropped — that is fine, because the **pantomime carries the beat anyway**. The first `ask` tap (a user gesture) "unlocks" audio for the session; from then on TTS plays. We never show a "tap to enable sound" text prompt (a non-reader can't read it); the `ask-again` button's own iconography is the unlock path.
-- **Empty voice list (E2):** `getVoices()` can return `[]` until the async `voiceschanged` event. `available()` returns false until a voice exists; pantomime covers the gap.
-- **Muted / no-audio device (E2):** indistinguishable from "no voices" at the API level — treat as not-available, pantomime carries.
-- **Mid-utterance beat change (E4):** `cancel()` then speak the new cue with `interrupt:true`; never let a stale cue keep talking after the beat advanced.
-- **Long `speech` strings:** cap at one sentence; R-room cues are already short ("two sevenths plus three sevenths — put them together").
-
-**Other edge cases:**
-
-- **E3 — child acts during the demo:** suppress/cancel pantomime + voice on the child's first gesture of the beat (don't talk over them; don't show two hands).
-- **E5 — `ask` spammed:** debounce `request_goal_replay` to 1/600ms; each restarts voice+pantomime from the top.
-- **E6 — bare-slate terminal beat:** still emits a `GoalCue` with `pant.write_answer` pointing at the slate and a `write_answer` icon; a non-reader knows "write here" even though the screen is otherwise just the equation.
-- **E7 — R0a mixed-scatter mastery beat:** the cue points per-type; `pant.count_tap` taps **only the target type** while the others sit dim (matches `01_R0a_count.md` §7 "dim every type but the one being counted"). One `GoalCue` per type-sub-question.
-- **E8 — Skin omission:** if a Skin fails to provide a pantomime visual for a template, the wireframe fallback (arrow + outline hand) renders — the contract (§8) forbids a Skin from leaving it blank, and the U7 missing-art test (plan-001 U7) catches a gap.
-
----
-
-## 7. Acceptance criteria
-
-### U7 — the contract test (the one the deliverable requires)
-
-> **U7-NONREADER-GOAL:** For **every beat of every room and the kitchen**, with `SpeechSynthesis` **disabled/unavailable** and the caption text **rendered as illegible blocks** (a "non-reader simulation" flag), a test harness (or a non-reading child in playtest) can identify the single correct next action from the non-audio channel alone.
-
-Operationalized as automated assertions (Playwright + presentation unit tests, plan-001 U7 `tests/web/scene-regions.test.ts`):
-
-1. **Cue completeness:** every beat emits a `GoalCue` with non-empty `pantomime.steps`, a resolved `pointAt` (every `TargetRef` resolves to an on-screen node/region/slot this frame), a defined `askVerb`, and `replayable === true`. *(No beat may ship without a non-reading goal channel.)*
-2. **Pantomime → legal action match:** the action that the pantomime demonstrates (its terminal `op`) maps, via the §3 primitive table, to **a currently legal action** for that beat. (The demo never shows an illegal move.)
-3. **Audio-off playability:** with TTS stubbed unavailable, a scripted "imitator" agent that **only replays the pantomime and performs its demonstrated primitive** completes every room L0→terminal. (If the pantomime is sufficient for a dumb imitator, it's sufficient for a non-reader.)
-4. **No-text-gating:** with caption text blanked, assertion (3) still passes. With caption text present but TTS off, assertion (3) still passes. *(Text is never load-bearing.)*
-5. **Answer never leaked pre-H4:** for H1–H3 hint renders, no pantomime `write` carries real answer glyphs (`glyphHint:'none'` enforced); only H4 may.
-6. **`ask` is a no-op on state:** dispatching `request_goal_replay` N times leaves `GameState` byte-identical (fold determinism, plan-001 U2) while replaying voice+pantomime; the Signal is present in the log.
-7. **Big targets:** `askVerb` icon, `ask-again`, and hint-affordance hit-targets are each ≥60px (arch §9).
-8. **No reflow:** showing/looping the pantomime and the hint forms does not change the layout/position of any live manipulable (state-model §7 stability) — assert bounding boxes of live `block`/`stack` nodes are unchanged when a pantomime starts.
-
-### Per-rung hint acceptance
-
-9. Each rung H1–H4 has a defined `HintNonReadingForm` whose `kind` matches the table in §5; requesting a hint sets `hint_rung` on the next `answer_submit`; H3/H4 system steps are logged with `actor:'system'`.
-
----
-
-## 8. Skin-contract amendments (architecture §7)
-
-Add to **A Skin must:**
-
-7. Provide a **pantomime visual** (ghost hand + ghost-clone motion) for every `PantomimeScript.templateId`, and a **distinct pictograph** for every `AskVerb`, and a render for every `HintNonReadingForm.kind`. (The wireframe Skin ships a plain arrow/outline-hand fallback so the game is playable before art.)
-8. Keep the **goal channel audio-independent**: the pantomime + `askVerb` icon + `ask-again` affordance must fully communicate the beat with `sound?` returning nothing.
-
-Add to **A Skin must NOT:**
-
-- Make on-screen **text load-bearing** for goal communication (text is decorative/support per §5.1).
-- Remove, shorten-to-empty, or replace the pantomime with a text-only cue.
-- Mime the **actual answer value** in any pantomime below hint rung H4.
-
-New asset roles for `asset-manifest.md` (extends §6/§8):
-
-- **`goal_cue_icon`** (symbolic layer) — one pictograph per `AskVerb` (9 states: `count`, `combine`, `measure_to`, `predict`, `slice`, `fuse`, `group_wholes`, `write_answer`, `pick`). Communicate the *kind of move*, language-free.
-- **`ghost_hand`** (manipulable-adjacent, presentation-only) — the demonstrating hand/cursor. States: `pointing`, `dragging`, `tapping`, `writing`, `idle_between_loops`. Non-interactive; reuses the `ghost` palette role.
-- **`ask_again_affordance`** (feedback & control §8) — the iconographic replay/"tell me again" button. States: `idle`, `pressed`, `playing`.
-- **`hint_affordance`** (existing §8) gains the non-reading `channel` per rung — no new role, but each of its `h1…h4` states now additionally drives a `HintNonReadingForm` (spotlight / pantomime / pantomime / worked).
-
----
-
-## 9. Doc-reconciliation (resolve the contradiction explicitly)
-
-- **`plan-001` "Deferred to Follow-Up Work":** change "Audio/spoken-tutor output" → "**Recorded/produced spoken-tutor VO, cloud TTS, and audio asset production**." **In scope for Phase 1:** client-side `SpeechSynthesis` TTS of the existing `GoalCue.speech`/hint `speech` strings (no audio assets, no server), gated behind `available()` and **never the sole channel**. This is consistent with KTD11 ("buy … browser Web Speech API") and adds the single sentence that the deferral previously over-broadly removed.
-- **`presentation-scene-architecture.md` §4/§5.1:** "Spoken first, with a visual cue" is now precise: the **non-audio pantomime + `askVerb` icon is the floor**, TTS is the preferred-when-available top layer. §5.1's "a child who can't read must still know what to do" is now *testable* via U7-NONREADER-GOAL.
-- **`asset-manifest.md` §8:** the "voice-first" note stands; add `goal_cue_icon`, `ghost_hand`, `ask_again_affordance`, and the per-rung non-reading hint channel as above.
-- **U7 / U8 (plan-001):** U7 emits the `GoalCue` + pantomime per beat and renders the goal-cue region sub-slots; U8's "hint-affordance surface showing fixed (scripted) copy at rungs H1–H4" is upgraded from "copy" to the §5 `HintRender` (text + speech + non-reading channel), still scripted in Phase 1.
-
----
-
-## 10. Worked examples
-
-### Example A — R1, L0 (blocks lead), a non-reader, tablet muted
-
-- Engine/RoomSpec emits `GoalCue{ cueId:'r1.L0.merge', text:"Put the stacks together", speech:"two sevenths plus three sevenths — put them together", askVerb:'combine', pantomime: pant.combine_merge(bound to stackA, stackB, merge_zone), pointAt:[merge_zone], emphasisRef: the padlocked denominator }`.
-- Beat entry: `voice.speak(...)` is dropped (muted) — fine. The **ghost hand drags a faded clone of stack A across the merge gap into stack B; they fuse; a glow settles; the `+` in the gap pulses.** Loops with 900ms gaps.
-- The `askVerb` icon shows "two-shapes-into-one"; the `↻` button sits top-right.
-- The child imitates: drags the real stack A → stack B → `merge_stacks` action fires → pantomime stops (first action). **A non-reader knew exactly what to do with audio off.** ✔ U7.
-
-### Example B — R2, L0, child stalls, escalates hints (audio off)
-
-- Intro pantomime: ghost slicer drags across one bar, it splits, `×?` placeholder pulses (no specific N).
-- Child idles 8s → idle-replay fires once. Still stuck → taps the `?` hint affordance:
-  - **H1 (spotlight):** play space dims except the **two mismatched bar widths**, which pulse. (Where to look: they don't match.)
-  - **H2 (pantomime, procedure):** ghost slicer mimes a slice across one bar — *the move*, not the N. (`glyphHint:'none'`, no value.)
-  - **H3 (one_step):** the engine issues a real `slice_bar` on the **first** bar to its correct N (`actor:'system'`), the bar visibly becomes sixths; the second bar is left for the child. The child slices the second and merges.
-  - If still stuck, **H4 (worked):** ghost hand slices both bars correctly, merges, and writes the real answer `5/6` on the slate; then the engine presents a **fresh isomorphic** `1/2 + 1/4` for the child to do unaided.
-- Every rung communicated with zero reading; `hint_rung` recorded for Phase-2's gate. ✔ §5.
-
-### Example C — R0b bare slate (L6), the hardest case for non-readers
-
-- Screen is just `3 + 2 = ?` and an empty slate. `GoalCue{ askVerb:'write_answer', pantomime: pant.write_answer(at: slate, glyphHint:'none'), pointAt:[slate], text:"Write the answer" }`.
-- Pantomime: ghost hand mimes a single stylus stroke on the slate (not the digit "5"). Icon = pencil. `↻` available.
-- A non-reader understands "write your answer here" though nothing but symbols remain — the **one beat the original design most risked stranding them**, now covered. ✔ E6.
-
-### Example D — R0a mixed scatter (mastery), two types intermixed
-
-- For the "how many squares?" sub-question: `GoalCue{ askVerb:'count', pantomime: pant.count_tap(targets: square instances only), pointAt:[the squares], text:"How many squares?" }`. The pantomime taps only squares (triangles dim); the tally ticks per tap, then resets. Then a second `GoalCue` for triangles. A non-reader counts the right type without reading the word "squares." ✔ E7.
-
----
-
-## 11. Phase-1 build delta (small, additive)
-
-- **Python (`content/rooms/*.py`, U7):** add per-beat `GoalCue` template fields (`cueId`, `text`, `speech`, `askVerb`, `pantomimeTemplateId`, `pointAt` target descriptors, per-rung `HintRender`). Add `request_goal_replay` to the `Signal` union (no-op reducer). Extend `actor` usage to allow `'system'` on H3/H4 step actions (the field already exists, plan-001 U2).
-- **TS (U6/U7):** `web/src/render/presentation/goalcue.ts` (binds templates to live `instanceKey`s); `web/src/render/skin/voice.ts` (TTS); `ghost_hand` + pantomime player in `web/src/render/manipulables/` (non-interactive overlay, no reflow); goal-cue region sub-slots + `ask-again` primitive in `regions.ts`/`interactions/`; per-rung non-reading hint render in `Hud.tsx`.
-- **Tests:** the U7-NONREADER-GOAL suite (§7) added to `tests/web/scene-regions.test.ts` and the e2e imitator pass in `tests/e2e/`.
-- **No server/transport change** beyond accepting the new Signal (already generic). No new runtime dependency (SpeechSynthesis + existing framer-motion ghost animation).
 
 ---
 
@@ -1611,14 +1235,14 @@ interface BeatSnapshot {
   session: 'KITCHEN' | 'ROOM';
   room: NodeId | null;            // e.g. 'R1_ADD_SAME_DEN'; null in kitchen
   scaffold: 'L0'|'L1'|'L2'|'L3'|'L4'|'L5'|'L6';   // architecture §4 space-trade level
-  beatLabel: string;              // 'blocks_lead' | 'bind_write' | 'blocks_fade' | 'numbers_lead' | 'new_dress' | 'bare_ghost_backdrop' | 'bare_slate' | 'mixed_scatter' (R0a terminal)
+  beatLabel: string;              // 'blocks_lead' | 'bind_write' | 'blocks_fade' | 'numbers_lead' | 'new_dress' | 'bare_ghost_backdrop' | 'bare_slate'
   phase: 'PRESENT'|'OBSERVING'|'HINTING'|'SUBMITTED'|'JUDGED';  // problem machine
   hintRung: 0|1|2|3|4;            // current H-rung (state-model §3.2)
   stage?: number;                 // R1 operation×unknown stage (1..4); room-specific, optional
 }
 ```
 
-`scaffold` and `phase` come straight from `gameState`; `beatLabel` is the human name for the scaffold level **for this room** (R0a has no L5/L6, its terminal is `mixed_scatter`).
+`scaffold` and `phase` come straight from `gameState`; `beatLabel` is the human name for the scaffold level **for this room**.
 
 ### 1.6 `lastError` — `HarnessError`
 
@@ -1688,8 +1312,8 @@ Each interaction primitive (architecture §3) hit‑tests `drop_target` nodes. D
 
 | `data-drop` | Accepts primitive | Emitted action | Present in |
 |-------------|-------------------|----------------|------------|
-| `place` | place (drag block/pile → zone) | `place_block` | R0a, R0b, R1, kitchen build zone |
-| `merge` | merge (drag stack → zone) | `merge_stacks` | R0b, R1, R2 (`merge_zone`) |
+| `place` | place (drag block/pile → zone) | `place_block` | R1, kitchen build zone |
+| `merge` | merge (drag stack → zone) | `merge_stacks` | R1, R2 (`merge_zone`) |
 | `slice` | slice (slicer over bar) | `slice_bar` | R2 bar targets |
 | `fuse` | fuse (fuse_tool / select K) | `fuse_by_k` | R3 bar |
 | `group_wholes` | group‑wholes (stack vs ruler) | `group_wholes` | R4 build zone + ruler |
@@ -1818,7 +1442,6 @@ The pad/slate emit `answer_submit{value, modality}`. `value` is a canonical stri
 - Proper/improper fraction: `"5/7"`, `"9/7"`.
 - Whole: `"2"`.
 - Mixed number: `"1 2/7"` (whole, single space, fraction). An exact whole with a forced empty leftover is just `"2"`; `"2 0/7"` is a **distinct** value (the R4 forced‑leftover trap — verifier marks it wrong, `error_signature='forced_leftover'`).
-- Count (R0a): a bare integer, or per‑type for mixed scatter: `{ "apple":3, "pear":2 }` encoded as `"apple:3,pear:2"`.
 
 A test drives the bare‑slate beat by `dispatchAction({type:'answer_submit', payload:{value:'5/7', modality:'tap'}, actor:'human'})` rather than typing into the pad — both paths converge on the identical action.
 
@@ -1845,7 +1468,7 @@ A test‑flagged WS message that resets the session to a fully‑constructed bea
 ```ts
 interface InitSessionRequest {
   room: NodeId | 'KITCHEN';          // e.g. 'R2_ADD_UNLIKE_DEN'
-  beat: BeatSnapshot['scaffold'] | 'mixed_scatter';   // L0..L6 (or R0a terminal)
+  beat: BeatSnapshot['scaffold'];   // L0..L6
   scaffold?: number;                 // optional explicit scaffold index if it differs from beat
   seed: number;                      // seeds the deterministic problem generator (state-model §1, U3)
   prefilledLog?: Event[];            // optional: replay these Actions/Signals first to reach a sub-state
@@ -1880,10 +1503,6 @@ A checked‑in catalog (`tests/e2e/fixtures/sessions.ts`) provides **one named s
 |------------|------|------|------|-------|
 | `kitchen.opener` | KITCHEN | L0 | 1001 | match‑a‑height ¾ cup |
 | `kitchen.predict` | KITCHEN | L1 | 1002 | predict‑the‑sum; name‑before‑stack |
-| `r0a.lead` | R0a_COUNT | L0 | 2001 | single‑type count |
-| `r0a.terminal` | R0a_COUNT | mixed_scatter | 2002 | two+ types intermixed |
-| `r0b.lead` | R0b_ADD_WHOLE | L0 | 2101 | two stacks + merge gap |
-| `r0b.bare` | R0b_ADD_WHOLE | L6 | 2102 | bare slate |
 | `r1.lead` | R1_ADD_SAME_DEN | L0 | 2201 | 2/7+3/7 merge |
 | `r1.bind` | R1_ADD_SAME_DEN | L1 | 2202 | locked denominator binding |
 | `r1.ghost` | R1_ADD_SAME_DEN | L5 | 2203 | ghost backdrop |
@@ -1900,7 +1519,6 @@ Each fixture is `{ id, request: InitSessionRequest, expect: { beatLabel, emphasi
 
 ### 5.5 Edge cases
 
-- **R0a has no L5/L6**: requesting `beat:'L6'` for `R0a_COUNT` is rejected with `error_frame{code:'invalid_beat_for_room'}`; the catalog only offers `mixed_scatter`.
 - **Mastery beats in P1**: `policy:'mastery'` / `masterySeed` are rejected with `error_frame{code:'mastery_unavailable_phase1'}` until Phase 2 ships; tests for those are skipped behind a capability check (`__GAME__.mastery !== undefined`).
 - **Bad seed/room combos** (e.g. a stage that doesn't exist for the room) → `error_frame{code:'invalid_session_spec'}`; `initSession` rejects with the message.
 
@@ -2961,9 +2579,6 @@ On the L6 bare slate (and the L5 ghost-backdrop beat) there is **no manipulable 
 ### 5.2 Bare-slate `correct`
 - M2 `glow_correct` on the slate's answer region (`slate[correct]`) + `reward_payoff` tick + advance. Silent-friendly: glow + static check fill. No `at_target`/`over_target` exist on the bare slate (no ruler/geometry), so only correct/incorrect apply.
 
-### 5.3 R0a exception
-R0a counting has no L5/L6 bare slate (architecture §4 note; objects never leave). Its terminal is the mixed-scatter beat, where the manipulable IS present, so the §4 (blocks-present) grammar applies throughout — there is no bare-slate case to spec for R0a.
-
 ---
 
 ## 6. Skin-contract clause: non-color channel separation (REQUIRED)
@@ -3036,7 +2651,7 @@ _Expands: presentation-scene-architecture.md §3 (primitives), §4 (space-trade)
 
 # Animation Architecture — scene/beat transitions, drag contract, mass re-layout, stage scaling
 
-> Expands `presentation-scene-architecture.md` §3 (interaction primitives), §4 / §4.1 (space-trade + complexity budget), §7 (Skin.motion seam), §10 (per-room scenes); plan-001 KTD5 (Vite + React + DOM/SVG + Framer Motion + `@use-gesture/react`) and units U6/U7; room R2/R3/R4 §5 ("Feel"), R0a §5 (mixed scatter), R4 §5 (overflow); the motion / phaser / game-development lenses.
+> Expands `presentation-scene-architecture.md` §3 (interaction primitives), §4 / §4.1 (space-trade + complexity budget), §7 (Skin.motion seam), §10 (per-room scenes); plan-001 KTD5 (Vite + React + DOM/SVG + Framer Motion + `@use-gesture/react`) and units U6/U7; room R2/R3/R4 §5 ("Feel"), R4 §5 (overflow); the motion / phaser / game-development lenses.
 >
 > **Scope.** This is the motion contract that sits *inside* Layer 3 (the Skin) and the render layer of Layer 2. It does not touch engine state, the verifier, or the Policy. Per architecture §1 invariant and §6, **the Skin animates outcomes; it never decides them.** Every rule below is a render-layer rule; none may change which node exists, where it is laid out, what is interactive, or what state it is in.
 >
@@ -3180,9 +2795,9 @@ type DragSession = {
 
 | Primitive | mode | original during drag | carrier | on accept | on reject |
 |-----------|------|----------------------|---------|-----------|-----------|
-| **place** (R0a/R0b/R1/kitchen) | `ghost` | source `pile` stays full | a single ghost `block` | snaps into stack slot; emit `place_block` | spring-back to pile, fade ghost |
-| **remove** (R0b/R1/R2/kitchen) | `original` | the piece leaves the stack and follows pointer | the real piece node | drops to tray/open; emit `remove_block`/`remove_pieces` | spring back onto stack, shake |
-| **merge** (R0b/R1/R2) | `original` | the dragged *stack* moves bodily | the whole stack | snaps adjacent to target stack; emit `merge_stacks` | spring-back + shake (the unlike-size lock) |
+| **place** (R1/kitchen) | `ghost` | source `pile` stays full | a single ghost `block` | snaps into stack slot; emit `place_block` | spring-back to pile, fade ghost |
+| **remove** (R1/R2/kitchen) | `original` | the piece leaves the stack and follows pointer | the real piece node | drops to tray/open; emit `remove_block`/`remove_pieces` | spring back onto stack, shake |
+| **merge** (R1/R2) | `original` | the dragged *stack* moves bodily | the whole stack | snaps adjacent to target stack; emit `merge_stacks` | spring-back + shake (the unlike-size lock) |
 | **slice** (R2) | `original` | the `slicer_tool` follows the drag across the bar | the slicer | on full traverse, emit `slice_bar`; bar re-subdivides (U7.2) | partial drag < threshold → slicer springs to dock |
 | **fuse** (R3) | `ghost` | selected K pieces highlight in place | a selection lasso/`fuse_tool` | even group → emit `fuse_by_k`, pieces clump (U7.2) | uneven K → pieces bounce back (shake), no emit |
 | **group-wholes** (R4) | `original` | pieces stack against the ruler | the top segment | segment reaches whole-mark → emit `group_wholes`; locks & slides to row | below mark → settle in place, no emit |
@@ -3202,7 +2817,7 @@ type DragSession = {
 
 ### U7.2 Mass re-layout = transform springs on pre-positioned nodes; reserve `layout` for ≤1–2/beat
 
-This is the core hazard. The juicy moments — **R2 bars snapping to equal width, R3 K-piece fuse with height held, R0b/R1 two-stack merge, R4 whole locking off and sliding** — each move many sub-elements. Framer Motion `layout` (FLIP) measures every participating element pre/post and animates the delta; with 30–50 sub-pieces this measures the whole subtree every commit and is the documented jank source. So:
+This is the core hazard. The juicy moments — **R2 bars snapping to equal width, R3 K-piece fuse with height held, R1 two-stack merge, R4 whole locking off and sliding** — each move many sub-elements. Framer Motion `layout` (FLIP) measures every participating element pre/post and animates the delta; with 30–50 sub-pieces this measures the whole subtree every commit and is the documented jank source. So:
 
 > **RULE (mass re-layout):** When more than 2 elements move in a beat, Layer 2 emits **both the from- and to-positions as logical `layout.x/y/w/h`**, and the render layer animates the difference with **transform-only springs (`x`, `y`, `scale`)** on pre-positioned absolute nodes. Framer Motion `layout`/`layoutId` is **reserved for at most 1–2 elements per beat** (typically the single binding label flying to its quantity, or the region box resize of U6.3).
 
@@ -3224,7 +2839,7 @@ Mechanics: every manipulable sub-node is absolutely positioned at its *final* lo
 
 - **R2 "bars snap to equal width" (§5 Feel).** Slicing 1/2 + 1/3 → sixths: the LHS bar goes from 1 piece to 3, RHS from 1 to 2. Layer 2 recomputes each sub-piece's `w` so both bars reach the `common_size_guide` width. Render: each existing piece animates `scaleX` to its new width and `x` to its new offset; *new* sub-pieces enter with `scaleX: 0→1` from the cut line. The two **bar containers** keep `instanceKey` and width-animate via a single `x/w` transform spring each — **zero `layout` props.** The `×N` label is the **1 allowed `layoutId`** element, flying from the bar to the top+bottom of the fraction.
 - **R3 K-piece fuse, height held (§5 Feel + §5.4 emphasis "height holds").** 6/8→3/4 fusing by 2: 6 small pieces → 3 big. The **height guide is a `static` line that never animates** (the invariant made literal). Each fused group: the two source pieces animate `y` together (clump) and `scaleY` is held at 1 across the group while a single bigger piece scales in. The bar's total height (`stack.layout.h`) is **identical pre/post** so the bar container does not animate at all. The `÷K` is the 1 `layoutId` flyer.
-- **R0b / R1 two-stack merge.** Two stacks → one. The dragged stack is the drag carrier (transform follow, U7.1); on accept its pieces **re-key into the target stack's `instanceKey` space** and animate `y` to stack on top of the existing column (`spring stiffness 420`). The merged stack container keeps the target's `instanceKey`. No `layout`.
+- **R1 two-stack merge.** Two stacks → one. The dragged stack is the drag carrier (transform follow, U7.1); on accept its pieces **re-key into the target stack's `instanceKey` space** and animate `y` to stack on top of the existing column (`spring stiffness 420`). The merged stack container keeps the target's `instanceKey`. No `layout`.
 - **R4 whole locks off and slides to the row (§5 Feel "satisfying snap").** When `group_wholes` lands, the bottom 7 pieces (one whole) get re-keyed under the `whole_unit_row` region's child set, and animate `x/y` from their stack position to the row slot (`spring stiffness 380, damping 26`), while the overflow pieces above animate `y` down to re-base at the ruler zero. The `whole_unit_row` is the **1 allowed `layoutId`** target so a locked whole "lands" into a measured slot. The ruler and whole-mark are `static`.
 
 #### First Canvas-boundary candidate (flag for KTD5 upgrade path)
@@ -3293,16 +2908,15 @@ This dictates the Motion DOM structure. The choice per room is driven by: do ind
 
 | Room / manipulable | Structure | Why | Animated unit |
 |--------------------|-----------|-----|---------------|
-| **R0a** unit pieces / scatter | **Keyed sub-nodes**, NO `LayoutGroup` | each piece has identity (placed, counted, scattered, dimmed independently); but they **never FLIP as a group** — they're transform-positioned. Avoid `LayoutGroup` to keep the 50-piece scatter off shared-layout measurement. | per-piece `x/y/opacity` |
-| **R0b / R1** stacks | **Keyed sub-nodes (pieces) under a `LayoutGroup` per merge** | merge needs pieces from stack B to land into stack A's column with shared FLIP context **only at the merge beat**; `LayoutGroup` is mounted *for that transition only*, then removed. ≤ ~12 pieces, within the layout budget. | piece `y` into column |
+| **R1** stacks | **Keyed sub-nodes (pieces) under a `LayoutGroup` per merge** | merge needs pieces from stack B to land into stack A's column with shared FLIP context **only at the merge beat**; `LayoutGroup` is mounted *for that transition only*, then removed. ≤ ~12 pieces, within the layout budget. | piece `y` into column |
 | **R2** bars | **Single subdivided node per bar** (subdivision = a `props.cuts` integer); sub-pieces are SVG `<rect>`s drawn by the Skin, **not** React-keyed motion nodes | the bar is one `PresentationNode` (architecture §2 "size-bearing asset, extent derived from props"); slicing changes `props.cuts`, not the node count. Width-snap animates the **bar container** transform + the Skin re-draws internal cut lines (cheap, transform-free internal). Reserves the bar as the Canvas-boundary candidate (U7.2). | bar container `x/scaleX`; cut lines redrawn |
 | **R3** fusing bar | **Single subdivided node**, same as R2 | fuse changes `props.cuts` (8→4→…); height held means the container never animates; the Skin animates internal clump via SVG, or (if jank) crosses to Canvas. Keeping it one node keeps the height-holds invariant trivially true. | internal clump (Skin); container static |
 | **R4** overflow stack + wholes | **Hybrid:** the overflow stack is **keyed sub-nodes** (each piece must individually lift to the whole-unit row); the **`whole_unit_row` uses one `layoutId` slot per locked whole** | locking a whole is the 1-element FLIP per beat (a whole "lands" in a measured row slot); the overflow pieces are transform-positioned keyed nodes. ≤ ~15 pieces typical. | pieces `x/y`; one whole `layoutId` land |
-| **kitchen** ruler + pile | **Keyed sub-nodes** (pile pieces), no LayoutGroup | identical to R0b place-to-stack; pure transform positioning. | piece `y` to mark |
+| **kitchen** ruler + pile | **Keyed sub-nodes** (pile pieces), no LayoutGroup | identical to R1 place-to-stack; pure transform positioning. | piece `y` to mark |
 
-**General rule derived:** *bars* (R2, R3 — pieces are a subdivision of a measured length) → **single subdivided node**, subdivision is a `prop`, internal cuts are a Skin draw concern, container is the only motion element. *Loose/stackable pieces* (R0a, R0b, R1, R4, kitchen — pieces have individual identity and get placed/removed/scattered) → **keyed sub-nodes**, `LayoutGroup` only transiently and only where a merge needs shared FLIP, otherwise transform-positioned.
+**General rule derived:** *bars* (R2, R3 — pieces are a subdivision of a measured length) → **single subdivided node**, subdivision is a `prop`, internal cuts are a Skin draw concern, container is the only motion element. *Loose/stackable pieces* (R1, R4, kitchen — pieces have individual identity and get placed/removed/scattered) → **keyed sub-nodes**, `LayoutGroup` only transiently and only where a merge needs shared FLIP, otherwise transform-positioned.
 
-This keeps `layout`/FLIP usage to: ≤1 transient `LayoutGroup` (R0b/R1/R4 merge/lock), + ≤1 `layoutId` flyer (the ×N/÷K/whole label), + the 2 region-box resizes (U6.3) — never the 30–50 piece subtrees.
+This keeps `layout`/FLIP usage to: ≤1 transient `LayoutGroup` (R1/R4 merge/lock), + ≤1 `layoutId` flyer (the ×N/÷K/whole label), + the 2 region-box resizes (U6.3) — never the 30–50 piece subtrees.
 
 #### Acceptance test (U7, `tests/web/node-structure.test.ts`)
 
@@ -3310,7 +2924,6 @@ This keeps `layout`/FLIP usage to: ≤1 transient `LayoutGroup` (R0b/R1/R4 merge
 - R2: the play_space contains exactly 2 bar motion containers (lhs/rhs) regardless of cut count
   (slicing 1/2 to sixths does NOT create 3 keyed React nodes — props.cuts changed; assert child
   motion-node count stable while an internal data-cuts attr went 1→3).
-- R0a scatter of 40 pieces: 40 keyed motion nodes, zero are wrapped in a LayoutGroup.
 - R4 lock: exactly one element gains a layoutId during the group_wholes transition.
 ```
 
@@ -3324,15 +2937,13 @@ A bar's internal cuts are a **render property of one node**, consistent with arc
 
 > **ANIMATED-NODE CAP:** at any single beat transition, **≤ 50 simultaneously-animating motion nodes**, of which **≤ 2 carry `layout`/`layoutId`** and **≤ 1 transient `LayoutGroup`** may be mounted. Everything else animates transform-only (`x/y/scale/opacity`). If a beat would exceed 50 animating nodes, either (a) the excess are `static` (no animate target) or (b) the beat is split (mirrors §4.1's "if a beat needs more than the budget, split it").
 
-The 50 cap is sized to the two worst cases:
+The 50 cap is sized to the worst case:
 
-- **R0a mixed-scatter (R0a §5 / L5).** Two–three object types scattered and intermixed — the most loose pieces on screen at once. Cap the scatter at ~40 pieces (well within count-recognition pedagogy; nobody counts 80 by glance). The **flash-then-dim** (R0a §4.2) animates opacity on all ~40 at once — this is a transform/opacity-only beat, **zero `layout`**, so 40 nodes is cheap.
 - **R4 overflow (R4 §5).** A tall improper stack (e.g. 9/7, or new-dress big tops like 23/7) → ~23 pieces + the leftover + row slots ≈ under 40. The lock-and-slide animates ≤ ~15 pieces (one whole's worth + the re-basing overflow) with exactly 1 `layoutId`.
 
 **`willChange` guidance (the worst-case GPU hint):**
 
 - Apply `will-change: transform, opacity` **only** to nodes that *are about to animate this beat*, and **remove it when the spring settles** (`onAnimationComplete` clears it). Never leave `will-change` on statically-resting nodes — a screen of 40 permanently-promoted layers exhausts GPU memory and *causes* the jank it was meant to prevent.
-- **R0a scatter:** during flash-then-dim, set `will-change: opacity` on the scatter set for the dim duration only, then clear. The resting scatter has no `will-change`.
 - **R4 overflow:** set `will-change: transform` on the ≤15 moving pieces at `group_wholes` start, clear on settle. The locked wholes already in the row and the static ruler get none.
 - **Mass re-layout (R2/R3):** the ≤2 animating bar containers get `will-change: transform` for the slice/fuse spring, cleared on settle.
 - Rule of thumb: **count of `will-change` nodes ≈ count of currently-springing nodes**, and that count obeys the 50-cap.
@@ -3346,7 +2957,7 @@ first animation frame of each transition assert:
   - count(nodes with layout || layoutId) <= 2
   - count(mounted LayoutGroup) <= 1
   - count(nodes with computed will-change !== 'auto') === animatingNodeCount (no stale promotions)
-Worst-case fixtures: R0a 40-piece mixed scatter flash-then-dim; R4 23/7 overflow lock.
+Worst-case fixture: R4 23/7 overflow lock.
 The test fails the build (CI) if any beat exceeds the cap — this is the §4.1 budget made executable
 on the motion layer.
 ```
@@ -3364,10 +2975,10 @@ on the motion layer.
 
 1. **U6.1–U6.2:** one always-mounted `AnimatePresence` per region, keyed by `instanceKey`, `mode="sync"`; exit/dissolve flips `pointer-events:none` on a non-interactive layer; ghost-backdrop dissolves on its own `ghost:`-keyed sub-layer; **exit-fires test** specified. U6.3: KITCHEN↔ROOM swap keeps region hosts mounted, crossfades backdrop, cuts goal text, and runs the space-trade as ≤2 region-box `layout` animations.
 2. **U7.1:** per-primitive drag contract — `@use-gesture` owns pointer/hit-test/emit, Framer Motion renders carrier/snap/spring-back; mode (ghost vs original), snap-to-slot spring, illegal-drop spring-back-then-shake with **no emit**, single in-stage drag overlay; tests specified.
-3. **U7.2:** mass re-layout uses transform-only `x/y/scale` springs on pre-positioned nodes; `layout`/`layoutId` reserved for ≤1–2 elements/beat; **R2 full-bar fuse flagged as first Canvas/PixiJS boundary candidate**; worked examples for R2 width-snap, R3 height-held fuse, R0b/R1 merge, R4 lock-and-slide.
+3. **U7.2:** mass re-layout uses transform-only `x/y/scale` springs on pre-positioned nodes; `layout`/`layoutId` reserved for ≤1–2 elements/beat; **R2 full-bar fuse flagged as first Canvas/PixiJS boundary candidate**; worked examples for R2 width-snap, R3 height-held fuse, R1 merge, R4 lock-and-slide.
 4. **U7.3:** fixed 1280×800 logical root + single CSS `scale()` letterbox; **scale-boundary rule** (no `layout`/`layoutId` crosses the scale); pointer unscaled once at the gesture boundary; **non-1.0-scale regression test** at 0.625 and 1.4.
 5. **U7.4–U7.5:** per-room keyed-sub-nodes-vs-single-subdivided-node decision (bars = single subdivided node with `props.cuts`; loose pieces = keyed sub-nodes, transient `LayoutGroup` only at merge/lock); subdivision-as-prop contract that legalizes single-node bars and the Canvas escape hatch.
-6. **U7.6:** per-beat cap of **≤50 animating nodes / ≤2 layout / ≤1 LayoutGroup**, asserted in CI; `willChange` applied only to currently-springing nodes and cleared on settle, with explicit guidance for the R0a 40-piece scatter flash-then-dim and the R4 overflow lock worst cases.
+6. **U7.6:** per-beat cap of **≤50 animating nodes / ≤2 layout / ≤1 LayoutGroup**, asserted in CI; `willChange` applied only to currently-springing nodes and cleared on settle, with explicit guidance for the R4 overflow lock worst case.
 
 ---
 
@@ -3386,8 +2997,8 @@ _Expands: presentation-scene-architecture.md §5.2/§6/§9; asset-manifest.md §
 > (§5), the responsiveness layering (§6), and the size/color/emphasis laws of the asset
 > manifest (§1 laws 3–5).
 >
-> **Audience constraint that drives all of this.** R0a/R0b target pre/early readers (3–6 yo);
-> the whole product is used by young children, ~8% of boys have a red-green color vision
+> **Audience constraint that drives all of this.** The whole product is used by young children,
+> ~8% of boys have a red-green color vision
 > deficiency, and an animation-heavy design is a vestibular and photosensitivity risk. The
 > design currently teaches the block↔numeral link partly through *shared denominator hue
 > alone* (manifest §1 law 4) with no redundant non-color encoding, has no reduced-motion
@@ -3828,13 +3439,6 @@ type StageFit = {
    (signaling, §5.4) plus the sevenths `chevron` pattern on both the stack and the running fraction
    — so the "this is locked / same family" reads via icon+pattern, not color alone.
 
-3. **R0a, pre-reader, high_contrast mode, small 960×600 window, uiScale 1.15.** Effective logical
-   reference 1280·1.15 × 800·1.15; solve `min(960/1472, 600/920) = min(0.652, 0.652) ≈ 0.65`. Count
-   pieces: `count_type_a/b/c` are distinguished by silhouette + pattern + the 2-hue high-contrast
-   split (not the full ramp), so an achromat counts each type out of the scatter (manifest §9
-   requirement preserved without color). `tally_readout` updates instantly (reduced/high-contrast
-   path). Voice-first goal still leads (§5.1); on-screen text is supportive only, at ≥16 device-px.
-
 ---
 
 ### G. Summary of additions to existing APPROVED docs (extend, do not contradict)
@@ -3959,13 +3563,13 @@ guard, applied *inside* the level, not just at the exit):
 2. **Alternate blank-position.** Toggle `last_blank_position` between `answer` (`2/7 + 3/7 = ?`)
    and `operand` (`2/7 + ? = 5/7`, the kitchen §4.5 "how much more" form). At least 1 in 3
    problems per level is the reverse (operand) form once the forward form has 1 correct.
-3. **Interleave forward/reverse.** Mix the room's forward skill with its inverse framing (R0b add
+3. **Interleave forward/reverse.** Mix the room's forward skill with its inverse framing (R1 add
    ↔ "what's left", R4 improper→mixed ↔ mixed→improper read-back) so practice is *interleaved*,
    not *blocked* — the game-design-theory / desirable-difficulty result that interleaved practice
    beats blocked practice on retention and transfer.
 
 **Edge case:** a generator that cannot satisfy a variety constraint (small problem space, e.g.
-R0a counting at low N) relaxes axis 1 first, then 2, never 3; it logs `variety_relaxed{axis}` as a
+R1 same-denominator at low N) relaxes axis 1 first, then 2, never 3; it logs `variety_relaxed{axis}` as a
 Signal so the harness can see where the space is too small.
 
 **Acceptance:** replaying any room's L0→L4 stream, no two consecutive same-level problems share
@@ -4157,7 +3761,7 @@ A single derived `BondLevel` (0–4), a pure fold over mastery milestones — **
 problem-count (same anti-grind law as the treat, §3.A.2):
 
 ```
-BondLevel = number of distinct nodes ever MASTERED  (capped at 4: R0a/R0b count as the onboarding band)
+BondLevel = number of distinct nodes ever MASTERED  (capped at 4)
    0  onboarding         (no node mastered yet)
    1  first skill proven
    2  two skills
@@ -4240,7 +3844,7 @@ Trigger (deterministic, boundary-only):
 
 Response:  the policy MUST emit, as the next problem, a GUARANTEED-WINNABLE problem:
    PresentProblem{ node, scaffold = current_or_one_easier, surface_form = recently-passed,
-                   difficulty = min_in_node,            # e.g. trivial like-base in R1, smallest N in R0a
+                   difficulty = min_in_node,            # e.g. trivial like-base in R1
                    relief = true }                      # tags it for metrics + reward framing
 ```
 
@@ -4402,7 +4006,7 @@ Schema for each row (this is the data shape a designer/engineer fills in, one YA
 
 ```yaml
 DegenerateStrategy:
-  room: KITCHEN_HUB | COUNT | ADD_WHOLE | ADD_SAME_DEN | ADD_UNLIKE_DEN | SIMPLIFY | IMPROPER_TO_MIXED
+  room: KITCHEN_HUB | ADD_SAME_DEN | ADD_UNLIKE_DEN | SIMPLIFY | IMPROPER_TO_MIXED
   id: string                      # stable slug, e.g. "r1_add_bottoms"
   dominant: bool                  # the first shortcut a lazy child reaches for
   name: string                    # human label of the strategy
@@ -4422,8 +4026,6 @@ DegenerateStrategy:
 |------|----------------------|----------|----------|--------------------|------------------------|--------------------------------------|-----------------|
 | **KITCHEN_HUB** | **eye-stack to the mark\*** — in Predict-the-Sum, ignore the "name it first" demand and just stack blocks to the target line by eye | wrong (no predicted value) | **T-BLOCK** | "answer slot must be filled before stacking is allowed" (hub §4.2). Eye-stacking the *prediction* is physically gated. | n/a (move blocked) | accuracy (no value submitted → no progress); the wall fires and routes | none (no answer emitted) |
 | KITCHEN_HUB (secondary) | overshoot-and-settle — stack past the mark then nudge down | wrong | T-BLOCK | "overshoot past the mark wobbles and doesn't lock" (hub §4.2) | n/a | accuracy | overshoot value |
-| **COUNT** | **subitize-only / count-one-neat-stack\*** — name counts only for small familiar neat stacks; fall apart on scatter / mixed types | sometimes-correct | **T-GATE** (+ partial T-MECH via flash-then-dim) | flash-then-dim pushes recognition; mixed-scatter mastery beat *requires* per-type counts. No single move is illegal. | speed reps; the mixed-scatter beat is mandatory to reach L5 | **transfer** (scatter/ring/mixed = distinct surface_forms, §4.4); **independence** | "pools two types into one number" |
-| **ADD_WHOLE** | **rebuild-and-recount\*** — don't predict; merge the stacks and count the merged total every time | correct | **T-MECH** | "prediction before the merge is allowed" in fade beats; rebuild path slows latency | reduced stars in predict beats; rebuild is allowed early, **fluency** penalized late | **fluency** (median latency over the merge, §4.2); transfer (missing-part form) | "stalls when blank moves off the answer slot" |
 | **ADD_SAME_DEN (R1)** | **add the bottoms too\*** (2/7 + 3/7 → 5/14) | wrong | **T-BLOCK** | **denominator padlock** (R1 §4.2): a move that changes the bottom is "blocked or visibly bounced" | n/a (move bounces) | accuracy + misconception state (§4.7.2) | **5/14** ("added denominators") — the canonical signature |
 | ADD_SAME_DEN (secondary) | forward-only — solve `2/7+3/7=?` but stall on `2/7+?/7=5/7` and subtraction | correct-but-narrow | **T-GATE** | none — all four stages must be cleared | n/a | **transfer** (missing-part + take-away are distinct surface_forms) | "handles addition but not take-away" |
 | **ADD_UNLIKE_DEN (R2)** | **over-slice to product-of-denominators\*** (1/2+1/3 → twelfths → 10/12) | correct | **T-MECH** | §4.6 ruling: legal, value-correct, merge succeeds | **reduced stars** + optional "fewer, bigger cuts?" nudge; never wrong, never forced retry | **fluency** (reaching LCD directly is the fluency mark; §6, §4.6) | "always uses product of denominators" |
@@ -4442,7 +4044,6 @@ The omission this spec fixes, stated as the per-room resolution:
 - **R1 "add the bottoms" → T-BLOCK** (was relying on the gate to catch 5/14 late). The padlock *already* exists; we name it as the mechanics-level block, and we register **5/14 as the canonical `error_signature`** so the misconception featurizer (measurement §4.7.4) can fingerprint it the moment the upgrade lands.
 - **R3 fuse-by-2 → T-MECH** (was gate-only). We make the **fewest-pieces meter the in-room star/fluency penalty**, exactly mirroring R2's over-slice scoring — small multi-step fuses are *correct but cost stars and fluency*, with an optional "one bigger fuse?" nudge. This is the structural twin of R2 §4.6 and the reason R3's wall ("messy answers get penalized") feels continuous.
 - **R4 guess-the-whole → T-GATE, deliberately** (no clean in-room block exists for a *correct guess*), but with the **exact-whole trap as a T-BLOCK secondary** (the trap is precisely the mechanic that makes a habitual leftover-writer fail in-room) and **transfer** (the reverse direction + trap) as the gate residue.
-- **R0a subitize-only → T-GATE, deliberately**, because counting has no bare-slate and no "wrong move" — the *mixed-scatter mastery beat* is the in-curriculum probe and the transfer dimension is the certifier.
 
 This gives every room an **explicit, recorded** tier decision rather than silent reliance on the gate.
 
@@ -4479,8 +4080,6 @@ BruteForcerPersona:
 | Persona id | Room | Enacts | `chain_b` | `on_blocked` | **Expected in-room** | **Expected gate** | Catching dimension (MUST hold the gate) |
 |------------|------|--------|-----------|--------------|----------------------|-------------------|------------------------------------------|
 | `bf_hub_eyestack` | KITCHEN_HUB | eye-stack instead of predict | guessing | retry-same → abandon | **blocked** (slot empty → can't stack) | MUST_NOT_PASS | accuracy (no value) → fires the wall correctly |
-| `bf_count_subitize` | COUNT | name only small neat stacks; pool mixed types | pattern-matching | n/a | sometimes correct, fails mixed-scatter | MUST_NOT_PASS | **transfer** (scatter/mixed surface_forms) |
-| `bf_addwhole_rebuild` | ADD_WHOLE | always merge+recount, never predict | guessing(slow) | n/a | correct, **reduced stars** in predict beats | MAY_PASS_IF_ALSO_FLUENT | **fluency** (latency over rebuild) |
 | `bf_r1_add_bottoms` | ADD_SAME_DEN | 2/7+3/7→5/14 | pattern-matching | retry-same (bounces) | **blocked** (padlock bounce) | MUST_NOT_PASS | accuracy + **misconception** (5/14 signature) |
 | `bf_r2_product_denoms` | ADD_UNLIKE_DEN | over-slice to product, e.g. 10/12 | pattern-matching(slow-grind) | n/a | correct, **reduced stars**, optional nudge | MAY_PASS_IF_ALSO_FLUENT | **fluency** (LCD-directness) |
 | `bf_r3_fuse_by_2` | SIMPLIFY | only fuse-by-2, many steps | pattern-matching(slow-grind) | n/a | correct, **meter/star penalty**, optional nudge | MAY_PASS_IF_ALSO_FLUENT | **fluency** (one-move reduction) |
@@ -4490,7 +4089,7 @@ BruteForcerPersona:
 
 For each brute-forcer, a harness run (the §8 loop) MUST establish:
 
-1. **Firewall holds.** No legal, value-correct artifact is ever `judged{incorrect}`. (`bf_r2_product_denoms`, `bf_r3_fuse_by_2`, `bf_addwhole_rebuild` are correct-with-reduced-stars; assert zero `incorrect` judgments on their value-correct submissions.)
+1. **Firewall holds.** No legal, value-correct artifact is ever `judged{incorrect}`. (`bf_r2_product_denoms`, `bf_r3_fuse_by_2` are correct-with-reduced-stars; assert zero `incorrect` judgments on their value-correct submissions.)
 2. **T-BLOCK personas are physically stopped.** `bf_hub_eyestack` and `bf_r1_add_bottoms` never reach a `judged` event for the illegal move — the action is rejected/bounced before judgment. Assert the bounce event appears and no progression results.
 3. **The named dimension is the one that holds the gate.** For each `MUST_NOT_PASS` / `MAY_PASS_IF_ALSO_FLUENT` persona, the gate stays closed and the *specific* `catching_dimension` is the failing predicate — not some other dimension passing by luck. (E.g. `bf_r2_product_denoms` must be blocked **by fluency**, with `P_known`, independence, and transfer all green; this is the precise §6 claim "answering correctly but not fluently.")
 4. **No false block of the fluent path.** A control persona that uses the LCD / largest-factor / direct-divide path (the "normal" persona, §8 `normal-but-slow` analogue) MUST clear the gate — proving the star/fluency penalty does not also punish correct fluent play.
@@ -4502,7 +4101,7 @@ Each `T-MECH` room exposes the same two knobs R2 named, now uniform:
 
 ```yaml
 TMECH_tuning:
-  star_cost: int            # stars the clumsy-but-correct path forfeits (R2 over-slice, R3 multi-fuse, R0b rebuild)
+  star_cost: int            # stars the clumsy-but-correct path forfeits (R2 over-slice, R3 multi-fuse)
   nudge_policy: always | gated_by_readiness   # does the "fewer/bigger" nudge auto-appear or wait for a ready-looking child
   fluency_weight: float     # how strongly the clumsy path drags median_latency toward the fluency-fail side
 ```
@@ -4546,7 +4145,7 @@ The skill_map is a pure read-only fold over `{ node_id → MasteryEstimate }` (m
 
 ```ts
 SkillMapNode = {
-  node_id: 'COUNT'|'ADD_WHOLE'|'ADD_SAME_DEN'|'ADD_UNLIKE_DEN'|'SIMPLIFY'|'IMPROPER_TO_MIXED'
+  node_id: 'ADD_SAME_DEN'|'ADD_UNLIKE_DEN'|'SIMPLIFY'|'IMPROPER_TO_MIXED'
   state: 'node_locked' | 'node_active' | 'node_mastered' | 'wall_revealed'   // existing §5.8 states
   capability_line: string   // child-facing "what you can now do", from each room's §1 "What the child can do after"
   newly_mastered: boolean   // true exactly on the L5 retrospective that crossed the gate for this node
@@ -4559,7 +4158,7 @@ SkillMap = {
 }
 ```
 
-`capability_line` is pulled directly from existing room copy (each room §1 "What the child can do after"), e.g. COUNT → "name how many without recounting", R2 → "turn unlike fractions into like ones, then add", R4 → "write an over-one answer as wholes plus a remainder". The map's center is the **abstract goal the philosophy names** ("add any two fractions" — the supersedes-cooking prize), with the kitchen demoted to *one* lit branch rather than the center.
+`capability_line` is pulled directly from existing room copy (each room §1 "What the child can do after"), e.g. R1 → "add fractions that share the same bottom", R2 → "turn unlike fractions into like ones, then add", R4 → "write an over-one answer as wholes plus a remainder". The map's center is the **abstract goal the philosophy names** ("add any two fractions" — the supersedes-cooking prize), with the kitchen demoted to *one* lit branch rather than the center.
 
 ### B.3.3 The beat (when and how it fires)
 
@@ -4573,7 +4172,7 @@ SkillMap = {
 - The map renders correctly in the **wireframe Skin** (boxes + lines + system font), proving it is not art-dependent.
 - A node shows `node_mastered` **iff** its `MasteryEstimate` passes the deterministic gate — never set by the LLM, never by affect (firewall).
 - On a **retention-probe demotion** (measurement §4.6), the node reverts `node_mastered → node_active` and `fraction_of_goal_lit` drops — the map is honest about regressions, not monotonic.
-- `fraction_of_goal_lit` equals (mastered core skills)/(total core skills); R0a/R0b count toward it only if attempted (skip-ahead leaves them, per A.4, as *credited-by-prior* not *un-lit*).
+- `fraction_of_goal_lit` equals (mastered core skills)/(total core skills); a node counts toward it only if attempted (skip-ahead leaves it, per A.4, as *credited-by-prior* not *un-lit*).
 
 ## B.4 Beat 2 — The non-cooking transfer beat ("this power isn't just for cooking")
 
@@ -4634,7 +4233,7 @@ The achievement is **the mastery gate made visible to the child** — it cannot 
 
 ### B.5.3 The grand capstone (`ADD_ANY_FRACTION`)
 
-After R4's terminal slate, when **all six core nodes are `node_mastered`** and the skill_map's `fraction_of_goal_lit == 1.0`, the central goal node `ADD_ANY_FRACTION` lights. The final beat:
+After R4's terminal slate, when **all four core nodes are `node_mastered`** and the skill_map's `fraction_of_goal_lit == 1.0`, the central goal node `ADD_ANY_FRACTION` lights. The final beat:
 1. The slate shows a *fresh* arbitrary unlike-denominator sum requiring the full pipeline (match sizes → add → simplify → improper→mixed), e.g. `3/4 + 5/6 = ?` → `1 and 7/12`.
 2. The child solves it bare, by hand, **using every room's skill at once**, with no scaffold and no wrapper.
 3. On success the capstone `MasteryAchievement{ node_id: 'ADD_ANY_FRACTION' }` is granted and the skill_map fully lights to the center.
@@ -4643,7 +4242,7 @@ After R4's terminal slate, when **all six core nodes are `node_mastered`** and t
 ### B.5.4 Acceptance criteria
 
 - A `MasteryAchievement` exists **iff** the corresponding `is_mastered` predicate is true on its node — assert no achievement can be granted while the gate is closed (firewall test).
-- The capstone requires **all six core nodes mastered** AND a fresh full-pipeline problem solved at L6 hint-free — it is not a participation trophy for reaching the end.
+- The capstone requires **all four core nodes mastered** AND a fresh full-pipeline problem solved at L6 hint-free — it is not a participation trophy for reaching the end.
 - A retention-probe demotion (§4.6) on any core node **revokes** the capstone and re-locks `ADD_ANY_FRACTION` until re-earned — honest, non-monotonic.
 - The whole sequence (skill_map → non-cooking transfer → bare-slate achievement → capstone) renders and is winnable in the **wireframe Skin**, proving the late-game motivator does not depend on the cooking art.
 
@@ -4662,7 +4261,7 @@ After R4's terminal slate, when **all six core nodes are `node_mastered`** and t
 
 Phase 1 ships **all rooms with the full L0–L6 fade**, but progression is a **static `ScriptedPolicy`** (the plan's `engine/policy/scripted.py`), not the mastery-driven `MasteryPolicy`. Make explicit, as a plan-level caveat:
 
-> **The fully-scripted Phase-1 progression is an engineering scaffold for the engine spine, decoupling, and replayable event log — it is NOT a flow/fun/pacing playtest target.** Conclusions about whether the *game* is fun, whether the wall→return rhythm lands, or whether the late-game motivation pivot works **must not** be drawn from the scripted shell. Those are Phase-2 (mastery-adaptive flow) questions, because the scripted shell deliberately forces a fixed path regardless of what the child already knows. Judging Phase-1 fun is a category error: the script makes a child who owns COUNT/ADD_WHOLE march through them anyway, which the real product (skip-ahead via cold-start prereq propagation, measurement §4.1) would never do.
+> **The fully-scripted Phase-1 progression is an engineering scaffold for the engine spine, decoupling, and replayable event log — it is NOT a flow/fun/pacing playtest target.** Conclusions about whether the *game* is fun, whether the wall→return rhythm lands, or whether the late-game motivation pivot works **must not** be drawn from the scripted shell. Those are Phase-2 (mastery-adaptive flow) questions, because the scripted shell deliberately forces a fixed path regardless of what the child already knows. Judging Phase-1 fun is a category error: the script makes a child who owns an early room march through it anyway, which the real product (skip-ahead via cold-start prereq propagation, measurement §4.1) would never do.
 
 This is consistent with the plan's own "decoupled engine spine built now; mastery flow deferred" stance and the cold-start **skip-ahead** mechanic already specified in measurement §4.1 (a strong prereq raises a node's prior so it can be skipped).
 
@@ -4675,7 +4274,7 @@ To keep the scripted shell from forcing a child through skills they own (the exa
 ```ts
 SkipAffordance = {
   enabled: boolean              // dev/playtest flag; OFF by default in any graded run
-  scope: 'R0a' | 'R0b' | <any room in scripted mode>
+  scope: <any room in scripted mode>
   surfaced_when: 'always' | 'after_one_correct'   // playtest knob
 }
 SkipRoomAction = {              // a real Action event (§1.1), logged, reducer-handled
@@ -4690,7 +4289,7 @@ SkipRoomAction = {              // a real Action event (§1.1), logged, reducer-
 
 - **Default OFF.** In Phase-1 demo and any harness/graded run, skip is disabled — the scripted full path is the *engineering* artifact and must stay deterministic/replayable.
 - **When ON (playtest/dev only):** a quiet affordance (e.g. a "skip — I can already do this" control) appears per `surfaced_when`; tapping it emits a logged `SKIP_ROOM` action that advances past the room to the next kitchen return.
-- **Targeted at R0a/R0b first** ("so a child isn't forced through COUNT/ADD_WHOLE they own") but mechanically applies to any scripted room.
+- **Targeted at early rooms first** ("so a child isn't forced through a skill they own") but mechanically applies to any scripted room.
 - **It is a manual stand-in for Phase-2 skip-ahead, not a replacement.** In Phase 2 the `MasteryPolicy` skips rooms *automatically* via cold-start prereq propagation; the manual affordance is the Phase-1 placeholder so playtesters aren't bored, and is **removed or gated off** once mastery-driven skip-ahead lands.
 - **Logged, never silent.** `SKIP_ROOM` is a first-class action in the event log so a skipped room is visible in replay and the harness can model a "skipper" (it maps to the existing `shortcut-seeker`/`distractible` family). A skip does **not** grant mastery — it advances the *script*, not the gate; the skipped node's `MasteryEstimate` stays at its cold-start prior (so in Phase 2 it would still be probed/transfer-tested).
 
@@ -4704,11 +4303,11 @@ SkipRoomAction = {              // a real Action event (§1.1), logged, reducer-
 
 # Cross-cutting acceptance criteria (the whole expansion)
 
-1. **Every room has an explicit tier decision** (A.2): no room silently relies on the gate by omission. T-GATE rooms (COUNT, R4-guess) are T-GATE *by recorded decision*, with the catching dimension named.
+1. **Every room has an explicit tier decision** (A.2): no room silently relies on the gate by omission. T-GATE rooms (R4-guess) are T-GATE *by recorded decision*, with the catching dimension named.
 2. **Every room has a bound brute-forcer persona** (A.3) whose harness run asserts the firewall (value-correct ⇒ never "wrong"), the correct in-room outcome, and that the *named* gate dimension is the one holding the gate closed.
 3. **`skill_map` is promoted** from optional (presentation §5.8 / manifest §10) to the **named late-game motivator**, rendered as a read-only fold over `MasteryEstimate`, honest under demotion.
 4. **The non-cooking transfer beat is both motivation and a §4.4 transfer probe** — the same beat that proves generalization is the one that fails the memorizer.
-5. **The bare-slate achievement IS the mastery gate surfaced** — no achievement without `is_mastered`, no LLM/affect grant path (firewall intact); the `ADD_ANY_FRACTION` capstone requires all six nodes mastered + a fresh full-pipeline bare solve.
+5. **The bare-slate achievement IS the mastery gate surfaced** — no achievement without `is_mastered`, no LLM/affect grant path (firewall intact); the `ADD_ANY_FRACTION` capstone requires all four nodes mastered + a fresh full-pipeline bare solve.
 6. **Phase-1 scripted progression is framed as a scaffold, not a fun target**, with an OFF-by-default, logged, mastery-neutral `SKIP_ROOM` affordance.
 7. **Nothing contradicts an APPROVED decision** — the over-slice ruling, the affect firewall, the deterministic gate, the `MasteryEstimate` interface, and wireframe-Skin-first are all preserved and extended.
 
@@ -4718,7 +4317,7 @@ SkipRoomAction = {              // a real Action event (§1.1), logged, reducer-
 2. The L5 ghost-backdrop dissolves; the **skill_map retrospective (B.3)** fires: `ADD_UNLIKE_DEN` animates to `node_mastered`, `capability_line` "turn unlike fractions into like ones, then add" is spoken, `fraction_of_goal_lit` ticks up, the path toward `ADD_ANY_FRACTION` lights.
 3. The L4 "new dress" slot includes a **non-cooking transfer surface (B.4)**: "two boards, 1/2 m and 1/3 m end to end — how long?" — same verifier, no kitchen, counts as a distinct `surface_form` toward §4.4 transfer. The `memorizer` persona fails here; this child passes.
 4. At **R2 L6** the slate is bare; the child writes `5/6` by hand; a **`MasteryAchievement{ADD_UNLIKE_DEN, L6_bare_slate}` (B.5)** is granted — the §4.5 gate surfaced as "you added 1/2 + 1/3 on a blank slate, by yourself."
-5. After R3 and R4 the same way, all six nodes lit, the **`ADD_ANY_FRACTION` capstone** presents a fresh `3/4 + 5/6 = ?` → `1 and 7/12`, solved bare; the skill_map fully lights to center; "now you can add *any* two fractions, anywhere — that's the real prize." The cooking wrapper has fully, deliberately receded, and the motivator that replaced it is the child's own visible competence.
+5. After R3 and R4 the same way, all four nodes lit, the **`ADD_ANY_FRACTION` capstone** presents a fresh `3/4 + 5/6 = ?` → `1 and 7/12`, solved bare; the skill_map fully lights to center; "now you can add *any* two fractions, anywhere — that's the real prize." The cooking wrapper has fully, deliberately receded, and the motivator that replaced it is the child's own visible competence.
 
 
 
