@@ -1,0 +1,20 @@
+# Local tool state (gstack) — contains session tokens, do not commit
+.gstack/
+
+# IDE
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
