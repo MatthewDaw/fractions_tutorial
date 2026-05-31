@@ -236,10 +236,13 @@ corrected correct/incorrect Bayesian update + learn step.
 - correct: `P = P_known·(1−S) / [P_known·(1−S) + (1−P_known)·G]`
 - incorrect: `P = P_known·S / [P_known·S + (1−P_known)·(1−G)]`
 - learn: `P_known' = P + (1−P)·T`, clamp `[0.01,0.99]`.
-Pure function `bkt_update(prior, correct, params) -> posterior`. Use **pyBKT** (CAHLR — the
-standard, maintained Python BKT library) for parameter fitting and as the validated
-reference for the BKT math, rather than re-deriving EM; the per-attempt runtime update is a
-3-line formula pinned to pyBKT's outputs in tests. The cold-start prereq propagation and the
+Pure function `bkt_update(prior, correct, params) -> posterior`. Use the **latest `pyBKT`** release
+(CAHLR — the standard Python BKT library; refreshed with a March 2026 release) for parameter
+fitting and as the validated reference for the BKT math, rather than re-deriving EM. Pin
+`pyBKT>=1.4.2` and verify it installs on the chosen Python at setup; if its native build ever
+fights the toolchain, fall back to the pure-Python path, a tiny hand-rolled update (BKT is a
+2-state HMM; the per-attempt update is a 3-line formula), or `hmmlearn`. The per-attempt
+runtime update is pinned to pyBKT's outputs in tests. The cold-start prereq propagation and the
 4-dimension gate stay custom (pyBKT does single-skill BKT; the DAG propagation and the gate
 are ours).
 
@@ -511,11 +514,16 @@ web overlays.
   good determinism, not as an LLM cage. (Removing the LLM also removes its content-
   correctness/latency risk and the "does the LLM give away answers" harness job.)
 - **Affect/attention camera** (measurement §6.1): `affect_window` and the `Signal` class
-  exist; Phase 3 buys **MorphCast** (browser-native, on-device — no video leaves the device,
-  which fits a kids' privacy bar), corroborated before action, never gating mastery.
-- **Voice + handwriting recognition**: the `modality` field exists; Phase 3 buys both — voice
-  via the browser **Web Speech API** (then a cloud TTS for a warmer voice), handwriting math
-  via **MyScript iink** or **Mathpix**, not custom ML.
+  exist; Phase 3 uses **Google MediaPipe Face Landmarker** (Apache-2.0, free, in-browser,
+  on-device — derive engagement/attention from its landmarks/blendshapes; no video leaves the
+  device), corroborated before action, never gating mastery. MorphCast is a paid upgrade only
+  if the free signal proves insufficient.
+- **Voice + handwriting recognition**: the `modality` field exists; both are **free,
+  on-device, no key** in Phase 3 — voice via the browser **Web Speech API** (on-device TTS;
+  Chrome 139 on-device ASR); handwriting via a *structured* slate (whole/numerator/
+  denominator boxes) + a tiny MNIST-class digit model (**TensorFlow.js** / **ONNX Runtime
+  Web**), with the deterministic verifier disambiguating against the known answer. MyScript
+  iink is an optional upgrade for free-form math; Mathpix dropped (paid).
 - **Synthetic-challenger harness** (state-model §8): the headless Python engine + `actor`
   field + pure folds make personas drivable on the same code path; the harness, persona
   library, parameter calibration (measurement §4.7.5), and overfit guard are Phase 3.

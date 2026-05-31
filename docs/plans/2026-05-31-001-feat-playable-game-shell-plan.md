@@ -685,10 +685,18 @@ verifier, `error_signature`, the `Policy` protocol, and `answer_submit` metadata
 scaffold level, hint rung) recorded per attempt.
 
 ### Deferred to Phase 3 / Outside these two plans
-LLM Tier-3 brain (the `Policy` seam already accepts it), affect/attention camera (the `Signal`
-class + `affect_window` already exist), voice + handwriting *recognition* (the `modality`
-field already exists), the synthetic-challenger harness (the headless Python engine + `actor`
-field already support it), and human escalation. Designed-for, not built.
+Affect/attention camera (the `Signal` class + `affect_window` already exist), voice +
+handwriting *recognition* (the `modality` field already exists), the synthetic-challenger
+harness (the headless Python engine + `actor` field already support it), and human
+escalation. Designed-for, not built. The **LLM Tier-3 brain is cut entirely** (too much
+scope, 2026-05-31); the deterministic policy is the brain — the `Policy` seam needs no LLM.
+When built (Phase 3), every modality is **free, on-device, and needs no API key or account**:
+handwriting → a *structured* slate (separate whole/numerator/denominator boxes) + a tiny
+MNIST-class digit model via **TensorFlow.js** or **ONNX Runtime Web**, with the deterministic
+verifier disambiguating against the known answer (recognition needn't be perfect);
+affect/attention → **Google MediaPipe Face Landmarker** (Apache-2.0, in-browser, on-device);
+voice → the browser **Web Speech API** (on-device TTS; Chrome 139 on-device ASR). MyScript
+iink and MorphCast are kept only as optional paid upgrades; Mathpix is dropped.
 
 ### Deferred to Follow-Up Work (plan-local)
 Audio/spoken-tutor output, multiple themes beyond the kitchen, final art polish, persistence
