@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe — R0a Counting Room</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* R0a-specific placement */
+  .pile{left:34px; top:150px; width:150px; height:330px}
+  .stack{left:430px; bottom:120px; width:74px}
+  .stack .piece{width:74px;height:60px}
+  .arrow{position:absolute; left:196px; top:300px; width:210px; height:40px}
+  .arrow svg{width:100%;height:100%}
+  .arrowlab{left:206px; top:262px}
+  .tally{left:740px; top:250px; width:230px}
+  .symnote{position:absolute; right:34px; top:120px; width:210px; text-align:right}
+  .symnote .box{display:inline-block; border:1px dotted var(--line); color:var(--muted);
+    border-radius:6px; padding:8px 10px; font-size:11px; background:#fbfcfe}
+</style>
+</head>
+<body>
+  <a class="backlink" href="index.html">← all rooms</a>
+  <h1>Wireframe — R0a · The Counting Room</h1>
+  <p class="sub">Wireframe Skin (boxes + system font, no art). Logical stage <b>1280×800</b>. Beat shown: <b>L0 — blocks lead</b>. Regions follow the scene-region grammar (§4); content follows the R0a breakdown (§10 + room doc). Goal line is <b>voiced and shown as on-screen text</b>. One emphasis target per beat = the climbing tally.</p>
+
+  <div class="stage">
+    <div class="band goal"><span class="tag">Goal cue · ~9% · spoken + shown</span></div>
+    <div class="band play"><span class="tag">Play space · ~80% · the hero</span></div>
+    <div class="band hud"><span class="tag">HUD · ~11% · contextual</span></div>
+
+    <div class="bubble">How&nbsp;many?</div>
+    <div class="speak">voiced aloud + shown on screen (caption)</div>
+    <div class="affcam">affect cam · Phase 3</div>
+
+    <div class="pile" title="pile">
+      <div class="piece"></div><div class="piece"></div><div class="piece"></div>
+      <div class="piece"></div><div class="piece"></div><div class="piece"></div>
+      <div class="piece"></div><div class="piece"></div>
+    </div>
+    <div class="lab" style="left:34px; top:120px">
+      <span class="k">pile</span> · unit pieces<span class="a">docked at edge · draggable</span>
+    </div>
+
+    <div class="arrowlab">place piece → stack &nbsp;(<span style="font-family:monospace">place_block</span>)</div>
+    <div class="arrow">
+      <svg viewBox="0 0 210 40"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c2410c"/></marker></defs>
+      <path d="M4,20 C70,4 130,4 196,20" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ah)"/></svg>
+    </div>
+
+    <div class="stack">
+      <div class="piece"></div><div class="piece"></div><div class="piece"></div>
+      <div class="piece"></div><div class="piece"></div>
+    </div>
+    <div class="lab" style="left:392px; top:300px">
+      <span class="k">stack</span> (forming)<span class="a">count-by-doing · each piece +1</span>
+    </div>
+
+    <div class="tally">
+      <div style="position:relative; display:inline-block">
+        <div class="emph-ring"></div>
+        <div class="num">5</div>
+      </div>
+      <div class="cap">tally_readout · the ONE foregrounded count · ◀ emphasis</div>
+    </div>
+
+    <div class="symnote">
+      <div class="box"><b>Symbol surface</b> — tiny at L0<br>(just the tally). It grows and<br>becomes the slate in later beats.</div>
+    </div>
+
+    <div class="progress">
+      <div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+      <span class="cap">quiet progress / treat cue</span>
+    </div>
+    <div class="check">✓ Check</div>
+
+    <div class="tutor">
+      <div class="face"><div class="mouth"></div></div>
+      <div class="cap"><b>tutor_guide</b><br>speaks the goal</div>
+    </div>
+  </div>
+
+  <div class="below">
+    <div class="legend">
+      <div>
+        <h3>What's on screen (region · affordance)</h3>
+        <div class="row"><span class="sw band"></span><span><span class="n">goal cue</span> <span class="d">— "How many?" voiced + shown as text; tutor points at the group.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">pile</span> <span class="d">— loose unit pieces, docked at the play-space edge. <b>draggable</b>.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">stack</span> <span class="d">— the neat column the child builds. Pieces stay fully visible (no bin).</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">tally_readout</span> <span class="d">— live count, +1 per placement. The single foregrounded number → <b>emphasis</b>.</span></span></div>
+      </div>
+      <div>
+        <h3>&nbsp;</h3>
+        <div class="row"><span class="sw" style="border-style:dotted;background:#fbfcfe"></span><span><span class="n">symbol surface</span> <span class="d">— tiny at L0 (tally only); trades space as blocks fade.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">check</span> <span class="d">— the one persistent HUD action. Big touch target (≥60px).</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">progress</span> <span class="d">— quiet advancement / treat cue, bottom-left.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">tutor_guide</span> <span class="d">— corner character; reacts and speaks the goal aloud.</span></span></div>
+      </div>
+    </div>
+
+    <div class="beats">
+      <h3>How the space evolves across beats (the §4 space-trade)</h3>
+      <div class="strip">
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~80%</div>
+            <div class="p">
+              <div class="blk" style="left:14px;top:24px;width:18px;height:18px"></div>
+              <div class="blk" style="left:36px;top:24px;width:18px;height:18px"></div>
+              <div class="blk" style="left:14px;top:46px;width:18px;height:18px"></div>
+              <div class="blk" style="left:120px;top:96px;width:26px;height:18px"></div>
+              <div class="blk" style="left:120px;top:76px;width:26px;height:18px"></div>
+              <div class="blk" style="left:120px;top:56px;width:26px;height:18px"></div>
+              <div class="t" style="right:38px;top:50px;font-size:40px">5</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L0 · blocks lead</b><span>Pieces + forming stack; tally ticks. "I'm building."</span></div>
+        </div>
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~70%</div>
+            <div class="p">
+              <div class="blk" style="left:40px;top:50px;width:30px;height:20px"></div>
+              <div class="blk" style="left:40px;top:72px;width:30px;height:20px"></div>
+              <div class="blk" style="left:40px;top:94px;width:30px;height:20px"></div>
+              <div class="slate" style="left:150px;top:54px;width:96px;height:66px"></div>
+              <div class="t" style="left:182px;top:64px;font-size:34px">5</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L1 · + write</b><span>Slate appears <i>beside</i> the stack; child writes the numeral. "This IS this number."</span></div>
+        </div>
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~100%</div>
+            <div class="p">
+              <div class="blk" style="left:24px;top:30px;width:16px;height:16px"></div>
+              <div class="blk" style="left:90px;top:54px;width:16px;height:16px;border-radius:50%"></div>
+              <div class="blk" style="left:150px;top:28px;width:16px;height:16px"></div>
+              <div class="blk" style="left:210px;top:64px;width:16px;height:16px;border-radius:50%"></div>
+              <div class="blk" style="left:60px;top:96px;width:16px;height:16px"></div>
+              <div class="blk" style="left:178px;top:104px;width:16px;height:16px;border-radius:50%"></div>
+              <div class="blk" style="left:118px;top:120px;width:16px;height:16px"></div>
+              <div class="blk" style="left:248px;top:36px;width:16px;height:16px"></div>
+              <div class="t" style="left:14px;top:120px;font-size:18px">▢ 5</div>
+              <div class="t" style="right:14px;top:120px;font-size:18px">○ 3</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>Final · mixed scatter</b><span>Two types scattered + intermixed; count each kind. No bare slate — objects never leave.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot">Wireframe only — shows <b>where things land</b>, not final art. Swap the wireframe Skin for the Kitchen Skin and the layout is identical; only the look changes (presentation §7).</p>
+  </div>
+</body>
+</html>

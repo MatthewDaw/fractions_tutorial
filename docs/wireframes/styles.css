@@ -1,0 +1,159 @@
+/* Shared wireframe chrome for the Fraction App room wireframes.
+   Logical stage = 1280x800. Wireframe Skin: boxes + system font, no art.
+   Room-specific manipulables (bars, slicer, padlock, etc.) are defined inline per page. */
+:root{
+  --ink:#1f2328; --muted:#6b7280; --line:#9aa3af;
+  --band:#cfd6df; --fill:#eef1f5; --piece:#dfe6ee; --piece-line:#7b8694;
+  --accent:#c2410c; --accent-soft:#fde6d8; --hud:#e7ebf0; --stage-bg:#f7f9fb;
+  --label-bg:#ffffff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; padding:32px 28px 56px;
+  background:#eceff3; color:var(--ink);
+  font:14px/1.45 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+}
+a{color:var(--accent)}
+h1{font-size:20px;margin:0 0 2px}
+.sub{color:var(--muted);margin:0 0 22px;font-size:13px;max-width:1180px}
+.sub b{color:var(--ink)}
+.backlink{display:inline-block;margin:0 0 16px;font-size:12.5px}
+
+/* ---- the logical stage: 1280x800 ---- */
+.stage{
+  position:relative; width:1280px; height:800px;
+  background:var(--stage-bg); border:2px solid var(--ink);
+  border-radius:6px; overflow:hidden;
+  box-shadow:0 6px 24px rgba(20,30,50,.12);
+}
+.band{position:absolute; left:0; right:0; border-bottom:2px dashed var(--line);}
+.band .tag{
+  position:absolute; top:8px; left:12px;
+  font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--muted); background:var(--label-bg);
+  padding:2px 7px; border:1px solid var(--band); border-radius:4px; font-weight:600;
+}
+.goal{top:0; height:72px; background:#f0f3f7;}            /* ~9%  */
+.play{top:72px; height:640px; background:var(--stage-bg);} /* ~80% */
+.hud{top:712px; height:88px; background:var(--hud); border-bottom:none;} /* ~11% */
+
+/* element label chips */
+.lab{
+  position:absolute; font-size:11px; line-height:1.25; color:#374151;
+  background:var(--label-bg); border:1px solid var(--band);
+  padding:3px 6px; border-radius:4px; max-width:230px; z-index:3;
+}
+.lab .k{font-family:ui-monospace,Consolas,monospace; color:#0f172a; font-weight:600}
+.lab .a{color:var(--muted); display:block; font-size:10px}
+
+/* goal cue content (now: voiced line shown as on-screen caption) */
+.bubble{
+  position:absolute; left:50%; top:16px; transform:translateX(-50%);
+  background:#fff; border:2px solid var(--ink); border-radius:18px;
+  padding:6px 18px; font-size:20px; font-weight:600; white-space:nowrap;
+}
+.bubble::after{content:""; position:absolute; left:26px; bottom:-9px;
+  width:14px;height:14px;background:#fff;border-right:2px solid var(--ink);
+  border-bottom:2px solid var(--ink); transform:rotate(45deg)}
+.speak{position:absolute; left:50%; top:46px; transform:translateX(-50%);
+  font-size:11px;color:var(--muted)}
+.speak::before{content:"🔊 "}
+.affcam{position:absolute; right:14px; top:84px; font-size:10px; color:#aab2bd;
+  border:1px dotted #c3cad3; border-radius:4px; padding:2px 5px; z-index:3}
+
+/* reusable manipulables */
+.piece{width:56px;height:56px;background:var(--piece);
+  border:2px solid var(--piece-line); border-radius:7px;}
+.pile{position:absolute; border:1px dashed var(--line); border-radius:8px; padding:14px;
+  display:flex; flex-wrap:wrap; gap:10px; align-content:flex-start; background:#fbfcfe;}
+.stack{position:absolute; display:flex; flex-direction:column-reverse; gap:5px;}
+
+/* a measuring ruler along an edge */
+.ruler{position:absolute; background:#fbfcfe; border:2px solid var(--ink);}
+.ruler .tick{position:absolute; left:0; right:0; border-top:1px solid var(--line)}
+
+/* tally / numeric readout — often the emphasis target */
+.tally{position:absolute; text-align:center;}
+.tally .num{font-size:120px; font-weight:800; line-height:1; color:var(--ink);
+  border:3px solid var(--accent); background:var(--accent-soft);
+  border-radius:14px; padding:6px 24px; display:inline-block}
+.tally .cap{margin-top:8px;font-size:12px;color:var(--accent);font-weight:700}
+.emph-ring{position:absolute; inset:-12px; border:2px dashed var(--accent); border-radius:20px; pointer-events:none}
+
+/* the slate (bare-write surface) */
+.slate{position:absolute; border:2px solid var(--ink); background:#fff; border-radius:10px}
+
+/* arrows */
+.arrowlab{position:absolute; font-size:11px; color:var(--accent); font-weight:600; z-index:3}
+
+/* equation / symbol target */
+.eqn{position:absolute; font-size:30px; font-weight:700; letter-spacing:.02em;
+  background:#fff; border:2px solid var(--ink); border-radius:10px; padding:8px 16px}
+
+/* HUD content */
+.check{position:absolute; left:50%; top:730px; transform:translateX(-50%);
+  width:150px;height:52px; background:#fff; border:2px solid var(--ink); border-radius:10px;
+  font-size:17px;font-weight:700; display:flex;align-items:center;justify-content:center;}
+.progress{position:absolute; left:40px; top:742px; display:flex; gap:9px; align-items:center}
+.dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);background:#fff}
+.dot.on{background:var(--accent);border-color:var(--accent)}
+.progress .cap{font-size:11px;color:var(--muted);margin-left:6px}
+.stars{position:absolute; right:170px; top:738px; font-size:22px; color:var(--accent); letter-spacing:3px}
+
+/* tutor guide, bottom-right corner */
+.tutor{position:absolute; right:26px; top:632px; width:120px; height:150px;
+  border:2px solid var(--ink); border-radius:10px; background:#fff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; z-index:2}
+.tutor .face{width:54px;height:54px;border-radius:50%;border:2px solid var(--ink);
+  position:relative;background:#fff}
+.tutor .face::before,.tutor .face::after{content:"";position:absolute;top:18px;width:7px;height:7px;
+  border-radius:50%;background:var(--ink)}
+.tutor .face::before{left:14px}.tutor .face::after{right:14px}
+.tutor .mouth{position:absolute;left:50%;top:34px;transform:translateX(-50%);
+  width:22px;height:10px;border:2px solid var(--ink);border-top:none;border-radius:0 0 12px 12px}
+.tutor .cap{font-size:10px;color:var(--muted);text-align:center}
+
+/* ----- legend + beat strip below the stage ----- */
+.below{width:1280px; margin-top:26px;}
+.legend{display:grid; grid-template-columns:repeat(2,1fr); gap:8px 28px; margin-bottom:30px}
+.legend h3,.beats h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--muted); margin:0 0 12px}
+.row{display:flex; gap:10px; font-size:12.5px; align-items:baseline; margin-top:7px}
+.row:first-child{margin-top:0}
+.row .sw{flex:0 0 14px;height:14px;border-radius:3px;border:2px solid var(--piece-line);
+  background:var(--piece); position:relative; top:2px}
+.row .sw.acc{background:var(--accent-soft);border-color:var(--accent)}
+.row .sw.band{background:#f0f3f7;border-color:var(--line);border-style:dashed}
+.row .n{font-family:ui-monospace,Consolas,monospace;font-weight:600}
+.row .d{color:var(--muted)}
+
+.beats{margin-top:6px}
+.strip{display:flex; gap:22px; flex-wrap:wrap}
+.thumb{width:300px}
+.mini{position:relative;width:300px;height:188px;border:1.5px solid var(--ink);
+  border-radius:5px;overflow:hidden;background:var(--stage-bg)}
+.mini .g{position:absolute;left:0;right:0;top:0;height:18px;background:#f0f3f7;border-bottom:1px dashed var(--line)}
+.mini .h{position:absolute;left:0;right:0;bottom:0;height:22px;background:var(--hud);border-top:1px dashed var(--line)}
+.mini .p{position:absolute;left:0;right:0;top:18px;bottom:22px}
+.mini .blk{position:absolute;background:var(--piece);border:1.5px solid var(--piece-line);border-radius:3px}
+.mini .slate{position:absolute;border:1.5px solid var(--ink);background:#fff;border-radius:3px}
+.mini .t{position:absolute;font-weight:800;color:var(--accent)}
+.thumb .cap{margin-top:8px;font-size:12px}
+.thumb .cap b{display:block;margin-bottom:2px}
+.thumb .cap span{color:var(--muted)}
+.pct{position:absolute;right:5px;top:21px;font-size:9px;color:var(--muted)}
+.foot{margin-top:26px;color:var(--muted);font-size:12px;max-width:1100px}
+code{font-family:ui-monospace,Consolas,monospace;background:#e7ebf0;padding:1px 5px;border-radius:3px}
+
+/* ---------- index / landing page ---------- */
+.hero{max-width:1180px;margin-bottom:26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px;max-width:1180px}
+.card{display:block;text-decoration:none;color:inherit;background:#fff;
+  border:2px solid var(--ink);border-radius:10px;padding:0;overflow:hidden;
+  box-shadow:0 3px 12px rgba(20,30,50,.08); transition:transform .08s ease, box-shadow .08s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,30,50,.16)}
+.card .thumbwrap{height:150px;border-bottom:2px solid var(--ink);background:var(--stage-bg);position:relative;overflow:hidden}
+.card .meta{padding:12px 14px}
+.card .code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.05em}
+.card h2{font-size:16px;margin:3px 0 5px}
+.card p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.4}

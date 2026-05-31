@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe — R1 Same-Pieces Room</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* R1-specific placement */
+
+  /* two same-size stacks of sevenths + the merge zone between them */
+  .stk{position:absolute; display:flex; flex-direction:column-reverse; gap:5px; width:120px}
+  .stk .piece{width:120px; height:42px}           /* one seventh = one slot height */
+  .stk.left{left:120px; bottom:150px}
+  .stk.right{left:430px; bottom:150px}
+
+  .merge_zone{position:absolute; left:268px; bottom:150px; width:148px; height:264px;
+    border:2px dashed var(--accent); border-radius:10px; background:#fff7f1;
+    display:flex; align-items:center; justify-content:center;}
+  .merge_zone .plus{font-size:54px; font-weight:800; color:var(--accent); opacity:.55}
+  .mergelab{position:absolute; left:262px; bottom:96px; width:170px; text-align:center}
+
+  /* the ruler running along the right measuring edge of the stacks */
+  .r1ruler{position:absolute; left:574px; bottom:150px; width:30px; height:399px;
+    background:#fbfcfe; border:2px solid var(--ink); border-radius:3px;}
+  .r1ruler .tick{position:absolute; left:0; right:0; border-top:1px solid var(--line)}
+  .r1ruler .whole{position:absolute; left:0; right:0; border-top:2px solid var(--ink)}
+  .r1ruler .num{position:absolute; left:34px; font-size:10px; color:var(--muted); transform:translateY(-7px)}
+
+  /* the running fraction label, attached to the stacks; denominator padlocked */
+  .frac{position:absolute; left:690px; bottom:300px; text-align:center; z-index:3}
+  .frac .lab2{font-size:11px; color:var(--muted); margin-bottom:8px}
+  .frac .stack2{display:inline-flex; flex-direction:column; align-items:center;
+    background:#fff; border:2px solid var(--ink); border-radius:12px; padding:14px 26px}
+  .frac .top{font-size:72px; font-weight:800; line-height:1; color:var(--ink)}
+  .frac .bar{width:96px; height:4px; background:var(--ink); margin:6px 0}
+  /* the denominator carries the ONE emphasis target: the padlock */
+  .frac .denwrap{position:relative; display:inline-block}
+  .frac .bot{font-size:72px; font-weight:800; line-height:1;
+    color:var(--accent); border:3px solid var(--accent); background:var(--accent-soft);
+    border-radius:12px; padding:2px 20px}
+  .frac .lock{position:absolute; right:-30px; top:50%; transform:translateY(-50%);
+    font-size:28px}
+  .frac .emph-ring{inset:-16px}
+  .frac .emphcap{margin-top:12px; font-size:12px; color:var(--accent); font-weight:700}
+
+  /* the equation shown small in the goal cue */
+  .goaleqn{position:absolute; right:18px; top:20px; font-size:18px; font-weight:700;
+    font-family:ui-monospace,Consolas,monospace; background:#fff;
+    border:2px solid var(--ink); border-radius:8px; padding:5px 12px; z-index:3}
+
+  /* connector linking the running fraction to the stacks (spatial contiguity) */
+  .link{position:absolute; left:604px; bottom:330px; width:84px; height:0;
+    border-top:2px dotted var(--line); z-index:1}
+</style>
+</head>
+<body>
+  <a class="backlink" href="index.html">← all rooms</a>
+  <h1>Wireframe — R1 · The Same-Pieces Room</h1>
+  <p class="sub">Wireframe Skin (boxes + system font, no art). Logical stage <b>1280×800</b>. Beat shown: <b>L0 — blocks lead</b> (add same denominator). Regions follow the scene-region grammar (§4); content follows the R1 breakdown (§10 + room doc). Goal line is <b>voiced and shown as on-screen text</b>. One emphasis target per beat = the <b>locked denominator</b> (the padlock).</p>
+
+  <div class="stage">
+    <div class="band goal"><span class="tag">Goal cue · ~9% · spoken + shown</span></div>
+    <div class="band play"><span class="tag">Play space · ~80% · the hero</span></div>
+    <div class="band hud"><span class="tag">HUD · ~11% · contextual</span></div>
+
+    <div class="bubble">two sevenths plus three sevenths</div>
+    <div class="speak">voiced aloud + shown on screen (caption)</div>
+    <div class="goaleqn">2/7 + 3/7</div>
+    <div class="affcam">affect cam · Phase 3</div>
+
+    <!-- LEFT stack: 2 sevenths -->
+    <div class="stk left" title="stack — 2/7">
+      <div class="piece"></div><div class="piece"></div>
+    </div>
+    <div class="lab" style="left:120px; top:120px">
+      <span class="k">stack</span> · 2 sevenths<span class="a">addend · same-size pieces · draggable</span>
+    </div>
+
+    <!-- merge zone with the + in the gap -->
+    <div class="merge_zone" title="merge_zone"><span class="plus">+</span></div>
+    <div class="mergelab">
+      <span class="lab" style="position:static; display:inline-block">
+        <span class="k">merge_zone</span> · drag stacks together<span class="a">the ONE clear action · (merge_stacks)</span>
+      </span>
+    </div>
+
+    <!-- RIGHT stack: 3 sevenths -->
+    <div class="stk right" title="stack — 3/7">
+      <div class="piece"></div><div class="piece"></div><div class="piece"></div>
+    </div>
+    <div class="lab" style="left:430px; top:120px">
+      <span class="k">stack</span> · 3 sevenths<span class="a">addend · same-size pieces · draggable</span>
+    </div>
+
+    <!-- ruler along the measuring edge -->
+    <div class="r1ruler" title="ruler — one whole = seven sevenths">
+      <div class="whole"  style="top:0"></div>     <div class="num" style="top:0">7/7</div>
+      <div class="tick"   style="top:57px"></div>  <div class="num" style="top:57px">6</div>
+      <div class="tick"   style="top:114px"></div> <div class="num" style="top:114px">5</div>
+      <div class="tick"   style="top:171px"></div> <div class="num" style="top:171px">4</div>
+      <div class="tick"   style="top:228px"></div> <div class="num" style="top:228px">3</div>
+      <div class="tick"   style="top:285px"></div> <div class="num" style="top:285px">2</div>
+      <div class="tick"   style="top:342px"></div> <div class="num" style="top:342px">1</div>
+    </div>
+    <div class="lab" style="left:560px; top:120px; max-width:120px">
+      <span class="k">ruler</span> · carried from kitchen<span class="a">one whole = 7 sevenths · check surface</span>
+    </div>
+
+    <!-- connector: running fraction attaches to the stacks -->
+    <div class="link"></div>
+
+    <!-- running fraction readout: top climbs as you merge, bottom locked at 7 -->
+    <div class="frac">
+      <div class="lab2"><span class="k" style="font-family:ui-monospace,Consolas,monospace">fraction_label</span> · running readout · attached to the stacks</div>
+      <div class="stack2">
+        <div class="top">2</div>
+        <div class="bar"></div>
+        <div class="denwrap">
+          <div class="emph-ring"></div>
+          <div class="bot">7</div>
+          <span class="lock">🔒</span>
+        </div>
+      </div>
+      <div class="emphcap">denominator padlocked at 7 — top climbs, bottom never moves ◀ emphasis</div>
+    </div>
+
+    <div class="progress">
+      <div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <span class="cap">quiet progress / treat cue</span>
+    </div>
+    <div class="check">✓ Check</div>
+
+    <div class="tutor">
+      <div class="face"><div class="mouth"></div></div>
+      <div class="cap"><b>tutor_guide</b><br>speaks the goal</div>
+    </div>
+  </div>
+
+  <div class="below">
+    <div class="legend">
+      <div>
+        <h3>What's on screen (region · affordance)</h3>
+        <div class="row"><span class="sw band"></span><span><span class="n">goal cue</span> <span class="d">— "two sevenths plus three sevenths" voiced + shown; equation <code>2/7 + 3/7</code> small alongside.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">stack (2/7)</span> <span class="d">— left addend, two same-size sevenths. <b>draggable</b>.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">stack (3/7)</span> <span class="d">— right addend, three same-size sevenths. <b>draggable</b>.</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">merge_zone</span> <span class="d">— the drop target between the stacks; the <code>+</code> lives in the gap. <b>drop target</b>.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">ruler</span> <span class="d">— measuring edge carried from the kitchen; one whole = seven sevenths. Optional check.</span></span></div>
+      </div>
+      <div>
+        <h3>&nbsp;</h3>
+        <div class="row"><span class="sw"></span><span><span class="n">fraction_label</span> <span class="d">— running readout attached to the stacks; top = how many, bottom = size.</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">denominator 🔒</span> <span class="d">— padlocked at 7; only the top climbs as pieces merge. The single teaching target → <b>emphasis</b>.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">check</span> <span class="d">— the one persistent HUD action. Big touch target (≥60px).</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">progress</span> <span class="d">— quiet advancement / treat cue, bottom-left.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">tutor_guide</span> <span class="d">— corner character; reacts and speaks the goal aloud.</span></span></div>
+      </div>
+    </div>
+
+    <div class="beats">
+      <h3>How the space evolves across beats (the §4 space-trade)</h3>
+      <div class="strip">
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~80%</div>
+            <div class="p">
+              <!-- left stack 2/7 -->
+              <div class="blk" style="left:20px;top:96px;width:40px;height:18px"></div>
+              <div class="blk" style="left:20px;top:76px;width:40px;height:18px"></div>
+              <!-- merge zone + -->
+              <div class="t" style="left:80px;top:80px;font-size:22px">+</div>
+              <!-- right stack 3/7 -->
+              <div class="blk" style="left:110px;top:96px;width:40px;height:18px"></div>
+              <div class="blk" style="left:110px;top:76px;width:40px;height:18px"></div>
+              <div class="blk" style="left:110px;top:56px;width:40px;height:18px"></div>
+              <!-- ruler -->
+              <div class="blk" style="left:166px;top:40px;width:12px;height:78px;background:#fbfcfe"></div>
+              <!-- running fraction, padlocked bottom -->
+              <div class="t" style="right:30px;top:36px;font-size:26px">2</div>
+              <div class="slate" style="right:24px;top:64px;width:36px;height:0;border-top:2px solid var(--ink)"></div>
+              <div class="t" style="right:30px;top:66px;font-size:26px;color:var(--accent)">7</div>
+              <div class="t" style="right:8px;top:74px;font-size:14px">🔒</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L0 · blocks lead</b><span>Two same-size stacks + merge zone; bottom padlocked at 7. "Merge them — the top climbs."</span></div>
+        </div>
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~30%</div>
+            <div class="p">
+              <!-- equation leads -->
+              <div class="t" style="left:24px;top:60px;font-size:30px;color:var(--ink)">2/7 + 3/7 =</div>
+              <!-- small stacks shrunk to a check -->
+              <div class="blk" style="right:60px;top:54px;width:18px;height:14px"></div>
+              <div class="blk" style="right:60px;top:68px;width:18px;height:14px"></div>
+              <div class="blk" style="right:36px;top:40px;width:18px;height:14px"></div>
+              <div class="blk" style="right:36px;top:54px;width:18px;height:14px"></div>
+              <div class="blk" style="right:36px;top:68px;width:18px;height:14px"></div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L3 · numbers lead</b><span>Equation leads (~55%); blocks shrink to a small check. "I mostly use numbers now."</span></div>
+        </div>
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">slate ~100%</div>
+            <div class="p">
+              <div class="t" style="left:18px;top:14px;font-size:18px;color:var(--ink)">2/7 + 3/7 =</div>
+              <div class="slate" style="left:14px;top:44px;right:14px;bottom:14px"></div>
+              <div class="t" style="left:30px;top:64px;font-size:16px;color:var(--muted)">✎ write by hand</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L6 · bare slate</b><span>Shared terminal: equation on top, slate fills the play space; write the answer by hand. "I've got it."</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot">Wireframe only — shows <b>where things land</b>, not final art. The signature rule is spatial: the <b>denominator is padlocked at 7</b> (the one emphasis target) while only the numerator climbs as the stacks merge. Swap the wireframe Skin for the Kitchen Skin and the layout is identical; only the look changes (presentation §7).</p>
+  </div>
+</body>
+</html>

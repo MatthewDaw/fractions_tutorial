@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe — R2 Matching-Sizes Room</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* R2-specific placement — two visibly MISMATCHED bars + the slicer_tool + the ×N labels */
+
+  /* a fraction bar: a horizontal whole, cut into a few equal pieces.
+     Both bars are the SAME total height (= same value's bar frame); only the
+     PIECE WIDTH differs, so the mismatch is the piece grain, not the bar length. */
+  .bar{position:absolute; height:84px; background:#fff;
+    border:2px solid var(--piece-line); border-radius:8px; display:flex; overflow:hidden}
+  .bar .pc{flex:1 1 0; border-right:2px solid var(--piece-line);
+    background:var(--piece)}
+  .bar .pc:last-child{border-right:none}
+  .barcap{position:absolute; font-size:11px; color:var(--muted); font-weight:600}
+
+  /* the ONE accent: the mismatched widths get the look-here treatment */
+  .bar.acc{border-color:var(--accent)}
+  .bar.acc .pc{border-right-color:var(--accent)}
+  .mismatch{position:absolute; border:2px dashed var(--accent); border-radius:12px;
+    pointer-events:none}
+  .mismatch .ml{position:absolute; left:50%; top:-22px; transform:translateX(-50%);
+    white-space:nowrap; font-size:11px; font-weight:700; color:var(--accent);
+    background:var(--accent-soft); border:1px solid var(--accent);
+    border-radius:5px; padding:2px 8px}
+
+  /* the ×N indicator — attached to the bar, on TOP and BOTTOM (multiply both) */
+  .xn{position:absolute; font-family:ui-monospace,Consolas,monospace; font-weight:800;
+    font-size:15px; color:var(--accent); background:var(--accent-soft);
+    border:2px solid var(--accent); border-radius:6px; padding:1px 7px}
+
+  /* the slicer_tool — the ONE room tool shown at this beat */
+  .slicer{position:absolute; left:472px; top:150px; width:128px; text-align:center; z-index:4}
+  .slicer .blade{width:128px; height:56px; background:#fff; border:2px solid var(--ink);
+    border-radius:8px; position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:var(--ink)}
+  .slicer .blade::before{content:""; position:absolute; left:50%; bottom:-26px;
+    transform:translateX(-50%); width:0; height:0;
+    border-left:9px solid transparent; border-right:9px solid transparent;
+    border-top:26px solid var(--ink)}
+  .slicer .scap{margin-top:30px; font-size:10px; color:var(--muted)}
+
+  /* drag path of the slicer onto a bar */
+  .slicearrow{position:absolute; left:512px; top:212px; width:44px; height:118px}
+  .slicearrow svg{width:100%;height:100%}
+
+  /* the equation target — the ONE symbol surface being filled */
+  .eqtarget{left:760px; top:240px}
+
+  /* merge zone between the (eventually matched) bars */
+  .mergez{position:absolute; left:300px; top:300px; width:60px; text-align:center;
+    font-size:40px; font-weight:800; color:var(--muted)}
+</style>
+</head>
+<body>
+  <a class="backlink" href="index.html">← all rooms</a>
+  <h1>Wireframe — R2 · The Matching-Sizes Room <span style="font-size:13px;color:var(--muted);font-weight:400">(Add unlike denominators — the complexity-budget validation case)</span></h1>
+  <p class="sub">Wireframe Skin (boxes + system font, no art). Logical stage <b>1280×800</b>. Beat shown: <b>L0 — blocks lead</b>. Regions follow the scene-region grammar (§4); content follows §10 (R2 lead) + the R2 room doc. <b>Budget (§4.1):</b> only the two bars + the <b>one</b> slicer + the equation target + check are visible — the <code>common_size_guide</code> and <code>denominator_picker</code> do <b>not</b> appear here (they live only in their own faded beats). Goal line is <b>voiced and shown as on-screen text</b>. One emphasis target = the mismatched widths + the ×N.</p>
+
+  <div class="stage">
+    <div class="band goal"><span class="tag">Goal cue · ~9% · spoken + shown</span></div>
+    <div class="band play"><span class="tag">Play space · ~80% · the hero</span></div>
+    <div class="band hud"><span class="tag">HUD · ~11% · contextual</span></div>
+
+    <div class="bubble">one half plus one third</div>
+    <div class="speak">voiced aloud + shown on screen (caption)</div>
+    <div class="affcam">affect cam · Phase 3</div>
+
+    <!-- TWO visibly MISMATCHED bars: same bar frame, different piece widths -->
+    <!-- 1/2 bar: wide pieces (2 big halves) -->
+    <div class="barcap" style="left:60px; top:148px">½ &mdash; wide pieces (halves)</div>
+    <div class="bar acc" style="left:60px; top:170px; width:380px">
+      <div class="pc"></div><div class="pc"></div>
+    </div>
+    <div class="lab" style="left:60px; top:262px">
+      <span class="k">bar · 1/2</span> · two big pieces<span class="a">slice with the tool to cut finer</span>
+    </div>
+
+    <!-- 1/3 bar: narrower pieces (3 thirds) — visibly finer grain than the ½ bar -->
+    <div class="barcap" style="left:60px; top:368px">⅓ &mdash; narrower pieces (thirds)</div>
+    <div class="bar acc" style="left:60px; top:390px; width:380px">
+      <div class="pc"></div><div class="pc"></div><div class="pc"></div>
+    </div>
+    <div class="lab" style="left:60px; top:482px">
+      <span class="k">bar · 1/3</span> · three smaller pieces<span class="a">pieces don't line up with the ½ bar &rarr; can't merge yet</span>
+    </div>
+
+    <!-- THE ONE EMPHASIS TARGET: the mismatched piece widths -->
+    <div class="mismatch" style="left:48px; top:158px; width:404px; height:336px">
+      <span class="ml">◀ emphasis · pieces DON'T match → merge is locked</span>
+    </div>
+
+    <!-- ×N indicator on TOP and BOTTOM (multiply both the same) — attached to the ½ bar -->
+    <div class="xn" style="left:226px; top:128px">×3 ↑ top</div>
+    <div class="xn" style="left:226px; top:258px">×3 ↓ bottom</div>
+    <div class="lab" style="left:300px; top:128px; max-width:148px; border-color:var(--accent)">
+      <span class="k" style="color:var(--accent)">×N</span> hits top AND bottom<span class="a">cut into more = multiply both; value unchanged</span>
+    </div>
+
+    <!-- the merge zone where the (eventually matched) bars will combine — locked for now -->
+    <div class="mergez" title="merge zone (locked until sizes match)">+</div>
+    <div class="lab" style="left:286px; top:352px; max-width:120px">
+      <span class="k">merge_zone</span> · locked<span class="a">unlocks once both bars share a piece size (R1 merge)</span>
+    </div>
+
+    <!-- THE ONE TOOL SHOWN: the slicer_tool -->
+    <div class="slicer">
+      <div class="blade">slicer_tool</div>
+      <div class="scap">drag across a bar to cut</div>
+    </div>
+    <div class="slicearrow">
+      <svg viewBox="0 0 44 118"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c2410c"/></marker></defs>
+      <path d="M22,4 C8,40 8,78 22,112" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ah)"/></svg>
+    </div>
+    <div class="arrowlab" style="left:560px; top:182px">slice a bar <span style="font-family:monospace">(slice_bar)</span></div>
+
+    <!-- the ONE symbol target being filled: the equation -->
+    <div class="eqn eqtarget">1/2&nbsp;+&nbsp;1/3&nbsp;=&nbsp;<span style="color:var(--muted)">?</span></div>
+    <div class="lab" style="left:760px; top:300px; max-width:230px">
+      <span class="k">equation target</span> · the one symbol surface<span class="a">tiny at L0; grows into the bare slate later</span>
+    </div>
+
+    <div class="progress">
+      <div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+      <span class="cap">quiet progress / treat cue</span>
+    </div>
+    <div class="stars" title="star_rating on result">★★★</div>
+    <div class="check">✓ Check</div>
+
+    <div class="tutor">
+      <div class="face"><div class="mouth"></div></div>
+      <div class="cap"><b>tutor_guide</b><br>speaks the goal</div>
+    </div>
+  </div>
+
+  <div class="below">
+    <div class="legend">
+      <div>
+        <h3>What's on screen (region · affordance · note)</h3>
+        <div class="row"><span class="sw band"></span><span><span class="n">goal cue</span> <span class="d">— goal · <b>voiced + shown as text</b>: "one half plus one third." Tutor speaks it; caption mirrors it.</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">bar · 1/2</span> <span class="d">— play · <b>sliceable</b>. Two wide pieces. Visibly coarser grain than the ⅓ bar.</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">bar · 1/3</span> <span class="d">— play · <b>sliceable</b>. Three narrower pieces; same bar frame, different piece width → the mismatch.</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">mismatched widths + ×N</span> <span class="d">— play · <b>emphasis</b> (the one accent target). The ×N rides top AND bottom of the bar as it's sliced.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">slicer_tool</span> <span class="d">— play · <b>draggable</b>. The ONE tool shown. Drag across a bar to cut each piece into N.</span></span></div>
+      </div>
+      <div>
+        <h3>&nbsp;</h3>
+        <div class="row"><span class="sw"></span><span><span class="n">merge_zone</span> <span class="d">— play · <b>drop target, locked</b>. The "+" gap; the R1 merge unlocks only once both bars share a piece size.</span></span></div>
+        <div class="row"><span class="sw" style="border-style:dotted;background:#fbfcfe"></span><span><span class="n">equation target</span> <span class="d">— symbol surface · <b>writable later</b>. Tiny at L0 (just <code>1/2 + 1/3 = ?</code>); grows into the bare slate.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">check</span> <span class="d">— HUD · <b>tappable</b>. The one persistent action. Big touch target (≥60px).</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">star_rating</span> <span class="d">— HUD · on result. <b>Full ★★★ for the LCD (sixths)</b>; fewer for a bigger common size (twelfths) — §4.6.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">progress · tutor_guide</span> <span class="d">— HUD/corner. Quiet advancement; corner character speaks the goal.</span></span></div>
+        <div class="row"><span class="sw" style="border-style:dotted;opacity:.5"></span><span><span class="n">NOT shown (budget §4.1)</span> <span class="d">— <code>common_size_guide</code> &amp; <code>denominator_picker</code> are absent here; they appear only in their own faded beats, never together.</span></span></div>
+      </div>
+    </div>
+
+    <div class="beats">
+      <h3>How the space evolves across beats (the §4 space-trade · §4.1 budget)</h3>
+      <div class="strip">
+        <!-- Beat 1: L0 — two mismatched bars + slicer -->
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~80%</div>
+            <div class="p">
+              <!-- ½ bar: 2 wide pieces -->
+              <div class="blk" style="left:16px;top:26px;width:150px;height:30px"></div>
+              <div class="blk" style="left:16px;top:26px;width:75px;height:30px;background:transparent;border-right-width:1.5px;border-left:none;border-top:none;border-bottom:none"></div>
+              <!-- ⅓ bar: 3 narrower pieces -->
+              <div class="blk" style="left:16px;top:84px;width:150px;height:30px"></div>
+              <div class="blk" style="left:16px;top:84px;width:50px;height:30px;background:transparent;border-right-width:1.5px;border-left:none;border-top:none;border-bottom:none"></div>
+              <div class="blk" style="left:16px;top:84px;width:100px;height:30px;background:transparent;border-right-width:1.5px;border-left:none;border-top:none;border-bottom:none"></div>
+              <!-- slicer -->
+              <div class="slate" style="left:196px;top:48px;width:78px;height:40px;background:#fff"></div>
+              <div class="t" style="left:206px;top:56px;font-size:11px">slicer</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L0 · blocks lead</b><span>Two visibly mismatched bars + the slicer (one tool). "These don't line up." Merge is locked.</span></div>
+        </div>
+
+        <!-- Beat 2: sliced-to-match with ×N on top and bottom, then merge -->
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~70%</div>
+            <div class="p">
+              <!-- both bars now sliced into sixths (6 pieces) — matched grain -->
+              <div class="blk" style="left:16px;top:30px;width:150px;height:30px"></div>
+              <div class="blk" style="left:41px;top:30px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:66px;top:30px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:91px;top:30px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:116px;top:30px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:141px;top:30px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:16px;top:88px;width:150px;height:30px"></div>
+              <div class="blk" style="left:41px;top:88px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:66px;top:88px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:91px;top:88px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:116px;top:88px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <div class="blk" style="left:141px;top:88px;width:0;height:30px;border-left:1.5px solid var(--piece-line);background:transparent;border-top:none;border-bottom:none;border-right:none"></div>
+              <!-- ×N on top and bottom (attached to the bar) -->
+              <div class="t" style="left:178px;top:24px;font-size:13px">×3 ↑</div>
+              <div class="t" style="left:178px;top:84px;font-size:13px">×3 ↓</div>
+              <div class="t" style="left:240px;top:54px;font-size:18px;color:var(--muted)">→ +</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L1 · sliced to match → merge</b><span>Both cut to sixths; ×N lands on top <i>and</i> bottom. Widths now equal → R1 merge unlocks.</span></div>
+        </div>
+
+        <!-- Beat 3: terminal — shared BARE SLATE -->
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~100%</div>
+            <div class="p">
+              <div class="t" style="left:50%;transform:translateX(-50%);top:8px;font-size:15px;color:var(--ink)">1/2 + 1/3 = ?</div>
+              <div class="slate" style="left:18px;top:34px;right:18px;width:auto;bottom:8px;height:auto"></div>
+              <div class="t" style="left:30px;top:52px;font-size:11px;color:var(--muted)">write by hand ✎</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>Terminal · bare slate (L6)</b><span>Shared terminal: equation on top, slate fills the play space, child writes the answer by hand. No bars, no slicer.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot">Wireframe only — shows <b>where things land</b>, not final art. <b>Budget check (§4.1):</b> at this lead beat exactly the two bars + one slicer + equation target + check are active; the guide and picker are deliberately absent. Swap the wireframe Skin for the Kitchen Skin and the layout is identical; only the look changes (presentation §7).</p>
+  </div>
+</body>
+</html>

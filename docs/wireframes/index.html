@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fraction App — Room Wireframes</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .schem{position:absolute;inset:0}
+  .schem .g{position:absolute;left:0;right:0;top:0;height:16px;background:#f0f3f7;border-bottom:1px dashed var(--line)}
+  .schem .h{position:absolute;left:0;right:0;bottom:0;height:20px;background:var(--hud);border-top:1px dashed var(--line)}
+  .schem .p{position:absolute;left:0;right:0;top:16px;bottom:20px}
+  .schem .b{position:absolute;background:var(--piece);border:1.5px solid var(--piece-line);border-radius:3px}
+  .schem .bar{position:absolute;background:#fff;border:1.5px solid var(--piece-line);border-radius:3px}
+  .schem .t{position:absolute;font-weight:800;color:var(--accent);font-size:22px}
+  .schem .r{position:absolute;background:#fbfcfe;border:1.5px solid var(--ink)}
+  .schem .sl{position:absolute;background:#fff;border:1.5px solid var(--ink);border-radius:3px}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <h1>Fraction App — Room Wireframes</h1>
+    <p class="sub">Spatial wireframes for every level of the fraction-adding tutoring game, in the <b>wireframe Skin</b> (boxes + system font, no art). Each page shows that room's lead scene on the logical <b>1280×800</b> stage plus a beat strip of how the space evolves. Layout follows the scene-region grammar (presentation-scene-architecture §4–§5, §10); the goal line is <b>voiced and shown on screen as text</b>. Swap in the Kitchen Skin later and the layout is unchanged — only the look.</p>
+  </div>
+
+  <div class="grid">
+
+    <a class="card" href="kitchen.html">
+      <div class="thumbwrap"><div class="schem">
+        <div class="g"></div>
+        <div class="p">
+          <div class="r" style="left:150px;top:18px;width:22px;height:96px"></div>
+          <div class="b" style="left:150px;top:60px;width:22px;height:18px"></div>
+          <div class="b" style="left:150px;top:80px;width:22px;height:18px"></div>
+          <div class="b" style="left:40px;top:34px;width:18px;height:14px"></div>
+          <div class="b" style="left:40px;top:52px;width:18px;height:14px"></div>
+          <div class="t" style="left:186px;top:30px;font-size:13px">¾</div>
+        </div>
+        <div class="h"></div>
+      </div></div>
+      <div class="meta"><div class="code">HUB</div><h2>Kitchen Hub</h2>
+        <p>Mom asks for an amount; stack ¼-pieces to a target mark on the ruler (Match-a-Height / Predict-the-Sum). The home base between rooms.</p></div>
+    </a>
+
+    <a class="card" href="R0a.html">
+      <div class="thumbwrap"><div class="schem">
+        <div class="g"></div>
+        <div class="p">
+          <div class="b" style="left:30px;top:30px;width:18px;height:18px"></div>
+          <div class="b" style="left:30px;top:50px;width:18px;height:18px"></div>
+          <div class="b" style="left:150px;top:96px;width:24px;height:18px"></div>
+          <div class="b" style="left:150px;top:76px;width:24px;height:18px"></div>
+          <div class="b" style="left:150px;top:56px;width:24px;height:18px"></div>
+          <div class="t" style="right:40px;top:46px">5</div>
+        </div>
+        <div class="h"></div>
+      </div></div>
+      <div class="meta"><div class="code">R0a · COUNT</div><h2>Counting Room</h2>
+        <p>A written number is how many objects there are. Place pieces, watch the tally climb, write the numeral. Terminal: the mixed scatter.</p></div>
+    </a>
+
+    <a class="card" href="R0b.html">
+      <div class="thumbwrap"><div class="schem">
+        <div class="g"></div>
+        <div class="p">
+          <div class="b" style="left:40px;top:60px;width:26px;height:18px"></div>
+          <div class="b" style="left:40px;top:80px;width:26px;height:18px"></div>
+          <div class="t" style="left:120px;top:60px">+</div>
+          <div class="b" style="left:170px;top:50px;width:26px;height:18px"></div>
+          <div class="b" style="left:170px;top:70px;width:26px;height:18px"></div>
+          <div class="b" style="left:170px;top:90px;width:26px;height:18px"></div>
+        </div>
+        <div class="h"></div>
+      </div></div>
+      <div class="meta"><div class="code">R0b · ADD_WHOLE</div><h2>Combining Room</h2>
+        <p>How many altogether? Drag two labeled stacks together across the merge gap (the <code>+</code>); the total attaches to the merged stack.</p></div>
+    </a>
+
+    <a class="card" href="R1.html">
+      <div class="thumbwrap"><div class="schem">
+        <div class="g"></div>
+        <div class="p">
+          <div class="b" style="left:50px;top:56px;width:24px;height:16px"></div>
+          <div class="b" style="left:50px;top:74px;width:24px;height:16px"></div>
+          <div class="t" style="left:120px;top:58px">+</div>
+          <div class="b" style="left:170px;top:40px;width:24px;height:16px"></div>
+          <div class="b" style="left:170px;top:58px;width:24px;height:16px"></div>
+          <div class="b" style="left:170px;top:76px;width:24px;height:16px"></div>
+          <div class="t" style="right:40px;top:44px;font-size:16px">🔒7</div>
+        </div>
+        <div class="h"></div>
+      </div></div>
+      <div class="meta"><div class="code">R1 · ADD_SAME_DEN</div><h2>Same-Pieces Room</h2>
+        <p>Two sevenths plus three sevenths. Merge same-size stacks; the top climbs while the denominator stays <b>padlocked</b>.</p></div>
+    </a>
+
+    <a class="card" href="R2.html">
+      <div class="thumbwrap"><div class="schem">
+        <div class="g"></div>
+        <div class="p">
+          <div class="bar" style="left:40px;top:46px;width:90px;height:24px"></div>
+          <div class="bar" style="left:40px;top:84px;width:60px;height:24px"></div>
+          <div class="t" style="left:150px;top:40px;font-size:13px">slicer ✂</div>
+          <div class="bar" style="left:150px;top:70px;width:36px;height:18px;border-style:dashed"></div>
+        </div>
+        <div class="h"></div>
+      </div></div>
+      <div class="meta"><div class="code">R2 · ADD_UNLIKE_DEN</div><h2>Matching-Sizes Room</h2>
+        <p>One half plus one third. Slice mismatched bars until the pieces match, then merge. The complexity-budget validation case.</p></div>
+    </a>
+
+    <a class="card" href="R3.html">
+      <div class="thumbwrap"><div class="schem">
+        <div class="g"></div>
+        <div class="p">
+          <div class="bar" style="left:40px;top:60px;width:14px;height:26px"></div>
+          <div class="bar" style="left:56px;top:60px;width:14px;height:26px"></div>
+          <div class="bar" style="left:72px;top:60px;width:14px;height:26px"></div>
+          <div class="bar" style="left:88px;top:60px;width:14px;height:26px"></div>
+          <div class="t" style="left:150px;top:40px;font-size:13px">fuse ⛓</div>
+          <div class="bar" style="left:150px;top:62px;width:44px;height:26px;border-style:dashed"></div>
+        </div>
+        <div class="h"></div>
+      </div></div>
+      <div class="meta"><div class="code">R3 · SIMPLIFY</div><h2>Tidying Room</h2>
+        <p>Tidy six eighths. Fuse K small pieces into one bigger piece while the height holds — fewest pieces, same amount.</p></div>
+    </a>
+
+    <a class="card" href="R4.html">
+      <div class="thumbwrap"><div class="schem">
+        <div class="g"></div>
+        <div class="p">
+          <div class="r" style="left:120px;top:20px;width:30px;height:96px"></div>
+          <div class="b" style="left:120px;top:96px;width:30px;height:16px"></div>
+          <div class="b" style="left:120px;top:78px;width:30px;height:16px"></div>
+          <div class="b" style="left:120px;top:60px;width:30px;height:16px"></div>
+          <div class="b" style="left:120px;top:42px;width:30px;height:16px;border-color:var(--accent)"></div>
+          <div class="sl" style="left:180px;top:60px;width:60px;height:30px"></div>
+          <div class="t" style="left:196px;top:62px;font-size:16px">1⅖</div>
+        </div>
+        <div class="h"></div>
+      </div></div>
+      <div class="meta"><div class="code">R4 · IMPROPER→MIXED</div><h2>Whole-Units Room</h2>
+        <p>Nine sevenths. Group an overflow stack into wholes against the ruler; read off the mixed number (wholes + leftover).</p></div>
+    </a>
+
+  </div>
+
+  <p class="foot" style="max-width:1180px">Order of play: kitchen hub → R0a → R0b → R1 → R2 → R3 → R4, with diagnosis routing children to the room they need. Every room except R0a ends on the shared <b>bare slate</b> (write the answer by hand). Wireframes are spatial only — final art arrives as a second Skin without moving anything.</p>
+</body>
+</html>

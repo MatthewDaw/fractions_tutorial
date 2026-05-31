@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe — Kitchen Hub</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Kitchen-specific placement (reuses styles.css for all chrome/manipulables) */
+
+  /* recipe card, framing object, top-left of the play space */
+  .recipe{position:absolute; left:34px; top:120px; width:188px;
+    border:2px solid var(--ink); border-radius:10px; background:#fff; padding:12px 14px}
+  .recipe .ttl{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .recipe .amt{font-size:22px;font-weight:800;line-height:1.1}
+  .recipe .ing{font-size:12px;color:var(--muted);margin-top:4px}
+
+  /* the upright ruler runs along the measuring edge (one full length = one whole) */
+  .ruler{left:560px; top:130px; width:78px; height:520px}
+  .ruler .tick{height:0}
+  .ruler .tick .n{position:absolute; right:84px; top:-9px; font-size:12px;
+    font-family:ui-monospace,Consolas,monospace; color:var(--muted); white-space:nowrap}
+  .ruler .tick.whole{border-top-width:2px; border-top-color:var(--ink)}
+  .ruler .tick.whole .n{color:var(--ink); font-weight:700}
+
+  /* the labeled target mark at 3/4 — the ONE emphasis target */
+  .target{position:absolute; left:548px; width:102px; height:0;
+    border-top:3px solid var(--accent); z-index:4}
+  .target .flag{position:absolute; left:108px; top:-22px;
+    background:var(--accent-soft); border:2px solid var(--accent); border-radius:8px;
+    padding:4px 12px; font-size:26px; font-weight:800; color:var(--accent); white-space:nowrap}
+  .target .flag .cap{display:block; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--accent)}
+
+  /* the pile of 1/4 blocks docked at the play-space edge */
+  .pile{left:230px; top:170px; width:200px; height:340px}
+  .pile .piece{width:78px;height:60px}
+
+  /* the stack the child builds up against the ruler */
+  .stack{left:551px; bottom:150px; width:78px}
+  .stack .piece{width:78px;height:62px; border-color:var(--accent); background:var(--accent-soft)}
+
+  .arrow{position:absolute; left:430px; top:430px; width:120px; height:40px}
+  .arrow svg{width:100%;height:100%}
+  .arrowlab{left:432px; top:398px}
+
+  /* treat / progress payoff cue, right side of the play space */
+  .treat{position:absolute; right:40px; top:150px; width:200px; text-align:center}
+  .treat .box{border:2px dashed var(--line); border-radius:12px; padding:18px 12px; background:#fbfcfe}
+  .treat .dish{font-size:13px;font-weight:700}
+  .treat .meter{display:flex; gap:6px; justify-content:center; margin-top:10px}
+  .treat .seg{width:26px;height:12px;border:2px solid var(--line);border-radius:3px;background:#fff}
+  .treat .seg.on{background:var(--accent);border-color:var(--accent)}
+  .treat .note{font-size:10px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+  <a class="backlink" href="index.html">← all rooms</a>
+  <h1>Wireframe — Kitchen Hub · Match-a-Height</h1>
+  <p class="sub">Wireframe Skin (boxes + system font, no art). Logical stage <b>1280×800</b>. Beat shown: <b>Game A — stack to the mark</b>. Regions follow the scene-region grammar (§4); content follows §10 (kitchen lead scene) + the room breakdown. Goal line is <b>voiced and shown as on-screen text (caption)</b>. One emphasis target this beat = the <b>target mark</b> at ¾.</p>
+
+  <div class="stage">
+    <div class="band goal"><span class="tag">Goal cue · ~9% · voiced + shown</span></div>
+    <div class="band play"><span class="tag">Play space · ~80% · the hero</span></div>
+    <div class="band hud"><span class="tag">HUD · ~11% · contextual</span></div>
+
+    <div class="bubble">Three&nbsp;quarters&nbsp;of&nbsp;a&nbsp;cup,&nbsp;please.</div>
+    <div class="speak">voiced aloud + shown on screen (caption)</div>
+    <div class="affcam">affect cam · Phase 3</div>
+
+    <!-- recipe card: the framing object / source of the problem -->
+    <div class="recipe" title="recipe_card">
+      <div class="ttl">Mom's recipe</div>
+      <div class="amt">¾ cup</div>
+      <div class="ing">flour · stack to the mark</div>
+    </div>
+    <div class="lab" style="left:34px; top:90px">
+      <span class="k">recipe_card</span> · the ask<span class="a">framing object · static</span>
+    </div>
+
+    <!-- pile of 1/4 blocks docked at the play-space edge -->
+    <div class="pile" title="pile">
+      <div class="piece"></div><div class="piece"></div>
+      <div class="piece"></div><div class="piece"></div>
+      <div class="piece"></div><div class="piece"></div>
+    </div>
+    <div class="lab" style="left:230px; top:140px">
+      <span class="k">pile</span> · ¼ blocks<span class="a">docked at edge · draggable</span>
+    </div>
+
+    <!-- place gesture: drag a 1/4 block onto the stack against the ruler -->
+    <div class="arrowlab">stack to the mark &nbsp;(<span style="font-family:monospace">place_block</span>)</div>
+    <div class="arrow">
+      <svg viewBox="0 0 120 40"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c2410c"/></marker></defs>
+      <path d="M4,22 C40,8 80,8 112,20" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ah)"/></svg>
+    </div>
+
+    <!-- the upright ruler along the measuring edge: one full length = one whole -->
+    <div class="ruler" title="ruler">
+      <div class="tick whole" style="top:0"><span class="n">1 (whole cup)</span></div>
+      <div class="tick" style="top:130px"><span class="n">¾</span></div>
+      <div class="tick" style="top:260px"><span class="n">½</span></div>
+      <div class="tick" style="top:390px"><span class="n">¼</span></div>
+      <div class="tick whole" style="top:520px"><span class="n">0</span></div>
+    </div>
+    <div class="lab" style="left:644px; top:130px">
+      <span class="k">ruler</span> · upright, graduated<span class="a">one length = one whole · static</span>
+    </div>
+
+    <!-- the stack the child builds up to the mark -->
+    <div class="stack" title="stack">
+      <div class="piece"></div><div class="piece"></div>
+    </div>
+    <div class="lab" style="left:470px; top:560px">
+      <span class="k">stack</span> (forming)<span class="a">¼ + ¼ so far · snaps to ruler</span>
+    </div>
+
+    <!-- the ONE emphasis target: the labeled target mark at 3/4 (symbol attached to the ruler) -->
+    <div class="target" style="top:260px">
+      <div class="emph-ring"></div>
+      <div class="flag">¾<span class="cap">target_mark · ◀ emphasis</span></div>
+    </div>
+
+    <!-- treat / progress payoff cue -->
+    <div class="treat" title="treat">
+      <div class="box">
+        <div class="dish">🍪 the treat forms</div>
+        <div class="meter"><span class="seg on"></span><span class="seg on"></span><span class="seg"></span><span class="seg"></span></div>
+        <div class="note">reward_payoff · quiet long-arc cue</div>
+      </div>
+    </div>
+
+    <!-- HUD: progress + the one persistent check action -->
+    <div class="progress">
+      <div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+      <span class="cap">quiet progress / treat cue</span>
+    </div>
+    <div class="check">✓ Check</div>
+
+    <!-- tutor guide, corner: speaks the goal aloud -->
+    <div class="tutor">
+      <div class="face"><div class="mouth"></div></div>
+      <div class="cap"><b>tutor_guide</b><br>speaks the goal</div>
+    </div>
+  </div>
+
+  <div class="below">
+    <div class="legend">
+      <div>
+        <h3>What's on screen (region · affordance)</h3>
+        <div class="row"><span class="sw band"></span><span><span class="n">goal cue</span> <span class="d">— region <b>goal</b> · "Three quarters of a cup" voiced + shown as caption. Mom asks; no reading required to play.</span></span></div>
+        <div class="row"><span class="sw" style="border-style:solid;background:#fff;border-color:var(--ink)"></span><span><span class="n">recipe_card</span> <span class="d">— region <b>play</b> · <b>static</b> · the ask / framing object; source of every problem.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">pile</span> <span class="d">— region <b>play</b> · <b>draggable</b> · same-size ¼ blocks docked at the play-space edge.</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">stack</span> <span class="d">— region <b>play</b> · <b>drop target</b> · the column the child builds; pieces snap and read to the ruler's marks.</span></span></div>
+      </div>
+      <div>
+        <h3>&nbsp;</h3>
+        <div class="row"><span class="sw" style="background:#fbfcfe;border-color:var(--ink)"></span><span><span class="n">ruler</span> <span class="d">— region <b>play</b> · <b>static</b> · upright graduated edge; one full length = one whole cup.</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">target_mark (¾)</span> <span class="d">— region <b>play</b> · <b>static</b> · labeled mark on the ruler; the fraction symbol attached to the ruler. <b>The one emphasis target.</b></span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">check</span> <span class="d">— region <b>hud</b> · <b>tappable</b> · the one persistent action. Big touch target (≥60px).</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">progress · treat</span> <span class="d">— region <b>hud</b>/play · <b>static</b> · quiet advancement + reward_payoff dish forming.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">tutor_guide</span> <span class="d">— corner · reacts; speaks the goal aloud.</span></span></div>
+      </div>
+    </div>
+
+    <div class="beats">
+      <h3>The kitchen's two modes (Match-a-Height · Predict-the-Sum) → payoff</h3>
+      <div class="strip">
+        <!-- (1) Match-a-Height: ruler + target mark + pile, stack to the mark -->
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~80%</div>
+            <div class="p">
+              <!-- pile -->
+              <div class="blk" style="left:18px;top:30px;width:26px;height:16px"></div>
+              <div class="blk" style="left:18px;top:50px;width:26px;height:16px"></div>
+              <div class="blk" style="left:18px;top:70px;width:26px;height:16px"></div>
+              <!-- ruler -->
+              <div style="position:absolute;left:150px;top:14px;bottom:8px;width:2px;background:var(--ink)"></div>
+              <!-- target mark (accent) -->
+              <div style="position:absolute;left:138px;top:44px;width:42px;height:0;border-top:3px solid var(--accent)"></div>
+              <div class="t" style="left:184px;top:34px;font-size:18px">¾</div>
+              <!-- stack against ruler -->
+              <div class="blk" style="left:152px;top:88px;width:26px;height:16px;background:var(--accent-soft);border-color:var(--accent)"></div>
+              <div class="blk" style="left:152px;top:104px;width:26px;height:16px;background:var(--accent-soft);border-color:var(--accent)"></div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>1 · Match-a-Height</b><span>Ruler + labeled target mark + a pile of ¼ blocks; stack to the mark. The opener — plants the goal, a familiar win.</span></div>
+        </div>
+        <!-- (2) Predict-the-Sum: TWO piles + answer slot, fill before stacking -->
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~70%</div>
+            <div class="p">
+              <!-- pile A -->
+              <div class="blk" style="left:14px;top:34px;width:24px;height:15px"></div>
+              <div class="blk" style="left:14px;top:51px;width:24px;height:15px"></div>
+              <!-- pile B -->
+              <div class="blk" style="left:46px;top:34px;width:24px;height:15px"></div>
+              <!-- answer slot (must fill first) -->
+              <div class="slate" style="left:150px;top:42px;width:108px;height:62px"></div>
+              <div class="t" style="left:166px;top:50px;font-size:15px;color:var(--muted)">¼ + ½ = ?</div>
+              <div class="t" style="left:196px;top:80px;font-size:9px;color:var(--accent)">fill first ◀</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>2 · Predict-the-Sum</b><span>Two piles + an <b>answer slot</b> that must be filled <i>before</i> stacking. Name it first — eye-matching is blocked; stack only to confirm.</span></div>
+        </div>
+        <!-- (3) result / treat payoff -->
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">payoff</div>
+            <div class="p">
+              <!-- completed stack glowing at the mark -->
+              <div style="position:absolute;left:60px;top:14px;bottom:8px;width:2px;background:var(--ink)"></div>
+              <div style="position:absolute;left:48px;top:40px;width:42px;height:0;border-top:3px solid var(--accent)"></div>
+              <div class="blk" style="left:62px;top:42px;width:26px;height:16px;background:var(--accent-soft);border-color:var(--accent)"></div>
+              <div class="blk" style="left:62px;top:60px;width:26px;height:16px;background:var(--accent-soft);border-color:var(--accent)"></div>
+              <div class="blk" style="left:62px;top:78px;width:26px;height:16px;background:var(--accent-soft);border-color:var(--accent)"></div>
+              <!-- treat + mom approval -->
+              <div class="t" style="left:160px;top:40px;font-size:26px">🍪</div>
+              <div class="t" style="left:150px;top:84px;font-size:11px;color:var(--muted)">mom approves</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>3 · Result / treat</b><span>Stack hits the mark → glow + mom's approval; the treat dish advances. The cooking goal IS the reward.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot">Wireframe only — shows <b>where things land</b>, not final art. Swap the wireframe Skin for the Kitchen Skin and the layout is identical; only the look changes (presentation §7). Per §4.1 budget: blocks for this problem + the one symbol target (the ¾ mark) + the check action; nothing persistent competes with the play space.</p>
+  </div>
+</body>
+</html>

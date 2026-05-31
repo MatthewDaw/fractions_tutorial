@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe — R3 Tidying Room (Simplify)</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* ---- R3-specific placement (everything else reuses styles.css) ---- */
+
+  /* the messy bar: many small equal pieces stacked into one tall bar */
+  .bar{position:absolute; left:300px; top:150px; width:150px;
+    display:flex; flex-direction:column-reverse; border:2px solid var(--ink);
+    border-radius:8px; overflow:hidden; background:#fff}
+  .bar .pc{height:44px; border-top:2px solid var(--piece-line);
+    background:var(--piece)}
+  .bar .pc:first-child{border-top:none}
+  /* 6 of 8 pieces filled — the rest are empty/ghost to show "out of 8" */
+  .bar .pc.empty{background:#fbfcfe; border-top:2px dashed var(--line)}
+
+  /* the height-holds guide — THE emphasis target (accent treatment) */
+  .heightguide{position:absolute; left:236px; top:150px; width:560px; height:264px;
+    pointer-events:none; z-index:4}
+  .heightguide .line{position:absolute; left:0; right:0; height:0;
+    border-top:3px dashed var(--accent)}
+  .heightguide .top{top:0}
+  .heightguide .base{bottom:0}
+  .heightguide .span{position:absolute; left:8px; top:0; bottom:0;
+    border-left:3px solid var(--accent)}
+  .heightguide .tagline{position:absolute; left:14px; top:50%;
+    transform:translateY(-50%); background:var(--accent-soft);
+    border:2px solid var(--accent); border-radius:8px; padding:6px 10px;
+    font-size:12px; font-weight:700; color:var(--accent); max-width:140px}
+  .heightguide .cap-top{position:absolute; right:0; top:-22px; font-size:11px;
+    font-weight:700; color:var(--accent)}
+  .heightguide .cap-base{position:absolute; right:0; bottom:-20px; font-size:11px;
+    font-weight:700; color:var(--accent)}
+
+  /* the fuse tool — pick a group size K (the room's signature object) */
+  .fuse{position:absolute; left:540px; top:150px; width:210px;
+    border:2px solid var(--ink); border-radius:10px; background:#fff; padding:10px 12px 12px}
+  .fuse .ft-title{font-size:11px; font-weight:700; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:8px}
+  .fuse .ft-k{display:flex; gap:8px}
+  .fuse .kbtn{flex:1; min-height:60px; border:2px solid var(--ink); border-radius:8px;
+    background:#fff; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; font-weight:700; font-size:18px}
+  .fuse .kbtn.sel{background:var(--accent-soft); border-color:var(--accent); color:var(--accent)}
+  .fuse .kbtn small{display:block; font-size:9px; font-weight:600; color:var(--muted)}
+  .fuse .kbtn.sel small{color:var(--accent)}
+  .fuse .ft-note{margin-top:9px; font-size:10.5px; color:var(--muted); line-height:1.35}
+
+  /* the ÷K symbol attached to the bar (top and bottom) */
+  .divk{position:absolute; left:300px; width:150px; text-align:center;
+    font-size:22px; font-weight:800; color:var(--ink); z-index:3}
+  .divk.top{top:118px}
+  .divk.bot{top:418px}
+  .divk .op{font-family:ui-monospace,Consolas,monospace; color:var(--accent)}
+
+  /* the fraction label attached to the bar (numeral lives next to its quantity) */
+  .barfrac{position:absolute; left:140px; top:236px; text-align:center; z-index:3}
+  .barfrac .frac{display:inline-block; font-size:30px; font-weight:800; line-height:1.05;
+    border:2px solid var(--ink); border-radius:10px; padding:6px 16px; background:#fff}
+  .barfrac .frac .over{border-bottom:3px solid var(--ink); padding-bottom:2px; display:block}
+  .barfrac .frac .under{display:block; padding-top:2px}
+  .barfrac .att{font-size:10px; color:var(--muted); margin-top:6px}
+
+  /* the quiet "fewest pieces" meter */
+  .meter{position:absolute; left:840px; top:150px; width:170px;
+    border:2px solid var(--line); border-radius:10px; background:#fbfcfe; padding:10px 12px}
+  .meter .m-title{font-size:11px; font-weight:700; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px}
+  .meter .m-row{display:flex; align-items:center; gap:8px; font-size:12px; margin-top:6px}
+  .meter .m-bar{flex:1; height:10px; border:1.5px solid var(--line); border-radius:5px;
+    background:#fff; position:relative; overflow:hidden}
+  .meter .m-bar > i{position:absolute; left:0; top:0; bottom:0; background:var(--band)}
+  .meter .m-now{font-family:ui-monospace,Consolas,monospace; font-weight:700}
+  .meter .m-goal{font-size:10.5px; color:var(--muted); margin-top:9px}
+
+  /* faded factor_tray — present only in later beats, drawn ghosted */
+  .factortray{position:absolute; left:840px; top:300px; width:170px;
+    border:1.5px dashed var(--line); border-radius:10px; background:#fbfcfe;
+    padding:9px 11px; opacity:.5}
+  .factortray .ft2{font-size:10.5px; color:var(--muted); line-height:1.4}
+  .factortray .ft2 b{color:#4b5563}
+</style>
+</head>
+<body>
+  <a class="backlink" href="index.html">← all rooms</a>
+  <h1>Wireframe — R3 · The Tidying Room (Simplify)</h1>
+  <p class="sub">Wireframe Skin (boxes + system font, no art). Logical stage <b>1280×800</b>. Beat shown: <b>L0 — blocks lead</b>. Regions follow the scene-region grammar (§4); content follows the R3 breakdown (§10 + room doc). Goal line is <b>voiced and shown as on-screen text</b>. One emphasis target this beat = the <b>height-holds guide</b> (the amount never changes as pieces fuse).</p>
+
+  <div class="stage">
+    <div class="band goal"><span class="tag">Goal cue · ~9% · spoken + shown</span></div>
+    <div class="band play"><span class="tag">Play space · ~80% · the hero</span></div>
+    <div class="band hud"><span class="tag">HUD · ~11% · contextual</span></div>
+
+    <div class="bubble">Tidy&nbsp;six&nbsp;eighths.</div>
+    <div class="speak">voiced aloud + shown on screen (caption)</div>
+    <div class="affcam">affect cam · Phase 3</div>
+
+    <!-- THE EMPHASIS TARGET: height-holds guide (accent), drawn first so it sits behind the bar edges -->
+    <div class="heightguide">
+      <div class="line top"></div>
+      <div class="line base"></div>
+      <div class="span"></div>
+      <div class="cap-top">total amount (top)</div>
+      <div class="cap-base">empty line (zero)</div>
+      <div class="tagline">height holds — same amount, fewer pieces ◀ emphasis</div>
+    </div>
+    <div class="lab" style="left:236px; top:120px; border-color:var(--accent); background:var(--accent-soft)">
+      <span class="k">height_guide</span> · amount unchanged<span class="a">fixed line · the ONE emphasis target</span>
+    </div>
+
+    <!-- the messy bar: 6 filled small pieces out of 8 -->
+    <div class="bar">
+      <div class="pc"></div><div class="pc"></div><div class="pc"></div>
+      <div class="pc"></div><div class="pc"></div><div class="pc"></div>
+      <div class="pc empty"></div><div class="pc empty"></div>
+    </div>
+    <div class="lab" style="left:300px; top:466px">
+      <span class="k">messy_bar</span> · many small pieces (6/8)<span class="a">the thing to tidy · pieces selectable</span>
+    </div>
+
+    <!-- ÷K attached to the bar, top and bottom (shows when a fuse succeeds) -->
+    <div class="divk top">… <span class="op">÷K</span> (top)</div>
+    <div class="divk bot">… <span class="op">÷K</span> (bottom)</div>
+
+    <!-- fraction label attached to its quantity -->
+    <div class="barfrac">
+      <div class="frac"><span class="over">6</span><span class="under">8</span></div>
+      <div class="att">fraction_label<br>attached to the bar</div>
+    </div>
+
+    <!-- the fuse tool (one active room tool this beat) -->
+    <div class="fuse">
+      <div class="ft-title">fuse_tool · group size K</div>
+      <div class="ft-k">
+        <div class="kbtn sel">×2<small>fuse by 2</small></div>
+        <div class="kbtn">×3<small>fuse by 3</small></div>
+        <div class="kbtn">×4<small>fuse by 4</small></div>
+      </div>
+      <div class="ft-note">Even fuse snaps into bigger pieces; an uneven group bounces back. The one active room tool.</div>
+    </div>
+    <div class="lab" style="left:540px; top:120px">
+      <span class="k">fuse_tool</span> · the signature verb<span class="a">tappable · pick K, then fuse</span>
+    </div>
+
+    <!-- quiet "fewest pieces" meter -->
+    <div class="meter">
+      <div class="m-title">fewest pieces</div>
+      <div class="m-row"><span class="m-now">8</span> pieces now
+        <span class="m-bar"><i style="width:100%"></i></span></div>
+      <div class="m-goal">goal: fewest (lowest terms). Quiet — never competes with the play space.</div>
+    </div>
+    <div class="lab" style="left:840px; top:120px">
+      <span class="k">fewest_pieces_meter</span> · win cue<span class="a">quiet readout · not a tool</span>
+    </div>
+
+    <!-- factor_tray: faded beats only — shown ghosted here -->
+    <div class="factortray">
+      <div class="ft2"><b>factor_tray</b> — faded beats only.<br>Surfaces shared factors of top &amp; bottom. <i>Not active at L0.</i></div>
+    </div>
+
+    <!-- HUD: check + quiet progress + tutor -->
+    <div class="progress">
+      <div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+      <span class="cap">quiet progress / treat cue</span>
+    </div>
+    <div class="check">✓ Check</div>
+
+    <div class="tutor">
+      <div class="face"><div class="mouth"></div></div>
+      <div class="cap"><b>tutor_guide</b><br>speaks the goal</div>
+    </div>
+  </div>
+
+  <div class="below">
+    <div class="legend">
+      <div>
+        <h3>What's on screen (region · affordance · note)</h3>
+        <div class="row"><span class="sw band"></span><span><span class="n">goal cue</span> <span class="d">— <i>goal · spoken</i> · "Tidy six eighths" voiced aloud <b>and</b> shown on screen as a caption. No separate non-reader channel.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">messy_bar</span> <span class="d">— <i>play · selectable</i> · a bar made of many small equal pieces (6/8). The thing to tidy.</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">fuse_tool</span> <span class="d">— <i>play · tappable</i> · pick a group size K; the room's signature verb. Even fuse snaps, uneven bounces back. The ONE active room tool.</span></span></div>
+        <div class="row"><span class="sw acc"></span><span><span class="n">height_guide</span> <span class="d">— <i>play · static</i> · fixed accent line: the total amount never changes as pieces fuse → the single <b>emphasis</b> target.</span></span></div>
+      </div>
+      <div>
+        <h3>&nbsp;</h3>
+        <div class="row"><span class="sw"></span><span><span class="n">÷K indicator</span> <span class="d">— <i>symbol · attached to bar</i> · appears on <b>top and bottom</b> when a fuse succeeds; binds fusing to dividing.</span></span></div>
+        <div class="row"><span class="sw" style="border-style:dotted;background:#fbfcfe"></span><span><span class="n">fewest_pieces_meter</span> <span class="d">— <i>play · static readout</i> · quiet win cue (lowest terms). Never competes with the play space.</span></span></div>
+        <div class="row"><span class="sw band"></span><span><span class="n">factor_tray</span> <span class="d">— <i>play · faded beats only</i> · shared factors of top &amp; bottom. <b>Not present at L0</b> (ghosted here for reference).</span></span></div>
+        <div class="row"><span class="sw"></span><span><span class="n">check · progress · tutor_guide</span> <span class="d">— <i>HUD / corner</i> · the one persistent action (≥60px), quiet progress, and the corner guide who speaks the goal.</span></span></div>
+      </div>
+    </div>
+
+    <div class="beats">
+      <h3>How the space evolves across beats (the §4 space-trade)</h3>
+      <div class="strip">
+
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~80%</div>
+            <div class="p">
+              <!-- messy many-piece bar -->
+              <div class="blk" style="left:48px;top:22px;width:46px;height:14px"></div>
+              <div class="blk" style="left:48px;top:37px;width:46px;height:14px"></div>
+              <div class="blk" style="left:48px;top:52px;width:46px;height:14px"></div>
+              <div class="blk" style="left:48px;top:67px;width:46px;height:14px"></div>
+              <div class="blk" style="left:48px;top:82px;width:46px;height:14px"></div>
+              <div class="blk" style="left:48px;top:97px;width:46px;height:14px"></div>
+              <!-- height guide (accent) -->
+              <div class="t" style="left:8px;top:18px;font-size:9px">▔</div>
+              <div style="position:absolute;left:40px;right:120px;top:21px;border-top:2px dashed var(--accent)"></div>
+              <div style="position:absolute;left:40px;right:120px;top:112px;border-top:2px dashed var(--accent)"></div>
+              <!-- fuse tool -->
+              <div class="blk" style="left:150px;top:40px;width:38px;height:22px;background:var(--accent-soft);border-color:var(--accent)"></div>
+              <div class="t" style="left:200px;top:42px;font-size:11px">fuse ×K</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L0 · blocks lead</b><span>Messy many-piece bar + fuse tool + height guide. Try a fuse; "could these be bigger pieces?"</span></div>
+        </div>
+
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">play ~70%</div>
+            <div class="p">
+              <!-- fused into fewer, bigger pieces, height held -->
+              <div class="blk" style="left:48px;top:22px;width:46px;height:30px"></div>
+              <div class="blk" style="left:48px;top:53px;width:46px;height:30px"></div>
+              <div class="blk" style="left:48px;top:84px;width:46px;height:28px"></div>
+              <!-- height guide unchanged -->
+              <div style="position:absolute;left:40px;right:110px;top:21px;border-top:2px dashed var(--accent)"></div>
+              <div style="position:absolute;left:40px;right:110px;top:112px;border-top:2px dashed var(--accent)"></div>
+              <!-- ÷K top & bottom + write -->
+              <div class="t" style="left:108px;top:24px;font-size:12px">÷2</div>
+              <div class="t" style="left:108px;top:96px;font-size:12px">÷2</div>
+              <div class="slate" style="left:160px;top:46px;width:96px;height:62px"></div>
+              <div class="t" style="left:196px;top:54px;font-size:20px">¾</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>L1 · + write</b><span>Fused to fewer, bigger pieces; <b>÷2 on top and bottom</b>, height held. Write the tidied fraction beside the bar.</span></div>
+        </div>
+
+        <div class="thumb">
+          <div class="mini">
+            <div class="g"></div><div class="pct">slate ~100%</div>
+            <div class="p">
+              <!-- terminal: shared BARE SLATE -->
+              <div class="t" style="left:18px;top:8px;font-size:13px">tidy 6/8 = ?</div>
+              <div class="slate" style="left:18px;top:34px;right:18px;bottom:14px"></div>
+              <div class="t" style="left:120px;top:78px;font-size:11px;color:var(--muted)">write by hand</div>
+            </div>
+            <div class="h"></div>
+          </div>
+          <div class="cap"><b>Terminal · bare slate</b><span>Equation on top, slate fills the play space. No bar, no fuse tool, no tray — write the reduced fraction by hand.</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="foot">Wireframe only — shows <b>where things land</b>, not final art. Swap the wireframe Skin for the Kitchen Skin and the layout is identical; only the look changes (presentation §7). The <code>factor_tray</code> is drawn ghosted to mark that it belongs to <i>later, faded beats</i>, not this L0 lead scene.</p>
+  </div>
+</body>
+</html>
