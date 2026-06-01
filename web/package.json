@@ -1,0 +1,33 @@
+{
+  "name": "fractions-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Web client for the fraction-adding tutoring game. Opens on the lesson map (Babushka's Fractions).",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "voice": "node scripts/generate-voice.mjs",
+    "audition": "node scripts/audition-voices.mjs",
+    "music-audition": "node scripts/fetch-music-audition.mjs",
+    "music-fetch": "node scripts/fetch-music.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "onnxruntime-web": "^1.26.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.7.3",
+    "vite": "^5.4.11",
+    "vitest": "^3.2.3"
+  }
+}
