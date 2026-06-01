@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 2 — Same-Size Pieces intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --halves:#1f6fd6;   /* 2 = blue   */
+    --thirds:#e07b00;   /* 3 = orange */
+    --sixths:#caa300;    /* 6 = gold   */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the board: two stacked bars, left-aligned so their lengths compare ── */
+  #board{ position:relative; width:520px; max-width:92vw; }
+
+  .barrow{ display:flex; align-items:center; gap:22px; margin:20px 0; transition:opacity .7s ease; }
+  /* the stacked fraction label to the left of each bar */
+  .flab{ display:flex; flex-direction:column; align-items:center; width:46px; flex:0 0 auto;
+    font-family:"Russo One",sans-serif; line-height:1; }
+  .flab .n,.flab .d{ font-size:30px; transition:color .6s ease; }
+  .flab .bar{ width:30px; height:4px; border-radius:2px; margin:5px 0; background:currentColor; }
+  .rA .flab{ color:var(--thirds); }   /* 1/3 orange */
+  .rB .flab{ color:var(--halves); }   /* 1/2 blue   */
+  .rA.toSix .flab,.rB.toSix .flab{ color:var(--sixths); }
+
+  /* a bar = a sequence of equal pieces; total width encodes the amount */
+  .bar-track{ display:flex; gap:0; height:48px; }
+  .pc{
+    height:100%; border:2px solid rgba(20,14,10,.5); border-right-width:1px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Russo One",sans-serif; font-size:13px; color:rgba(255,250,235,.92);
+    transition:background .6s ease, opacity .45s ease;
+  }
+  .pc:last-child{ border-right-width:2px; }
+  .pc .plab{ opacity:0; transition:opacity .4s ease; }
+  .rA .pc{ background:var(--thirds); }
+  .rB .pc{ background:var(--halves); }
+  .rA.toSix .pc,.rB.toSix .pc{ background:var(--sixths); }
+  .show-plab .pc .plab{ opacity:1; }
+
+  /* mismatch flag on beat 2 */
+  #mismatch{
+    position:absolute; right:-4px; top:50%; transform:translateY(-50%) scale(.6);
+    font-family:"Russo One",sans-serif; font-size:18px; color:#fff; background:var(--red);
+    padding:4px 12px; border-radius:16px; box-shadow:0 2px 0 rgba(0,0,0,.22);
+    opacity:0; transition:opacity .45s ease, transform .45s cubic-bezier(.34,1.56,.64,1);
+  }
+  #mismatch.on{ opacity:1; transform:translateY(-50%) scale(1); }
+  .is-shake{ animation:shake .5s ease; }
+  @keyframes shake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+
+  /* the joined result row + equation (revealed late, centered) */
+  #result{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(14px);
+    display:flex; flex-direction:column; align-items:center; gap:18px; z-index:7;
+    opacity:0; transition:opacity .6s ease, transform .6s ease;
+  }
+  #result.on{ opacity:1; transform:translate(-50%,-50%); }
+  #joined{ display:flex; gap:0; height:48px; }
+  #joined .pc{ background:var(--sixths); }
+  #eq{ display:flex; align-items:center; gap:14px; font-family:"Russo One",sans-serif; }
+  #eq .f{ display:flex; flex-direction:column; align-items:center; line-height:1; }
+  #eq .f .n,#eq .f .d{ font-size:40px; } #eq .f .bar{ width:42px; height:4px; background:var(--ink); border-radius:2px; margin:5px 0; }
+  #eq .t3{ color:var(--thirds); } #eq .t2{ color:var(--halves); } #eq .t6{ color:var(--sixths); }
+  #eq .op{ font-size:30px; color:var(--ink-soft); }
+  /* when the result is shown, recede the working bars so nothing collides */
+  #board:has(#result.on) .barrow{ opacity:.14; }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(680px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .h{color:var(--halves);font-weight:700;} .t{color:var(--thirds);font-weight:700;} .s{color:var(--sixths);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Same-Size Pieces</div>
+
+    <div id="board">
+      <div class="barrow rA" id="rA">
+        <div class="flab"><div class="n" id="aN">1</div><div class="bar"></div><div class="d" id="aD">3</div></div>
+        <div class="bar-track" id="barA"></div>
+      </div>
+      <div class="barrow rB" id="rB">
+        <div class="flab"><div class="n" id="bN">1</div><div class="bar"></div><div class="d" id="bD">2</div></div>
+        <div class="bar-track" id="barB"></div>
+      </div>
+      <div id="mismatch">≠ sizes</div>
+
+      <div id="result">
+        <div id="joined"></div>
+        <div id="eq">
+          <span class="f t3"><span class="n">1</span><span class="bar"></span><span class="n">3</span></span>
+          <span class="op">+</span>
+          <span class="f t2"><span class="n">1</span><span class="bar"></span><span class="n">2</span></span>
+          <span class="op">=</span>
+          <span class="f t6"><span class="n">5</span><span class="bar"></span><span class="n">6</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0"><span class="t">One third</span> of a strip, and <span class="h">one half</span> of a strip.</div>
+      <div class="cap" data-i="1">Different sizes — how can we add them?</div>
+      <div class="cap" data-i="2"><b>Slice them into matching pieces!</b></div>
+      <div class="cap" data-i="3">Every piece is now <span class="s">one sixth</span> — the same size.</div>
+      <div class="cap" data-i="4">So the bottom number is <span class="s">six</span>.</div>
+      <div class="cap" data-i="5">Count the pieces…</div>
+      <div class="cap" data-i="6"><span class="t">One third</span> plus <span class="h">one half</span> makes <span class="s">five sixths</span>.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "samesize.v2";
+  var DURATION = 22;            // seconds — tightened (~0.5s between lines)
+  var PW = 56;                  // pixels per 1/6 piece (a "sixth")
+
+  function el(id){ return document.getElementById(id); }
+  // build a bar of `n` equal pieces, each PW wide; optional running labels
+  function buildBar(track, n, labelEach){
+    track.innerHTML = "";
+    for (var i=0;i<n;i++){
+      var d=document.createElement("div"); d.className="pc"; d.style.width=PW+"px";
+      var s=document.createElement("span"); s.className="plab"; s.textContent = labelEach || "";
+      d.appendChild(s); track.appendChild(d);
+    }
+  }
+  // start: 1/3 = ONE orange piece 2·PW wide; 1/2 = ONE blue piece 3·PW wide
+  // (their differing widths are the whole point — different-size pieces)
+  function startBars(){
+    var a=el("barA"); a.innerHTML="";
+    var pa=document.createElement("div"); pa.className="pc"; pa.style.width=(2*PW)+"px"; a.appendChild(pa);
+    var b=el("barB"); b.innerHTML="";
+    var pb=document.createElement("div"); pb.className="pc"; pb.style.width=(3*PW)+"px"; b.appendChild(pb);
+  }
+  startBars();
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  function pulse(el2){ el2.style.transition="transform .25s ease"; el2.style.transform="scale(1.3)";
+    setTimeout(function(){ el2.style.transform="scale(1)"; }, 260); }
+
+  var beatsDone = [];
+
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — the two strips of different sizes
+    [1.5, function(){ showCap(0); }],
+
+    // Beat 2 — they don't match (wobble + ≠ flag)
+    [5.0, function(){
+      showCap(1);
+      el("mismatch").classList.add("on");
+      el("rA").classList.add("is-shake"); el("rB").classList.add("is-shake");
+      setTimeout(function(){ el("rA").classList.remove("is-shake"); el("rB").classList.remove("is-shake"); }, 520);
+    }],
+
+    // Beat 3 — SLICE both into sixth-size pieces (same amount, more cuts → match)
+    [8.0, function(){
+      showCap(2);
+      el("mismatch").classList.remove("on");
+      buildBar(el("barA"), 2);    // 1/3 → two 1/6 pieces
+      buildBar(el("barB"), 3);    // 1/2 → three 1/6 pieces
+      el("rA").classList.add("toSix"); el("rB").classList.add("toSix");
+      el("aN").textContent="2"; el("aD").textContent="6";
+      el("bN").textContent="3"; el("bD").textContent="6";
+    }],
+
+    // Beat 4 — every piece is one sixth, the same size
+    [10.6, function(){
+      showCap(3);
+      el("rA").classList.add("show-plab"); el("rB").classList.add("show-plab");
+      var pcs=document.querySelectorAll("#barA .plab, #barB .plab");
+      pcs.forEach(function(p){ p.textContent="⅙"; });
+    }],
+
+    // Beat 5 — so the bottom number is six (pulse the denominators)
+    [14.6, function(){ showCap(4); pulse(el("aD")); pulse(el("bD")); }],
+
+    // Beat 6 — join + count the five sixths
+    [16.9, function(){
+      showCap(5);
+      buildBar(el("joined"), 5);  // five gold sixths
+      var pcs=el("joined").children;
+      for (var i=0;i<pcs.length;i++){ (function(p,k){
+        var s=p.querySelector(".plab"); s.textContent=(k+1); s.style.opacity="0";
+        setTimeout(function(){ s.style.opacity="1"; }, 200 + k*260); // count up 1..5
+      })(pcs[i], i); }
+      el("result").classList.add("on");   // recedes the working bars (via :has)
+    }],
+
+    // Beat 7 — one third plus one half makes five sixths
+    [18.7, function(){ showCap(6); el("eq").style.transform="scale(1.0)"; pulse(el("eq")); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; }
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+/* r4.css — The Tidying Room (R4, SIMPLIFY). Room-specific additions ONLY.
+   Shared look comes from lesson.css + tokens.css; everything here is namespaced
+   .r4-… so it cannot collide with another room. The room reuses the lesson.css
+   shells (.page/.topbar/.goal/.play/.canvas/.plank/.hud/.check/.frinput …) and
+   adds: a fuse-tool tray, a ÷K stamp on top & bottom of the big fraction, a
+   fixed "height-holds" guide on the ruler, and a "pieces remaining" meter. */
+
+/* ---- the messy stack on the ruler: each fuse clumps blocks into fewer/bigger
+   pieces. We reuse .plank/.plank-body/.piece, only adding a settle animation so a
+   successful fuse visibly snaps the new (bigger) blocks into place. ---- */
+.r4-bar { position: absolute; }
+.r4-bar .plank-body { transition: width .42s cubic-bezier(.34,1.45,.6,1); }
+.r4-fuse-anim .plank-body { animation: r4Snap .44s cubic-bezier(.34,1.6,.5,1); }
+@keyframes r4Snap { 0% { transform: scaleX(1.02); } 40% { transform: scaleX(0.985); } 100% { transform: scaleX(1); } }
+
+/* the ÷K stamp that lands on BOTH numerator and denominator of the big fraction */
+.r4-divrow { position: absolute; left: 100%; margin-left: 8px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; top: -2px; }
+.r4-divchip { font-family: var(--stencil); font-weight: 700; font-size: 14px; color: var(--red);
+  border: 1.5px solid var(--red); padding: 1px 7px; background: rgba(163,42,34,0.07); white-space: nowrap; line-height: 1.3; }
+.r4-divchip.pop { animation: r4Stamp .45s cubic-bezier(.34,1.56,.64,1); }
+@keyframes r4Stamp { 0% { transform: scale(1.7) rotate(-9deg); opacity: 0; } 55% { opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+
+/* the fixed "height never changes" guide — a faint red rule the bar's right edge
+   keeps meeting through every fuse (the amount holds). */
+.r4-guide { position: absolute; width: 0; border-left: 2px dashed var(--red); opacity: 0.5; }
+.r4-guide .r4-guide-cap { position: absolute; top: -20px; left: 6px; white-space: nowrap;
+  font-family: var(--display); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); }
+
+/* ---- the fuse-tool tray in the rail ---- */
+.r4-fuse-tray { display: flex; flex-direction: column; gap: 9px; margin-top: 10px; }
+.r4-fuse-btn { all: unset; cursor: pointer; box-sizing: border-box; display: flex; align-items: center; gap: 12px;
+  padding: 10px 13px; border: 1.5px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.16); }
+.r4-fuse-btn:hover:not(:disabled) { background: var(--paper-2); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.18); }
+.r4-fuse-btn:active:not(:disabled) { transform: translate(1px,1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.16); }
+.r4-fuse-btn:disabled { opacity: 0.3; cursor: default; box-shadow: none; }
+.r4-fuse-btn.bounce { animation: r4Bounce .42s ease-in-out; border-color: var(--red); }
+@keyframes r4Bounce { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+.r4-fuse-k { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto;
+  font-family: var(--display); font-size: 19px; color: var(--paper-1); background: var(--ink); border: 1.5px solid var(--ink); }
+.r4-fuse-btn:hover:not(:disabled) .r4-fuse-k { background: var(--red); border-color: var(--red-deep); }
+.r4-fuse-txt { display: flex; flex-direction: column; line-height: 1.2; }
+.r4-fuse-txt .r4-fuse-title { font-family: var(--display); font-size: 13px; letter-spacing: .02em; color: var(--ink); }
+.r4-fuse-txt .r4-fuse-sub { font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--ink-mute); }
+
+/* "pieces remaining" / fewest-pieces meter */
+.r4-meter { margin-top: 12px; padding: 10px 13px; border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02); }
+.r4-meter-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.r4-meter-lab { font-family: var(--display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-mute); }
+.r4-meter-val { font-family: var(--display); font-size: 22px; color: var(--ink); }
+.r4-meter-val.fewest { color: var(--red); }
+.r4-dots { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.r4-dot { width: 11px; height: 11px; border: 1.5px solid var(--ink); background: var(--paper-1); }
+.r4-dot.gone { background: var(--paper-2); border-color: var(--paper-3); opacity: 0.5; }
+.r4-dot.fewest { border-color: var(--red); background: var(--red); }
+.r4-meter-note { font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--red-deep); margin-top: 8px; }
+
+/* tidied-state badge in the canvas (mirrors .eqstate.eqfloat usage) */
+.eqstate.r4-tidy.ok { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+
+/* the worked-example value readout under the big fraction (the amount holds) */
+.r4-valnote { position: absolute; left: 50%; transform: translateX(-50%); top: 78px; white-space: nowrap;
+  font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
+
+/* rail card: what fusing means */
+.r4-card { display: grid; grid-template-columns: auto 1fr; gap: 13px; align-items: center; margin-top: 10px;
+  padding: 10px 14px; border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02); }
+.r4-card .bignum .n, .r4-card .bignum .d { font-size: 24px; }
+.r4-card-note { font-family: var(--display); font-size: 11.5px; letter-spacing: .02em; color: var(--ink); line-height: 1.5; text-transform: uppercase; }
+.r4-card-note b { color: var(--red); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE INTERACTION ARC — stage selector + the per-stage writing/fade additions.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── stage selector: jump to any of the five arc stages in one click ───────── */
+.r4-stagebar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+.r4-stagechip { all: unset; cursor: pointer; box-sizing: border-box; display: flex; align-items: center; gap: 9px;
+  padding: 7px 11px; border: 1.5px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.14); }
+.r4-stagechip:hover { background: var(--paper-2); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.16); }
+.r4-stagechip:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.r4-stagechip.active { background: var(--ink); box-shadow: 1px 1px 0 rgba(28,22,18,0.2); }
+.r4-stagechip.active .r4-stage-tag { color: var(--paper-1); }
+.r4-stagechip.active .r4-stage-blurb { color: rgba(237,226,200,0.78); }
+.r4-stagechip.active .r4-stage-n { background: var(--red); border-color: var(--red-deep); color: var(--paper-1); }
+.r4-stage-n { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto;
+  font-family: var(--display); font-size: 15px; color: var(--paper-1); background: var(--ink); border: 1.5px solid var(--ink); }
+.r4-stage-tx { display: flex; flex-direction: column; line-height: 1.18; min-width: 0; }
+.r4-stage-tag { font-family: var(--display); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); }
+.r4-stage-blurb { font-family: var(--serif); font-style: italic; font-size: 10.5px; color: var(--ink-mute);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── the fading bar (Stage 3 Fade / Stage 4 ghost): dim to a faint check ───── */
+.plank.r4-ghost { opacity: 0.32; filter: grayscale(0.35); transition: opacity .5s ease, filter .5s ease; }
+.plank.r4-ghost .piece-lab { opacity: 0.7; }
+
+/* ── Stage 3: shared-factor chips (the symbolic pick that replaces the bar) ── */
+.r4-factor-tray { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+.r4-factor-btn { all: unset; cursor: pointer; box-sizing: border-box; min-width: 52px; text-align: center;
+  padding: 9px 14px; font-family: var(--display); font-size: 19px; color: var(--ink);
+  border: 1.5px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.16); }
+.r4-factor-btn:hover:not(:disabled) { background: var(--paper-2); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.18); }
+.r4-factor-btn:active:not(:disabled) { transform: translate(1px,1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.16); }
+.r4-factor-btn:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.r4-factor-btn:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+.r4-factor-btn.picked { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); box-shadow: 1px 1px 0 rgba(28,22,18,0.2); }
+.r4-factor-btn.bounce { animation: r4Bounce .42s ease-in-out; border-color: var(--red); }
+
+/* the symbolic "8/12 = ?/?" that fills in once a factor's picked */
+.r4-fade-eq { display: flex; align-items: center; gap: 12px; margin-top: 13px; padding: 10px 14px;
+  border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02); font-family: var(--display); font-size: 26px; color: var(--ink); }
+.r4-fade-op { color: var(--ink-mute); }
+.r4-fade-out { color: var(--ink-mute); }
+.r4-fade-out.on { color: var(--red); animation: r4Stamp .42s cubic-bezier(.34,1.56,.64,1); }
+
+/* ── the WRITING channel panel (the Slate, present from Stage 2 on) ────────── */
+.r4-slate-panel h3 { color: var(--red); }
+.r4-slate-wrap { display: flex; justify-content: center; margin-top: 12px; }
+
+/* ── HUD readouts for the arc (the live "8/12 = ?/?" being written) ────────── */
+.r4-hud-amt { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); }
+.r4-hud-write { color: var(--red); }
+
+/* ── Stage 5 (Words): no diagram — center the recipe + Slate, tutor beside ─── */
+.r4-play-words { grid-template-columns: 1fr 320px; align-items: start; }
+.r4-words-side { display: flex; flex-direction: column; gap: 16px; }
+.r4-words-rosette { display: flex; justify-content: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .r4-stagechip, .r4-factor-btn { transition: none; }
+  .r4-fade-out.on { animation: none; }
+  .plank.r4-ghost { transition: none; }
+}

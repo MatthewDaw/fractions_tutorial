@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 4 — Simplify intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --thirds:#e07b00;   /* 3 = orange */
+    --sixths:#caa300;   /* 6 = gold   */
+    --neutral:#8c7a5e;  /* twelfths — neutral until simplified */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the board: one bar of pieces + a stacked fraction label to its left ── */
+  #board{ position:relative; width:560px; max-width:92vw; }
+
+  .barrow{ display:flex; align-items:center; gap:24px; margin:14px 0; }
+  /* the stacked fraction label to the left of the bar */
+  .flab{ display:flex; flex-direction:column; align-items:center; width:54px; flex:0 0 auto;
+    font-family:"Russo One",sans-serif; line-height:1; color:var(--neutral); transition:color .7s ease; }
+  .flab .n,.flab .d{ font-size:34px; transition:color .7s ease; }
+  .flab .bar{ width:34px; height:4px; border-radius:2px; margin:6px 0; background:currentColor; }
+  /* the fraction colors shift as we simplify: neutral → gold → orange */
+  #board.toSix .flab{ color:var(--sixths); }
+  #board.toThirds .flab{ color:var(--thirds); }
+
+  /* a bar = a sequence of equal pieces; the bar's TOTAL width is the AMOUNT and
+     never changes — only how many cuts there are changes. */
+  #barWrap{ position:relative; }
+  .bar-track{ display:flex; gap:0; height:54px; align-items:stretch; }
+  .pc{
+    height:100%; border:2px solid rgba(20,14,10,.5); border-right-width:1px;
+    background:var(--neutral);
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Russo One",sans-serif; font-size:13px; color:rgba(255,250,235,.92);
+    transition:background .7s ease, opacity .5s ease;
+  }
+  .pc:last-child{ border-right-width:2px; }
+  #board.toSix .pc{ background:var(--sixths); }
+  #board.toThirds .pc{ background:var(--thirds); }
+
+  /* the held right edge — a vertical tick that stays put the whole time */
+  #edge{
+    position:absolute; top:-12px; bottom:-12px; width:3px; background:var(--red);
+    opacity:0; transition:opacity .6s ease;
+  }
+  #edge.on{ opacity:.85; }
+  #edgeLabel{
+    position:absolute; top:-40px; transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--red); white-space:nowrap;
+    opacity:0; transition:opacity .6s ease;
+  }
+  #edgeLabel.on{ opacity:.9; }
+
+  /* the equation, revealed late and centered over a faded board */
+  #result{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(16px);
+    display:flex; align-items:center; gap:16px; z-index:7;
+    font-family:"Russo One",sans-serif;
+    opacity:0; transition:opacity .6s ease, transform .6s ease;
+  }
+  #result.on{ opacity:1; transform:translate(-50%,-50%); }
+  #result .f{ display:flex; flex-direction:column; align-items:center; line-height:1; }
+  #result .f .n,#result .f .d{ font-size:46px; }
+  #result .f .bar{ width:48px; height:5px; background:currentColor; border-radius:2px; margin:6px 0; }
+  #result .f12{ color:var(--neutral); } #result .f3{ color:var(--thirds); }
+  #result .op{ font-size:34px; color:var(--ink-soft); }
+  /* when the result shows, recede the working bar so nothing collides */
+  #board.faded .barrow{ opacity:.14; }
+  #board.faded #edge,#board.faded #edgeLabel{ opacity:.14; }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(700px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .nq{color:var(--neutral);font-weight:700;} .g{color:var(--sixths);font-weight:700;} .o{color:var(--thirds);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Simplify</div>
+
+    <div id="board">
+      <div class="barrow">
+        <div class="flab"><div class="n" id="fN">8</div><div class="bar"></div><div class="d" id="fD">12</div></div>
+        <div id="barWrap">
+          <div class="bar-track" id="bar"></div>
+          <div id="edge"><span id="edgeLabel">same amount</span></div>
+        </div>
+      </div>
+
+      <div id="result">
+        <span class="f f12"><span class="n">8</span><span class="bar"></span><span class="d">12</span></span>
+        <span class="op">=</span>
+        <span class="f f3"><span class="n">2</span><span class="bar"></span><span class="d">3</span></span>
+      </div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0"><span class="nq">Eight twelfths</span> — a bar of many tiny pieces.</div>
+      <div class="cap" data-i="1">Let's fuse equal groups into fewer, bigger pieces.</div>
+      <div class="cap" data-i="2">Two twelfths fuse into <span class="g">one sixth</span> — now it's <span class="g">four sixths</span>.</div>
+      <div class="cap" data-i="3">Keep going — fuse again into the biggest pieces: <span class="o">two thirds</span>.</div>
+      <div class="cap" data-i="4">The amount never changed — the bar is the same length.</div>
+      <div class="cap" data-i="5"><span class="nq">Eight twelfths</span> is <span class="o">two thirds</span>, tidied up.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "simplify.v1";
+  var DURATION = 27;            // seconds — tightened (~0.5s between lines)
+  var TOTAL = 432;              // px: the bar's full length (the AMOUNT) — held fixed
+
+  function el(id){ return document.getElementById(id); }
+
+  // build a bar of `n` equal pieces that together span TOTAL px (the held amount).
+  // the right edge therefore lands at the same x for every n — the whole point.
+  function buildBar(n){
+    var bar = el("bar"); bar.innerHTML = "";
+    var w = TOTAL / n;
+    for (var i=0;i<n;i++){
+      var d=document.createElement("div"); d.className="pc"; d.style.width=w+"px";
+      bar.appendChild(d);
+    }
+  }
+  buildBar(12); // start: eight... well, twelve tiny twelfths (8 shown filled below)
+
+  // place the held right-edge tick at the bar's far end (x = TOTAL)
+  el("edge").style.left = TOTAL + "px";
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.28)";
+    setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
+
+  var beatsDone = [];
+
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — eight twelfths: a bar of many tiny neutral pieces (12 cuts)
+    [1.5, function(){ showCap(0); buildBar(12); }],
+
+    // Beat 2 — set up: we'll fuse equal groups into fewer, bigger pieces.
+    //          drop the held-edge tick in so the audience can watch it stay put.
+    [5.8, function(){
+      showCap(1);
+      el("edge").classList.add("on");
+      el("edgeLabel").classList.add("on");
+    }],
+
+    // Beat 3 — two twelfths fuse into one sixth → 8/12 becomes 4/6 (gold)
+    [10.5, function(){
+      showCap(2);
+      buildBar(6);                 // 12 tiny pieces fuse two-by-two into 6 (same total width)
+      el("board").classList.add("toSix");
+      el("fN").textContent="4"; el("fD").textContent="6";
+      pulse(el("fD"));
+    }],
+
+    // Beat 4 — keep going — fuse again into the biggest pieces: 2/3 (orange)
+    [14.7, function(){
+      showCap(3);
+      buildBar(3);                 // 6 sixths fuse two-by-two into 3 thirds (same total width)
+      el("board").classList.remove("toSix");
+      el("board").classList.add("toThirds");
+      el("fN").textContent="2"; el("fD").textContent="3";
+      pulse(el("fD"));
+    }],
+
+    // Beat 5 — the amount never changed — the bar is the same length (flash the edge)
+    [19.4, function(){
+      showCap(4);
+      var e=el("edge"); e.style.transition="transform .3s ease, opacity .6s ease";
+      e.style.transform="scaleX(2.4)"; setTimeout(function(){ e.style.transform="scaleX(1)"; }, 320);
+    }],
+
+    // Beat 6 — eight twelfths is two thirds, tidied up (equation over faded board)
+    [23.7, function(){
+      showCap(5);
+      el("board").classList.add("faded");
+      el("result").classList.add("on");
+      pulse(el("result"));
+    }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; }
+  };
+})();
+</script>
+</body>
+</html>

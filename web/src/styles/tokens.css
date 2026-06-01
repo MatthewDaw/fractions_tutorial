@@ -1,0 +1,24 @@
+/* Shared design tokens — Moscow-Puzzles printed-page aesthetic.
+   Ported from the design handoff (styles/base.css). */
+:root {
+  /* Two-color palette: warm ink + muted soviet red on cream paper */
+  --paper-1: #ede2c8;       /* light page */
+  --paper-2: #e3d4b1;       /* page shadow / accent */
+  --paper-3: #c9b78d;       /* edge */
+  --ink:     #1c1612;       /* warm black, the printing ink */
+  --ink-soft:#3a2e24;       /* secondary rule */
+  --ink-mute:#6b5a47;       /* annotations / labels */
+  --red:     #a32a22;       /* muted Soviet red */
+  --red-deep:#6e1c16;       /* shadowed red */
+  --red-soft:#c46a5f;       /* tint */
+  --shade:   rgba(28, 22, 18, 0.10);
+
+  --serif:    "Old Standard TT", "EB Garamond", "Cormorant Garamond", Georgia, serif;
+  --display:  "Russo One", "Stardos Stencil", Impact, sans-serif;
+  --stencil:  "Stardos Stencil", Impact, sans-serif;
+  --type:     "Special Elite", "Courier Prime", "Courier New", monospace;
+  --mono:     "JetBrains Mono", "Courier Prime", monospace;
+}
+
+.no-select { user-select: none; }
+.crisp { image-rendering: crisp-edges; }

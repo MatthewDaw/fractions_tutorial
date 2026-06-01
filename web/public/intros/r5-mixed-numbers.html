@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 5 — Mixed Numbers intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --sevenths:#5a4fcf;   /* 7 = indigo */
+    --whole:#2e7d4f;      /* a completed whole unit reads green-ink */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the board: a 0→2 vertical ruler with a stack of sevenths beside it ── */
+  #board{ position:relative; width:560px; max-width:94vw; height:430px;
+    display:flex; align-items:flex-end; justify-content:center; gap:46px; }
+
+  /* the ruler: a tall axis from 0 (bottom) to 2 (top); the "1 WHOLE" line is the key mark */
+  #ruler{ position:relative; width:64px; height:392px; flex:0 0 auto; }
+  #ruler .axis{ position:absolute; left:30px; top:0; bottom:0; width:3px; background:var(--ink-soft); border-radius:2px; }
+  .tick{ position:absolute; left:30px; height:3px; background:var(--ink-soft); transform:translateY(-50%); }
+  .tick.major{ width:40px; }
+  .tick.mid{ width:22px; opacity:.55; }
+  .tick .num{ position:absolute; left:-28px; top:50%; transform:translateY(-50%);
+    font-family:"Russo One",sans-serif; font-size:20px; color:var(--ink-soft); }
+  /* the emphasized ONE-WHOLE line that the stack overflows past */
+  #oneLine{ position:absolute; left:6px; right:-470px; height:0;
+    border-top:3px dashed var(--red); opacity:0; transition:opacity .6s ease; }
+  #oneLine.on{ opacity:.9; }
+  #oneLine .tag{ position:absolute; right:14px; top:-22px;
+    font-family:"Russo One",sans-serif; font-size:13px; letter-spacing:.12em; color:var(--red);
+    text-transform:uppercase; background:rgba(237,226,200,.9); padding:2px 8px; border-radius:10px;
+    box-shadow:0 1px 0 rgba(60,40,20,.12); }
+
+  /* the stack of nine sevenths, growing UP from the 0 baseline */
+  #stackWrap{ position:relative; width:200px; height:392px; flex:0 0 auto; }
+  #stack{ position:absolute; left:0; right:0; bottom:0;
+    display:flex; flex-direction:column-reverse; align-items:stretch; }
+  .seg{ position:relative; height:42px; border:2px solid rgba(20,14,10,.45); border-bottom-width:1px;
+    background:var(--sevenths); display:flex; align-items:center; justify-content:center;
+    font-family:"Russo One",sans-serif; font-size:14px; color:rgba(255,250,235,.95);
+    opacity:0; transform:translateY(10px) scale(.96);
+    transition:opacity .35s ease, transform .35s ease, background .5s ease, border-color .5s ease; }
+  .seg:first-child{ border-bottom-width:2px; }
+  .seg.in{ opacity:1; transform:none; }
+  /* the seven that group into one whole get a green-ink wash + brace */
+  .seg.grouped{ background:var(--whole); }
+  /* the snapped-shut whole-unit overlay that replaces the lower seven */
+  #wholeUnit{ position:absolute; left:0; right:0; bottom:0; height:294px;
+    border:3px solid var(--whole); border-radius:8px;
+    background:linear-gradient(180deg, rgba(46,125,79,.92), rgba(46,125,79,.82));
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Russo One",sans-serif; color:#f3efe2; box-shadow:0 4px 0 rgba(0,0,0,.18);
+    opacity:0; transform:scaleY(1.02); transform-origin:bottom;
+    transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.4,.64,1); }
+  #wholeUnit.on{ opacity:1; transform:scaleY(1); }
+  #wholeUnit .big{ font-size:26px; letter-spacing:.04em; }
+  /* the two leftover sevenths above the whole get a halo when called out */
+  .seg.left.glow{ box-shadow:0 0 0 3px rgba(163,42,34,.55), 0 0 18px rgba(163,42,34,.35); }
+
+  /* the running fraction label that names the stack (top-right of board) */
+  #stackLabel{ position:absolute; top:0; right:0;
+    display:flex; flex-direction:column; align-items:center; line-height:1;
+    font-family:"Russo One",sans-serif; color:var(--sevenths);
+    opacity:0; transform:translateY(-6px); transition:opacity .5s ease, transform .5s ease; }
+  #stackLabel.on{ opacity:1; transform:none; }
+  #stackLabel .n,#stackLabel .d{ font-size:34px; }
+  #stackLabel .barl{ width:34px; height:4px; background:currentColor; border-radius:2px; margin:5px 0; }
+  #stackLabel .cap{ font-family:"Old Standard TT",serif; font-size:13px; color:var(--ink-soft);
+    margin-top:8px; letter-spacing:.02em; text-transform:none; }
+
+  /* the final answer — a mixed number, centered, working pieces faded behind */
+  #result{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(14px);
+    display:flex; align-items:center; gap:18px; z-index:7;
+    font-family:"Russo One",sans-serif;
+    opacity:0; transition:opacity .6s ease, transform .6s ease;
+  }
+  #result.on{ opacity:1; transform:translate(-50%,-50%); }
+  #result .imp{ display:flex; flex-direction:column; align-items:center; line-height:1; color:var(--sevenths); }
+  #result .imp .n,#result .imp .d{ font-size:46px; } #result .imp .barl{ width:48px; height:5px; background:currentColor; border-radius:2px; margin:6px 0; }
+  #result .op{ font-size:34px; color:var(--ink-soft); }
+  #result .mix{ display:flex; align-items:center; gap:10px; }
+  #result .mix .who{ font-size:64px; color:var(--whole); }
+  #result .mix .frac{ display:flex; flex-direction:column; align-items:center; line-height:1; color:var(--sevenths); }
+  #result .mix .frac .n,#result .mix .frac .d{ font-size:40px; } #result .mix .frac .barl{ width:40px; height:5px; background:currentColor; border-radius:2px; margin:5px 0; }
+  /* when the answer shows, recede the working ruler+stack so nothing collides */
+  #board.done > #ruler,#board.done > #stackWrap,#board.done > #stackLabel{ opacity:.14; transition:opacity .6s ease; }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(700px,94vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .s{color:var(--sevenths);font-weight:700;} .w{color:var(--whole);font-weight:700;} .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Mixed Numbers</div>
+
+    <div id="board">
+      <div id="ruler">
+        <div class="axis"></div>
+        <!-- ticks placed by script: 0, 1, 2 majors + half-marks -->
+        <div id="oneLine"><span class="tag">1 whole</span></div>
+      </div>
+
+      <div id="stackWrap">
+        <div id="stack"></div>
+        <div id="wholeUnit"><span class="big">1 whole</span></div>
+      </div>
+
+      <div id="stackLabel">
+        <span class="n">9</span><span class="barl"></span><span class="d">7</span>
+        <span class="cap">nine sevenths</span>
+      </div>
+
+      <div id="result">
+        <span class="imp"><span class="n">9</span><span class="barl"></span><span class="d">7</span></span>
+        <span class="op">=</span>
+        <span class="mix">
+          <span class="who">1</span>
+          <span class="frac"><span class="n">2</span><span class="barl"></span><span class="d">7</span></span>
+        </span>
+      </div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0"><span class="s">Nine sevenths</span> — a tall stack of pieces.</div>
+      <div class="cap" data-i="1">Look — it climbs <span class="r">past one whole</span>.</div>
+      <div class="cap" data-i="2"><span class="s">Seven sevenths</span> make <span class="w">one whole</span>.</div>
+      <div class="cap" data-i="3">Group those seven — they snap into <span class="w">one whole</span>.</div>
+      <div class="cap" data-i="4">And <span class="s">two sevenths</span> are left over.</div>
+      <div class="cap" data-i="5">So <span class="s">nine sevenths</span> is <span class="w">one whole</span> and <span class="s">two sevenths</span>.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "mixed.v1";
+  var DURATION = 21;            // seconds — tightened (~0.5s between lines)
+  var SEGH = 42;                // px per one-seventh segment (matches .seg height)
+
+  function el(id){ return document.getElementById(id); }
+
+  // ── build the 0→2 ruler: 14 sevenths tall total; 0 at bottom, 2 at top ──
+  // segment height 42px → 7 segs = 294px = the "1" mark, 14 segs = 588 (capped by view).
+  // We show 0,1,2 majors and the half marks, positioned from the bottom of #ruler.
+  (function buildRuler(){
+    var r = el("ruler");
+    var H = 392;                       // ruler pixel height
+    var unit = 7*SEGH;                 // px for one whole (=294)
+    // place a tick at value v (in wholes) measured from bottom
+    function tick(v, cls, label){
+      var t=document.createElement("div"); t.className="tick "+cls;
+      t.style.bottom = (v*unit) + "px";
+      if (label!=null){ var n=document.createElement("span"); n.className="num"; n.textContent=label; t.appendChild(n); }
+      r.appendChild(t);
+    }
+    tick(0, "major", "0");
+    tick(0.5, "mid", null);
+    tick(1, "major", "1");
+    // the top of the ruler is the "2" reference (a 0→2 number line)
+    var topV = H/unit;                 // how many wholes tall the ruler is (~1.33)
+    if (topV >= 1.5) tick(1.5, "mid", null);
+    // position the emphasized one-whole line at v=1
+    var ol=el("oneLine"); ol.style.bottom = unit + "px";
+  })();
+
+  // ── build the stack of nine indigo sevenths, hidden until beat 1 reveals them ──
+  (function buildStack(){
+    var s=el("stack");
+    for (var i=0;i<9;i++){
+      var d=document.createElement("div"); d.className="seg";
+      d.dataset.i=i;
+      // the seventh through ninth are the ones above the 1-line (i>=7 are leftover-region;
+      // i 0..6 are the seven that make a whole). label every piece "⅐"-ish.
+      d.textContent="⅐";
+      s.appendChild(d);
+    }
+  })();
+
+  var segs = Array.prototype.slice.call(document.querySelectorAll("#stack .seg"));
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.25)";
+    setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
+
+  var beatsDone = [];
+
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 (1.5) — nine sevenths: reveal the tall indigo stack piece-by-piece, name it
+    [1.5, function(){
+      showCap(0);
+      el("stackLabel").classList.add("on");
+      segs.forEach(function(seg, k){
+        setTimeout(function(){ seg.classList.add("in"); }, 120 + k*150); // stack climbs up
+      });
+    }],
+
+    // Beat 2 (5.4) — overflow: drop the one-whole line, show it climbs PAST it
+    [5.4, function(){
+      showCap(1);
+      el("oneLine").classList.add("on");
+      // nudge attention to the pieces sticking out above the line (the 8th & 9th)
+      setTimeout(function(){ pulse(segs[8]); }, 250);
+      setTimeout(function(){ pulse(segs[7]); }, 450);
+    }],
+
+    // Beat 3 (8.5) — seven sevenths make one whole: tint the lower seven green-ink
+    [8.5, function(){
+      showCap(2);
+      for (var i=0;i<7;i++){ (function(seg,k){
+        setTimeout(function(){ seg.classList.add("grouped"); }, k*90);
+      })(segs[i], i); }
+    }],
+
+    // Beat 4 (10.9) — snap the seven shut into one whole unit
+    [10.9, function(){
+      showCap(3);
+      el("wholeUnit").classList.add("on");   // overlay snaps over the lower seven
+      // hide the individual lower-seven seg borders beneath the snapped unit
+      for (var i=0;i<7;i++){ segs[i].style.opacity="0"; }
+    }],
+
+    // Beat 5 (14.7) — two sevenths left over above the whole; halo them
+    [14.7, function(){
+      showCap(4);
+      segs[7].classList.add("left","glow");
+      segs[8].classList.add("left","glow");
+      pulse(segs[7]); pulse(segs[8]);
+    }],
+
+    // Beat 6 (17.3) — so nine sevenths is one whole and two sevenths (mixed number)
+    [17.3, function(){
+      showCap(5);
+      el("board").classList.add("done");     // recede the working ruler+stack
+      el("result").classList.add("on");
+      setTimeout(function(){ pulse(document.querySelector("#result .mix")); }, 500);
+    }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[];
+      // reset visual state so scrubbing backward re-runs beats cleanly
+      el("kicker").classList.remove("on");
+      el("oneLine").classList.remove("on");
+      el("stackLabel").classList.remove("on");
+      el("wholeUnit").classList.remove("on");
+      el("board").classList.remove("done");
+      el("result").classList.remove("on");
+      segs.forEach(function(s){ s.className="seg"; s.style.opacity=""; s.style.transform=""; });
+      caps.forEach(function(c){ c.classList.remove("on"); });
+    }
+  };
+})();
+</script>
+</body>
+</html>

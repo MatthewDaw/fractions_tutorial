@@ -1,0 +1,98 @@
+/* momsroom.css — Babushka's Room (story / word problems). Layers on top of the shared
+   lesson chrome; only the room-specific bits live here. Includes the prop motion
+   keyframes ported from the design contact sheet (the anim-* classes the SVG
+   props use), so the snap / pop / merge / lid-close beats read on solve. */
+
+.momsroom .mr-heart { color: var(--red); font-size: 22px; line-height: 1; }
+
+/* progress pips in the header centre */
+.mr-progress { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; max-width: 560px; justify-self: center; }
+.mr-pip { width: 9px; height: 9px; border: 1.5px solid var(--ink); background: var(--paper-1); transform: rotate(45deg); opacity: 0.6; }
+.mr-pip.done { background: var(--ink); opacity: 0.5; }
+.mr-pip.on { background: var(--red); border-color: var(--red-deep); opacity: 1; box-shadow: 0 0 0 2px rgba(163,42,34,0.18); }
+
+/* the story prop sits centred over its built-in ruler */
+.mr-stage { flex: 1 1 auto; display: grid; place-items: center; min-height: 360px; padding: 6px 0 2px; }
+.mr-stage > svg { width: 100%; max-width: 560px; height: auto; }
+
+/* rail — who's asking */
+.mr-asker { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.mr-asker-art { height: 150px; display: grid; place-items: end center; overflow: visible; margin: 2px 0 4px; }
+.mr-asker-note { font-family: var(--serif); font-size: 13px; line-height: 1.35; color: var(--ink-soft); }
+.mr-asker-note b { color: var(--red-deep); }
+.mr-recipe-row { display: flex; align-items: baseline; gap: 8px; margin-top: 9px; }
+.mr-recipe-no { font-family: var(--display); font-size: 20px; color: var(--ink); }
+.mr-recipe-of { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
+
+/* the Cat's meows read as a sound, not speech */
+.ribbon.mr-meow { font-style: italic; color: var(--ink-mute); letter-spacing: 0.04em; }
+
+/* ── scratch space: a free-form drawing layer over the prop + ruler ───────── */
+.mr-scratch { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%;
+  touch-action: none; cursor: crosshair; background: transparent; }
+.mr-scratch-hint { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 5;
+  font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); opacity: 0.6; pointer-events: none; }
+
+/* tool strip (top-left of the diagram, above the scratch layer) */
+.mr-tools { position: absolute; left: 8px; top: 8px; z-index: 12; display: flex; align-items: center; gap: 5px;
+  padding: 4px; border: 1.5px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.16); }
+.mr-tool { all: unset; cursor: pointer; box-sizing: border-box; min-width: 30px; height: 30px; padding: 0 7px;
+  display: inline-grid; place-items: center; color: var(--ink); border: 1px solid transparent;
+  font-family: var(--display); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.mr-tool:hover { background: var(--paper-2); }
+.mr-tool.on { background: var(--ink); color: var(--paper-1); }
+.mr-tool.on svg [stroke="currentColor"] { stroke: var(--paper-1); }
+.mr-tool-clear { color: var(--red-deep); }
+.mr-tool-sep { width: 1px; height: 20px; background: var(--paper-3); margin: 0 2px; }
+
+/* the "wall": route into the room that teaches the missed skill */
+.mr-wallbtn { all: unset; cursor: pointer; box-sizing: border-box; height: 64px; padding: 0 16px;
+  display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-size: 13px; letter-spacing: 0.02em;
+  color: var(--paper-1); background: var(--red); border: 2px solid var(--red-deep);
+  box-shadow: 3px 3px 0 rgba(110,28,22,0.32); animation: wallNudge 1.4s ease-in-out infinite; }
+.mr-wallbtn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 rgba(110,28,22,0.34); }
+@keyframes wallNudge { 0%,100% { box-shadow: 3px 3px 0 rgba(110,28,22,0.32); } 50% { box-shadow: 3px 3px 0 rgba(110,28,22,0.32), 0 0 14px rgba(163,42,34,0.5); } }
+
+/* look-ahead "sneak peek" badge tint */
+.eqstate.eqfloat.mr-peek { background: var(--paper-1); border-color: var(--red); }
+.eqstate.eqfloat.mr-peek .g { color: var(--red); }
+
+/* "Final answer" eyebrow over the HUD answer boxes (the designated spot) */
+.mr-final-label { font-family: var(--display); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--red); margin-bottom: 2px; }
+
+/* mixed-number answer entry (wholes "and" leftover) */
+.hud-eq .mr-and { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--ink-mute); }
+.hud-eq .mr-whole { gap: 4px; }
+.hud-eq .mr-whole .mr-cap { font-family: var(--display); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mute); }
+
+/* finale card over the diagram */
+.mr-finale { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255,245,220,0.96), rgba(237,226,200,0.96)); text-align: center; padding: 20px; }
+.mr-finale-art { filter: drop-shadow(0 6px 10px rgba(20,12,6,0.25)); }
+.mr-finale-text { font-family: var(--serif); font-size: 19px; line-height: 1.4; color: var(--ink); max-width: 460px; }
+
+/* ── prop motion (ported from the asset contact sheet) ───────────────────── */
+[class*="anim-"] { transform-box: fill-box; transform-origin: center; }
+.anim-pop   { animation: a-pop   2.6s ease-in-out infinite; }
+.anim-pulse { animation: a-pulse 1.7s ease-in-out infinite; }
+.anim-glow  { animation: a-glow  1.7s ease-in-out infinite; }
+.anim-snap  { animation: a-snap  2.4s ease-in-out infinite; }
+.anim-merge { animation: a-merge 2.6s ease-in-out infinite; }
+.anim-bob   { animation: a-bob   2.4s ease-in-out infinite; }
+.anim-lift  { animation: a-lift  2.2s ease-in-out infinite; }
+.anim-lidclose { transform-box: view-box; transform-origin: 70px 108px; animation: a-lid 2.8s ease-in-out infinite; }
+
+@keyframes a-pop   { 0%{transform:scale(.66);opacity:.25} 22%{transform:scale(1.1);opacity:1} 38%{transform:scale(1)} 100%{transform:scale(1);opacity:1} }
+@keyframes a-pulse { 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.02)} }
+@keyframes a-glow  { 0%,100%{filter:drop-shadow(0 0 0 rgba(163,42,34,0))} 50%{filter:drop-shadow(0 0 7px rgba(163,42,34,.6))} }
+@keyframes a-snap  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2.5px)} }
+@keyframes a-merge { 0%,100%{transform:translateX(0)} 50%{transform:translateX(-6px)} }
+@keyframes a-bob   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+@keyframes a-lift  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-11px)} }
+@keyframes a-lid   { 0%{transform:rotate(-15deg)} 45%{transform:rotate(3deg)} 62%{transform:rotate(0)} 100%{transform:rotate(0)} }
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="anim-"] { animation: none !important; }
+  .anim-lidclose { transform: rotate(0deg); }
+}

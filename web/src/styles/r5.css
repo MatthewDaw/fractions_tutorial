@@ -1,0 +1,162 @@
+/* r5.css — Room R5 "Whole Units" (IMPROPER_TO_MIXED) room-specific styles.
+   Reuses lesson.css classes by name; only NEW, namespaced .r5-* rules live here.
+   The house look (paper, ink, red, engraved blocks) comes from lesson.css +
+   denominatorColors.js. These rules add only what R5 needs: the whole-unit frame
+   that the child fills, the leftover tray, and the mixed-number write slots. */
+
+/* the canvas wants a touch more height than R1's 346 to seat the tall overflow
+   stack, the whole-unit frame, and the ruler without crowding. */
+.r5-canvas { width: 720px; height: 392px; position: relative; margin: 6px auto 0; }
+
+/* a single 1/den block in the overflow column / frame / tray. The fill + hatch
+   are applied inline from denominatorColors so every block matches its size. */
+.r5-block {
+  position: relative; box-sizing: border-box; display: grid; place-items: center;
+  border: 1.5px solid var(--ink); height: 30px; cursor: grab;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 -3px 6px rgba(20,12,6,0.18);
+}
+.r5-block.is-grabbing { cursor: grabbing; }
+.r5-block.is-locked { cursor: default; }
+.r5-block .r5-hatch { position: absolute; inset: 0; pointer-events: none; }
+.r5-block .r5-lab {
+  position: relative; z-index: 2; font-family: var(--display); font-size: 12px;
+  pointer-events: none; text-shadow: 0 1px 0 rgba(255,250,235,.25);
+}
+
+/* the standing overflow column (the improper stack), every piece visible. */
+.r5-overflow { position: absolute; }
+.r5-overflow .r5-col-tag {
+  position: absolute; left: 50%; transform: translateX(-50%); top: -52px; white-space: nowrap;
+}
+.r5-overflow .r5-block { width: 90px; }
+
+/* the WHOLE-UNIT FRAME — the target the child fills. It holds exactly `den`
+   blocks; the moment it is full it LOCKS (a snap) and reads as "1 whole". */
+.r5-frame {
+  position: absolute; box-sizing: border-box; border: 2px dashed var(--ink-soft);
+  background: rgba(28,22,18,0.025); transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
+}
+.r5-frame.is-hot { border-color: var(--red); box-shadow: 0 0 0 3px rgba(163,42,34,0.16); background: rgba(163,42,34,0.05); }
+.r5-frame.is-locked {
+  border: 2px solid var(--ink); border-style: solid; background: rgba(28,22,18,0.02);
+  animation: r5Snap .42s cubic-bezier(.34,1.7,.5,1);
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18);
+}
+@keyframes r5Snap { 0%{ transform: scale(1) } 40%{ transform: scale(1.05) } 100%{ transform: scale(1) } }
+.r5-frame .r5-frame-fill { position: absolute; inset: 0; display: flex; }
+.r5-frame .r5-frame-fill .r5-block { flex: 1 1 0; border-right: none; }
+.r5-frame .r5-frame-fill .r5-block + .r5-block { border-left: 1.5px solid var(--ink); }
+.r5-frame .r5-frame-lab {
+  position: absolute; left: 0; right: 0; top: -50px; text-align: center; white-space: nowrap;
+}
+/* the small "1 whole" stamp that lands when the frame locks */
+.r5-whole-stamp {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--display);
+  font-size: 15px; letter-spacing: .03em; color: var(--paper-1); background: var(--red);
+  border: 1.5px solid var(--red-deep); padding: 3px 12px; box-shadow: 1px 1px 0 rgba(110,28,22,.3);
+  animation: stampIn .45s cubic-bezier(.34,1.56,.64,1);
+}
+.r5-frame-hint { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
+
+/* the LEFTOVER TRAY — what's left after the whole locks (the fraction part). */
+.r5-tray {
+  position: absolute; box-sizing: border-box; border: 1.5px dashed var(--paper-3);
+  background: rgba(28,22,18,0.015); display: flex; align-items: flex-end; padding: 4px;
+}
+.r5-tray.is-hot { border-color: var(--red); border-style: solid; box-shadow: 0 0 0 2px rgba(163,42,34,0.14); }
+.r5-tray .r5-tray-lab { position: absolute; left: 0; right: 0; top: -34px; text-align: center; white-space: nowrap; }
+.r5-tray-fill { display: flex; gap: 0; }
+.r5-tray-fill .r5-block { width: 60px; cursor: default; }
+.r5-tray-fill .r5-block + .r5-block { border-left: none; }
+
+/* a faint "drop here" call-out used on the frame while the child still has blocks
+   to place. */
+.r5-dropcue {
+  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  text-align: center; font-family: var(--display); font-size: 12px; letter-spacing: .04em;
+  color: var(--ink-mute); pointer-events: none; opacity: .8;
+}
+
+/* the floating help/status badge already exists as .eqstate.eqfloat; nothing new. */
+
+/* the drag ghost block that follows the pointer */
+.r5-ghost { position: fixed; z-index: 60; pointer-events: none; opacity: 0.92;
+  box-shadow: 2px 4px 6px rgba(20,12,6,.35); }
+
+/* ---- rail card: "Group into wholes" (R5's analogue of R1's lockcard) ---- */
+.r5-card { display: grid; gap: 8px; margin-top: 10px; padding: 10px 14px; border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02); }
+.r5-card .r5-card-row { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 14px; color: var(--ink); }
+.r5-card .r5-card-row .r5-mini-frame { display: inline-flex; border: 1.5px solid var(--ink); }
+.r5-card .r5-card-row .r5-mini-block { width: 11px; height: 18px; border-right: 1px solid var(--ink); }
+.r5-card .r5-card-row .r5-mini-block:last-child { border-right: none; }
+.r5-card .r5-card-note { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--ink-mute); line-height: 1.35; }
+
+/* ---- the MIXED-NUMBER write slots in the HUD ---- */
+/* whole-number slot sits to the LEFT of the fraction, big like the HUD inputs. */
+.r5-mixed { display: inline-flex; align-items: center; gap: 18px; }
+.r5-mixed .r5-and { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--ink-mute); }
+.r5-mixed .r5-whole-input {
+  width: 88px; height: 82px; box-sizing: border-box; text-align: center;
+  font-family: var(--display); font-size: 48px; color: var(--ink);
+  background: var(--paper-1); border: 3px solid var(--ink); outline: none; caret-color: var(--red);
+}
+.r5-mixed .r5-whole-input:focus { border-color: var(--red); background: #fff8ea; box-shadow: 0 0 0 4px rgba(163,42,34,.16); }
+.r5-mixed .r5-whole-input:disabled { opacity: 0.4; background: var(--paper-2); cursor: not-allowed; }
+.r5-mixed .r5-whole-input.bad { border-color: var(--red); animation: shakeX .42s ease-in-out; }
+.r5-mixed .r5-whole-input.want { border-color: var(--red); background: #fff8ea; animation: wantPulse 1.05s ease-in-out infinite; }
+.r5-whole-cap { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); margin-top: 5px; text-align: center; }
+
+/* the denominator under the leftover numerator is LOCKED (size never changes). */
+.r5-mixed .r5-lockden {
+  width: 88px; height: 82px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 4px; position: relative;
+  font-family: var(--display); font-size: 48px; color: var(--ink-mute);
+  background: repeating-linear-gradient(45deg, rgba(28,22,18,0.05) 0 3px, transparent 3px 8px), var(--paper-2);
+  border: 3px solid var(--ink-mute);
+}
+.r5-mixed .r5-lockden svg { position: absolute; top: 6px; right: 6px; }
+
+/* ==========================================================================
+   THE INTERACTION ARC — stage-specific scaffolding (R5-owned).
+   The block channel shrinks (ghost board → bare → gone); the stylus channel
+   grows (touch-only cue → Slate mixed number).
+   ========================================================================== */
+
+/* Stage 3 "Fade": the whole manipulative board dims to a faint, non-interactive
+   check behind the leading equation + choice. */
+.r5-ghost-board { opacity: 0.34; filter: grayscale(0.4); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .r5-ghost-board { filter: none; } }
+
+/* Stages 4–5 "Numbers / Words": no board — a bare equation or a story card sit
+   centered in the canvas frame. */
+.r5-bare { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.r5-bare-eq { display: flex; align-items: center; gap: 18px; font-family: var(--display); font-size: 64px; color: var(--ink); }
+.r5-bare-eq .qop { color: var(--ink-mute); }
+.r5-bare-eq .slate-blank { color: var(--red); }
+.r5-bare-eq .r5-bare-frac { letter-spacing: .01em; }
+.r5-bare-note { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink-mute); text-align: center; max-width: 460px; }
+
+/* Stage 3 rail: pick how many WHOLES fit (symbolic choice, no manipulation). */
+.r5-pick { display: flex; gap: 10px; margin: 12px 0 8px; }
+.r5-pick-btn {
+  all: unset; cursor: pointer; box-sizing: border-box; width: 52px; height: 52px;
+  display: inline-grid; place-items: center; font-family: var(--display); font-size: 26px;
+  color: var(--ink); background: var(--paper-1); border: 2px solid var(--ink);
+}
+.r5-pick-btn:hover:not(:disabled) { background: var(--paper-2); }
+.r5-pick-btn.ok { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); box-shadow: 1px 1px 0 rgba(110,28,22,.3); }
+.r5-pick-btn.bad { border-color: var(--red); animation: shakeX .42s ease-in-out; }
+.r5-pick-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* The STYLUS write channel in the HUD: the whole-number Slate, an "and", then the
+   leftover fraction Slate (numerator over the LOCKED denominator). */
+.r5-write { display: inline-flex; align-items: center; gap: 16px; }
+.r5-write.bad { animation: shakeX .42s ease-in-out; }
+.r5-write .r5-and { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--ink-mute); }
+.r5-write .r5-write-whole, .r5-write .r5-write-frac { display: inline-flex; }
+
+/* Stage 1 has NO writing — the blocks ARE the answer. A small read-only cue shows
+   what the grouped blocks spell out. */
+.r5-touch-cue {
+  font-family: var(--display); font-size: 30px; color: var(--ink);
+  padding: 6px 16px; border: 2px dashed var(--paper-3); background: rgba(28,22,18,0.02);
+}

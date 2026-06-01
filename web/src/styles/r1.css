@@ -1,0 +1,178 @@
+/* r1.css — namespaced styles for AppR1's 5-stage arc. Shared lesson.css house
+   classes (.page/.canvas/.hud/.ribbon/.joinbtn/.qeq/.check/.panel …) are reused
+   by reference only; everything here is .r1-* so it never collides. */
+
+/* ── stage selector strip (reachability: jump to any stage) ───────────────── */
+.r1-stages {
+  display: flex;
+  gap: 8px;
+  margin: 4px 22px 2px;
+  flex-wrap: wrap;
+}
+.r1-stage-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border: 1.5px solid var(--paper-3);
+  border-radius: 8px;
+  background: var(--paper-1);
+  color: var(--ink-mute);
+  cursor: pointer;
+  font-family: var(--serif);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.r1-stage-tab:hover { border-color: var(--ink-mute); color: var(--ink); }
+.r1-stage-tab.is-active {
+  border-color: var(--red);
+  background: #fff8ea;
+  color: var(--ink);
+  box-shadow: 0 1px 0 var(--red-deep);
+}
+.r1-stage-tab.is-done .r1-stage-n {
+  background: var(--ink-mute);
+  color: var(--paper-1);
+  border-color: var(--ink-mute);
+}
+.r1-stage-n {
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--paper-3);
+  background: var(--paper-2);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+}
+.r1-stage-tab.is-active .r1-stage-n {
+  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
+}
+.r1-stage-txt { display: flex; flex-direction: column; line-height: 1.1; }
+.r1-stage-name { font-size: 14px; font-weight: 600; }
+.r1-stage-sub { font-size: 11px; opacity: 0.8; }
+
+/* ── shared write-stage layout (blocks beside the Slate) ──────────────────── */
+.r1-write-play .r1-slate-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+/* ── Stage 2/3 bind canvas ────────────────────────────────────────────────── */
+.r1-bind-canvas { position: relative; }
+.r1-bind-stack {
+  position: absolute;
+  left: 60px; top: 120px;
+}
+.r1-bind-cap {
+  margin-top: 12px;
+  max-width: 360px;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+.r1-bind-cap b { color: var(--red); }
+
+/* Fade: dim the blocks to a faint check */
+.r1-faded .r1-bind-stack { opacity: 1; }
+.r1-ghostblocks { opacity: 0.28; filter: grayscale(0.5); }
+.r1-fadecheck {
+  position: absolute;
+  left: 60px; top: 78px;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-mute);
+  font-style: italic;
+}
+.r1-fadecheck-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #2f6b3a;
+  color: var(--paper-1);
+  font-style: normal; font-weight: 700; font-size: 14px;
+}
+.r1-leadeq {
+  position: absolute;
+  left: 60px; top: 250px;
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--serif);
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.r1-leadeq .qop { color: var(--red); font-size: 30px; }
+.r1-leadeq-blank {
+  color: var(--red);
+  border-bottom: 3px dashed var(--red-soft);
+  padding: 0 6px;
+}
+
+/* ── Stage 4 numbers canvas ───────────────────────────────────────────────── */
+.r1-numbers-canvas {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.r1-ghost-rail {
+  position: absolute;
+  left: 50%; top: 32px;
+  transform: translateX(-50%);
+  opacity: 0.18;
+  filter: grayscale(0.7);
+  pointer-events: none;
+}
+.r1-bigeq {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 40px;
+}
+.r1-bigeq-op {
+  font-family: var(--serif);
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--red);
+}
+.r1-bigeq-q {
+  font-family: var(--serif);
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--red);
+  min-width: 48px;
+  text-align: center;
+}
+.r1-numbers-cap {
+  margin-top: 26px;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-soft);
+  max-width: 420px;
+  text-align: center;
+}
+
+/* the answer readout in the HUD equation for write stages */
+.r1-eq-answer {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--red);
+  margin-left: 4px;
+}
+
+/* ── Stage 5 word problem ─────────────────────────────────────────────────── */
+.r1-words-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .r1-stage-tab { transition: none; }
+}

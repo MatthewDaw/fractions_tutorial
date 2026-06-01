@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 1 — Same Denominators intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --sevenths:#5a4fcf;   /* 7 = indigo */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the board: two stacks of same-size sevenths, side by side ── */
+  #board{ position:relative; width:560px; max-width:94vw;
+    display:flex; align-items:flex-end; justify-content:center; gap:64px; min-height:340px; }
+
+  /* a stack = a vertical column of equal sevenths-pieces, growing upward.
+     `--lift` raises the column (used to top-align the two stacks when they first
+     appear); `--shift` slides it sideways (the gentle push-together). They live
+     in custom props so the two motions compose in one transform without one beat
+     clobbering the other. */
+  .col{ display:flex; flex-direction:column-reverse; align-items:center; gap:0;
+    --lift:0px; --shift:0px;
+    transform:translate(var(--shift), var(--lift));
+    transition:opacity .6s ease, transform .8s cubic-bezier(.22,1,.36,1); }
+  .col .flab{ margin-top:14px; font-family:"Russo One",sans-serif; line-height:1;
+    display:flex; flex-direction:column; align-items:center; color:var(--sevenths); }
+  .col .flab .n,.col .flab .d{ font-size:34px; transition:transform .25s ease; }
+  .col .flab .bar{ width:30px; height:4px; border-radius:2px; margin:5px 0; background:currentColor; }
+
+  /* one seventh piece */
+  .pc{
+    width:88px; height:40px; margin-top:6px;
+    border:2px solid rgba(20,14,10,.5); border-radius:4px;
+    background:var(--sevenths);
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Russo One",sans-serif; font-size:16px; color:rgba(255,250,235,.94);
+    opacity:0; transform:translateY(14px) scale(.85);
+    transition:background .5s ease, opacity .5s ease, transform .5s cubic-bezier(.34,1.56,.64,1);
+  }
+  .pc.in{ opacity:1; transform:none; }
+  .pc .num{ opacity:0; transition:opacity .35s ease; }
+  .pc.counted .num{ opacity:1; }
+  .pc.counted{ background:#6e63e0; }
+
+  /* the joined stack + equation, revealed late, centered */
+  #result{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(16px);
+    display:flex; flex-direction:row; align-items:center; gap:40px; z-index:7;
+    opacity:0; transition:opacity .6s ease, transform .6s ease;
+  }
+  #result.on{ opacity:1; transform:translate(-50%,-50%); }
+  #joined{ display:flex; flex-direction:column-reverse; align-items:center; gap:0; }
+  #eq{ display:flex; align-items:center; gap:14px; font-family:"Russo One",sans-serif; }
+  #eq .f{ display:flex; flex-direction:column; align-items:center; line-height:1; color:var(--sevenths); }
+  #eq .f .n,#eq .f .d{ font-size:44px; } #eq .f .bar{ width:46px; height:5px; background:currentColor; border-radius:2px; margin:6px 0; }
+  #eq .op{ font-size:32px; color:var(--ink-soft); }
+  /* when the result is shown, fully clear the working stacks so no ghost
+     silhouette lingers behind the counted stack */
+  #board:has(#result.on) .col{ opacity:0; }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(720px,94vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .s{color:var(--sevenths);font-weight:700;} .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Same Denominators</div>
+
+    <div id="board">
+      <div class="col" id="colA">
+        <div class="flab"><div class="n">2</div><div class="bar"></div><div class="d">7</div></div>
+      </div>
+      <div class="col" id="colB">
+        <div class="flab"><div class="n">3</div><div class="bar"></div><div class="d">7</div></div>
+      </div>
+
+      <div id="result">
+        <div id="joined"></div>
+        <div id="eq">
+          <span class="f"><span class="n">2</span><span class="bar"></span><span class="d">7</span></span>
+          <span class="op">+</span>
+          <span class="f"><span class="n">3</span><span class="bar"></span><span class="d">7</span></span>
+          <span class="op">=</span>
+          <span class="f"><span class="n">5</span><span class="bar"></span><span class="d">7</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">Two <span class="s">sevenths</span> here, and three <span class="s">sevenths</span> here.</div>
+      <div class="cap" data-i="1">Every piece is the <b>same size</b> — they line up.</div>
+      <div class="cap" data-i="2"><b>Push them together</b> into one stack.</div>
+      <div class="cap" data-i="3">Count the pieces… one, two, three, four, five.</div>
+      <div class="cap" data-i="4">The bottom number stays <span class="r">seven</span>.</div>
+      <div class="cap" data-i="5">Two <span class="s">sevenths</span> plus three <span class="s">sevenths</span> makes five <span class="s">sevenths</span>.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "samedenom.v1";
+  var DURATION = 24;            // seconds — tightened so beats don't drag
+  var LIFT = 46;                // one piece's vertical stride (height 40 + 6 gap)
+
+  function el(id){ return document.getElementById(id); }
+
+  // build `n` seventh-pieces into a column (hidden until .in is added)
+  function buildPieces(col, n){
+    for (var i=0;i<n;i++){
+      var d=document.createElement("div"); d.className="pc";
+      var s=document.createElement("span"); s.className="num"; s.textContent="";
+      d.appendChild(s); col.insertBefore(d, col.firstChild); // stack grows; flab stays at bottom via column-reverse
+    }
+  }
+  // colA: 2 sevenths, colB: 3 sevenths
+  buildPieces(el("colA"), 2);
+  buildPieces(el("colB"), 3);
+  // colA starts lifted one piece-height so the two stacks first appear with
+  // their TOPS level (they look equal); Beat 2 drops it to the shared floor so
+  // the size difference (2 vs 3) reveals itself.
+  el("colA").style.setProperty("--lift", -LIFT + "px");
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.35)";
+    setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
+
+  // reveal pieces one-by-one in a column
+  function revealCol(colId, baseDelay){
+    var pcs = document.querySelectorAll("#"+colId+" .pc");
+    for (var i=0;i<pcs.length;i++){ (function(p,k){
+      setTimeout(function(){ p.classList.add("in"); }, baseDelay + k*260);
+    })(pcs[i], i); }
+  }
+
+  var beatsDone = [];
+
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — two stacks of same-size sevenths appear, TOPS level (colA pre-lifted)
+    [1.5, function(){
+      showCap(0);
+      revealCol("colA", 200);
+      revealCol("colB", 700);
+    }],
+
+    // Beat 2 — colA drops to the shared floor; the size difference (2 vs 3) shows
+    [5.0, function(){
+      showCap(1);
+      el("colA").style.setProperty("--lift", "0px");
+    }],
+
+    // Beat 3 — push the two stacks together, snug but NOT overlapping
+    [8.5, function(){
+      showCap(2);
+      el("colA").style.setProperty("--shift", "28px");
+      el("colB").style.setProperty("--shift", "-28px");
+    }],
+
+    // Beat 4 — join into the result stack and COUNT 1..5
+    [11.5, function(){
+      showCap(3);
+      // assemble five pieces in #joined (indigo) and count them up
+      var j=el("joined"); j.innerHTML="";
+      for (var i=0;i<5;i++){
+        var d=document.createElement("div"); d.className="pc in";
+        var s=document.createElement("span"); s.className="num"; s.textContent="";
+        d.appendChild(s); j.insertBefore(d, j.firstChild);
+      }
+      el("result").classList.add("on");   // recedes the working stacks (via :has)
+      var pcs=el("joined").querySelectorAll(".pc");
+      // pcs[0] is the TOP visually; count bottom→top = reverse order
+      var order=[]; for (var q=pcs.length-1;q>=0;q--){ order.push(pcs[q]); }
+      for (var m=0;m<order.length;m++){ (function(p,k){
+        var s=p.querySelector(".num");
+        setTimeout(function(){ s.textContent=(k+1); p.classList.add("counted"); pulse(p); }, 600 + k*520);
+      })(order[m], m); }
+    }],
+
+    // Beat 5 — the bottom number stays seven (pulse the denominators)
+    [16.0, function(){
+      showCap(4);
+      var ds=document.querySelectorAll("#eq .f .d");
+      ds.forEach(function(d){ pulse(d); });
+    }],
+
+    // Beat 6 — two sevenths plus three sevenths makes five sevenths
+    [19.0, function(){ showCap(5); pulse(el("eq")); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; }
+  };
+})();
+</script>
+</body>
+</html>

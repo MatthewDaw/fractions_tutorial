@@ -1,0 +1,93 @@
+/* lesson-unlike.css — scoped styles OWNED by LessonUnlikeDen.jsx (Lessons 2 & 3:
+   Scale One + Cross-Multiply). Reuses lesson.css / slate.css house classes by
+   NAME only (never edited here). All new rules are namespaced .lu-* (plus the
+   stage-selector ✎ marker) so they can't collide with the shared sheets.
+
+   Palette + fonts come from tokens.css (--ink, --red, --paper-*, --display,
+   --serif). Piece/numeral hues come from denominatorColors.js. Motion is gated
+   by prefers-reduced-motion at the bottom. */
+
+/* ---- stage selector: the stylus (✎) marker on a write stage ---------------- */
+.beat-select .beat-btn .lu-stylus {
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--red);
+  vertical-align: 1px;
+}
+.beat-select .beat-btn.on .lu-stylus { color: var(--paper-1); }
+
+/* ---- the shared <Slate> mounted in the HUD answer slot --------------------- */
+/* The HUD equation row is large (.hud-eq .qeq, 58px). The Slate's fraction
+   surface is taller than the printed inputs, so seat it inline and nudge the row
+   so the big "a/b + c/d =" and the writing cells share a baseline-ish center. */
+.lu-slate-mount {
+  display: inline-flex;
+  align-items: center;
+  transform: scale(0.82);          /* the Slate cells are 132px — trim to fit the HUD */
+  transform-origin: left center;
+}
+.lu-slate-mount.bad { animation: shakeX .42s ease-in-out; }
+/* pull the equation back so the scaled-down slate doesn't leave a gap */
+.hud-eq:has(.lu-slate-mount) .qeq { gap: 12px; }
+
+/* ---- numbers-lead CROSS-MULTIPLY visual (Stage 3/4, rename-both lesson) ---- */
+/* Sits where .slate-eq sits (the bare-equation slot in the canvas). The equation
+   leads; the dashed arrows arc each bottom across to the OTHER fraction, with the
+   ×N each contributes — adapted from the old standalone cross-multiply room. */
+.lu-cross {
+  position: absolute; left: 0; right: 0; top: 70px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  pointer-events: none;
+}
+.lu-cross-eq {
+  display: inline-flex; align-items: center; gap: 16px;
+  font-family: var(--display); font-size: 40px; color: var(--ink);
+}
+.lu-cross-eq .qop { color: var(--ink-mute); }
+.lu-cross-eq .slate-blank { color: var(--red); }
+.lu-cross-eq .lu-cf { color: var(--ink); }
+
+.lu-cross-svg {
+  width: 220px; height: 110px;
+  animation: luCrossIn .5s ease-out;
+}
+.lu-cross-x {
+  font-family: var(--display); font-size: 15px; fill: var(--red);
+}
+
+.lu-cross-rule {
+  display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;
+  max-width: 640px; padding: 8px 16px;
+  border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02);
+  font-family: var(--display); font-size: 16px; color: var(--ink); letter-spacing: .01em;
+}
+.lu-cross-rule b { color: var(--red); }
+.lu-cross-plus { color: var(--ink-mute); margin: 0 4px; }
+.lu-cross-note {
+  flex-basis: 100%; text-align: center; margin-top: 2px;
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+}
+
+@keyframes luCrossIn { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* ---- Stage 5 WORD PROBLEM mount (the shared <WordProblem>) ------------------ */
+/* Center the recipe card + its Slate inside the canvas where the story-card used
+   to sit. WordProblem owns its own .wp* styling (slate.css); this only positions
+   the mount and trims the Slate so the card + answer fit the canvas. */
+.lu-wp-mount {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 10px;
+}
+.lu-wp-mount .wp { gap: 12px; transform: scale(0.92); }
+.lu-wp-mount .wp-story { font-size: 21px; }
+.lu-wp-mount .wp-card { padding: 18px 24px 16px; }
+.lu-wp-mount .slate-fraction { transform: scale(0.78); transform-origin: center top; }
+
+/* ---- reduced motion -------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .lu-cross-svg, .lu-slate-mount.bad {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
