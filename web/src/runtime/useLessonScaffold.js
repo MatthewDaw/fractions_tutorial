@@ -287,6 +287,7 @@ export function useLessonScaffold({
     stars: starCount = 0,
     modality = "tap",
     recognizerConfidence = null,
+    hintMaxRung = 0,
   }) => {
     // On a generated stage the surface form IS the generated problem's form (so
     // the engine's transfer dimension tracks the real structural variants).
@@ -301,7 +302,10 @@ export function useLessonScaffold({
         correct,
         errorSignature: errorSignature ?? null,
         stars: starCount ?? 0,
-        hintMaxRung: 0,
+        // A used hint is recorded so the engine's independence gate + hint_dependence
+        // dimension get real signal: a hinted correct is NOT hint-free, so it does
+        // not count toward the clean-correct fade streak or scaffold-independence.
+        hintMaxRung: hintMaxRung ?? 0,
         selfCorrections: selfCorrectionsRef.current,
         surfaceForm,
       }
@@ -375,8 +379,8 @@ export function useLessonScaffold({
 
   // ---- award + advance on a correct answer ----------------------------------
   // Positional (line, voice, answerValue, opts) so existing callsites are unchanged.
-  // opts: { stars=3, modality, recognizerConfidence }. advanceMode "deferred"
-  // delays the engine decision (R5 lingers on the celebration first).
+  // opts: { stars=3, modality, recognizerConfidence, hintMaxRung }. advanceMode
+  // "deferred" delays the engine decision (R5 lingers on the celebration first).
   const award = useCallback((line, voice, answerValue, opts = {}) => {
     const st = opts.stars ?? 3;
     setSolved(true); solvedRef.current = true; setStars(st); setCook("cheer");
@@ -389,6 +393,7 @@ export function useLessonScaffold({
       stars: st,
       modality: opts.modality,
       recognizerConfidence: opts.recognizerConfidence,
+      hintMaxRung: opts.hintMaxRung ?? 0,
     });
     if (advanceMode === "deferred") {
       setTimeout(() => applyEngineDecision(dec, true), deferredDelayMs);
