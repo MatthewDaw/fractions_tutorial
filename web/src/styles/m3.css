@@ -21,12 +21,12 @@
    ════════════════════════════════════════════════════════════════════════════ */
 /* the FitStage canvas fills the (now flexible) shared stage box; FitStage measures
    the leftover height and downscales its child so the manipulative always fits. */
-.m3-fz-canvas { position: relative; width: 100%; max-width: 776px; flex: 1 1 auto; min-height: 0; margin: 0 auto; }
-.m3-fz-canvas-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.m3-fz-canvas { position: relative; width: 100%; max-width: 1000px; flex: 1 1 auto; min-height: 0; margin: 0 auto; }
+.m3-fz-canvas-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
 /* When the centered canvas is a <FitStage>, its children render inside
    .fit-stage-content (which has its own centering but no gap) — restore the 8px
    vertical rhythm between the big equation, caption, and prompt dots there. */
-.m3-fz-canvas-center .fit-stage-content { gap: 8px; }
+.m3-fz-canvas-center .fit-stage-content { gap: 18px; }
 
 /* equation-row pieces rendered inside the shared <AnswerBar eq={…}> */
 .m3-fz-fact { font-family: var(--display); font-size: 46px; color: var(--ink); }
@@ -59,14 +59,14 @@
    (an absolute/100% fill would collapse to the box and defeat the measurement). */
 .m3-jarwrap {
   position: relative; width: auto;
-  display: inline-flex; align-items: center; justify-content: center; gap: 26px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 44px;
 }
 .m3-jarwrap.is-ghost { opacity: 0.32; filter: grayscale(0.5); }
 
-.m3-jar { position: relative; width: 188px; display: flex; flex-direction: column; align-items: center; }
-.m3-jar-neck { width: 96px; height: 16px; margin: 0 auto; border: 2.5px solid #6b5a3c; border-bottom: none; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.35); }
+.m3-jar { position: relative; width: 214px; display: flex; flex-direction: column; align-items: center; }
+.m3-jar-neck { width: 108px; height: 18px; margin: 0 auto; border: 2.5px solid #6b5a3c; border-bottom: none; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.35); }
 .m3-jar-body {
-  position: relative; width: 188px; height: 256px;
+  position: relative; width: 214px; height: 288px;
   border: 3px solid #6b5a3c; border-radius: 10px 10px 16px 16px;
   background: linear-gradient(180deg, rgba(255,255,255,0.4), rgba(220,210,185,0.25));
   overflow: hidden;
@@ -90,7 +90,7 @@
   animation: m3-drop 0.4s cubic-bezier(0.34,1.2,0.64,1);
 }
 .m3-cube {
-  position: relative; width: 12px; height: 12px;
+  position: relative; width: 14px; height: 14px;
   border: 1.5px solid; border-radius: 3px; overflow: hidden;
 }
 .m3-cube-hatch { position: absolute; inset: 0; opacity: 0.5; }
@@ -100,17 +100,17 @@
 }
 
 .m3-jar-tally { display: flex; flex-direction: column; align-items: center; margin-top: 6px; }
-.m3-jar-tally-n { font-family: var(--display); font-size: 30px; color: var(--ink); line-height: 1; }
-.m3-jar-tally-cap { font-family: var(--serif); font-size: 11px; color: var(--ink-soft); }
+.m3-jar-tally-n { font-family: var(--display); font-size: 36px; color: var(--ink); line-height: 1; }
+.m3-jar-tally-cap { font-family: var(--serif); font-size: 12px; color: var(--ink-soft); }
 
 .m3-scale {
-  width: 88px; max-height: 300px; overflow: hidden;
-  display: flex; flex-direction: column-reverse; gap: 3px;
+  width: 104px; max-height: 320px; overflow: hidden;
+  display: flex; flex-direction: column-reverse; gap: 4px;
 }
-.m3-scale-empty { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
-.m3-scale-step { display: flex; align-items: baseline; gap: 6px; padding: 1px 6px; border-left: 3px solid var(--red-soft); }
-.m3-scale-step-add { font-family: var(--serif); font-size: 11px; color: var(--ink-mute); }
-.m3-scale-step-tot { font-family: var(--display); font-size: 19px; color: var(--ink); }
+.m3-scale-empty { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+.m3-scale-step { display: flex; align-items: baseline; gap: 7px; padding: 2px 8px; border-left: 3px solid var(--red-soft); }
+.m3-scale-step-add { font-family: var(--serif); font-size: 12px; color: var(--ink-mute); }
+.m3-scale-step-tot { font-family: var(--display); font-size: 23px; color: var(--ink); }
 
 .m3-scoopzone { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .m3-scoop {
@@ -164,8 +164,8 @@
    box and let the ribbon overflow the bottom). */
 .m3-bind {
   position: relative;
-  display: flex; align-items: center; justify-content: center; gap: 28px;
-  width: 720px;
+  display: flex; align-items: center; justify-content: center; gap: 48px;
+  width: 760px;
 }
 /* The jar sits at natural size beside the ribbon; FitStage does the single global
    downscale, so no fixed-size clip box / manual transform is needed here anymore. */
@@ -186,10 +186,10 @@
 }
 .m3-ribbon-term {
   position: relative;
-  font-family: var(--display); font-size: 22px; color: var(--ink);
-  padding: 4px 16px 4px 46px; border-radius: 6px;
+  font-family: var(--display); font-size: 26px; color: var(--ink);
+  padding: 6px 18px 6px 52px; border-radius: 6px;
   background: var(--paper-1); border: 1.5px solid var(--paper-3);
-  text-align: right; min-width: 118px; box-sizing: border-box;
+  text-align: right; min-width: 132px; box-sizing: border-box;
   overflow: visible;
 }
 /* the running "+M" step shown to the left of each term, so the count reads. A
@@ -216,7 +216,7 @@
    Laid out in NORMAL FLOW (not position:absolute) so the <FitStage> wrapper can
    measure its natural size and downscale-to-fit. A fixed width gives the number
    line a horizontal track to lay out along. */
-.m3-fade { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; width: 720px; }
+.m3-fade { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: 860px; }
 /* The ghost jar is a small confirmation above the line. It now lays out in NORMAL
    FLOW (the wrap is no longer position:absolute), so we shrink it with a scale and
    let the box shrink-wrap the SCALED footprint (no clip box) — the whole faded jar
@@ -233,29 +233,29 @@
 /* shrink the jar to a small confirmation chip (normal-flow wrap, scaled in place) */
 .m3-fade-jar .m3-jarwrap { transform: scale(0.42); transform-origin: center; }
 
-.m3-skipline { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+.m3-skipline { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; }
 .m3-skipline.is-ghost { opacity: 0.4; }
-.m3-skipline-track { position: relative; display: flex; align-items: flex-start; justify-content: center; gap: 0; padding-top: 10px; }
-.m3-skipline-rail { position: absolute; left: 8px; right: 8px; top: 16px; height: 3px; background: var(--ink-mute); }
-.m3-skipline-stop { display: flex; flex-direction: column; align-items: center; width: 64px; }
-.m3-skipline-tick { width: 3px; height: 12px; background: var(--ink-mute); }
+.m3-skipline-track { position: relative; display: flex; align-items: flex-start; justify-content: center; gap: 0; padding-top: 14px; }
+.m3-skipline-rail { position: absolute; left: 8px; right: 8px; top: 22px; height: 4px; background: var(--ink-mute); }
+.m3-skipline-stop { display: flex; flex-direction: column; align-items: center; width: 96px; }
+.m3-skipline-tick { width: 4px; height: 18px; background: var(--ink-mute); }
 .m3-skipline-term {
-  margin-top: 6px; font-family: var(--display); font-size: 22px; color: var(--ink);
-  min-width: 38px; text-align: center; padding: 2px 4px; border-radius: 6px;
+  margin-top: 9px; font-family: var(--display); font-size: 32px; color: var(--ink);
+  min-width: 52px; text-align: center; padding: 4px 6px; border-radius: 8px;
 }
 /* a blank is a DROP SLOT: a dashed landing well the child drags a chip into */
-.m3-skipline-term.is-blank { color: var(--red); border: 2px dashed var(--red); background: #fff8ea; min-width: 50px; }
+.m3-skipline-term.is-blank { color: var(--red); border: 2px dashed var(--red); background: #fff8ea; min-width: 68px; }
 .m3-skipline-term.is-active { box-shadow: 0 0 0 2px var(--red-soft); }
 /* the slot the dragged chip is currently hovering over — light up to invite the drop */
 .m3-skipline-term.is-hot { background: var(--red-soft); border-style: solid; box-shadow: 0 0 0 3px var(--red); transform: scale(1.08); }
 .m3-skipline-term.is-correct { color: var(--paper-1); background: #2a9d8f; border: 2px solid #2a9d8f; }
 .m3-skipline-term.is-wrong { color: var(--paper-1); background: #d1495b; border-color: #d1495b; }
 
-.m3-skipline-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
-.m3-skipline-chips-lead { font-family: var(--serif); font-size: 13px; color: var(--ink-mute); width: 100%; text-align: center; }
+.m3-skipline-chips { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.m3-skipline-chips-lead { font-family: var(--serif); font-size: 15px; color: var(--ink-mute); width: 100%; text-align: center; }
 .m3-skipline-chip {
-  font-family: var(--display); font-size: 20px; color: var(--ink);
-  padding: 8px 16px; border: 2px solid var(--ink); border-radius: 8px;
+  font-family: var(--display); font-size: 26px; color: var(--ink);
+  padding: 10px 22px; border: 2px solid var(--ink); border-radius: 8px;
   background: var(--paper-1); cursor: grab; touch-action: none; user-select: none;
   box-shadow: 2px 2px 0 rgba(28,22,18,0.18);
   transition: transform 0.1s, box-shadow 0.1s, opacity 0.1s;
@@ -280,17 +280,20 @@
    .play just needs to fill the (bare) stage box. */
 .lboard-stage.bare .play { flex: 1 1 auto; margin-top: 0; height: 100%; }
 
-/* ── Stage 5 (numbers): the bare fact equation ────────────────────────────── */
-.m3-bigeq { display: flex; align-items: center; gap: 22px; }
-.m3-bigeq-term { font-family: var(--display); font-size: 64px; color: var(--ink); }
-.m3-bigeq-op { font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red); }
-.m3-bigeq-q { font-family: var(--display); font-size: 64px; color: var(--red); min-width: 70px; text-align: center; border-bottom: 4px dashed var(--red-soft); }
+/* ── Stage 5 (numbers): the bare fact equation ──────────────────────────────
+   The stage box is wide and tall here (FitStage downscales if it ever overflows),
+   so the bare fact is rendered BIG to fill the empty proof zone — this is the
+   "know it by heart" focal moment. */
+.m3-bigeq { display: flex; align-items: center; gap: 34px; }
+.m3-bigeq-term { font-family: var(--display); font-size: 132px; line-height: 1; color: var(--ink); }
+.m3-bigeq-op { font-family: var(--serif); font-size: 92px; font-weight: 700; color: var(--red); }
+.m3-bigeq-q { font-family: var(--display); font-size: 132px; line-height: 1; color: var(--red); min-width: 132px; text-align: center; border-bottom: 7px dashed var(--red-soft); }
 .m3-numbers-cap {
-  font-family: var(--serif); font-size: 15px; color: var(--ink-soft); max-width: 540px; text-align: center;
-  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-family: var(--serif); font-size: 22px; color: var(--ink-soft); max-width: 760px; text-align: center;
+  height: 28px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
-.m3-prompt-dots { display: flex; gap: 8px; }
-.m3-prompt-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink-mute); background: transparent; }
+.m3-prompt-dots { display: flex; gap: 12px; }
+.m3-prompt-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink-mute); background: transparent; }
 .m3-prompt-dot.is-active { border-color: var(--red); background: var(--red-soft); }
 .m3-prompt-dot.is-done { border-color: #2a9d8f; background: #2a9d8f; }
 
@@ -299,33 +302,45 @@
    variant="wide">; these rules — scoped by the className="m3-fz-words" the board
    carries — only tune the WordProblem card/Slate sizing inside it. The old fixed
    .m3-fz-wp / .m3-fz-tutor layout rectangles are gone. */
-.m3-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
-.m3-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
-.m3-fz-words .wp-card-head { margin-bottom: 8px; }
-.m3-fz-words .wp-story { font-size: 18px; }
-.m3-fz-words .wp-setup { gap: 4px; }
-.m3-fz-words .wp-answer { gap: 6px; }
-.m3-fz-words .wp-answer .slate-row .slate-cell { width: 92px; height: 68px; }
-.m3-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 42px; }
-.m3-fz-words .wp-answer .slate-row .slate-ph { font-size: 26px; }
+/* center the word-problem stack vertically so it sits in the middle of the tall
+   wide column instead of hugging the top with empty space below. */
+.m3-fz-words .lboard-wp { justify-content: center; }
+.m3-fz-words .wp { gap: 18px; width: 100%; align-items: center; }
+.m3-fz-words .wp-card { padding: 18px 32px 16px; max-width: 860px; }
+.m3-fz-words .wp-card-head { margin-bottom: 12px; }
+.m3-fz-words .wp-story { font-size: 23px; line-height: 1.45; }
+.m3-fz-words .wp-setup { gap: 8px; }
+.m3-fz-words .wp-answer { gap: 10px; }
+.m3-fz-words .wp-answer .slate-row .slate-cell { width: 104px; height: 80px; }
+.m3-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 48px; }
+.m3-fz-words .wp-answer .slate-row .slate-ph { font-size: 30px; }
 
 /* the Words optional "show your work" scratch — a GENEROUS full drawing slate
    (was a cramped 150px strip), as roomy as the dedicated Show-Work step. It sits
    as the WordProblem's setup slot, so it spans the card width. */
 .m3-words-scratch {
   position: relative;
-  width: 760px;
+  width: 860px;
   max-width: 100%;
-  height: 250px;
+  height: 300px;
   margin: 2px auto 0;
 }
 
+/* ── Show-Work step — the mandatory blank slate between Applied and Words.
+   The wide column is tall (~500px) and was top-aligned with a fixed 800×360 slate
+   that left a big empty band below. Center the whole stack and let the drawing
+   surface grow as large as comfortably fits. */
+.m3-showwork .lboard-wp { justify-content: center; gap: 14px; }
+.m3-sw-panel { width: 920px; max-width: 100%; box-sizing: border-box; margin-bottom: 0; }
+.m3-sw-surface { position: relative; width: 920px; max-width: 100%; height: 380px; }
+.m3-sw-marks { margin-top: 0; }
+
 /* the Applied setup gate (groups × size) — two single-slot Slates with an × */
-.m3-setup-row { display: inline-flex; align-items: center; gap: 14px; }
-.m3-setup-row .slate-row .slate-cell { width: 58px; height: 54px; }
-.m3-setup-row .slate-row .slate-committed-digit { font-size: 30px; }
-.m3-setup-row .slate-row .slate-ph { font-size: 20px; }
-.m3-setup-op { font-family: var(--display); font-size: 30px; color: var(--ink-mute); }
+.m3-setup-row { display: inline-flex; align-items: center; gap: 18px; }
+.m3-setup-row .slate-row .slate-cell { width: 72px; height: 66px; }
+.m3-setup-row .slate-row .slate-committed-digit { font-size: 38px; }
+.m3-setup-row .slate-row .slate-ph { font-size: 24px; }
+.m3-setup-op { font-family: var(--display); font-size: 38px; color: var(--ink-mute); }
 .m3-setup-row.is-shake { animation: m3-shake 0.42s; }
 .m3-setup-ok { font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center; }
 

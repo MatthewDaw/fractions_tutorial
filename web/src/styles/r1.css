@@ -25,7 +25,7 @@
    the top — the empty room below it absorbs the stage row's slack (no fixed
    336px that would clip when the honest stage height is shorter). */
 .r1-s1-canvas {
-  position: relative; width: 524px; height: 100%; min-height: 0;
+  position: relative; width: 584px; height: 100%; min-height: 0;
   margin: 0 auto; flex: 1 1 auto;
 }
 
@@ -85,12 +85,16 @@
    "r1-fz-words" the board carries — only tune the WordProblem card + Slate sizing
    inside it. Answer cells stay comfortably large for a child's digit; the
    optional/setup cells are smaller. */
-.r1-fz-words .wp { gap: 8px; width: 100%; align-items: center; }
-.r1-fz-words .wp-card { padding: 10px 24px 9px; max-width: 760px; }
-.r1-fz-words .wp-card-head { margin-bottom: 8px; }
-.r1-fz-words .wp-story { font-size: 18px; }
-.r1-fz-words .wp-setup { gap: 4px; }
-.r1-fz-words .wp-answer { gap: 6px; }
+/* center the whole word column vertically in the wide stage box so it never
+   top-anchors with a big empty band below (FitStage axis="y" still downscales it
+   only if it would overflow). */
+.r1-fz-words .lboard-wp { justify-content: center; }
+.r1-fz-words .wp { gap: 14px; width: 100%; align-items: center; }
+.r1-fz-words .wp-card { padding: 18px 36px 16px; max-width: 880px; }
+.r1-fz-words .wp-card-head { margin-bottom: 12px; }
+.r1-fz-words .wp-story { font-size: 21px; line-height: 1.5; }
+.r1-fz-words .wp-setup { gap: 8px; }
+.r1-fz-words .wp-answer { gap: 10px; }
 /* answer Slate — GENEROUSLY large for handwriting, matching the block stages'
    96×78 cells. The word stages are wrapped in <FitStage axis="y">, which uniformly
    downscales the whole column only if it would overflow, so we can size the writing
@@ -102,22 +106,25 @@
 .r1-fz-words .wp-answer .slate-fraction .slate-ph { font-size: 28px; }
 .r1-fz-words .wp-answer .slate-fraction { gap: 4px; }
 /* setup ExpressionSlate — smaller (scratch / gate), real box reduction */
-.r1-fz-words .expr-slate { gap: 12px; }
-.r1-fz-words .expr-slate .slate-cell { width: 58px; height: 52px; }
-.r1-fz-words .expr-slate .slate-bar { width: 58px; }
+.r1-fz-words .expr-slate { gap: 16px; }
+.r1-fz-words .expr-slate .slate-cell { width: 70px; height: 60px; }
+.r1-fz-words .expr-slate .slate-bar { width: 70px; }
 .r1-fz-words .expr-slate .slate-fraction { gap: 3px; }
-.r1-fz-words .expr-slate .slate-fraction .slate-fixed { font-size: 28px; }
-.r1-fz-words .expr-slate .slate-fraction .slate-committed-digit { font-size: 30px; }
-.r1-fz-words .expr-slate .slate-fraction .slate-ph { font-size: 20px; }
+.r1-fz-words .expr-slate .slate-fraction .slate-fixed { font-size: 32px; }
+.r1-fz-words .expr-slate .slate-fraction .slate-committed-digit { font-size: 34px; }
+.r1-fz-words .expr-slate .slate-fraction .slate-ph { font-size: 22px; }
 
 /* ── Stage 2/3 proof-zone contents ────────────────────────────────────────── */
 .r1-bind-stack {
   position: absolute;
-  left: 40px; top: 96px;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center;
 }
 .r1-bind-cap {
-  margin-top: 12px;
-  max-width: 420px;
+  margin-top: 18px;
+  max-width: 560px;
+  text-align: center;
   font-family: var(--serif);
   font-size: 15px;
   color: var(--ink-soft);

@@ -15,23 +15,31 @@
    here is only m2-SPECIFIC content: the stage canvas, the equation-row pieces that
    ride inside the shared <AnswerBar>, and the distributivity answer row.
    ════════════════════════════════════════════════════════════════════════════ */
-/* the stage canvas wrapped by <FitStage>, which measures its natural size and
-   scales it to the (flexible) shared stage box — so the canvas keeps its honest
-   776×336 design size here. */
-.m2-fz-canvas { position: relative; width: 776px; height: 336px; margin: 0 auto; }
+/* the stage canvas wrapped by <FitStage>. This class lands on FitStage's OUTER
+   box (.fit-stage), so it must FILL the (flexible) shared stage zone — NOT pin a
+   fixed 776×336 rectangle (that old fixed box forced FitStage to always measure
+   against 336px of height and shrink every tray to ~0.72×, the root of the
+   "tray too small / wasted whitespace" bug). Filling the zone lets FitStage
+   measure the REAL available height and only downscale the content when it
+   genuinely overflows. */
+.m2-fz-canvas { position: relative; width: 100%; height: 100%; }
+/* the inner natural-size content column (.fit-stage-content). Gap/centering for
+   the manipulative + caption stack; FitStage already centers the box. */
+.m2-fz-canvas.m2-fz-canvas-center > .fit-stage-content,
 .m2-fz-canvas-center {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 10px;
 }
 
 /* equation-row pieces rendered inside the shared <AnswerBar eq={…}> */
-.m2-fz-expr { font-family: var(--display); font-size: 46px; color: var(--ink); }
-.m2-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+.m2-fz-expr { font-family: var(--display); font-size: 54px; color: var(--ink); }
+.m2-fz-op { font-family: var(--display); font-size: 46px; color: var(--ink-mute); }
 .m2-fz-slate { display: inline-flex; position: relative; }
-/* single whole-number slot — kept large for a child's handwriting */
-.m2-fz-slate .slate-row .slate-cell { width: 96px; height: 78px; }
-.m2-fz-slate .slate-row .slate-committed-digit { font-size: 46px; }
-.m2-fz-slate .slate-row .slate-ph { font-size: 28px; }
+/* single whole-number slot — large for a child's handwriting; the 172px foot
+   gives room for a tall write cell. */
+.m2-fz-slate .slate-row .slate-cell { width: 116px; height: 104px; }
+.m2-fz-slate .slate-row .slate-committed-digit { font-size: 58px; }
+.m2-fz-slate .slate-row .slate-ph { font-size: 34px; }
 /* float the verifier guess chip so it never changes row height */
 .m2-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
 
@@ -127,7 +135,15 @@
 }
 
 /* ── Stage 4 workbench build controls ────────────────────────────────────── */
-.m2-build-empty { font-family: var(--serif); font-size: 18px; color: var(--ink-mute); font-style: italic; }
+/* Stage-4 empty state: a roomy dashed "build plate" placeholder so the bare stage
+   reads as a workbench waiting for a tray, not an empty void. */
+.m2-build-empty {
+  font-family: var(--serif); font-size: 26px; color: var(--ink-mute); font-style: italic;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  width: 460px; height: 200px; padding: 0 28px; box-sizing: border-box;
+  border: 3px dashed rgba(122, 82, 48, 0.45); border-radius: 16px;
+  background: rgba(255, 245, 220, 0.35);
+}
 .m2-build-controls { display: flex; align-items: flex-end; gap: 14px; margin-top: 14px; }
 .m2-build-x { font-family: var(--display); font-size: 26px; color: var(--red); padding-bottom: 6px; }
 .m2-build-dim { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -149,11 +165,17 @@
 .m2-fz-answer-big .m2-fz-slate .slate-row .slate-committed-digit { font-size: 66px; }
 .m2-fz-answer-big .m2-fz-slate .slate-row .slate-ph { font-size: 40px; }
 
-/* ── Stage 5 bare equation ───────────────────────────────────────────────── */
-.m2-bigeq { display: flex; align-items: center; gap: 22px; }
-.m2-bigeq-f, .m2-bigeq-q { font-family: var(--display); font-size: 64px; color: var(--ink); }
+/* Stage 4 build readout in the answer bar — the equation is the whole answer
+   (no Slate), so size the factors/product up to fill the wide bar. */
+.m2-fz-answer-build .lbar-eq { gap: 22px; }
+.m2-fz-answer-build .m2-fz-expr { font-size: 58px; }
+.m2-fz-answer-build .m2-fz-op { font-size: 50px; }
+
+/* ── Stage 5 bare equation ─── grown to fill the (now taller) sparse stage ── */
+.m2-bigeq { display: flex; align-items: center; gap: 30px; }
+.m2-bigeq-f, .m2-bigeq-q { font-family: var(--display); font-size: 104px; line-height: 1; color: var(--ink); }
 .m2-bigeq-q { color: var(--red-deep); }
-.m2-bigeq-op { font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red); }
+.m2-bigeq-op { font-family: var(--serif); font-size: 80px; font-weight: 700; color: var(--red); }
 
 /* ── Stages 6,7 word-problem content tweaks ───────────────────────────────────
    The wide layout (story column + narrow tutor) is the shared <LessonBoard
@@ -215,6 +237,17 @@
 .m2-fz-applied .m2-setup-row .slate-row .slate-committed-digit { font-size: 52px; }
 .m2-fz-applied .m2-setup-row .slate-row .slate-ph { font-size: 34px; }
 .m2-fz-applied .wp-setup-lead { font-size: 13px; }
+
+/* ── Show-Work stage (sw) — a GENEROUS blank writing sheet that fills the stage
+   zone width (a handwriting app: the scratch surface should be as large as
+   comfortably fits). Not wrapped in FitStage, so it's sized to sit inside the
+   ~774px-wide × 271px-tall zone without overflow. */
+.m2-showwork-canvas { gap: 10px; }
+.m2-showwork-surface {
+  position: relative;
+  width: 760px; max-width: 100%;
+  height: 232px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .m2-tray-cell { transition: none; }

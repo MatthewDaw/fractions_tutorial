@@ -31,28 +31,28 @@
    leftover height to size the plates so all N always fit — no fixed 336px that
    would clip when the honest stage height is shorter. */
 .m1-canvas {
-  position: relative; width: 100%; max-width: 776px; height: 100%; margin: 0 auto;
+  position: relative; width: 100%; max-width: 880px; height: 100%; margin: 0 auto;
   min-height: 0; box-sizing: border-box;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-  gap: 14px; padding-top: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding-top: 6px;
 }
 .m1-canvas-center { justify-content: center; gap: 6px; }
 
 /* equation-row pieces rendered inside the shared <AnswerBar eq={…}> */
-.m1-fz-frac { font-family: var(--display); font-size: 40px; color: var(--ink); }
-.m1-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+.m1-fz-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
+.m1-fz-op { font-family: var(--display); font-size: 46px; color: var(--ink-mute); }
 .m1-fz-slate { display: inline-flex; position: relative; }
 /* keep the handwriting cell comfortably large for a child's digit */
-.m1-fz-slate .slate-row .slate-cell { width: 92px; height: 78px; }
-.m1-fz-slate .slate-row .slate-committed-digit { font-size: 46px; }
-.m1-fz-slate .slate-row .slate-ph { font-size: 28px; }
+.m1-fz-slate .slate-row .slate-cell { width: 104px; height: 92px; }
+.m1-fz-slate .slate-row .slate-committed-digit { font-size: 52px; }
+.m1-fz-slate .slate-row .slate-ph { font-size: 32px; }
 .m1-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
 
 /* the count box (Stage 1) — a plain numeric box, not a Slate */
 .m1-countbox { display: inline-flex; }
 .m1-count-input {
-  width: 110px; height: 74px;
-  font-family: var(--display); font-size: 46px; text-align: center;
+  width: 124px; height: 88px;
+  font-family: var(--display); font-size: 52px; text-align: center;
   color: var(--ink); background: var(--paper-1);
   border: 2.5px solid var(--ink); border-radius: 8px;
 }
@@ -153,6 +153,12 @@
   filter: drop-shadow(2px 3px 2px rgba(20,12,6,0.35));
 }
 
+/* m1 plates read a touch larger & wider on the tablet: keep the JS-computed height
+   (so the vertical fit/clamp is untouched) but widen the oval so the stack fills
+   more of the wide stage and the pelmeni sit roomier. */
+.m1-canvas .mg-vessel { width: calc(var(--mg-plate, 92px) * 1.42); }
+.m1-canvas .mg-vessel-pieces { gap: 4px 8px; }
+
 .m1-board-head { font-family: var(--serif); font-size: 16px; color: var(--ink-soft); flex: 0 0 auto; }
 .m1-board-head b { color: var(--red); }
 .m1-bowl-hint { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 0 0 auto; }
@@ -161,14 +167,14 @@
 
 /* ── Stage 2 repeated-addition strip ──────────────────────────────────────── */
 .m1-addstrip {
-  display: inline-flex; align-items: center; gap: 10px; margin-top: 6px;
-  font-family: var(--display); font-size: 34px; color: var(--ink);
+  display: inline-flex; align-items: center; gap: 12px; margin-top: 6px;
+  font-family: var(--display); font-size: 44px; color: var(--ink);
 }
 .m1-addstrip-term {
-  min-width: 44px; text-align: center;
-  border-bottom: 3px solid var(--red-soft); padding: 0 4px;
+  min-width: 54px; text-align: center;
+  border-bottom: 3px solid var(--red-soft); padding: 0 6px;
 }
-.m1-addstrip-op { color: var(--red); font-size: 28px; }
+.m1-addstrip-op { color: var(--red); font-size: 36px; }
 .m1-addstrip-blank { color: var(--red); border-bottom: 3px dashed var(--red-soft); padding: 0 8px; }
 .m1-addstrip-hint { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-mute); }
 
@@ -182,44 +188,47 @@
   width: 22px; height: 22px; border-radius: 50%;
   background: #2f6b3a; color: var(--paper-1); font-style: normal; font-weight: 700; font-size: 14px;
 }
-.m1-collapse-row { display: inline-flex; align-items: center; gap: 16px; margin-top: 10px; }
-.m1-addstrip-lead { font-family: var(--display); font-size: 34px; color: var(--ink); }
+.m1-collapse-row { display: inline-flex; align-items: center; gap: 20px; margin-top: 12px; }
+.m1-addstrip-lead { font-family: var(--display); font-size: 46px; color: var(--ink); }
 .m1-collapse-btn {
-  font-family: var(--serif); font-size: 15px; cursor: pointer;
-  padding: 8px 14px; border: 1.5px solid var(--red); border-radius: 8px;
+  font-family: var(--serif); font-size: 17px; cursor: pointer;
+  padding: 11px 18px; border: 1.5px solid var(--red); border-radius: 8px;
   background: #fff8ea; color: var(--red-deep);
 }
 .m1-collapse-btn:hover { background: #fff0d6; }
 .m1-collapse-btn:disabled { opacity: 0.5; cursor: default; }
-.m1-times-lead { font-family: var(--display); font-size: 40px; color: var(--ink); }
+.m1-times-lead { font-family: var(--display); font-size: 56px; color: var(--ink); }
 .m1-times-eq { color: var(--ink-mute); }
 .m1-times-blank { color: var(--red); border-bottom: 3px dashed var(--red-soft); padding: 0 8px; }
 
 /* ── Stage 5 bare equation ────────────────────────────────────────────────── */
-.m1-bigeq { display: flex; align-items: center; gap: 18px; }
-.m1-bigeq-term { font-family: var(--display); font-size: 60px; color: var(--ink); }
-.m1-bigeq-op { font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red); }
-.m1-bigeq-q { font-family: var(--display); font-size: 60px; color: var(--red); }
+.m1-bigeq { display: flex; align-items: center; gap: 26px; }
+.m1-bigeq-term { font-family: var(--display); font-size: 92px; color: var(--ink); }
+.m1-bigeq-op { font-family: var(--serif); font-size: 72px; font-weight: 700; color: var(--red); }
+.m1-bigeq-q { font-family: var(--display); font-size: 92px; color: var(--red); }
 .m1-numbers-cap {
-  margin-top: 18px; font-family: var(--serif); font-size: 15px; color: var(--ink-soft);
-  max-width: 540px; text-align: center;
-  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  margin-top: 26px; font-family: var(--serif); font-size: 17px; color: var(--ink-soft);
+  max-width: 600px; text-align: center;
+  height: 22px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 
 /* ── Stages 6,7 word-problem content tweaks ───────────────────────────────────
    The wide layout (story column + narrow tutor) is the shared <LessonBoard
    variant="wide">; these rules — scoped by the className="m1-fz-words" the board
    carries — only tune the WordProblem card/Slate sizing inside it. */
-.m1-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
-.m1-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
-.m1-fz-words .wp-card-head { margin-bottom: 8px; }
-.m1-fz-words .wp-story { font-size: 18px; }
-.m1-fz-words .wp-setup { gap: 4px; }
-.m1-fz-words .wp-answer { gap: 6px; }
+/* center the word-problem column vertically so it fills the tall wide stage
+   instead of clinging to the top with a big empty bottom. */
+.m1-fz-words .lboard-wp { justify-content: center; }
+.m1-fz-words .wp { gap: 18px; width: 100%; align-items: center; }
+.m1-fz-words .wp-card { padding: 20px 32px 18px; width: 100%; max-width: 880px; box-sizing: border-box; }
+.m1-fz-words .wp-card-head { margin-bottom: 12px; }
+.m1-fz-words .wp-story { font-size: 24px; line-height: 1.5; }
+.m1-fz-words .wp-setup { gap: 8px; }
+.m1-fz-words .wp-answer { gap: 10px; }
 /* answer Slate — large for handwriting */
-.m1-fz-words .wp-answer .slate-row .slate-cell { width: 78px; height: 64px; }
-.m1-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 40px; }
-.m1-fz-words .wp-answer .slate-row .slate-ph { font-size: 24px; }
+.m1-fz-words .wp-answer .slate-row .slate-cell { width: 96px; height: 80px; }
+.m1-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 48px; }
+.m1-fz-words .wp-answer .slate-row .slate-ph { font-size: 30px; }
 
 /* Words (Stage 7) OPTIONAL scratch surface — a GENEROUS, full-width drawing slate
    (was a cramped 255px box). Sized to match M3's words scratch (~756×246) and the
@@ -230,19 +239,44 @@
    .m1-fz-wp is a fixed, overflow-hidden 544px column). */
 .m1-words-scratch {
   width: 100%;
-  max-width: 756px;
-  height: 280px;
+  max-width: 860px;
+  height: 200px;
 }
+/* the Words stage packs a story + a generous scratch + an answer row into one
+   fixed-height wide column — tighten the verticals so nothing clips at top/bottom. */
+.m1-words-stage .wp { gap: 8px; }
+.m1-words-stage .wp-card { padding: 10px 28px 10px; }
+.m1-words-stage .wp-story { font-size: 19px; line-height: 1.35; }
+/* let the scratch + answer rows stretch to the card width instead of hugging
+   their own content (otherwise the "show your work" slate reads as a tiny box). */
+.m1-words-stage .wp-setup,
+.m1-words-stage .wp-setup-row { width: 100%; max-width: 880px; box-sizing: border-box; }
+.m1-words-stage .wp-setup { padding: 4px 8px; margin: 0; }
+.m1-words-stage .wp-setup-row { display: flex; }
+.m1-words-stage .wp-answer .slate-row .slate-cell { width: 84px; height: 68px; }
+.m1-words-stage .wp-answer .slate-row .slate-committed-digit { font-size: 42px; }
 /* tighten the dashed setup wrapper around the big slate so the extra height stays
    inside the fixed words column (no clip of the answer row). */
 .m1-fz-words .wp-setup { padding: 6px 10px; margin: 2px 0 8px; }
 
+/* ── Show-Work step — a GENEROUS full-width scratch slate ───────────────────────
+   The wide column has no answer bar of its own, so let the blank slate run nearly
+   the full width and as tall as fits above the Next button. */
+.m1-showwork .lboard-wp { align-items: stretch; }
+.m1-showwork-head { margin-bottom: 12px; flex: 0 0 auto; }
+.m1-showwork-slate {
+  flex: 1 1 auto; min-height: 0;
+  width: 100%; max-width: 940px;
+  margin: 0 auto;
+}
+.m1-showwork .lbar-marks { flex: 0 0 auto; }
+
 /* the count × size setup row (Applied gate / Words scratch) */
-.m1-setup-row { display: inline-flex; align-items: center; gap: 12px; }
-.m1-setup-row .slate-row .slate-cell { width: 56px; height: 52px; }
-.m1-setup-row .slate-row .slate-committed-digit { font-size: 30px; }
-.m1-setup-row .slate-row .slate-ph { font-size: 20px; }
-.m1-setup-times { font-family: var(--display); font-size: 30px; color: var(--red); }
+.m1-setup-row { display: inline-flex; align-items: center; gap: 16px; }
+.m1-setup-row .slate-row .slate-cell { width: 72px; height: 64px; }
+.m1-setup-row .slate-row .slate-committed-digit { font-size: 38px; }
+.m1-setup-row .slate-row .slate-ph { font-size: 24px; }
+.m1-setup-times { font-family: var(--display); font-size: 38px; color: var(--red); }
 .m1-setup-ok { font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center; }
 .m1-setup-row.is-shake { animation: m1-shake 0.42s; }
 @keyframes m1-shake {

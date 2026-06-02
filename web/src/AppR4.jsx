@@ -50,7 +50,7 @@ import "./styles/r4.css";
 // the whole SPAN — the GroupBar fills the width and cells are as big as possible.
 // The filled region's right edge is fixed at ORIGIN + value·SPAN and never moves
 // while grouping — that's the persistent fill-edge ("same amount") marker.
-const ORIGIN = 90, SPAN = 660, LINE_Y = 188, BAR_Y = 96;
+const ORIGIN = 90, SPAN = 660, LINE_Y = 198, BAR_Y = 64;
 
 // The worked example. ORIGINAL is the unsimplified fraction; VALUE its true amount.
 const START_NUM = 8, START_DEN = 12;
@@ -563,7 +563,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
             </div>
             <div className="r4-s-setup">
               <span className="r4-s-setup-lead">Show your work here</span>
-              <div className="bs-surface" style={{ position: "relative", width: 1080, height: 420 }}>
+              <div className="bs-surface" style={{ position: "relative", width: 1120, height: 330 }}>
                 <BlankSlate
                   key={`showwork:${stage}`}
                   hint="show your work here — write anything you like ✎"
@@ -901,7 +901,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
         current: stage,
         onSelect: goStage,
       }}
-      band={stage !== "words" ? Band : null}
+      band={stage !== "words" && stage !== "showwork" ? Band : null}
       goal={Goal}
       extra={Ghost}
     >

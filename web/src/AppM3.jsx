@@ -437,8 +437,10 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 1 · MANIPULATE — the SkipJar IS the problem. No writing but the count box.
     body = (
       <LessonBoard
-        footHeight={196}
-        railWidth={396}
+        footHeight={158}
+        railWidth={360}
+        rowGap={10}
+        marginTop={6}
         stage={
           <FitStage className="canvas m3-fz-canvas" id="m3canvas">
             <SkipJar groupSize={SIZE} groups={GROUPS} filled={scoops} onScoop={doScoop} />
@@ -465,8 +467,10 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 2 · BIND — jar + printed skip-count ribbon (early terms shown) + equation.
     body = (
       <LessonBoard
-        footHeight={196}
-        railWidth={396}
+        footHeight={158}
+        railWidth={360}
+        rowGap={10}
+        marginTop={6}
         stage={
           <FitStage className="canvas m3-fz-canvas" id="m3canvas">
             <div className="m3-bind">
@@ -507,8 +511,10 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 3 · FADE — the jar ghosts; the SkipLine leads with two blank interior terms.
     body = (
       <LessonBoard
-        footHeight={196}
-        railWidth={396}
+        footHeight={158}
+        railWidth={360}
+        rowGap={10}
+        marginTop={6}
         stage={
           <FitStage className="canvas m3-fz-canvas" id="m3canvas">
             <div className="m3-fade">
@@ -544,7 +550,9 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <LessonBoard
         rail={null}
-        footHeight={196}
+        footHeight={158}
+        rowGap={10}
+        marginTop={6}
         stageClassName="bare"
         stage={
           <BlockSandbox
@@ -574,8 +582,10 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     const prompt = FLUENCY_PROMPTS[promptIdx];
     body = (
       <LessonBoard
-        footHeight={196}
-        railWidth={396}
+        footHeight={158}
+        railWidth={360}
+        rowGap={10}
+        marginTop={6}
         stage={
           <FitStage className="canvas m3-fz-canvas m3-fz-canvas-center" id="m3canvas">
             <div className="m3-bigeq">
@@ -624,6 +634,7 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
         variant="wide"
         className="m3-fz-words"
         tutorWidth={220}
+        marginTop={6}
         content={
           <WordProblem
             story={story}
@@ -665,15 +676,16 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <LessonBoard
         variant="wide"
-        className="m3-fz-words"
+        className="m3-fz-words m3-showwork"
         tutorWidth={220}
+        marginTop={6}
         content={
           <>
-            <div className="panel" style={{ marginBottom: 14 }}>
+            <div className="panel m3-sw-panel">
               <h3>Show Your Work</h3>
               <div className="hint">Before the last story problem — show how you'd skip-count {GROUPS} × {SIZE} on a blank slate. Write anything you like; this one isn't graded.</div>
             </div>
-            <div className="bs-surface" style={{ position: "relative", width: 800, height: 360 }}>
+            <div className="bs-surface m3-sw-surface">
               <BlankSlate
                 key={`showwork:${stage}`}
                 hint="show your work here — write anything you like ✎"
@@ -681,7 +693,7 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
                 ariaLabel="show your work on a blank slate"
               />
             </div>
-            <div className="lbar-marks" style={{ marginTop: 12 }}>
+            <div className="lbar-marks m3-sw-marks">
               <button
                 className={"check" + (showWorkInked ? " ready" : "")}
                 disabled={!showWorkInked}
@@ -707,6 +719,7 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
         variant="wide"
         className="m3-fz-words"
         tutorWidth={220}
+        marginTop={6}
         content={
           <WordProblem
             story={story}

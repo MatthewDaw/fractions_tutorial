@@ -447,6 +447,8 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 1 · MANIPULATE — the plates ARE the problem. Tap pelmeni; fill a count box.
     body = (
       <LessonBoard
+        footHeight={160}
+        railWidth={360}
         stage={
           <div className="canvas m1-canvas">
             <div className="m1-board-head">Drag the <b>same {SIZE}</b> onto every plate</div>
@@ -508,6 +510,8 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     };
     body = (
       <LessonBoard
+        footHeight={160}
+        railWidth={360}
         stage={
           <div className="canvas m1-canvas">
             <div className="m1-board-head">Tap each plate to add its <b>+ {SIZE}</b> to the sum</div>
@@ -544,6 +548,8 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 3 · FADE — plates dim to ghost; the 4+4+4 line leads; collapse to 3 × 4.
     body = (
       <LessonBoard
+        footHeight={160}
+        railWidth={360}
         stage={
           <div className="canvas m1-canvas m1-faded">
             <div className="m1-fadecheck" aria-hidden="true"><span className="m1-fadecheck-mark">✓</span> plates checked — let the numbers lead</div>
@@ -599,6 +605,8 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 5 · NUMBERS — a bare 3 × 4 = ? card; write the product.
     body = (
       <LessonBoard
+        footHeight={160}
+        railWidth={360}
         stage={
           <div className="canvas m1-canvas m1-canvas-center">
             <div className="m1-bigeq">
@@ -622,6 +630,7 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <LessonBoard
         variant="wide"
+        tutorWidth={224}
         className="m1-fz-words"
         content={
           <WordProblem
@@ -679,14 +688,15 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <LessonBoard
         variant="wide"
-        className="m1-fz-words"
+        tutorWidth={224}
+        className="m1-fz-words m1-showwork"
         content={
           <>
-            <div className="panel" style={{ marginBottom: 14 }}>
+            <div className="panel m1-showwork-head">
               <h3>Show Your Work</h3>
               <div className="hint">Before the last story problem — show how you'd count {GROUPS} groups of {SIZE} on a blank slate. Write anything you like; this one isn't graded.</div>
             </div>
-            <div className="bs-surface" style={{ position: "relative", width: 800, height: 360 }}>
+            <div className="bs-surface m1-showwork-slate" style={{ position: "relative" }}>
               <BlankSlate
                 key={`showwork:${stage}`}
                 hint="show your work here — write anything you like ✎"
@@ -712,7 +722,8 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <LessonBoard
         variant="wide"
-        className="m1-fz-words"
+        tutorWidth={224}
+        className="m1-fz-words m1-words-stage"
         content={
           <WordProblem
             story={prob.prose}

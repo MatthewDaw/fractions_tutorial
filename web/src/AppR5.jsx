@@ -427,17 +427,21 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
     : (NEXT_STAGE[stage] ? "Next ▸" : "Again");
 
   // ---- layout coordinates inside the canvas -----------------------------------
-  const COL_W = 90;
+  // The manipulative fills the board: the tall overflow column on the left, the
+  // whole-unit FRAME and leftover TRAY (both a full UNIT wide, comfortably tall)
+  // stacked in the center-right so the assembly spans the canvas instead of
+  // hugging the upper-left corner.
+  const COL_W = 100;
   const COL_X = ORIGIN;
-  const COL_TOP = 28;
-  const FRAME_X = ORIGIN + 200;
-  const FRAME_Y = 96;
+  const COL_TOP = 24;
+  const FRAME_X = ORIGIN + 280;
+  const FRAME_Y = 92;
   const FRAME_W = UNIT;
-  const FRAME_H = 64;
+  const FRAME_H = 88;
   const TRAY_X = FRAME_X;
-  const TRAY_Y = FRAME_Y + 150;
+  const TRAY_Y = FRAME_Y + 168;
   const TRAY_W = UNIT;
-  const TRAY_H = 56;
+  const TRAY_H = 72;
 
   // ── CANONICAL QUESTION BAND — the shared full-width band, mounted directly
   //    under the stage-selector tabs on every stage EXCEPT the final words-only
@@ -909,8 +913,9 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
 
     body = (
       <LessonBoard
-        footHeight={236}
-        railWidth={396}
+        footHeight={isNumbers ? 188 : 198}
+        railWidth={372}
+        rowGap={12}
         stage={Stage}
         rail={Rail}
         answer={Answer}

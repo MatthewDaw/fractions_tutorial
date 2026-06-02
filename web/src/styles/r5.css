@@ -28,7 +28,7 @@
 .r5-overflow .r5-col-tag {
   position: absolute; left: 50%; transform: translateX(-50%); top: -52px; white-space: nowrap;
 }
-.r5-overflow .r5-block { width: 90px; }
+.r5-overflow .r5-block { width: 100px; height: 32px; }
 
 /* the WHOLE-UNIT FRAME — the target the child fills. It holds exactly `den`
    blocks; the moment it is full it LOCKS (a snap) and reads as "1 whole". */
@@ -111,15 +111,15 @@
 .lbar .r5-write { align-items: center; gap: 14px; }
 /* the handwriting cells stay comfortably large for a child's digit. The leftover
    fraction is a stacked slate; the whole-number is a single-cell row slate. */
-.lbar .r5-write .slate-fraction .slate-cell { width: 84px; height: 70px; }
-.lbar .r5-write .slate-fraction .slate-bar { width: 84px; }
-.lbar .r5-write .slate-row .slate-cell { width: 84px; height: 70px; }
+.lbar .r5-write .slate-fraction .slate-cell { width: 92px; height: 76px; }
+.lbar .r5-write .slate-fraction .slate-bar { width: 92px; }
+.lbar .r5-write .slate-row .slate-cell { width: 92px; height: 76px; }
 .lbar .r5-write .slate-fraction .slate-fixed,
-.lbar .r5-write .slate-row .slate-fixed { font-size: 40px; }
+.lbar .r5-write .slate-row .slate-fixed { font-size: 44px; }
 .lbar .r5-write .slate-fraction .slate-committed-digit,
-.lbar .r5-write .slate-row .slate-committed-digit { font-size: 44px; }
+.lbar .r5-write .slate-row .slate-committed-digit { font-size: 48px; }
 .lbar .r5-write .slate-fraction .slate-ph,
-.lbar .r5-write .slate-row .slate-ph { font-size: 26px; }
+.lbar .r5-write .slate-row .slate-ph { font-size: 28px; }
 /* the verifier guess chip floats so it can't change the row height */
 .lbar .r5-write .slate-fraction,
 .lbar .r5-write .slate-row { position: relative; }
@@ -189,12 +189,27 @@
 
 /* Stages 4–5 "Numbers / Words": no board — a bare equation or a story card sit
    centered in the canvas frame. */
-.r5-bare { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-.r5-bare-eq { display: flex; align-items: center; gap: 18px; font-family: var(--display); font-size: 64px; color: var(--ink); }
-.r5-bare-eq .qop { color: var(--ink-mute); }
-.r5-bare-eq .slate-blank { color: var(--red); }
+/* NUMBERS stage — the bare "14/7 = ?" leads. It must FILL the board, not sit as a
+   tiny box in a big empty area. The canvas stretches to the full FitStage and the
+   equation grows to a commanding size; FitStage then scales the whole thing to fit
+   so it reads large on the tablet. */
+.r5-bare {
+  width: 720px; height: 348px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 30px;
+}
+.r5-bare-eq {
+  display: flex; align-items: center; gap: 34px;
+  font-family: var(--display); font-size: 132px; line-height: 1; color: var(--ink);
+}
+.r5-bare-eq .qop { color: var(--ink-mute); font-size: 96px; }
+.r5-bare-eq .slate-blank {
+  color: var(--red); display: inline-grid; place-items: center;
+  min-width: 132px; height: 150px;
+  border: 4px dashed var(--paper-3); background: rgba(163,42,34,0.04);
+}
 .r5-bare-eq .r5-bare-frac { letter-spacing: .01em; }
-.r5-bare-note { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink-mute); text-align: center; max-width: 460px; }
+.r5-bare-note { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); text-align: center; max-width: 620px; }
 
 /* Stage 3 rail: pick how many WHOLES fit (symbolic choice, no manipulation). */
 .r5-pick { display: flex; gap: 10px; margin: 12px 0 8px; }
@@ -231,8 +246,14 @@
 
 /* APPLIED — the worded question + required setup gate. The <WordProblem> owns its
    own card/answer chrome (slate.css); .r5-applied-play just lets it fill the play
-   area like the manipulative stages do. */
+   area. The setup + answer composer get bigger, tablet-comfortable handwriting
+   cells (principle: larger writing areas) — the only room-local lever here, since
+   the WordProblem card's own column/centering is shared-component-owned. */
 .r5-applied-play { display: block; }
+.r5-applied-play .r5-setup-row .slate-cell,
+.r5-wp-mount .r5-setup-row .slate-cell { width: 84px; height: 70px; }
+.r5-applied-play .r5-write .slate-cell,
+.r5-wp-mount .r5-write .slate-cell { width: 84px; height: 70px; }
 
 /* WORDS — the shared <WordProblem> mount (story + optional scratch + answer). */
 .r5-wp-mount { display: block; width: 100%; }

@@ -52,8 +52,8 @@ import "./styles/r1.css";
 // LINE_Y/HOME.A sit high enough that the ruler labels (drawn at LINE_Y+12) stay
 // inside the fixed, clipped block zone (.r1-s1-canvas is 336px tall) instead of
 // being cut off below it. The lower stack rests its bottom edge on the ruler.
-const ORIGIN = 60, UNIT = 320, CW = 500, CH = 336, BAR_H = 72, LINE_Y = 304;
-const HOME = { A: { x: ORIGIN, y: 232 }, B: { x: ORIGIN, y: 86 } };
+const ORIGIN = 96, UNIT = 392, CW = 584, CH = 336, BAR_H = 72, LINE_Y = 258;
+const HOME = { A: { x: ORIGIN, y: 186 }, B: { x: ORIGIN, y: 44 } };
 
 // The single worked example threaded through every stage: 2/7 + 3/7 = 5/7.
 const A_N = 2, B_N = 3, DEN = 7, ANSWER = A_N + B_N; // 5
@@ -450,7 +450,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
             ))}
 
             {merged ? (
-              <div className="nbar" style={{ left: HOME.A.x, top: 140 }}>
+              <div className="nbar" style={{ left: HOME.A.x, top: 96 }}>
                 <div className="btag">
                   <BigFrac num={(reveal || solved) ? ANSWER : "?"} den={DEN} locked />
                   {!solved && <button className="mini" title="split them back apart" onClick={unmerge}>↺</button>}

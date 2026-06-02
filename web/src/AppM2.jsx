@@ -518,7 +518,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 1 · MANIPULATE — the tray IS the problem; fill interior cells, count.
     body = (
       <LessonBoard
-        footHeight={196}
+        footHeight={172}
         railWidth={396}
         stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
@@ -594,7 +594,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 2 · BIND — full tray + written 4 × 6 = __; SPIN for commutativity.
     body = (
       <LessonBoard
-        footHeight={196}
+        footHeight={172}
         railWidth={396}
         stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
@@ -629,7 +629,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 3 · FADE — tray dims; SCORE a column → two partial products (distrib).
     body = (
       <LessonBoard
-        footHeight={196}
+        footHeight={172}
         railWidth={396}
         stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
@@ -676,7 +676,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     const built = buildRows * buildCols;
     body = (
       <LessonBoard
-        footHeight={196}
+        footHeight={172}
         railWidth={396}
         stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
@@ -714,6 +714,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
         }
         answer={
           <AnswerBar
+            className="m2-fz-answer-build"
             eq={
               <>
                 <span className="m2-fz-expr">{buildRows || "?"} × {buildCols || "?"}</span>
@@ -736,7 +737,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     // STAGE 5 · NUMBERS — a BARE expression; write the product. No tray.
     body = (
       <LessonBoard
-        footHeight={196}
+        footHeight={172}
         railWidth={396}
         stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
@@ -821,11 +822,11 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     const wordsKey = STAGES.find((s) => s.key === "7-words")?.n ?? 7;
     body = (
       <LessonBoard
-        footHeight={196}
+        footHeight={172}
         railWidth={396}
         stage={
-          <div className="m2-fz-canvas m2-fz-canvas-center">
-            <div className="bs-surface" style={{ position: "relative", width: 800, height: 252 }}>
+          <div className="m2-fz-canvas m2-fz-canvas-center m2-showwork-canvas">
+            <div className="bs-surface m2-showwork-surface">
               <BlankSlate
                 key="showwork:m2"
                 hint="show your work here — write anything you like ✎"

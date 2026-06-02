@@ -56,7 +56,17 @@
    (clientToStage / grabBar read #r2canvas) are unchanged; height flexes to the
    honest stage-row height so it never overflows the bordered stage zone below
    (the LessonBoard stage track is minmax(0,1fr) + overflow:hidden). */
-.lu-canvas { width: 720px; height: 100%; min-height: 0; margin: 0 auto; }
+/* The drag board is a FIXED-SIZE coordinate box (720×CH, matching the JS ORIGIN/
+   SPAN/CH constants) so #r2canvas getBoundingClientRect stays in 1:1 design pixels
+   and the pointer math is never scaled. We don't stretch it to 100% (that left the
+   ruler + lower strip clipped below the stage); instead we size it to the content
+   footprint and CENTER it in the stage track, so the diagram sits balanced with
+   comfortable margins on every side instead of floating top-left. */
+.lu-canvas {
+  width: 720px; height: 296px; flex: 0 0 auto;
+  margin: auto;                 /* centers both axes inside the flex stage column */
+  max-height: 100%;
+}
 
 /* RAIL — compress the L4 worksheet + picker readouts so the whole picker (incl.
    the Slice & Check / New problem buttons) fits the rail column height. */
@@ -104,9 +114,14 @@
 /* Sits where .slate-eq sits (the bare-equation slot in the canvas). The equation
    leads; the dashed arrows arc each bottom across to the OTHER fraction, with the
    ×N each contributes — adapted from the old standalone cross-multiply room. */
+/* Fill the canvas and CENTER vertically so the whole proof (equation → crossing
+   arrows → the rename rule card) sits balanced inside the stage and is never
+   clipped at the bottom — replaces the old fixed top:70px that overflowed the
+   shorter shared stage track. */
 .lu-cross {
-  position: absolute; left: 0; right: 0; top: 70px;
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px;
   pointer-events: none;
 }
 .lu-cross-eq {
@@ -118,7 +133,7 @@
 .lu-cross-eq .lu-cf { color: var(--ink); }
 
 .lu-cross-svg {
-  width: 220px; height: 110px;
+  width: 210px; height: 96px;
   animation: luCrossIn .5s ease-out;
 }
 .lu-cross-x {
@@ -160,8 +175,10 @@
    tutor row, but keep the prose the child reads fully legible (no clamp). */
 .lu-wp-board .wp-card { padding: 9px 22px 7px; }
 .lu-wp-board .wp-story { font-size: 18px; }
-.lu-wp-board .wp-answer { gap: 6px; }
-.lu-wp-board .slate-fraction { transform: scale(0.78); transform-origin: center top; }
+.lu-wp-board .wp-answer { gap: 4px; }
+/* the answer (the total the child writes) is the payoff of the Words stage — keep
+   it comfortably large now that the scratch slate no longer crowds the column. */
+.lu-wp-board .slate-fraction { transform: scale(0.92); transform-origin: center top; }
 /* the optional "show your work" scratch is a GENEROUS full-width drawing surface
    (matching the roomy Show-Work slate) so a child has real room to work it out. */
 .lu-wp-board .wp-setup { width: 100%; margin: 0; }
