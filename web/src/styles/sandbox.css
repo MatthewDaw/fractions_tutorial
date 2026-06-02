@@ -2,7 +2,11 @@
    (.play/.diagram/.canvas/.rail/.panel/.hint); everything room-specific here is
    .sandbox-* so it never collides. */
 
-.sandbox-canvas { position: relative; }
+/* The Workbench's row + ruler only fill the top ~190px of the canvas; cap the
+   canvas to that content and center it in the (taller) diagram so there is no dead
+   band below the ruler. Drag/drop reads the line's LIVE rect, so centering is safe. */
+.sandbox-canvas { position: relative; height: 232px; }
+.sandbox-play .diagram { justify-content: center; }
 
 /* the running status line, top of the canvas */
 .sandbox-status {

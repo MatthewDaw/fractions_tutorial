@@ -65,7 +65,12 @@ export function NumberLine({
   }
   if (marks) for (const m of marks) labels.push({ value: m.value, label: m.label, ng: !!m.ng });
 
-  const shownPoint = dragVal != null ? dragVal : point;
+  // Guard a non-finite point (e.g. an unplaced NaN handed in by the caller). NaN
+  // passes a `!= null` check, so without this the marker/fill would render with
+  // left:NaN (a React style warning + a dot at an undefined position). Treat any
+  // non-finite value as "no point yet".
+  const shownPointRaw = dragVal != null ? dragVal : point;
+  const shownPoint = Number.isFinite(shownPointRaw) ? shownPointRaw : null;
   const dragging = dragVal != null;
 
   // ---- draggable point: glide continuously, snap to nearest 1/den on release ----
@@ -147,7 +152,7 @@ export function NumberLine({
       })}
 
       {/* whole-number + partition + extra labels (whole numbers get the .ng class) */}
-      {labels.map((l, i) => (
+      {labels.filter((l) => Number.isFinite(l.value)).map((l, i) => (
         <span
           key={"l" + i}
           className={"nlab" + (l.ng ? " ng" : "") + (l.part ? " nl-partlab" : "")}
