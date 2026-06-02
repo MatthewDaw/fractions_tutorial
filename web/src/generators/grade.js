@@ -24,6 +24,40 @@ function num(x) {
 }
 
 /**
+ * Pull the two fraction operands out of a generator's `operands` (shapes vary:
+ * {a,b}, {start,take}, {a,b,den}, or [[n,d],[n,d]]). Returns [{num,den},{num,den}]
+ * or null when fewer than two fraction-shaped operands are present.
+ */
+function twoOperands(operands) {
+  if (!operands || typeof operands !== 'object') return null;
+  const list = Array.isArray(operands) ? operands : Object.values(operands);
+  const ops = [];
+  for (const o of list) {
+    if (Array.isArray(o) && o.length >= 2) ops.push({ num: num(o[0]), den: num(o[1]) });
+    else if (o && typeof o === 'object' && 'num' in o && 'den' in o) ops.push({ num: num(o.num), den: num(o.den) });
+    if (ops.length === 2) break;
+  }
+  return ops.length === 2 ? ops : null;
+}
+
+/**
+ * Classify an add/subtract wrong answer into an engine ErrorSignature, or null.
+ * Detects the classic "added the bottoms too" misconception (answer = (na+nb)/(da+db)):
+ * like denominators → add_denominators; unlike → add_across_unlike. This is the
+ * new grading logic U4 needs — the catch-all wrong_value can't drive remediation.
+ */
+function classifyAddError(operands, an, ad) {
+  if (!Number.isFinite(an) || !Number.isFinite(ad)) return null;
+  const ops = twoOperands(operands);
+  if (!ops) return null;
+  const [p, q] = ops;
+  if (an === p.num + q.num && ad === p.den + q.den) {
+    return p.den !== q.den ? 'add_across_unlike' : 'add_denominators';
+  }
+  return null;
+}
+
+/**
  * @param {object} problem  a GeneratedProblem (problem.skill, problem.answer, problem.operands)
  * @param {object} answer   the learner's answer in the skill's shape
  * @returns {{ correct: boolean, stars: number, errorSignature: string|null }}
@@ -37,7 +71,7 @@ export function gradeAnswer(problem, answer = {}) {
       const d = num(answer.den);
       if (!(d > 0) || !(n >= 0)) return { correct: false, stars: 0, errorSignature: null };
       const sameValue = equalValue(n, d, problem.operands.num, problem.operands.den);
-      if (!sameValue) return { correct: false, stars: 0, errorSignature: 'wrong_value' };
+      if (!sameValue) return { correct: false, stars: 0, errorSignature: 'other' };
       const lowest = gcd(n, d) === 1;
       // Engine credit gated on full reduction (anti false-positive, matches the
       // locked R4 equivalence framing); a same-amount-but-not-reduced answer is
@@ -55,7 +89,7 @@ export function gradeAnswer(problem, answer = {}) {
       const remOk = a.num === 0 ? r === 0 : equalValue(r, d, a.num, a.den);
       return wholeOk && remOk
         ? { correct: true, stars: 3, errorSignature: null }
-        : { correct: false, stars: 0, errorSignature: a.num === 0 && r > 0 ? 'forced_leftover' : 'wrong_value' };
+        : { correct: false, stars: 0, errorSignature: a.num === 0 && r > 0 ? 'forced_leftover' : 'other' };
     }
 
     case 'MULT_EQUAL_GROUPS':
@@ -63,13 +97,13 @@ export function gradeAnswer(problem, answer = {}) {
       const v = num(answer.value ?? answer.product);
       return v === a.product
         ? { correct: true, stars: 3, errorSignature: null }
-        : { correct: false, stars: 0, errorSignature: 'wrong_product' };
+        : { correct: false, stars: 0, errorSignature: 'other' };
     }
 
     case 'COMPARE_BENCHMARK': {
       return answer.rel === a.rel
         ? { correct: true, stars: 3, errorSignature: null }
-        : { correct: false, stars: 0, errorSignature: 'wrong_relation' };
+        : { correct: false, stars: 0, errorSignature: 'other' };
     }
 
     // Default: a single fraction answer judged by EQUAL VALUE (adds/subtracts/place).
@@ -77,9 +111,10 @@ export function gradeAnswer(problem, answer = {}) {
     default: {
       const n = num(answer.num);
       const d = num(answer.den);
-      return equalValue(n, d, a.num, a.den)
-        ? { correct: true, stars: 3, errorSignature: null }
-        : { correct: false, stars: 0, errorSignature: 'wrong_value' };
+      if (equalValue(n, d, a.num, a.den)) return { correct: true, stars: 3, errorSignature: null };
+      // U4: fingerprint the misconception from the operands so the engine's
+      // credit→reteach path can fire (add_denominators is the 6.58x-common error).
+      return { correct: false, stars: 0, errorSignature: classifyAddError(problem.operands, n, d) || 'other' };
     }
   }
 }

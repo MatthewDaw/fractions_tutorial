@@ -278,6 +278,19 @@ export function segment(log: readonly Event[]): Observation[] {
     // --- error_signature ---
     let error_signature: ErrorSignature = null;
     if (!correct) {
+      // U4: trust an engine signature the runtime already emitted (generated
+      // practice grades with grade.js, which emits engine ErrorSignature values).
+      // Coerce unknown strings (e.g. lesson-specific 'flipped'/'wrong_benchmark')
+      // to 'other' so the credit path never keys on a non-union value. Only
+      // re-derive from slip/operands when nothing usable was emitted.
+      const emittedSig = judgedAction.payload['error_signature'];
+      const VALID_SIGS = new Set([
+        'add_denominators', 'add_across_unlike', 'scaled_bottom_only',
+        'forced_leftover', 'not_simplified', 'other',
+      ]);
+      if (typeof emittedSig === 'string' && emittedSig.length > 0) {
+        error_signature = (VALID_SIGS.has(emittedSig) ? emittedSig : 'other') as ErrorSignature;
+      } else {
       const slipCode =
         typeof judgedAction.payload['slip'] === 'string'
           ? (judgedAction.payload['slip'] as string)
@@ -302,6 +315,7 @@ export function segment(log: readonly Event[]): Observation[] {
         targetDen,
         operands
       );
+      }
     }
 
     // --- too_fast_correct ---
