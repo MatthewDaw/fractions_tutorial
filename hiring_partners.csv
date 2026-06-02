@@ -1,0 +1,40 @@
+Company,Industry,Tier,Credits,Access,WorkModel,Location,Role,RoleType
+Nerdy,EdTech,platinum,6,Week 4,Remote,,Product Engineer,fullstack
+Superbuilders,EdTech,platinum,0,Week 4,On site,"Austin, TX",Learning Science Engineer,fullstack
+Peak6,Financial Services,platinum,2,Week 4,On site,"Austin, TX",AI Engineer,fullstack
+Boostlingo,SaaS,gold,2,Week 5,Remote,,Senior Full-Stack Agentic Engineer,fullstack
+YourAI,SaaS,gold,4,Week 5,Remote,,Senior Full Stack Engineer,fullstack
+YourAI,SaaS,gold,4,Week 5,Remote,,Senior Backend Engineer,backend
+YourAI,SaaS,gold,4,Week 5,Remote,,Senior AI Engineer,fullstack
+YourAI,SaaS,gold,4,Week 5,Remote,,Senior DevOps Engineer,backend
+SkyFi,Other,gold,4,Week 5,Remote,,Senior Full Stack Engineer,fullstack
+SkyFi,Other,gold,4,Week 5,Remote,,AI Solutions Engineer,fullstack
+ST6,SaaS,gold,1,Week 5,Remote,,Lead Software Engineer,fullstack
+ST6,SaaS,gold,1,Week 5,Remote,,AI Native Product Engineer,fullstack
+GoFundMe,Other,gold,2,Week 5,Hybrid,"San Francisco, CA",Full Stack AI Engineer,fullstack
+GoFundMe,Other,gold,2,Week 5,Hybrid,"San Francisco, CA",Staff Full Stack Engineer,frontend
+GoFundMe,Other,gold,2,Week 5,Hybrid,"San Francisco, CA",Staff Backend Engineer,backend
+HouseAccount,Technology,silver,3,Week 6,Remote,,AI Engineer,fullstack
+OpenDoor,Technology,silver,3,Week 6,On site,"San Francisco, CA",Software Engineer (All Levels),fullstack
+Vellum,Technology,silver,1,Week 6,On site,"New York, NY",AI Engineer,fullstack
+Steno,Other,silver,2,Week 6,Remote,,Staff Software Engineer,fullstack
+Thesis,Healthcare,silver,2,Week 6,Hybrid,"New York, NY",AI Software Engineer,fullstack
+AutoHDR,Technology,silver,3,Week 6,On site,"Austin, TX",Senior Software Engineer,fullstack
+AutoHDR,Technology,silver,3,Week 6,On site,"Austin, TX",Software Engineer,fullstack
+Ledger Run,SaaS,silver,1,Week 6,Remote,,Senior Software Engineer,fullstack
+Carvana,Technology,silver,2,Week 6,On site,"Tempe, AZ",Software Engineer,backend
+Credal.ai,Technology,silver,1,Week 6,On site,"New York, NY",Staff/Senior Full Stack Engineer,fullstack
+Frontier Audio,Technology,silver,1,Week 6,On site,"Chicago, IL",Senior Backend & Full Stack Software Engineer,fullstack
+Hijack Poker,Technology,silver,3,Week 6,Hybrid,"Austin, TX",Senior Product Engineer,fullstack
+Cover,Technology,silver,1,Week 6,On site,"Los Angeles, CA",Senior/Staff Fullstack Engineer,fullstack
+Cover,Technology,silver,1,Week 6,On site,"Los Angeles, CA",Senior/Staff Agentic Systems Engineer,fullstack
+CompanyCam,Technology,silver,3,Week 6,Remote,,Senior Software Engineer - Backend,backend
+CompanyCam,Technology,silver,3,Week 6,Remote,,Senior Software Engineer - Client,frontend
+CompanyCam,Technology,silver,3,Week 6,Remote,,Machine Learning Engineer - Computer Vision,backend
+HumanLayer,SaaS,silver,3,Week 6,On site,"San Francisco, CA",Founding Engineer,fullstack
+Future,Technology,silver,2,Week 6,Remote,,AI Engineer,fullstack
+Yuno,Financial Services,silver,3,Week 6,Remote,,Senior AI Engineer,backend
+Nclusion,Financial Services,silver,1,Week 6,Hybrid,"East Palo Alto, CA",Product Engineer,fullstack
+Nclusion,Financial Services,silver,1,Week 6,Hybrid,"East Palo Alto, CA",Crypto/Web3 Software Engineer,fullstack
+Nclusion,Financial Services,silver,1,Week 6,Hybrid,"East Palo Alto, CA",Crypto Infrastructure Engineer,backend
+Kickdrum,Technology,bronze,1,,Remote,,Forward Deployed Engineer (FDE),fullstack
