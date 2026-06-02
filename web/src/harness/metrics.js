@@ -158,8 +158,12 @@ function computeMetrics(factsList) {
 
   return {
     n_tapes: n,
-    // headline + counters
-    mastery_rate: rate(gatedFacts.length, n),
+    // headline + counters.
+    // mastery_rate is NULL (absent, not 0) when NO tape gated: its paired counter
+    // evidence_count_at_gate_open is only meaningful once a gate has opened, so a
+    // gateless population must not assert a flattering "0% mastery" headline whose
+    // counter is null (that would trip the MetricsRecord pairing contract — KTD5).
+    mastery_rate: gatedFacts.length ? rate(gatedFacts.length, n) : null,
     false_mastery_rate: rate(falseMastery, n),
     evidence_count_at_gate_open: gatedFacts.length
       ? Math.min(...gatedFacts.map((f) => f.evidenceAtGate))
