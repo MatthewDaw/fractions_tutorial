@@ -29,6 +29,7 @@ import { isMastered } from './engine/gate.js';
 import { allNodes, mostUpstreamUnmastered } from './engine/graph.js';
 import { migrateFromKitchenProgress as engineMigrate, loadLog, saveLog } from './engine/index.js';
 import { measurementReduce } from './engine/measurementReduce.js';
+import { generatorSkills } from './generators/index.js';
 
 // ---------------------------------------------------------------------------
 // Legacy storage key (unchanged from original — keeps existing data intact)
@@ -182,4 +183,28 @@ export function entryScaffoldFor(nodeId, masteryMap) {
 
   // One below max, floored at 0.
   return /** @type {0|1|2|3|4} */ (Math.max(0, maxPassed - 1));
+}
+
+/**
+ * U8: the skills eligible for interleaved "mixed review" — recipes the learner has
+ * been INTRODUCED to (engaged with) AND that have a generator. A type only enters
+ * the mix after initial schema formation, so interleaving never precedes
+ * acquisition. "Introduced" = mastered, previously-mastered (mastered_at set), or
+ * meaningful evidence (P_known elevated above the cold-start prior).
+ *
+ * @param {Record<string, import('./engine/types.js').MasteryEstimate>|null} masteryMap
+ * @returns {string[]} engine skill node ids
+ */
+export function eligibleMixSkills(masteryMap) {
+  if (!masteryMap) return [];
+  const generatable = new Set(generatorSkills());
+  const out = [];
+  for (const node of allNodes()) {
+    if (!generatable.has(node.id)) continue;
+    const est = masteryMap[node.id];
+    if (!est) continue;
+    const introduced = isMastered(est) || est.mastered_at != null || est.P_known >= 0.25;
+    if (introduced) out.push(node.id);
+  }
+  return out;
 }

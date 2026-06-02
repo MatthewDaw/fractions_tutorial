@@ -28,6 +28,7 @@ import AppNumberLine from "./AppNumberLine.jsx";
 import AppSubtract from "./AppSubtract.jsx";
 import AppCompare from "./AppCompare.jsx";
 import MomsRoom from "./MomsRoom.jsx";
+import MixedReview from "./MixedReview.jsx";
 import BackgroundMusic from "./BackgroundMusic.jsx";
 import TapToRead from "./TapToRead.jsx";
 import EngineSurfaces from "./ui/EngineSurfaces.jsx";
@@ -35,7 +36,7 @@ import r2Unit from "./lessons/r2-unit.js";
 import r3NonUnit from "./lessons/r3-nonunit.js";
 import { ROOMS } from "./rooms.js";
 import { sceneFor } from "./music.js";
-import { entryScaffoldFor } from "./kitchenProgress.js";
+import { entryScaffoldFor, eligibleMixSkills } from "./kitchenProgress.js";
 import { toBeatForLevel } from "./runtime/scaffoldMap.js";
 import { loadLog, migrateFromKitchenProgress } from "./engine/index.js";
 import { measurementReduce } from "./engine/measurementReduce.js";
@@ -136,8 +137,9 @@ export default function Shell() {
   const [masteryMap, setMasteryMap] = useState(null);
 
   useEffect(() => {
-    // Refresh mastery map whenever the child returns to the world map.
-    if (route === "world" || route === "title") {
+    // Refresh mastery map whenever the child returns to the world map, or enters
+    // mixed review (U8 — its eligible-skill set is derived from the live map).
+    if (route === "world" || route === "title" || route === "review") {
       setMasteryMap(loadMasteryMap());
     }
   }, [route]);
@@ -147,7 +149,7 @@ export default function Shell() {
   // <BackgroundMusic> below stays mounted across navigation (music never restarts
   // just because we changed rooms).
   let screen, showingIntro = false;
-  const room = (route === "title" || route === "mom") ? null : ROOMS.find((r) => r.id === route);
+  const room = (route === "title" || route === "mom" || route === "review") ? null : ROOMS.find((r) => r.id === route);
 
   if (route === "settings") {
     // Settings screen — voice/music volume + answer input mode. Overlay-style: it
@@ -165,6 +167,9 @@ export default function Shell() {
     // Babushka's Room (the central kitchen): story / word problems. Not a ROOMS
     // entry — it's the hub itself, opened from the kitchen medallion on the map.
     screen = <MomsRoom onBack={toWorld} onOpenRoom={(id) => go(id)} />;
+  } else if (route === "review") {
+    // U8: interleaved "mixed basket" across the recipes the learner has met.
+    screen = <MixedReview skills={eligibleMixSkills(masteryMap)} onExit={toWorld} />;
   } else if (!room) {
     // World map (home) for the 'world' route / anything unrecognised.
     screen = <WorldMap onOpen={(id) => go(id)} masteryMap={masteryMap} />;
