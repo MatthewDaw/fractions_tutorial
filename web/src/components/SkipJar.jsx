@@ -1,25 +1,26 @@
 // SkipJar.jsx — the m3 (Times Facts) skip-counting manipulative. A jar fills one
-// SCOOP at a time; every scoop is the SAME group size (e.g. 8). The teaching
-// device is the VISIBLE RUNNING TALLY beside the jar: each scoop bumps the tally
-// by the group size (8, 16, 24, …) so the child reads the product off the jar
-// instead of recounting — the anti-drift guard against skip-count slips.
+// SCOOP at a time; every scoop drops the SAME group of DISTINCT, COUNTABLE CUBES
+// (e.g. 8 cubes). The child SEES "N groups of M" as concrete grouped objects: each
+// scoop adds one visible cluster of `groupSize` cubes, so the jar accumulates into
+// `groups` clusters = groups × groupSize distinct cubes. A small running tally sits
+// beside the jar as a SECONDARY readout (the anti-drift guard) — the cubes, not the
+// number, are the primary visual.
 //
 // CONTROLLED-ISH: the room owns groupSize/groups/filled and the onScoop callback;
-// the jar owns the visual fill + the running tally derived from `filled`.
+// the jar owns the visual cubes + the running tally derived from `filled`.
 //
 //   props:
-//     groupSize : number   — pieces per scoop (the "size" factor, e.g. 8)
+//     groupSize : number   — cubes per scoop (the "size" factor, e.g. 8)
 //     groups    : number   — how many scoops make a full jar (the "count", e.g. 7)
 //     filled    : number   — how many scoops are currently in (0..groups)
-//     onScoop() : ()=>void — fired when the child taps the scoop (add one handful)
+//     onScoop() : ()=>void — fired when the child taps the scoop (add one cluster)
 //     ghost     : boolean  — dim the jar to a faint check (Fade stage)
 //
-// Whole-number food objects: a FIXED neutral kitchen tone for the pieces; no
-// denomTone/denomColor (those color by denominator and have no meaning here).
-import React from "react";
-
-const FOOD_TONE = "#caa35a";    // neutral kitchen food tone (mushrooms/scoops)
-const FOOD_EDGE = "#8a6a2e";
+// Cubes are colored by the group SIZE using the shared denominator palette
+// (colorblind-safe hue + hatch + readable outline) so all "groups of 8" share one
+// distinct, glyph-backed color — same visual approach as BlockSandbox's number mode.
+import React, { useRef, useState } from "react";
+import { denomColor, denomTone, denomHatch, denomHatchSize } from "../denominatorColors.js";
 
 export default function SkipJar({
   groupSize = 1,
@@ -29,63 +30,163 @@ export default function SkipJar({
   ghost = false,
 }) {
   const clampedFilled = Math.max(0, Math.min(groups, filled));
-  const tally = clampedFilled * groupSize;            // the visible running total
+  const tally = clampedFilled * groupSize;            // the small running total
   const full = clampedFilled >= groups;
-  const fillPct = groups > 0 ? (clampedFilled / groups) * 100 : 0;
 
-  // The sequence of tally steps already poured, oldest → newest (8, 16, 24 …).
-  const steps = Array.from({ length: clampedFilled }, (_, i) => (i + 1) * groupSize);
+  // DRAG-TO-SCOOP (drag-only): the child drags the scoop bowl and drops it INTO the
+  // jar; a ghost bowl follows the pointer in real time and the jar body lights up as
+  // the drop target. Mirrors AppR5's grabBlock / SkipLine's grabChip. A plain pointer
+  // tap does NOT scoop — only a real drag-into-jar places a group. Keyboard
+  // Enter/Space on the <button> still scoops (non-pointer a11y path only).
+  const jarBodyRef = useRef(null);
+  const movedRef = useRef(false);
+  const [drag, setDrag] = useState(null); // { x, y } | null
+  const [hotJar, setHotJar] = useState(false);
+
+  function overJar(ev) {
+    const el = jarBodyRef.current;
+    if (!el) return false;
+    const r = el.getBoundingClientRect();
+    const pad = 36; // a forgiving drop band around the jar mouth
+    return ev.clientX >= r.left - pad && ev.clientX <= r.right + pad &&
+           ev.clientY >= r.top - pad && ev.clientY <= r.bottom + pad;
+  }
+
+  function grabScoop(e) {
+    if (full || ghost) return;
+    // No pointer info (keyboard/Enter via the button) → let the click handler scoop.
+    if (!e || e.clientX == null) return;
+    e.preventDefault();
+    movedRef.current = false;
+    const startX = e.clientX, startY = e.clientY;
+    setDrag({ x: e.clientX, y: e.clientY });
+    setHotJar(overJar(e));
+    const move = (ev) => {
+      if (Math.abs(ev.clientX - startX) > 5 || Math.abs(ev.clientY - startY) > 5) movedRef.current = true;
+      setDrag({ x: ev.clientX, y: ev.clientY });
+      setHotJar(overJar(ev));
+    };
+    const up = (ev) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      const dropped = overJar(ev);
+      setDrag(null); setHotJar(false);
+      // Only a real drag that ends over the jar scoops. A no-move press does NOT
+      // scoop (no tap fallback); a drag that misses the jar cancels.
+      if (movedRef.current && dropped) onScoop();
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
+  // Each poured scoop is one CLUSTER of `groupSize` distinct cubes, oldest → newest.
+  const clusters = Array.from({ length: clampedFilled }, (_, i) => i);
+
+  // Cube color keyed by the group size (so every "group of 8" matches). The shared
+  // palette is colorblind-safe (hue + hatch + outline) — same as the workbench.
+  const cubeFill = denomColor(groupSize);
+  const cubeEdge = denomTone(groupSize, 0.6);
+  const cubeHatch = denomHatch(groupSize);
+  const cubeHatchSize = denomHatchSize(groupSize);
+
+  // Lay the cubes of one group in a tidy little grid (columns of up to 4 high) so a
+  // cluster reads as "one scoop of M" at a glance regardless of M.
+  const cols = Math.ceil(groupSize / 4);
 
   return (
     <div className={"m3-jarwrap" + (ghost ? " is-ghost" : "")}>
-      {/* the jar itself — fills bottom-up with the poured scoops */}
-      <div className="m3-jar" aria-label={`jar holding ${tally}`}>
+      {/* the jar itself — the poured clusters of cubes pile up inside it */}
+      <div className="m3-jar" aria-label={`jar holding ${clampedFilled} groups of ${groupSize} — ${tally} cubes`}>
         <div className="m3-jar-neck" aria-hidden="true" />
-        <div className="m3-jar-body">
-          <div
-            className="m3-jar-fill"
-            style={{ height: fillPct + "%", background: FOOD_TONE, borderColor: FOOD_EDGE }}
-            aria-hidden="true"
-          />
-          {/* the running tally, large, sits over the jar — the anti-drift readout */}
-          <div className="m3-jar-tally">
-            <span className="m3-jar-tally-n">{tally}</span>
-            <span className="m3-jar-tally-cap">in the jar</span>
+        <div ref={jarBodyRef} className={"m3-jar-body" + (hotJar ? " is-hot" : "")}>
+          <div className="m3-jar-cubes">
+            {clusters.length === 0 ? (
+              <div className="m3-jar-empty" aria-hidden="true">empty</div>
+            ) : (
+              clusters.map((ci) => (
+                <div key={ci} className="m3-cluster" title={`group ${ci + 1} of ${groupSize}`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+                  {Array.from({ length: groupSize }, (_, k) => (
+                    <span
+                      key={k}
+                      className="m3-cube"
+                      style={{ background: cubeFill, borderColor: cubeEdge }}
+                      aria-hidden="true"
+                    >
+                      <span className="m3-cube-hatch" style={{ backgroundImage: cubeHatch, backgroundSize: cubeHatchSize }} />
+                    </span>
+                  ))}
+                </div>
+              ))
+            )}
           </div>
+        </div>
+        {/* small SECONDARY running-tally label under the jar */}
+        <div className="m3-jar-tally">
+          <span className="m3-jar-tally-n">{tally}</span>
+          <span className="m3-jar-tally-cap">cubes ({clampedFilled} group{clampedFilled === 1 ? "" : "s"} of {groupSize})</span>
         </div>
       </div>
 
       {/* the side scale: each poured scoop, its running total stamped on it */}
       <div className="m3-scale" aria-label="skip-count so far">
-        {steps.length === 0 ? (
+        {clusters.length === 0 ? (
           <div className="m3-scale-empty">empty — start scooping</div>
         ) : (
-          steps.map((s, i) => (
-            <div key={i} className="m3-scale-step">
+          clusters.map((ci) => (
+            <div key={ci} className="m3-scale-step">
               <span className="m3-scale-step-add">+{groupSize}</span>
-              <span className="m3-scale-step-tot">{s}</span>
+              <span className="m3-scale-step-tot">{(ci + 1) * groupSize}</span>
             </div>
           ))
         )}
       </div>
 
-      {/* the scoop bowl — tap to pour ONE handful of `groupSize` */}
+      {/* the scoop bowl — DRAG it into the jar to pour ONE group of `groupSize`
+          cubes (drag-only; keyboard Enter/Space also scoops for a11y) */}
       <div className="m3-scoopzone">
         <button
           type="button"
-          className="m3-scoop"
-          onClick={onScoop}
+          className={"m3-scoop" + (drag ? " is-dragging" : "")}
+          style={{ touchAction: "none" }}
+          onPointerDown={grabScoop}
+          onClick={(e) => {
+            // Reset the synthetic-click guard left by a real pointer-drag.
+            if (movedRef.current) { movedRef.current = false; return; }
+            // POINTER taps do NOT scoop (no tap-to-place fallback). Only a keyboard
+            // activation (Enter/Space → e.detail === 0) places a group.
+            if (e.detail !== 0) return;
+            if (!full && !ghost) onScoop();
+          }}
           disabled={full || ghost}
-          title={full ? "the jar is full" : `scoop ${groupSize} more`}
-          aria-label={`scoop ${groupSize} more into the jar`}
+          title={full ? "the jar is full" : `drag the scoop into the jar — ${groupSize} cubes`}
+          aria-label={`scoop ${groupSize} more cubes into the jar`}
         >
-          <span className="m3-scoop-bowl" style={{ background: FOOD_TONE, borderColor: FOOD_EDGE }} />
+          <span className="m3-scoop-bowl" aria-hidden="true">
+            {Array.from({ length: groupSize }, (_, k) => (
+              <span key={k} className="m3-scoop-cube" style={{ background: cubeFill, borderColor: cubeEdge }} />
+            ))}
+          </span>
           <span className="m3-scoop-lab">scoop {groupSize}</span>
         </button>
         <div className="m3-scoop-count">
           {clampedFilled} / {groups} scoops
         </div>
+        {!full && !ghost && (
+          <div className="m3-scoop-dragcue" aria-hidden="true">drag into the jar ↑</div>
+        )}
       </div>
+
+      {/* the scoop ghost that follows the pointer while dragging into the jar */}
+      {drag && (
+        <div className="m3-scoop-ghost" style={{ left: drag.x, top: drag.y }} aria-hidden="true">
+          <span className="m3-scoop-bowl">
+            {Array.from({ length: groupSize }, (_, k) => (
+              <span key={k} className="m3-scoop-cube" style={{ background: cubeFill, borderColor: cubeEdge }} />
+            ))}
+          </span>
+          <span className="m3-scoop-ghost-lab">+{groupSize}</span>
+        </div>
+      )}
     </div>
   );
 }

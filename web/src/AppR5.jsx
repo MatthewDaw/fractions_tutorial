@@ -31,6 +31,10 @@ import Lock from "./components/Lock.jsx";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
 import BlockSandbox from "./components/BlockSandbox.jsx";
+import QuestionBand from "./components/QuestionBand.jsx";
+import BlankSlate from "./components/BlankSlate.jsx";
+import FitStage from "./components/FitStage.jsx";
+import SettingsButton from "./SettingsButton.jsx";
 import { useVoice } from "./voice.js";
 import { denomColor, denomTextColor, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import { useLessonEngine } from "./runtime/useLessonEngine.js";
@@ -88,9 +92,10 @@ const STAGES = [
   ["workbench", "Workbench", "Build the improper fraction from the bin, then count it.", "W"],
   ["4-numbers", "Numbers", "Bare 9/7 = ? — write the whole mixed number.", "4"],
   ["applied", "Applied", "A worded question — write the improper fraction, then the answer.", "A"],
+  ["showwork", "Show Work", "Show your work on a blank slate.", "✎"],
   ["5-words", "Words", "A recipe story — read it, write the mixed number.", "5"],
 ];
-const NEXT_STAGE = { "1-manipulate": "2-bind", "2-bind": "3-fade", "3-fade": "workbench", "workbench": "4-numbers", "4-numbers": "applied", "applied": "5-words" };
+const NEXT_STAGE = { "1-manipulate": "2-bind", "2-bind": "3-fade", "3-fade": "workbench", "workbench": "4-numbers", "4-numbers": "applied", "applied": "showwork", "showwork": "5-words" };
 
 // ---------------- main ----------------
 export default function AppR5({ no, title, onBack, onRewatchIntro }) {
@@ -129,7 +134,8 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   // Words: the same single-fraction surface is OPTIONAL scratch — never gates.
   const [setupFrac, setSetupFrac] = useState({ num: "", den: "" });
   const [setupOk, setSetupOk] = useState(false);
-  const [scratchFrac, setScratchFrac] = useState({ num: "", den: "" });
+  // ---- mandatory "show your work" blank-slate gate (between Applied and Words) ----
+  const [showWorkInked, setShowWorkInked] = useState(false);
 
   // ---- stage flavor flags -----------------------------------------------------
   const isManipulate = stage === "1-manipulate";
@@ -138,6 +144,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   const isWorkbench = stage === "workbench";  // the free block sandbox (own render branch)
   const isNumbers = stage === "4-numbers";
   const isApplied = stage === "applied";      // worded question + a required setup gate
+  const isShowWork = stage === "showwork";    // mandatory blank-slate "show your work" step
   const isWords = stage === "5-words";
 
   // Stages that still SHOW the manipulative board. 1+2 show live blocks; 3 shows a
@@ -153,7 +160,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   const leftover = needsGroup ? NUMER - placed : REMAIN;
   const grouped = needsGroup ? locked : true;        // grouping precondition met?
 
-  const { soundOn, speaking, say, stopVoice, toggleSound } = useVoice();
+  const { speaking, say, stopVoice } = useVoice();
   const placedRef = useRef(placed), solvedRef = useRef(solved), stageRef = useRef(stage);
   useEffect(() => { placedRef.current = placed; }, [placed]);
   useEffect(() => { solvedRef.current = solved; }, [solved]);
@@ -192,7 +199,8 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
         "workbench": "3-fade",
         "4-numbers": "workbench",
         "applied": "4-numbers",
-        "5-words": "applied",
+        "showwork": "applied",
+        "5-words": "showwork",
       }[stageRef.current];
       if (nb) goStage(nb);
     } else if (isCorrect) {
@@ -372,10 +380,6 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
     const v = onlyDigits(value);
     setSetupFrac((s) => ({ ...s, [key]: v }));
   }
-  function onScratchChange(key, value) {
-    const v = onlyDigits(value);
-    setScratchFrac((s) => ({ ...s, [key]: v }));
-  }
 
   // ---- stage navigation -------------------------------------------------------
   // Set the board to a fresh start for stage `s` (problem, placements, inputs).
@@ -390,7 +394,8 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
     setHotFrame(false); setDrag(null); setWholesPick(null); setBad(false);
     setVals({ w: "", n: "" });
     // reset the word→math surfaces (Applied gate + Words scratch) on every stage change
-    setSetupFrac({ num: "", den: "" }); setSetupOk(false); setScratchFrac({ num: "", den: "" });
+    setSetupFrac({ num: "", den: "" }); setSetupOk(false);
+    setShowWorkInked(false);
     selfCorrectionsRef.current = 0;
     const m = mixedOf(p.num, p.den);
     const greet = {
@@ -400,6 +405,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
       "workbench": "The Workbench. Pull " + p.den + "ths from the bin and build " + p.num + "/" + p.den + " on the line, then count them up.",
       "4-numbers": "Just the numbers: " + p.num + "/" + p.den + " = ? Write the whole mixed number on the Slate. (Watch the leftover!)",
       "applied": "A question in words, with the amount shown. Write it as one improper fraction first, then give the mixed number.",
+      "showwork": "Show your work — write anything you like on the blank slate, then tap Next.",
       "5-words": "A recipe — read it, find the improper fraction, and write the mixed number.",
     }[s];
     setStatus({ tone: "normal", text: greet });
@@ -494,16 +500,29 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
               <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
             </button>
           )}
-          <button className={"ctrl-btn" + (soundOn ? " on" : "")} title={soundOn ? "Turn sound off" : "Turn sound on"} onClick={toggleSound}>
-            {soundOn ? (
-              <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><path d="M12 5 Q15 8 12 11" stroke="currentColor" strokeWidth="1.5" fill="none" /><path d="M13.5 3 Q18 8 13.5 13" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
-            ) : (
-              <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><line x1="12" y1="5" x2="17" y2="11" stroke="currentColor" strokeWidth="1.6" /><line x1="17" y1="5" x2="12" y2="11" stroke="currentColor" strokeWidth="1.6" /></svg>
-            )}
-          </button>
+          <SettingsButton />
           <button className="ctrl-btn" title="Start over" onClick={() => resetForStage(stage)}>⟲</button>
         </div>
       </div>
+
+      {/* CANONICAL QUESTION BAND — the shared full-width band, mounted directly
+          under the stage-selector tabs (the topbar) on every stage EXCEPT the
+          final words-only stage ("5-words"). It shows this lesson's live improper
+          fraction with a "?" answer that becomes the solved mixed number once the
+          stage is solved. The goal/story copy below it is secondary helper text.
+          Replaces the old ad-hoc .r5-question band AND the in-canvas .eqstate
+          float that used to overlap the board.
+          The Words stage deliberately HIDES this band: the child must read the
+          prose recipe and extract the improper fraction themselves — showing the
+          bare equation would give the answer away. (Applied keeps it: it shows the
+          amount on purpose.) */}
+      {!isWords && (
+        <QuestionBand
+          lead="write as a mixed number"
+          expr={<>{NUMER}/{DEN}</>}
+          answer={solved ? (REMAIN > 0 ? <>{WHOLES} and {REMAIN}/{DEN}</> : <>{WHOLES}</>) : "?"}
+        />
+      )}
 
       <div className="goal">
         <button className={"speaker" + (speaking ? " speaking" : "")} onClick={() => say("r5Goal")}>
@@ -619,6 +638,43 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
             {solved && <div className="marks"><Rosette count={stars} /></div>}
           </div>
         </>
+      ) : isShowWork ? (
+        /* SHOW WORK — a mandatory blank-slate step between Applied and Words. The
+           child writes anything they like; Next unlocks once ink is down. No
+           grading, no engine decision — advancement is a plain advance(). */
+        <>
+          <div className="play">
+            <div className="diagram">
+              <div className="bs-surface" style={{ position: "relative", width: 800, height: 360 }}>
+                <BlankSlate
+                  key={`showwork:${stage}`}
+                  hint="show your work here — write anything you like ✎"
+                  onInkChange={setShowWorkInked}
+                  ariaLabel="show your work on a blank slate"
+                />
+              </div>
+            </div>
+            <div className="rail">
+              <div className="panel">
+                <h3>Show Your Work</h3>
+                <div className="hint">Use the slate to work it out however you like — group the pieces, write the division, sketch it. Put something down, then tap Next.</div>
+              </div>
+            </div>
+          </div>
+          <div className="hud">
+            <div className="cook-zone">
+              <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+              <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+            </div>
+            <div className="marks">
+              <button
+                className={"check" + (showWorkInked ? " ready" : "")}
+                disabled={!showWorkInked}
+                onClick={advance}
+              >Next ▸</button>
+            </div>
+          </div>
+        </>
       ) : isWords ? (
         /* WORDS (beat 6, out of the s1–s5 sweep) — keeps the shared <WordProblem>
            card flow. Not a fixed-zone stage; left on the existing .play layout. */
@@ -632,17 +688,17 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
                   readAloud={() => say("r5Goal")}
                   speaking={speaking}
                   answerLead="Write the mixed number"
-                  setupLead="Optional — write the amount as one fraction first"
+                  setupLead="Optional — show your work here"
                   setup={
-                    <Slate
-                      slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
-                      values={{ num: scratchFrac.num, den: scratchFrac.den }}
-                      onChange={onScratchChange}
-                      layout="fraction"
-                      den={parseInt(scratchFrac.den, 10) || DEN}
-                      disabled={solved}
-                      ariaLabel="optional: write the improper fraction from the recipe"
-                    />
+                    /* GENEROUS full-width scratch slate (consistent with M3's
+                       ~756×246 reference). With the bare-equation QuestionBand
+                       hidden on this words-only stage, there's room for a roomy
+                       slate the child can actually sketch the grouping/division
+                       in — not a sliver. Fixed px so the centered .wp column
+                       gives it a real width instead of collapsing to content. */
+                    <div className="r5-scratch-surface bs-surface" style={{ position: "relative", width: 740, maxWidth: "100%", height: 300 }}>
+                      <BlankSlate key="words-scratch" hint="optional — show your work here ✎" />
+                    </div>
                   }
                 >
                   <div className={"r5-write" + (bad ? " bad" : "")}>
@@ -681,7 +737,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
             <div className="rail">
               <div className="panel">
                 <h3>Word Problem</h3>
-                <div className="hint">No blocks, no equation. Read the recipe, find the improper fraction ({NUMER} quarters = {NUMER}/{DEN}), then write it as a mixed number.</div>
+                <div className="hint">No blocks, no equation. Read the recipe, work out the improper fraction it describes, then write it as a mixed number.</div>
               </div>
             </div>
           </div>
@@ -709,13 +765,16 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
          different font (Safari vs Chromium) can NEVER reflow one zone onto another.
          ════════════════════════════════════════════════════════════════════════ */
       <div className="r5-stage">
-        {/* ── BOARD ZONE (fixed rect, top-left) ── */}
+        {/* ── BOARD ZONE (fixed rect, top-left) ──
+            Wrapped in <FitStage> so the tallest improper-fraction stack (the 9-high
+            9/7 overflow column, or any future 11/4-in-a-stack) auto-downscales to
+            fit the fixed zone instead of clipping top/bottom. The canvas keeps its
+            own 720×348 absolute geometry; FitStage only shrinks it uniformly. */}
         <div className="r5-z-board">
+          <FitStage className="r5-board-fit">
           {/* STAGES 1–3: the manipulative board (live, or a faded ghost on stage 3) */}
           {showBoard && (
             <div className={"canvas r5-canvas" + (ghostBoard ? " r5-ghost-board" : "")} id="r5canvas">
-              <div className="eqstate eqfloat"><span className="g">{NUMER}/{DEN}</span>more than one whole</div>
-
               {/* ruler 0→rulerWholes (the answer overflows past 1) */}
               <div className="nline" style={{ top: LINE_Y, left: ORIGIN, right: "auto", width: rulerWholes * UNIT }} />
               {Array.from({ length: RULER_TICKS + 1 }).map((_, k) => (
@@ -777,10 +836,19 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
                 )}
               </div>
 
-              {/* "Group a piece" affordance alongside drag — click/keyboard too */}
+              {/* "Group a piece" affordance — DRAG the block into the frame.
+                  This is a KEYBOARD-only assist (Enter/Space groups one piece);
+                  it has NO pointer tap-to-place path, so a plain tap/click can
+                  never place a block. The pointer user drags the overflow Block
+                  (grabBlock); the keyboard user activates here. placeOne() and
+                  the place_block emit are unchanged. */}
               {!locked && !solved && needsGroup && (
-                <button className="joinbtn" style={{ left: COL_X, top: COL_TOP + leftover * 30 + 16 }} onClick={placeOne}>
-                  ▸ Group a piece into the whole
+                <button
+                  className="joinbtn"
+                  style={{ left: COL_X, top: COL_TOP + leftover * 30 + 16 }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); placeOne(); } }}
+                >
+                  ▸ Drag a piece into the whole
                 </button>
               )}
             </div>
@@ -797,6 +865,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
               <div className="r5-bare-note">{NUMER} ÷ {DEN} — how many whole {DEN}-piece units fit, and what's left over?</div>
             </div>
           )}
+          </FitStage>
         </div>
 
         {/* ── HINT RAIL (fixed rect, top-right) ── */}

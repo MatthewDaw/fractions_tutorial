@@ -27,6 +27,10 @@ import Rosette from "./components/Rosette.jsx";
 import BigFrac from "./components/BigFrac.jsx";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
+import BlankSlate from "./components/BlankSlate.jsx";
+import FitStage from "./components/FitStage.jsx";
+import QuestionBand from "./components/QuestionBand.jsx";
+import SettingsButton from "./SettingsButton.jsx";
 import { useVoice } from "./voice.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import { useLessonEngine } from "./runtime/useLessonEngine.js";
@@ -54,6 +58,7 @@ const STAGES = [
   { id: "fade",       n: 3, tag: "Fade",       blurb: "Pick the shared factor, then write" },
   { id: "numbers",    n: 4, tag: "Numbers",    blurb: "Bare 8/12 — write lowest terms" },
   { id: "applied",    n: 5, tag: "Applied",    blurb: "Write the fraction, then simplify it" },
+  { id: "showwork",   n: "SW", tag: "Show Work", blurb: "Show your work on a blank slate" },
   { id: "words",      n: 6, tag: "Words",      blurb: "Read the recipe, write the simplest" },
 ];
 
@@ -125,17 +130,34 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
   // Stage 3 (Fade): which shared factor the child picks, symbolically.
   const [pickedK, setPickedK] = useState(0);
 
+  // ── DRAG state (Change B): the fuse/factor chips are DRAG-and-drop. A ghost
+  // follows the pointer; the bar (Manipulate/Bind) or the fade-equation (Fade)
+  // is the highlighting drop target. A pointer tap (no movement) is a no-op —
+  // only a real drag (pointer) or keyboard activation (non-pointer) places.
+  // `drag` = { x, y, k, kind } while a chip is in flight; `hotDrop` = pointer is
+  // over the live drop target. Refs to the drop-target DOM nodes drive hit-test.
+  const [drag, setDrag] = useState(null);
+  const [hotDrop, setHotDrop] = useState(false);
+  const barDropRef = useRef(null);   // Manipulate / Bind: the bar+ruler region
+  const fadeDropRef = useRef(null);  // Fade: the symbolic 8/12 = ?/? equation
+  const suppressClickRef = useRef(false); // a completed drag must not also click
+  // Defensive: clear any in-flight drag on unmount.
+  useEffect(() => () => { setDrag(null); setHotDrop(false); }, []);
+
   // Applied (Stage 5): word→math gate. The child first WRITES the fraction the
   // words describe (8/12) in the setup Slate; once that's checked (setupOk) the
   // simplified answer unlocks. Words (Stage 6): an OPTIONAL, ungraded scratch
   // Slate for 8/12 — it never gates the answer.
   const [setupAns, setSetupAns] = useState({ n: "", d: "" });
   const [setupOk, setSetupOk] = useState(false);
-  const [scratch, setScratch] = useState({ n: "", d: "" });
+
+  // Show Work (mandatory blank-slate step between Applied and Words): a pure
+  // presence gate — Next unlocks once the child puts ANY ink on the slate.
+  const [showWorkInked, setShowWorkInked] = useState(false);
 
   const [status, setStatus] = useState(initialStatus("manipulate"));
 
-  const { soundOn, speaking, say, stopVoice, toggleSound } = useVoice();
+  const { speaking, say, stopVoice } = useVoice();
   const solvedRef = useRef(solved);
   const stageRef = useRef(stage);
   useEffect(() => { solvedRef.current = solved; }, [solved]);
@@ -196,6 +218,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
       case "fade":       return { tone: "normal", text: "The bar is fading. Pick the number that divides BOTH 8 and 12, then write the tidied line." };
       case "numbers":    return { tone: "normal", text: "Just the numbers now: 8/12. Write it in its lowest terms — fewest, biggest pieces." };
       case "applied":    return { tone: "normal", text: "A question in words. First write the fraction it describes — 8/12 — then the simplest form unlocks." };
+      case "showwork":   return { tone: "normal", text: "Show your work on the blank slate — write anything you like. When you've put something down, you can move on." };
       case "words":      return { tone: "normal", text: "Read the recipe. The pieces come out messy — write the simplest fraction for the total." };
       default:           return { tone: "normal", text: "" };
     }
@@ -208,7 +231,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     setNum(START_NUM); setDen(START_DEN); setDivs([]); setFuseTick(0); setBounceK(0);
     setSolved(false); solvedRef.current = false; setStars(0); setCook("idle");
     setSlate({ n: "", d: "" }); setPickedK(0);
-    setSetupAns({ n: "", d: "" }); setSetupOk(false); setScratch({ n: "", d: "" });
+    setSetupAns({ n: "", d: "" }); setSetupOk(false); setShowWorkInked(false);
     setStatus(initialStatus(s));
     // Emit problem_present for the new stage.
     selfCorrectionsRef.current = 0;
@@ -278,6 +301,59 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
       setStatus({ tone: "warn", text: `${k} doesn't divide both 8 and 12. Pick a number that splits the TOP and the BOTTOM evenly.` });
       say("r4Uneven");
     }
+  }
+
+  // ── DRAG-to-place (Change B): grab a Fuse/Factor chip and drag it onto its
+  // drop target (the bar for fuse, the fade equation for factor). A ghost tracks
+  // the pointer in real time; releasing OVER the target performs the action
+  // (fuse / pickFactor). Releasing elsewhere cancels. A near-zero-movement
+  // pointer press is a no-op (the onClick guard ignores pointer clicks via
+  // e.detail>=1), so a tap never places an object — only drag does. Keyboard
+  // activation (e.detail===0) still places, for non-pointer a11y.
+  // Mirrors AppR5 grabBlock. ──
+  function dropRectFor(kind) {
+    const node = kind === "factor" ? fadeDropRef.current : barDropRef.current;
+    return node ? node.getBoundingClientRect() : null;
+  }
+  function overDrop(kind, ev) {
+    const r = dropRectFor(kind);
+    if (!r) return false;
+    const pad = 36;
+    return ev.clientX >= r.left - pad && ev.clientX <= r.right + pad &&
+           ev.clientY >= r.top - pad && ev.clientY <= r.bottom + pad;
+  }
+  function grabChip(e, k, kind) {
+    if (solvedRef.current) return;
+    // overflow-disabled chips never start a drag (mirror the action guards).
+    if (kind === "fuse" && !(num % k === 0 && den % k === 0)) return;
+    if (e && e.preventDefault) e.preventDefault();
+    // No pointer info (keyboard / synthetic) → keyboard activation falls through to onClick.
+    if (!e || e.clientX == null) return;
+    const startX = e.clientX, startY = e.clientY;
+    let moved = false;
+    setDrag({ x: startX, y: startY, k, kind });
+    const hover = (ev) => {
+      if (Math.abs(ev.clientX - startX) > 5 || Math.abs(ev.clientY - startY) > 5) moved = true;
+      setDrag({ x: ev.clientX, y: ev.clientY, k, kind });
+      setHotDrop(overDrop(kind, ev));
+    };
+    const up = (ev) => {
+      window.removeEventListener("pointermove", hover);
+      window.removeEventListener("pointerup", up);
+      setDrag(null); setHotDrop(false);
+      // A real drag that lands on the target performs the action here, and the
+      // browser's synthetic click that follows is suppressed (in onClick) so we
+      // never double-fire. A no-movement pointer tap is ignored by the onClick
+      // guard (e.detail>=1), so it does nothing — drag is required.
+      if (moved) {
+        suppressClickRef.current = true;
+        if (overDrop(kind, ev)) {
+          if (kind === "factor") pickFactor(k); else fuse(k);
+        }
+      }
+    };
+    window.addEventListener("pointermove", hover);
+    window.addEventListener("pointerup", up);
   }
 
   // ── grading the written answer (Bind / Fade / Numbers / Words) ───────────────
@@ -448,7 +524,6 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
             <div className="puzzle-title">{title}</div>
           </div>
         </div>
-        <div />
         <div className="controls">
           {onBack && <button className="ctrl-btn" title="Back to the lesson map" onClick={onBack}>←</button>}
           {onRewatchIntro && (
@@ -456,13 +531,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
               <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
             </button>
           )}
-          <button className={"ctrl-btn" + (soundOn ? " on" : "")} title={soundOn ? "Turn sound off" : "Turn sound on"} onClick={toggleSound}>
-            {soundOn ? (
-              <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><path d="M12 5 Q15 8 12 11" stroke="currentColor" strokeWidth="1.5" fill="none" /><path d="M13.5 3 Q18 8 13.5 13" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
-            ) : (
-              <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><line x1="12" y1="5" x2="17" y2="11" stroke="currentColor" strokeWidth="1.6" /><line x1="17" y1="5" x2="12" y2="11" stroke="currentColor" strokeWidth="1.6" /></svg>
-            )}
-          </button>
+          <SettingsButton />
           <button className="ctrl-btn" title="Start this stage over" onClick={reset}>⟲</button>
         </div>
       </div>
@@ -487,6 +556,21 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
         ))}
       </div>
 
+      {/* ── THE QUESTION (Change A): the canonical full-width band, mounted
+         directly under the stage tabs on every stage EXCEPT the final words-only
+         stage. Shows the bare equation 8/12 = ?; the "?" becomes the solved
+         lowest-terms value (2/3) once solved. On the WORDS stage the band is
+         deliberately omitted — the whole point there is that the child reads the
+         prose and extracts the math themselves, so showing the bare equation
+         would give the answer away. (Applied keeps it; it shows numerals.) ── */}
+      {stage !== "words" && (
+        <QuestionBand
+          lead="the question"
+          expr={<BigFrac num={START_NUM} den={START_DEN} />}
+          answer={solved ? <BigFrac num={LOW_NUM} den={LOW_DEN} /> : "?"}
+        />
+      )}
+
       <div className="goal">
         <button className={"speaker" + (speaking ? " speaking" : "")} onClick={() => say("r4Goal")}>
           <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
@@ -495,7 +579,56 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
         <div className="goal-text" data-vox="r4Goal" data-vox-speaker="mom">{stageGoal(stage)}</div>
       </div>
 
-      {(stage === "applied" || stage === "words") ? (
+      {stage === "showwork" ? (
+        /* ════════════════════════════════════════════════════════════════════
+           SHOW WORK — MANDATORY BLANK-SLATE STEP (between Applied and Words)
+           A pure presence gate: the child writes anything on a 100%-blank slate;
+           "Next" unlocks once any ink lands (onInkChange). Ungraded — no engine
+           judge; advancement is a plain goStage to Words. ── */
+        <div className="r4-s r4-s-wordsmode">
+          <div className="r4-s-story">
+            <FitStage className="r4-s-fit" axis="y">
+              <div className="wp-card r4-s-card">
+                <div className="wp-card-head">
+                  <span className="wp-tag">Show Your Work</span>
+                </div>
+                <p className="wp-story r4-s-story-text">
+                  Show how you'd tidy <b>{START_NUM}/{START_DEN}</b> — write anything you like on the slate. When you've put something down, tap Next.
+                </p>
+              </div>
+              <div className="r4-s-setup">
+                <span className="r4-s-setup-lead">Show your work here</span>
+                <div className="bs-surface" style={{ position: "relative", width: 800, height: 360 }}>
+                  <BlankSlate
+                    key={`showwork:${stage}`}
+                    hint="show your work here — write anything you like ✎"
+                    onInkChange={setShowWorkInked}
+                    ariaLabel="show your work on a blank slate"
+                  />
+                </div>
+              </div>
+            </FitStage>
+          </div>
+
+          <div className="r4-s-answer r4-s-answer-words">
+            <div className="r4-s-ansprompt">When you've shown your work, move on</div>
+            <div className="r4-s-answrite">
+              <div className="r4-s-marks">
+                <button
+                  className={"check" + (showWorkInked ? " ready" : "")}
+                  disabled={!showWorkInked}
+                  onClick={() => gotoStage("words")}
+                >Next →</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="r4-s-tutor">
+            <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+            <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+          </div>
+        </div>
+      ) : (stage === "applied" || stage === "words") ? (
         /* ════════════════════════════════════════════════════════════════════
            WORDS / APPLIED — DETERMINISTIC FIXED-ZONE LAYOUT
              · .r4-s-story  — recipe card + (Applied) the required setup gate
@@ -503,7 +636,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
              · .r4-s-tutor  — Cook + ribbon (bottom-right)
            Every zone is a fixed rectangle with clamped text, so a longer string
            or a different font can never reflow one zone onto another. ── */
-        <div className="r4-s r4-s-wordsmode">
+        <div className={"r4-s r4-s-wordsmode" + (stage === "words" ? " r4-s-onlywords" : "")}>
           {/* STORY ZONE (fixed rect, top) */}
           <div className="r4-s-story">
             <div className="wp-card r4-s-card">
@@ -525,26 +658,30 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
             {/* the word→math surface: REQUIRED gate (Applied) / OPTIONAL scratch (Words) */}
             <div className="r4-s-setup">
               <span className="r4-s-setup-lead">
-                {stage === "applied" ? "First, write the fraction the words describe" : "Optional — sketch the fraction the words give"}
+                {stage === "applied" ? "First, write the fraction the words describe" : "Optional — show your work here"}
               </span>
-              <div className="r4-s-setup-row">
-                <Slate
-                  slots={[{ key: "n", label: "top" }, { key: "d", label: "bottom" }]}
-                  values={stage === "applied" ? setupAns : scratch}
-                  onChange={(k, v) => (stage === "applied"
-                    ? setSetupAns((s) => ({ ...s, [k]: onlyDigits(v) }))
-                    : setScratch((s) => ({ ...s, [k]: onlyDigits(v) })))}
-                  onSubmit={stage === "applied" ? checkSetup : undefined}
-                  layout="fraction"
-                  den={START_DEN}
-                  disabled={(stage === "applied" && (setupOk || solved)) || (stage === "words" && solved)}
-                  autoFocusKey={stage === "applied" && !setupOk ? "n" : undefined}
-                  ariaLabel="write the fraction the words describe"
-                />
-                {stage === "applied" && (setupOk
-                  ? <span className="r4-setup-ok">✓ that's {START_NUM}/{START_DEN} — now simplify it</span>
-                  : <button type="button" className="wp-check" onClick={checkSetup}>Check the fraction</button>)}
-              </div>
+              {stage === "applied" ? (
+                <div className="r4-s-setup-row">
+                  <Slate
+                    slots={[{ key: "n", label: "top" }, { key: "d", label: "bottom" }]}
+                    values={setupAns}
+                    onChange={(k, v) => setSetupAns((s) => ({ ...s, [k]: onlyDigits(v) }))}
+                    onSubmit={checkSetup}
+                    layout="fraction"
+                    den={START_DEN}
+                    disabled={setupOk || solved}
+                    autoFocusKey={!setupOk ? "n" : undefined}
+                    ariaLabel="write the fraction the words describe"
+                  />
+                  {setupOk
+                    ? <span className="r4-setup-ok">✓ that's {START_NUM}/{START_DEN} — now simplify it</span>
+                    : <button type="button" className="wp-check" onClick={checkSetup}>Check the fraction</button>}
+                </div>
+              ) : (
+                <div className="bs-surface r4-s-scratch-surface" style={{ position: "relative" }}>
+                  <BlankSlate key="words-scratch" hint="optional — show your work here ✎" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -594,7 +731,11 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
         <div className="r4-s">
           {/* ── BLOCK / EQUATION ZONE (fixed rect, top-left) ── */}
           <div className="r4-s-blocks">
-            <div className="canvas r4-s-canvas" id="r3canvas">
+            <div
+              ref={(stage === "manipulate" || stage === "bind") ? barDropRef : null}
+              className={"canvas r4-s-canvas" + (drag && drag.kind === "fuse" ? " r4-droptarget" : "") + (drag && drag.kind === "fuse" && hotDrop ? " is-hot" : "")}
+              id="r3canvas"
+            >
               {stage === "numbers" ? (
                 <div className="r4-bare-eq">
                   <BigFrac num={START_NUM} den={START_DEN} />
@@ -639,13 +780,17 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
             {(stage === "manipulate" || stage === "bind") && (
               <div className="panel">
                 <h3 className="pick-title">Fuse Tool</h3>
-                <div className="hint">Pick a group size. If the blocks split into that many evenly, they fuse into fewer, bigger pieces — divide the top <b>and</b> bottom by it.</div>
+                <div className="hint"><b>Drag</b> a group size onto the bar. If the blocks split into that many evenly, they fuse into fewer, bigger pieces — divide the top <b>and</b> bottom by it.</div>
                 <div className="r4-fuse-tray">
                   {FUSE_CHOICES.map((k) => {
                     const even = num % k === 0 && den % k === 0;
                     return (
-                      <button key={k} className={"r4-fuse-btn" + (bounceK === k ? " bounce" : "")}
-                        disabled={(stage === "manipulate" && solved) || !even} onClick={() => fuse(k)} title={`Fuse equal groups of ${k}`}>
+                      <button key={k} className={"r4-fuse-btn" + (bounceK === k ? " bounce" : "") + (drag && drag.kind === "fuse" && drag.k === k ? " is-dragging" : "")}
+                        style={{ touchAction: "none" }}
+                        disabled={(stage === "manipulate" && solved) || !even}
+                        onPointerDown={(e) => grabChip(e, k, "fuse")}
+                        onClick={(e) => { if (suppressClickRef.current) { suppressClickRef.current = false; return; } if (e.detail !== 0) return; /* pointer tap: drag required */ fuse(k); }}
+                        title={`Drag onto the bar to fuse equal groups of ${k}`}>
                         <span className="r4-fuse-k">{k}</span>
                         <span className="r4-fuse-txt">
                           <span className="r4-fuse-title">Fuse by {k}</span>
@@ -673,18 +818,24 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
             {stage === "fade" && (
               <div className="panel">
                 <h3 className="pick-title">Shared Factor</h3>
-                <div className="hint">The bar is fading — choose with numbers now. Pick the number that divides <b>both</b> 8 and 12.</div>
+                <div className="hint">The bar is fading — choose with numbers now. <b>Drag</b> the ÷ number that divides <b>both</b> 8 and 12 onto the equation.</div>
                 <div className="r4-factor-tray">
                   {FACTOR_CHOICES.map((k) => (
                     <button key={k}
-                      className={"r4-factor-btn" + (pickedK === k ? " picked" : "") + (bounceK === k ? " bounce" : "")}
-                      disabled={solved} onClick={() => pickFactor(k)}
-                      aria-pressed={pickedK === k} title={`Divide top and bottom by ${k}`}>
+                      className={"r4-factor-btn" + (pickedK === k ? " picked" : "") + (bounceK === k ? " bounce" : "") + (drag && drag.kind === "factor" && drag.k === k ? " is-dragging" : "")}
+                      style={{ touchAction: "none" }}
+                      disabled={solved}
+                      onPointerDown={(e) => grabChip(e, k, "factor")}
+                      onClick={(e) => { if (suppressClickRef.current) { suppressClickRef.current = false; return; } if (e.detail !== 0) return; /* pointer tap: drag required */ pickFactor(k); }}
+                      aria-pressed={pickedK === k} title={`Drag onto the equation to divide top and bottom by ${k}`}>
                       ÷{k}
                     </button>
                   ))}
                 </div>
-                <div className="r4-fade-eq">
+                <div
+                  ref={fadeDropRef}
+                  className={"r4-fade-eq" + (drag && drag.kind === "factor" ? " r4-droptarget" : "") + (drag && drag.kind === "factor" && hotDrop ? " is-hot" : "")}
+                >
                   <span className="r4-fade-frac">{START_NUM}/{START_DEN}</span>
                   <span className="r4-fade-op">=</span>
                   <span className={"r4-fade-frac r4-fade-out" + (pickedK ? " on" : "")}>
@@ -768,6 +919,20 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
           </div>
         </div>
       )}
+
+      {/* ── the dragging GHOST (Change B): follows the pointer in real time while
+         a Fuse/Factor chip is in flight. Fixed-position, pointer-events:none. ── */}
+      {drag && (
+        <div
+          className={"r4-drag-ghost" + (drag.kind === "factor" ? " r4-drag-ghost-factor" : " r4-drag-ghost-fuse") + (hotDrop ? " is-hot" : "")}
+          style={{ left: drag.x, top: drag.y, position: "fixed" }}
+          aria-hidden="true"
+        >
+          {drag.kind === "factor"
+            ? <span className="r4-drag-ghost-k">÷{drag.k}</span>
+            : <><span className="r4-fuse-k">{drag.k}</span><span className="r4-drag-ghost-lab">Fuse by {drag.k}</span></>}
+        </div>
+      )}
     </div>
   );
 }
@@ -785,6 +950,8 @@ function stageGoal(stage) {
       return (<>Just the numbers: <b>{START_NUM}/{START_DEN} = ?</b> Write it in lowest terms on the Slate — no blocks to lean on.</>);
     case "applied":
       return (<>A question in words. First <b>write the fraction</b> it describes ({START_NUM}/{START_DEN}); once that's checked, <b>write it with the fewest, biggest pieces</b>.</>);
+    case "showwork":
+      return (<>Now <b>show your work</b> on the blank slate — write anything you like. When you've put something down, tap <b>Next</b>.</>);
     case "words":
       return (<>Read Babushka's recipe. The leftover comes out as a messy fraction — <b>write the simplest form</b> of the total.</>);
     default:

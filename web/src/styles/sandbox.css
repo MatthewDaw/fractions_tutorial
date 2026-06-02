@@ -25,6 +25,10 @@
 .sandbox-piece-hatch { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; }
 .sandbox-piece-lab { position: relative; font-family: var(--display); font-weight: 700; }
 
+/* number-mode cell dividers — split an "N" block into N countable unit cells so the
+   child can physically count the cubes inside a group (shared by chip/piece/ghost) */
+.sandbox-seg { position: absolute; inset: 0; pointer-events: none; }
+
 /* ruler 0 → rulerWholes */
 .sandbox-line { position: absolute; height: 0; border-top: 2px solid var(--ink); }
 .sandbox-tick { position: absolute; width: 2px; height: 14px; background: var(--ink); transform: translateX(-1px); }
@@ -72,6 +76,40 @@
 .sandbox-clear:hover:not(:disabled) { background: var(--paper-1); }
 .sandbox-clear:disabled { opacity: 0.4; cursor: default; }
 
+/* ── DRAG-AND-DROP ─────────────────────────────────────────────────────────
+   A bin block is dragged with pointer events; a ghost follows the pointer and the
+   line lights as a drop target. Placement is drag-only — drop on the line. */
+
+/* the drop-target band over the row/ruler — shown only while dragging; it pulses
+   to a stronger red tint once the pointer is actually over the line (is-hot). */
+.sandbox-droptarget {
+  position: absolute; z-index: 1; pointer-events: none; box-sizing: border-box;
+  border: 2px dashed var(--red-soft);
+  background: rgba(163, 42, 34, 0.05);
+  transition: background .1s ease, border-color .1s ease, box-shadow .1s ease;
+}
+.sandbox-droptarget.is-hot {
+  border-color: var(--red);
+  background: rgba(163, 42, 34, 0.14);
+  box-shadow: inset 0 0 0 2px rgba(163, 42, 34, 0.22);
+}
+
+/* the chip being dragged fades in its tray slot (its ghost is what you see move) */
+.sandbox-bin-btn.is-dragging { opacity: 0.35; }
+
+/* the ghost block that tracks the pointer — centered on the cursor, above all */
+.sandbox-ghost {
+  position: fixed; z-index: 60; pointer-events: none;
+  transform: translate(-50%, -50%);
+  min-width: 56px; height: 38px; padding: 0 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-weight: 700; font-size: 15px;
+  border: 1.5px solid var(--ink); overflow: hidden;
+  box-shadow: 3px 4px 0 rgba(20,14,10,0.28); opacity: 0.95;
+}
+.sandbox-ghost-hatch { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; }
+.sandbox-ghost-lab { position: relative; }
+
 @media (prefers-reduced-motion: reduce) {
-  .sandbox-piece, .sandbox-bin-btn { transition: none; }
+  .sandbox-piece, .sandbox-bin-btn, .sandbox-droptarget { transition: none; }
 }

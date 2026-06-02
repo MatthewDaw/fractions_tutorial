@@ -35,7 +35,10 @@ import Rosette from "./components/Rosette.jsx";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
 import BlockSandbox from "./components/BlockSandbox.jsx";
+import QuestionBand from "./components/QuestionBand.jsx";
 import PlateGroup, { BowlGroup } from "./components/PlateGroup.jsx";
+import BlankSlate from "./components/BlankSlate.jsx";
+import SettingsButton from "./SettingsButton.jsx";
 import { useVoice } from "./voice.js";
 import { useLessonEngine } from "./runtime/useLessonEngine.js";
 import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
@@ -55,6 +58,10 @@ const STAGES = [
   { n: 4, key: "4-workbench",  tab: "Workbench",  sub: "build it in bowls" },
   { n: 5, key: "5-numbers",    tab: "Numbers",    sub: "bare 3 × 4 = ?" },
   { n: 6, key: "6-applied",    tab: "Applied",    sub: "write the setup, then total" },
+  // String-keyed mandatory "show your work" step (between Applied and Words). A
+  // non-numeric `n` keeps the numeric stages 1..7 from renumbering; the selector
+  // and goStage route by `key`. scaffoldMap returns L3 for "showwork".
+  { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
   { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
 ];
 
@@ -77,17 +84,21 @@ const WORD_BANK = [
 
 export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }) {
   // Find the starting stage from the beat key (consume initialBeat like AppR1).
+  // `stage` holds either a numeric stage (1..7) OR the string key "showwork" for
+  // the inserted mandatory step — so the numeric stages never renumber.
   const startN = (() => {
     const b = initialBeat;
     const f = STAGES.find((s) => s.key === b || s.n === b || String(s.n) === String(b));
-    return f ? f.n : 1;
+    // Normalize the inserted step to its canonical string value "showwork".
+    return f ? (f.key === "showwork" ? "showwork" : f.n) : 1;
   })();
+  const startKey = STAGES.find((s) => s.n === startN || s.key === startN).key;
   const [stage, setStage] = useState(startN);
 
   // --- Engine integration ---
   const { emit, judgeAndAdvance } = useLessonEngine({
     nodeId: NODE,
-    lessonConfig: { lessonId: "m1", initialBeat: initialBeat != null ? String(initialBeat) : String(startN) },
+    lessonConfig: { lessonId: "m1", initialBeat: startKey },
   });
 
   // Track place/remove self-corrections for the current attempt.
@@ -99,6 +110,12 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   const [plateFlag, setPlateFlag] = useState(false);     // paint unequal plates red on a bad check
   const [tally, setTally] = useState("");                 // the count box (no Slate)
 
+  // --- Stage 2 (bind) — the child ASSEMBLES the repeated-addition strip by tapping
+  // each plate to carry its "+ SIZE" into a running sum (0 → 4 → 4+4 → 4+4+4). The
+  // total slate unlocks only once all GROUPS terms are bound. (Distinct from Fade,
+  // which COLLAPSES that finished sum into 3 × 4 — Issue 6.)
+  const [boundTerms, setBoundTerms] = useState(0);
+
   // --- Stage 3 (fade) collapse state — the 4+4+4 line gathered toward 3 × 4 ---
   const [collapsed, setCollapsed] = useState(false);
 
@@ -109,9 +126,10 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   const [setupCount, setSetupCount] = useState("");
   const [setupSize, setSetupSize] = useState("");
   const [setupOk, setSetupOk] = useState(false);
-  // --- Words (7) optional ungraded scratch (never gates) ---
-  const [scratchCount, setScratchCount] = useState("");
-  const [scratchSize, setScratchSize] = useState("");
+  // --- Words (7) optional scratch is now a standalone BlankSlate (ungraded, no
+  // state needed). ---
+  // --- Show-work step gate: the child must put ink down before advancing ---
+  const [showWorkInked, setShowWorkInked] = useState(false);
 
   // --- shared outcome state ---
   const [solved, setSolved] = useState(false);
@@ -120,7 +138,7 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   const [cook, setCook] = useState("idle");
   const [status, setStatus] = useState({ tone: "normal", text: STAGE_INTRO(1) });
 
-  const { soundOn, speaking, say, stopVoice, toggleSound } = useVoice();
+  const { speaking, say, stopVoice } = useVoice();
   const solvedRef = useRef(solved), stageRef = useRef(stage);
   useEffect(() => { solvedRef.current = solved; }, [solved]);
   useEffect(() => { stageRef.current = stage; }, [stage]);
@@ -131,7 +149,7 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
       presentEmittedRef.current = true;
       emit({
         type: "problem_present",
-        payload: { node_id: NODE, scaffold_level: toScaffoldLevel("m1", STAGES.find((s) => s.n === startN)?.key ?? "1-manipulate") },
+        payload: { node_id: NODE, scaffold_level: toScaffoldLevel("m1", startKey) },
       });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -142,34 +160,46 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   function intro(n) { setStatus({ tone: "normal", text: STAGE_INTRO(n) }); }
 
   // ---- enter a stage cleanly (selector click OR auto-advance) ----
-  function goStage(n) {
+  // Accepts a numeric stage (1..7), the string key "showwork", OR any STAGES
+  // `key` (selector clicks). Normalizes to the canonical stage value: a number
+  // for the seven numeric stages, the string "showwork" for the inserted step.
+  function goStage(arg) {
+    const desc = STAGES.find((s) => s.n === arg || s.key === arg);
+    const n = desc ? (desc.key === "showwork" ? "showwork" : desc.n) : arg;
     stopVoice();
     setStage(n); stageRef.current = n;
     setSolved(false); solvedRef.current = false;
     setStars(0); setBadInput(false);
     setPlates(Array(GROUPS).fill(0)); setPlateFlag(false); setTally("");
+    setBoundTerms(0);
     setCollapsed(false);
     setProduct("");
     setSetupCount(""); setSetupSize(""); setSetupOk(false);
-    setScratchCount(""); setScratchSize("");
+    setShowWorkInked(false);
     setCook("idle");
     intro(n);
     selfCorrectionsRef.current = 0;
     presentEmittedRef.current = true;
-    const key = STAGES.find((s) => s.n === n)?.key ?? "1-manipulate";
+    const key = STAGES.find((s) => s.n === n || s.key === n)?.key ?? "1-manipulate";
     emit({
       type: "problem_present",
       payload: { node_id: NODE, scaffold_level: toScaffoldLevel("m1", key) },
     });
   }
 
+  // Linear advance order, threading the string-keyed "showwork" step between
+  // Applied (6) and Words (7). Routes by key so the numeric stages don't shift.
   function nextStage() {
-    const n = Math.min(7, stageRef.current + 1);
-    if (n === stageRef.current) {
+    const cur = stageRef.current;
+    let next;
+    if (cur === 6) next = "showwork";
+    else if (cur === "showwork") next = 7;
+    else next = Math.min(7, (typeof cur === "number" ? cur : 7) + 1);
+    if (next === cur) {
       setStatus({ tone: "ok", text: "That's the whole arc — from filling plates to reading a story and writing the answer. Brilliant, povaryonok!" });
       return;
     }
-    goStage(n);
+    goStage(next);
   }
 
   // ---- engine integration helpers ------------------------------------------
@@ -179,7 +209,10 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     if (dec.kind === "FadeScaffold") {
       nextStage();
     } else if (dec.kind === "RaiseScaffold") {
-      const prev = Math.max(1, stageRef.current - 1);
+      // "showwork" is ungraded and never reports an attempt, so RaiseScaffold can
+      // only fire from a numeric stage; guard the arithmetic anyway.
+      const cur = typeof stageRef.current === "number" ? stageRef.current : 6;
+      const prev = Math.max(1, cur - 1);
       if (prev !== stageRef.current) goStage(prev);
     } else if (isCorrect) {
       nextStage();
@@ -302,6 +335,21 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     award(`Yes! ${GROUPS} × ${SIZE} = ${PRODUCT}. Add the group again and again, or multiply — full marks!`, "mr_mom_goal_1", [PRODUCT, 1]);
   }
 
+  // ---- Stage 2 BIND: tap a plate to carry its "+ SIZE" into the running sum ----
+  // Each tap binds one more equal group; once all GROUPS are bound the strip reads
+  // SIZE + SIZE + SIZE and the total slate unlocks. (This is the REPEATED-ADDITION
+  // construction — Fade then collapses the finished sum into 3 × 4.)
+  const allBound = boundTerms >= GROUPS;
+  function bindNextGroup() {
+    if (solvedRef.current || allBound) return;
+    setBoundTerms((n) => Math.min(GROUPS, n + 1));
+    setCook("idle");
+    const next = Math.min(GROUPS, boundTerms + 1);
+    setStatus(next >= GROUPS
+      ? { tone: "ok", text: `${ADD_TERMS.join(" + ")} — three equal groups added up. Now write the total.` }
+      : { tone: "normal", text: `Bound ${next} of ${GROUPS} groups: ${Array(next).fill(SIZE).join(" + ")}. Keep adding the group.` });
+  }
+
   // ---- Stage 3 collapse: gather 4 + 4 + 4 toward 3 × 4 ----
   function collapse() {
     if (solved || collapsed) return;
@@ -310,13 +358,16 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     say("mr_mom_goal_1");
   }
 
-  // ---- Stage 4 WORKBENCH — reuse BlockSandbox styling (linear N groups of M) ----
-  // The sandbox builds a same-size row to a target; we target GROUPS groups by
-  // having the child stack SIZE-denominator blocks (a clean "N groups of M" build).
-  function onSandboxSolve() {
+  // ---- Stage 4 WORKBENCH — BlockSandbox in NUMBER mode (whole-number groups) ----
+  // The child stacks equal "group" scoops (size SIZE) on a 0→PRODUCT count line
+  // until the row reaches the flag at GROUPS groups. The sandbox only fires onSolve
+  // for a SAME-SIZE row that hits the target count, reporting {num: #groups, den:
+  // scoop size}; we read num*den as the product (= PRODUCT for an equal-group row).
+  function onSandboxSolve({ num, den } = {}) {
     if (solvedRef.current) return;
-    setProduct(String(PRODUCT));
-    award(`Yes! ${GROUPS} groups of ${SIZE} — built from equal groups and counted up. ${GROUPS} × ${SIZE} = ${PRODUCT}!`, "mr_mom_goal_1", [PRODUCT, 1]);
+    const total = (num != null && den != null) ? num * den : PRODUCT;
+    setProduct(String(total));
+    award(`Yes! ${num ?? GROUPS} groups of ${den ?? SIZE} — built from equal groups and counted up. ${num ?? GROUPS} × ${den ?? SIZE} = ${total}!`, "mr_mom_goal_1", [total, 1]);
   }
 
   // ---- Stage 6 APPLIED — the required count × size setup gate -----------------
@@ -381,28 +432,71 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   // ---- header reset ----
   function reset() { goStage(1); }
 
+  // ---- the BARE core question for this stage, shown big in the header center ----
+  // Every stage surfaces the exact math the child must answer (an equation ending
+  // in "= ?"), large and bold, so the question is the most readable thing on screen.
+  // Word-problem stages reduce the prose to its bare equation.
+  function questionFor(st) {
+    if (st === 2) return { a: SIZE, op: "+", b: SIZE, c: SIZE };            // 4 + 4 + 4 = ?
+    if (st === 6) { const p = WORD_BANK[0]; return { a: p.groups, op: "×", b: p.size }; }
+    if (st === 7) { const p = WORD_BANK[1]; return { a: p.groups, op: "×", b: p.size }; }
+    return { a: GROUPS, op: "×", b: SIZE };                                  // 3 × 4 = ?
+  }
+  // The shared full-width QuestionBand mounted directly under the stage tabs on
+  // every stage EXCEPT the final WORDS-only story stage (7). Builds the bare
+  // equation body (terms + red ops) from questionFor, with answer "?" until solved,
+  // then the solved product. (Replaces the old in-topbar .m1-hdr-q header eq — the
+  // question never overlaps the working area.)
+  //
+  // WHY NOT ON WORDS (stage 7): that stage's whole point is the child READS the
+  // prose and extracts the math (count × size) themselves — surfacing the bare
+  // 3 × 4 = ? band would give the answer away. So the band renders on every other
+  // stage (including Applied, which intentionally shows numerals, and Show-Work)
+  // but is suppressed on stage 7. `showBand` gates the mount below.
+  const showBand = stage !== 7;
+  const Band = (() => {
+    const q = questionFor(stage);
+    const answer = q.op === "+"
+      ? (q.a + q.b + (q.c ?? 0))
+      : (q.a * q.b);
+    const expr = (
+      <>
+        {q.a}
+        <span className="qb-op">{q.op}</span>
+        {q.b}
+        {q.c != null && <><span className="qb-op">{q.op}</span>{q.c}</>}
+      </>
+    );
+    return <QuestionBand lead="the question" expr={expr} answer={solved ? answer : "?"} />;
+  })();
+
   // "Ready to check": the child has committed what this stage needs.
   const answerReady = !solved && (
     stage === 1 ? (allEqualFull && tally !== "")
+    : stage === 2 ? (allBound && product !== "")
     : stage === 3 ? (collapsed && product !== "")
     : stage === 6 ? (setupOk && product !== "")
-    : (stage === 2 || stage === 5 || stage === 7) ? (product !== "")
+    : (stage === 5 || stage === 7) ? (product !== "")
     : false
   );
 
   // The repeated-addition strip terms (one per plate).
   const ADD_TERMS = Array(GROUPS).fill(SIZE);
 
-  // ---- stage selector strip (reachability) ----
+  // ---- stage selector strip (reachability: jump to any stage) ----
+  // The current stage is matched by `key` so the string-keyed "showwork" step
+  // selects/navigates correctly alongside the numeric stages.
+  const curKey = STAGES.find((s) => s.n === stage || s.key === stage)?.key;
+  const curIdx = STAGES.findIndex((s) => s.key === curKey);
   const Selector = (
     <div className="m1-stages" role="tablist" aria-label="Lesson stages">
-      {STAGES.map((s) => (
+      {STAGES.map((s, i) => (
         <button
-          key={s.n}
+          key={s.key}
           role="tab"
-          aria-selected={stage === s.n}
-          className={"m1-stage-tab" + (stage === s.n ? " is-active" : "") + (stage > s.n ? " is-done" : "")}
-          onClick={() => goStage(s.n)}
+          aria-selected={curKey === s.key}
+          className={"m1-stage-tab" + (curKey === s.key ? " is-active" : "") + (curIdx > i ? " is-done" : "")}
+          onClick={() => goStage(s.key)}
           title={s.sub}
         >
           <span className="m1-stage-n">{s.n}</span>
@@ -424,7 +518,7 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
           <div className="puzzle-title">{title}</div>
         </div>
       </div>
-      <div />
+      <div aria-hidden="true" />
       <div className="controls">
         {onBack && <button className="ctrl-btn" title="Back to the lesson map" onClick={onBack}>←</button>}
         {onRewatchIntro && (
@@ -432,13 +526,7 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
           </button>
         )}
-        <button className={"ctrl-btn" + (soundOn ? " on" : "")} title={soundOn ? "Turn sound off" : "Turn sound on"} onClick={toggleSound}>
-          {soundOn ? (
-            <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><path d="M12 5 Q15 8 12 11" stroke="currentColor" strokeWidth="1.5" fill="none" /><path d="M13.5 3 Q18 8 13.5 13" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
-          ) : (
-            <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><line x1="12" y1="5" x2="17" y2="11" stroke="currentColor" strokeWidth="1.6" /><line x1="17" y1="5" x2="12" y2="11" stroke="currentColor" strokeWidth="1.6" /></svg>
-          )}
-        </button>
+        <SettingsButton />
         <button className="ctrl-btn" title="Start over" onClick={reset}>⟲</button>
       </div>
     </div>
@@ -450,7 +538,7 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
         <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
         Read aloud
       </button>
-      <div className="goal-text" data-vox="mr_mom_goal_1" data-vox-speaker="mom">Babushka has <b>{GROUPS} plates</b>, and she wants the <b>same {SIZE} pelmeni</b> on every plate — add the group again and again, or multiply.</div>
+      <div className="goal-text m1-goal-text" data-vox="mr_mom_goal_1" data-vox-speaker="mom">Babushka has <b>{GROUPS} plates</b>, and she wants the <b>same {SIZE} pelmeni</b> on every plate — add the group again and again, or multiply.</div>
     </div>
   );
 
@@ -512,7 +600,7 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
       <div className="m1-fz">
         <div className="m1-fz-stage">
           <div className="canvas m1-canvas">
-            <div className="m1-board-head">Put the <b>same {SIZE}</b> on every plate</div>
+            <div className="m1-board-head">Drag the <b>same {SIZE}</b> onto every plate</div>
             <PlateGroup
               plates={plates}
               cap={SIZE}
@@ -520,10 +608,10 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
               onClear={clearPlate}
               flagUnequal={plateFlag}
               readOnly={solved}
+              pile
             />
             <div className="m1-bowl-hint">
-              <span className="m1-bowl">🥟 bowl of pelmeni</span>
-              <span className="m1-bowl-note">tap a plate to drop one on · right-click a plate to empty it</span>
+              <span className="m1-bowl-note">drag pelmeni from the pile onto a plate · right-click a plate to empty it</span>
             </div>
           </div>
         </div>
@@ -559,31 +647,50 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
       </div>
     );
   } else if (stage === 2) {
-    // STAGE 2 · BIND — filled plates stay; the repeated-addition strip fades in.
+    // STAGE 2 · BIND — the child ASSEMBLES the repeated addition: tap each plate to
+    // carry its "+ SIZE" into a running sum (4 → 4+4 → 4+4+4). A plate that's already
+    // been bound shows a "+4" badge; the total slate unlocks once all are bound.
+    const boundExpr = boundTerms > 0 ? Array(boundTerms).fill(SIZE).join(" + ") : "?";
+    const checkBind = () => {
+      if (solved) { nextStage(); return; }
+      if (!allBound) { flashBad(); setStatus({ tone: "warn", text: `Tap each plate to add its + ${SIZE} first — bind all ${GROUPS} groups into the sum.` }); return; }
+      checkProductStage();
+    };
     body = (
       <div className="m1-fz">
         <div className="m1-fz-stage">
           <div className="canvas m1-canvas">
-            <div className="m1-board-head">Each plate is one <b>+ {SIZE}</b></div>
-            <PlateGroup plates={Array(GROUPS).fill(SIZE)} cap={SIZE} readOnly />
+            <div className="m1-board-head">Tap each plate to add its <b>+ {SIZE}</b> to the sum</div>
+            <PlateGroup
+              plates={Array(GROUPS).fill(SIZE)}
+              cap={SIZE}
+              onAdd={bindNextGroup}
+              readOnly={solved || allBound}
+            />
             <div className="m1-addstrip">
-              {ADD_TERMS.map((t, i) => (
-                <React.Fragment key={i}>
-                  {i > 0 && <span className="m1-addstrip-op">+</span>}
-                  <span className="m1-addstrip-term">{t}</span>
-                </React.Fragment>
-              ))}
-              <span className="m1-addstrip-op">=</span>
-              <span className="m1-addstrip-blank">{solved ? PRODUCT : "?"}</span>
+              {boundTerms === 0 ? (
+                <span className="m1-addstrip-hint">tap a plate to begin: {SIZE} …</span>
+              ) : (
+                <>
+                  {Array(boundTerms).fill(SIZE).map((t, i) => (
+                    <React.Fragment key={i}>
+                      {i > 0 && <span className="m1-addstrip-op">+</span>}
+                      <span className="m1-addstrip-term">{t}</span>
+                    </React.Fragment>
+                  ))}
+                  {!allBound && <span className="m1-addstrip-op">+ …</span>}
+                  {allBound && <><span className="m1-addstrip-op">=</span><span className="m1-addstrip-blank">{solved ? PRODUCT : "?"}</span></>}
+                </>
+              )}
             </div>
           </div>
         </div>
 
-        {Rail("Add the Group", `Three plates, ${SIZE} on each: ${ADD_TERMS.join(" + ")}. Write the total on the Slate.`)}
+        {Rail("Add the Group", `Tap all ${GROUPS} plates to build ${ADD_TERMS.join(" + ")} — that's adding the equal group again and again. Then write the total.`)}
 
         <WriteCard
-          onCheck={checkProductStage}
-          expr={<span className="m1-fz-frac">{ADD_TERMS.join(" + ")}</span>}
+          onCheck={checkBind}
+          expr={<span className="m1-fz-frac">{boundExpr}</span>}
         />
 
         {Tutor}
@@ -627,10 +734,10 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <>
         <BlockSandbox
+          mode="number"
           bin={[SIZE, 5, 3]}
-          targetValue={GROUPS}
+          targetValue={PRODUCT}
           targetLabel={`${GROUPS} groups of ${SIZE}`}
-          rulerWholes={GROUPS}
           solved={solved}
           onSolve={onSandboxSolve}
           onPlace={() => { selfCorrectionsRef.current += 1; emit({ type: "place_block", payload: { node_id: NODE } }); }}
@@ -734,8 +841,38 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
         </div>
       </div>
     );
+  } else if (stage === "showwork") {
+    // SHOW WORK — the mandatory free-form blank slate between Applied and Words.
+    // Ungraded: the child must put ink down (showWorkInked) to unlock "Next".
+    // Never judged/advanced by the engine — Next is a plain nextStage hop.
+    body = (
+      <div className="m1-fz m1-fz-words">
+        <div className="m1-fz-wp">
+          <div className="panel" style={{ marginBottom: 14 }}>
+            <h3>Show Your Work</h3>
+            <div className="hint">Before the last story problem — show how you'd count {GROUPS} groups of {SIZE} on a blank slate. Write anything you like; this one isn't graded.</div>
+          </div>
+          <div className="bs-surface" style={{ position: "relative", width: 800, height: 360 }}>
+            <BlankSlate
+              key={`showwork:${stage}`}
+              hint="show your work here — write anything you like ✎"
+              onInkChange={setShowWorkInked}
+              ariaLabel="show your work on a blank slate"
+            />
+          </div>
+          <div className="m1-fz-marks" style={{ marginTop: 12 }}>
+            <button
+              className={"check" + (showWorkInked ? " ready" : "")}
+              disabled={!showWorkInked}
+              onClick={() => nextStage()}
+            >Next ▸</button>
+          </div>
+        </div>
+        {Tutor}
+      </div>
+    );
   } else {
-    // STAGE 7 · WORDS — prose only; optional ungraded scratch that never gates.
+    // STAGE 7 · WORDS — prose only; optional ungraded blank-slate scratch.
     const prob = WORD_BANK[1];
     body = (
       <div className="m1-fz m1-fz-words">
@@ -746,26 +883,10 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
             readAloud={() => say(prob.say)}
             speaking={speaking}
             answerLead="Write how many in all"
-            setupLead="Optional — write it as count × size first"
+            setupLead="Optional — show your work here"
             setup={
-              <div className="m1-setup-row">
-                <Slate
-                  slots={[{ key: "count", label: "groups" }]}
-                  values={{ count: scratchCount }}
-                  onChange={(k, v) => setScratchCount(onlyDigits(v))}
-                  layout="row"
-                  disabled={solved}
-                  ariaLabel="optional: how many groups"
-                />
-                <span className="m1-setup-times">×</span>
-                <Slate
-                  slots={[{ key: "size", label: "in each" }]}
-                  values={{ size: scratchSize }}
-                  onChange={(k, v) => setScratchSize(onlyDigits(v))}
-                  layout="row"
-                  disabled={solved}
-                  ariaLabel="optional: how many in each group"
-                />
+              <div className="bs-surface m1-words-scratch" style={{ position: "relative" }}>
+                <BlankSlate key="words-scratch" hint="optional — show your work here ✎" />
               </div>
             }
             slots={[{ key: "product", label: "total" }]}
@@ -790,8 +911,9 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     <div className="page" data-vox-speaker="cook">
       <div className="foxing" />
       {TopBar}
-      {Goal}
       {Selector}
+      {showBand && Band}
+      {Goal}
       {body}
     </div>
   );
@@ -799,9 +921,10 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
 
 // Intro line per stage (also the ribbon's initial text).
 function STAGE_INTRO(n) {
+  if (n === "showwork") return `Show your work on a blank slate — count ${GROUPS} groups of ${SIZE} however you like, then move on.`;
   switch (n) {
-    case 1: return `Three plates, the same four pelmeni on each. Tap pelmeni onto every plate, then count them all up.`;
-    case 2: return `All filled — each plate is one + ${SIZE}. ${Array(GROUPS).fill(SIZE).join(" + ")} = ? Write the total on the Slate.`;
+    case 1: return `Three plates, the same four pelmeni on each. Drag pelmeni from the pile onto every plate, then count them all up.`;
+    case 2: return `All filled — now tap each plate to add its + ${SIZE} to the sum. Build ${Array(GROUPS).fill(SIZE).join(" + ")}, then write the total on the Slate.`;
     case 3: return `The plates just confirm it now — let the numbers lead. Collapse ${Array(GROUPS).fill(SIZE).join(" + ")} into ${GROUPS} × ${SIZE}, then write the product.`;
     case 4: return `The Workbench — build ${GROUPS} equal groups of ${SIZE} from the bin, all the same size, then read the count.`;
     case 5: return `Just the numbers: ${GROUPS} × ${SIZE} = ? Write the product on the Slate.`;

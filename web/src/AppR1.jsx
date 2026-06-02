@@ -38,7 +38,11 @@ import Lock from "./components/Lock.jsx";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
 import BlockSandbox from "./components/BlockSandbox.jsx";
+import QuestionBand from "./components/QuestionBand.jsx";
 import ExpressionSlate from "./components/ExpressionSlate.jsx";
+import BlankSlate from "./components/BlankSlate.jsx";
+import FitStage from "./components/FitStage.jsx";
+import SettingsButton from "./SettingsButton.jsx";
 import { useVoice } from "./voice.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import { useLessonEngine } from "./runtime/useLessonEngine.js";
@@ -68,6 +72,9 @@ const STAGES = [
   { n: 4, key: "4-workbench",  tab: "Workbench",  sub: "build it from the bin" },
   { n: 5, key: "5-numbers",    tab: "Numbers",    sub: "bare 2/7 + 3/7 = ?" },
   { n: 6, key: "6-applied",    tab: "Applied",    sub: "write the sum, then total" },
+  // String-keyed mandatory step (does NOT renumber the lesson). scaffoldMap maps
+  // "showwork" -> level 3; the slate is ungraded — advancing is gated only on ink.
+  { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
   { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
 ];
 
@@ -130,15 +137,15 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
   // num/den slots; the denominator is the locked padlock idea.
   const [slate, setSlate] = useState({ num: "", den: "" });
 
-  // --- word→math surfaces (Applied gate + Words optional scratch) ---
+  // --- word→math surfaces (Applied gate) ---
   // Applied (6): the child TRANSCRIBES the two shown fractions here; once they
-  // match 2/7 and 3/7 (either order) the answer Slate unlocks (setupOk). Words
-  // (7): the same ExpressionSlate is OPTIONAL scratch — never gates, never graded.
+  // match 2/7 and 3/7 (either order) the answer Slate unlocks (setupOk). The Words
+  // (7) optional scratch is now a free-form BlankSlate (ungraded; no state needed).
   const [setupA, setSetupA] = useState({ num: "", den: "" });
   const [setupB, setSetupB] = useState({ num: "", den: "" });
   const [setupOk, setSetupOk] = useState(false);
-  const [scratchA, setScratchA] = useState({ num: "", den: "" });
-  const [scratchB, setScratchB] = useState({ num: "", den: "" });
+  // --- mandatory "show your work" step (ungraded; ink-presence gate) ---
+  const [showWorkInked, setShowWorkInked] = useState(false);
 
   // --- shared outcome state ---
   const [solved, setSolved] = useState(false);
@@ -147,7 +154,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
   const [cook, setCook] = useState("idle");
   const [status, setStatus] = useState({ tone: "normal", text: STAGE_INTRO(1) });
 
-  const { soundOn, speaking, say, stopVoice, toggleSound } = useVoice();
+  const { speaking, say, stopVoice } = useVoice();
   const mergedRef = useRef(merged), solvedRef = useRef(solved), stageRef = useRef(stage);
   const posARef = useRef(posA), posBRef = useRef(posB);
   const bodyA = useRef(), bodyB = useRef();
@@ -186,16 +193,18 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     setSlate({ num: "", den: "" });
     // reset the word→math surfaces (Applied gate + Words scratch) on every entry
     setSetupA({ num: "", den: "" }); setSetupB({ num: "", den: "" }); setSetupOk(false);
-    setScratchA({ num: "", den: "" }); setScratchB({ num: "", den: "" });
+    setShowWorkInked(false);
     setPosA(HOME.A); setPosB(HOME.B);
     setCook("idle");
     intro(n);
     // Emit problem_present for this stage (latency anchor for the engine).
+    // The mandatory "show your work" step is keyed by the string "showwork" so
+    // scaffoldMap returns its dedicated level (3); numeric stages pass through.
     selfCorrectionsRef.current = 0;
     presentEmittedRef.current = true;
     emit({
       type: "problem_present",
-      payload: { node_id: "ADD_SAME_DEN", scaffold_level: toScaffoldLevel("r1", String(n)) },
+      payload: { node_id: "ADD_SAME_DEN", scaffold_level: toScaffoldLevel("r1", n === "sw" ? "showwork" : String(n)) },
     });
     if (n >= 2) {
       // stages 2–5 write on the Slate; nudge focus is automatic via autoFocusKey
@@ -203,13 +212,15 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
   }
 
   function nextStage() {
-    const n = Math.min(7, stageRef.current + 1);
-    if (n === stageRef.current) {
+    // Advance by STAGES ORDER (not arithmetic) so the string-keyed "showwork"
+    // step (n: "sw") sits correctly between Applied (6) and Words (7).
+    const idx = STAGES.findIndex((s) => s.n === stageRef.current);
+    if (idx < 0 || idx >= STAGES.length - 1) {
       // already at the last stage — celebrate completion in place
       setStatus({ tone: "ok", text: "That's the whole arc — from dragging blocks to reading a story and writing the answer. Brilliant!" });
       return;
     }
-    goStage(n);
+    goStage(STAGES[idx + 1].n);
   }
 
   // ---- engine integration helpers ------------------------------------------
@@ -431,12 +442,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     if (side === "a") setSetupA((s) => ({ ...s, [key]: v }));
     else setSetupB((s) => ({ ...s, [key]: v }));
   }
-  function onScratchChange(side, key, value) {
-    const v = onlyDigits(value);
-    if (side === "a") setScratchA((s) => ({ ...s, [key]: v }));
-    else setScratchB((s) => ({ ...s, [key]: v }));
-  }
-
   // ---- header reset: back to Stage 1, fresh board ----
   function reset() { goStage(1); }
 
@@ -488,13 +493,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
           </button>
         )}
-        <button className={"ctrl-btn" + (soundOn ? " on" : "")} title={soundOn ? "Turn sound off" : "Turn sound on"} onClick={toggleSound}>
-          {soundOn ? (
-            <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><path d="M12 5 Q15 8 12 11" stroke="currentColor" strokeWidth="1.5" fill="none" /><path d="M13.5 3 Q18 8 13.5 13" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
-          ) : (
-            <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><line x1="12" y1="5" x2="17" y2="11" stroke="currentColor" strokeWidth="1.6" /><line x1="17" y1="5" x2="12" y2="11" stroke="currentColor" strokeWidth="1.6" /></svg>
-          )}
-        </button>
+        <SettingsButton />
         <button className="ctrl-btn" title="Start over" onClick={reset}>⟲</button>
       </div>
     </div>
@@ -508,6 +507,20 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
       </button>
       <div className="goal-text" data-vox="r1Goal" data-vox-speaker="mom">Babushka needs <b>{A_N}/{DEN}</b> of a tray and <b>{B_N}/{DEN}</b> of a tray — the pieces are the same size, so add the tops and keep the bottom.</div>
     </div>
+  );
+
+  // ── THE QUESTION, MADE PROMINENT ───────────────────────────────────────────
+  // The shared <QuestionBand> now carries the bare equation. It is mounted ONCE,
+  // as a full-width row directly UNDER the stage-selector tabs (see the return
+  // block), so the question reads in the exact same spot on every stage and never
+  // overlaps the working area. The bare equation body + the "?"→solved answer are
+  // the lesson's data; goal/story/helper copy stays secondary below it.
+  const questionBand = (
+    <QuestionBand
+      lead="the question"
+      expr={<>{A_N}/{DEN} <span className="qb-op">+</span> {B_N}/{DEN}</>}
+      answer={solved ? `${ANSWER}/${DEN}` : "?"}
+    />
   );
 
   // "Ready to check": the child has committed the answer the current stage needs,
@@ -569,10 +582,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
                   <div className="grip"><i /><i /><i /></div>
                 </div>
               </React.Fragment>
-            )}
-
-            {!merged && (
-              <button className="joinbtn" style={{ left: ORIGIN + stackW(A_N) + 40, top: HOME.A.y + 22 }} onClick={doMerge}>▸ Count them up</button>
             )}
           </div>
         </div>
@@ -659,17 +668,9 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
               <div className="r1-bind-cap">
                 {stage === 2
                   ? <>this one stack <b>is</b> the number {ANSWER}/{DEN}</>
-                  : <>the blocks just confirm it — the equation leads now</>}
+                  : <>the blocks just confirm it — the equation up top leads now</>}
               </div>
             </div>
-
-            {/* the equation leads in Fade */}
-            {stage === 3 && (
-              <div className="r1-leadeq">
-                <span>{A_N}/{DEN}</span><span className="qop">+</span><span>{B_N}/{DEN}</span><span className="qop">=</span>
-                <span className="r1-leadeq-blank">?/{DEN}</span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -843,6 +844,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     body = (
       <div className="r1-fz r1-fz-words">
         <div className="r1-fz-wp">
+          <FitStage axis="y">
           <WordProblem
             story={story}
             tag="Babushka's kitchen"
@@ -877,6 +879,57 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
             checkLabel={solved ? "Next stage ▸" : "Check"}
             checkDisabled={!setupOk}
           />
+          </FitStage>
+        </div>
+
+        {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
+        <div className="r1-fz-tutor">
+          <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+          <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+        </div>
+      </div>
+    );
+  } else if (stage === "sw") {
+    // SHOW WORK — the mandatory, UNGRADED free-form blank slate between Applied and
+    // Words. The child shows their working however they like; advancing is gated
+    // purely on ink presence (onInkChange), never on a graded answer. The slate
+    // remounts (key) on (re)entry to clear, and goStage resets showWorkInked.
+    const story = (
+      <>Show how you worked it out — write the sum, draw the pieces, do whatever helps. There's no wrong way here.</>
+    );
+    body = (
+      <div className="r1-fz r1-fz-words">
+        <div className="r1-fz-wp">
+          <FitStage axis="y">
+          <WordProblem
+            story={story}
+            tag="Babushka's kitchen"
+            readAloud={() => say("Show how you worked it out. Write the sum, draw the pieces, whatever helps. There is no wrong way here.")}
+            speaking={speaking}
+            answerLead="Show your work"
+            setup={
+              <div className="bs-surface" style={{ position: "relative", width: "100%", height: 320 }}>
+                <BlankSlate
+                  key="showwork:r1"
+                  hint="show your work here — write anything you like ✎"
+                  onInkChange={setShowWorkInked}
+                  ariaLabel="show your work on a blank slate"
+                />
+              </div>
+            }
+            setupLead="Show your work — write anything you like"
+          >
+            {/* custom "answer" surface: this step is ungraded, so the only control
+                is a presence-gated Next ▸ (BlankSlate never advances itself). */}
+            <button
+              className={"check" + (showWorkInked ? " ready" : "")}
+              disabled={!showWorkInked}
+              onClick={() => nextStage()}
+            >
+              Next ▸
+            </button>
+          </WordProblem>
+          </FitStage>
         </div>
 
         {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
@@ -888,8 +941,8 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     );
   } else {
     // STAGE 7 · WORDS — a plain-language story; read it, pull the numbers, write
-    // the total. No blocks, no given equation. The <ExpressionSlate> setup here is
-    // OPTIONAL, ungraded scratch — it NEVER gates the answer (answer stays enabled).
+    // the total. No blocks, no given equation. The setup here is an OPTIONAL,
+    // ungraded free-form BlankSlate — it NEVER gates the answer (answer stays enabled).
     const story = (
       <>
         Babushka used <b>two sevenths</b> of the oats for the porridge, then poured in{" "}
@@ -903,22 +956,18 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     body = (
       <div className="r1-fz r1-fz-words">
         <div className="r1-fz-wp">
+          <FitStage axis="y">
           <WordProblem
             story={story}
             tag="Babushka's Recipe"
             readAloud={() => say("Babushka used two sevenths of the oats, then poured in three sevenths more. The pieces are the same size. How much of the oats did she use in all?")}
             speaking={speaking}
             answerLead="Write how much in all"
-            setupLead="Optional — write the question as a sum first"
+            setupLead="Optional — show your work here"
             setup={
-              <ExpressionSlate
-                a={scratchA} b={scratchB}
-                onChange={onScratchChange}
-                denA={parseInt(scratchA.den, 10) || undefined}
-                denB={parseInt(scratchB.den, 10) || undefined}
-                disabled={solved}
-                ariaLabel="optional: write the two fractions from the recipe"
-              />
+              <div className="bs-surface r1-words-scratch">
+                <BlankSlate key="words-scratch" hint="optional — show your work here ✎" />
+              </div>
             }
             slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
             values={slate}
@@ -930,6 +979,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
             onCheck={() => checkSlateStage(false)}
             checkLabel={solved ? "Finish ▸" : "Check"}
           />
+          </FitStage>
         </div>
 
         {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
@@ -945,8 +995,12 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     <div className="page" data-vox-speaker="cook">
       <div className="foxing" />
       {TopBar}
-      {Goal}
       {Selector}
+      {/* The bare equation reads in the same spot on every stage EXCEPT the final
+          words-only stage (7): there the child must read the PROSE and extract the
+          math themselves, so showing the equation would give the answer away. */}
+      {stage !== 7 && questionBand}
+      {Goal}
       {body}
     </div>
   );
@@ -961,6 +1015,7 @@ function STAGE_INTRO(n) {
     case 4: return "The Workbench — pull blocks from the bin, build the answer out of same-size pieces, then count them up.";
     case 5: return `Just the numbers: ${A_N}/${DEN} + ${B_N}/${DEN} = ? Write the whole answer on the Slate.`;
     case 6: return `A question in words, with the fractions shown. Write it as a sum first (${A_N}/${DEN} + ${B_N}/${DEN}), then give the answer.`;
+    case "sw": return "Show your work — write the sum, draw the pieces, do whatever helps. Put something down, then move on.";
     case 7: return "A story this time — read it, find the two fractions, and write how much in all.";
     default: return "";
   }

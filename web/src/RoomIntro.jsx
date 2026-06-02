@@ -23,6 +23,8 @@ import { INTRO_CUES as INTRO_CUES_R5, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R5 
 import { INTRO_CUES as INTRO_CUES_M1, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M1 } from "./introM1.js";
 import { INTRO_CUES as INTRO_CUES_M2, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M2 } from "./introM2.js";
 import { INTRO_CUES as INTRO_CUES_M3, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M3 } from "./introM3.js";
+import SettingsButton from "./SettingsButton.jsx";
+import { getSettings } from "./settings.js";
 
 const VOICE_BASE = import.meta.env.BASE_URL + "voice/";
 
@@ -107,7 +109,7 @@ export default function RoomIntro({ room, onContinue, onBack }) {
         else {
           const done = () => { a.removeEventListener("ended", done); advance(); };
           stopClip();
-          a.volume = mutedRef.current ? 0 : 1;
+          a.volume = getSettings().voiceVol / 100;
           try { a.currentTime = 0; } catch (e) {}
           a.addEventListener("ended", done);
           curRef.current = a;
@@ -148,7 +150,7 @@ export default function RoomIntro({ room, onContinue, onBack }) {
     const a = curRef.current;
     const f = finishRef.current;
     if (next) {
-      if (a && !a.ended) { a.volume = mutedRef.current ? 0 : 1; a.play().catch(() => {}); }
+      if (a && !a.ended) { a.volume = getSettings().voiceVol / 100; a.play().catch(() => {}); }
       if (!f.id && f.remaining > 0) { f.startedAt = Date.now(); f.id = setTimeout(() => setEnded(true), f.remaining); }
     } else {
       if (a) { try { a.pause(); } catch (e) {} }
@@ -234,8 +236,7 @@ export default function RoomIntro({ room, onContinue, onBack }) {
         <aside className="intro-transcript">
           <div className="tr-head">
             <span>Transcript</span>
-            <button className="tr-mute" onClick={toggleMute} aria-pressed={muted}
-              title={muted ? "Unmute narration" : "Mute narration"}><Spk off={muted} /></button>
+            <SettingsButton className="tr-mute" />
           </div>
           <ol className="tr-list">
             <li className={"tr-line tr-start" + (activeIdx < 0 ? " active" : "")}

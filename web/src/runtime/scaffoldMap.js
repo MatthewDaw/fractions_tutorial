@@ -29,6 +29,17 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
   const id = String(lessonId);
   const beat = String(nativeBeat);
 
+  // ---- NEW: the mandatory free-form "show your work" step ------------------
+  // An ADDITIVE step that sits BETWEEN Applied (L3) and Words (L4) in every
+  // lesson that adopts it. The surface is a 100% blank slate (no slots, no
+  // recognizer, no grading), so there is no answer to score. We treat it as the
+  // same independence level as Applied (L3): the support is gone but the child
+  // is still on a posed problem, not free transfer. Recognized for ALL lessons
+  // by a string key so adopting it never renumbers a lesson's numeric stages.
+  // Lessons that have NOT adopted it (e.g. M1) simply never pass this key, so
+  // their existing mapping is untouched and nothing crashes.
+  if (beat === 'showwork' || beat === 'show-work' || beat === 'show_work') return 3;
+
   // ---- LessonUnlikeDen (r2 = Scale One, r3 = Cross-Multiply) ---------------
   // Both use the same beat keys from NEXT_BEAT in LessonUnlikeDen.jsx.
   //

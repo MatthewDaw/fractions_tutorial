@@ -49,6 +49,10 @@
   }
   .plate.in{ opacity:1; transform:none; }
   .plate.equal{ border-color:var(--ok); }
+  /* when the equation strip / collapsed line is shown, recede the plates so the
+     centered equation reads clearly over them (matches the sibling intros) */
+  #board:has(#addstrip.on) .plate,
+  #board:has(#times.on) .plate{ opacity:.16; }
   .plate .pieces{ display:grid; grid-template-columns:repeat(2,auto); gap:4px 7px; }
   .pc{
     width:30px; height:30px; border-radius:50% 50% 48% 48%;

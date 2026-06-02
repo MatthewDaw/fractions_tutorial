@@ -4,6 +4,19 @@
    The 1280×800 stage is laid out as fixed, non-overlapping rectangles (the same
    contract AppR1 uses), so the same assets land in the same place on every device. */
 
+/* The old in-topbar header equation (.m1-hdr-q*) has been REMOVED — the shared
+   full-width <QuestionBand> now carries the bare question directly under the stage
+   tabs on every stage (questionband.css owns its styling). Nothing m1-namespaced
+   replaces it; the band never overlaps the working area. */
+
+/* the story/goal line is deliberately SECONDARY to the QuestionBand above:
+   smaller and lighter so the equation always wins the eye. (Namespaced override
+   of the shared .goal-text — shared rule itself is untouched.) */
+.m1-goal-text {
+  font-size: 14px; color: var(--ink-soft); font-style: italic;
+}
+.m1-goal-text b { font-style: normal; color: var(--red); }
+
 /* ── stage selector strip (reachability) ──────────────────────────────────── */
 .m1-stages {
   display: flex; gap: 8px; margin: 4px 22px 2px;
@@ -138,22 +151,35 @@
    THE PLATE / BOWL MANIPULATIVE (PlateGroup.jsx)
    Fixed neutral food tone for pieces; ROLE_COLORS for guard/correct/incorrect.
    ════════════════════════════════════════════════════════════════════════════ */
+/* The fit wrapper: flex-fills the remaining board height and lets PlateGroup
+   measure it to size the plates so all N fit VERTICALLY with no scroll (Issue 1). */
+.mg-fit {
+  position: relative; flex: 1 1 auto; min-height: 0; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.mg-fit-pile { gap: 18px; }
+
+/* VERTICAL plate stack — plates sit top-to-bottom; size comes from --mg-plate
+   (computed by PlateGroup from the available height). */
 .m1-plates {
-  display: flex; align-items: flex-end; justify-content: center; gap: 22px;
-  flex-wrap: nowrap;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; flex-wrap: nowrap; height: 100%;
 }
 .m1-plates.mg-ghost { opacity: 0.3; filter: grayscale(0.5); }
-.mg-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+/* with a pile beside it the stack hugs the right of the fit row */
+.mg-fit-pile .m1-plates { height: 100%; }
+
+.mg-group { display: flex; flex-direction: row; align-items: center; gap: 12px; }
 .mg-vessel {
-  width: 116px; height: 96px;
+  width: calc(var(--mg-plate, 92px) * 1.18); height: var(--mg-plate, 92px);
   display: flex; align-items: center; justify-content: center;
   border: 3px solid var(--ink-mute); cursor: pointer;
   background: radial-gradient(ellipse at 50% 38%, #fffdf6 0%, #efe3c6 78%, #e3d2ab 100%);
   transition: border-color 0.18s, box-shadow 0.18s, transform 0.1s;
-  position: relative; padding: 8px;
+  position: relative; padding: 6px;
 }
 .mg-plate .mg-vessel { border-radius: 50% / 46%; }
-.mg-bowl .mg-vessel { border-radius: 10px 10px 46% 46%; height: 88px; }
+.mg-bowl .mg-vessel { border-radius: 10px 10px 46% 46%; }
 .mg-vessel:disabled { cursor: default; }
 .mg-vessel:not(:disabled):hover { transform: translateY(-1px); }
 .mg-vessel.is-equal-ok { background: radial-gradient(ellipse at 50% 38%, #f1fbf8 0%, #d8efe9 80%); }
@@ -170,11 +196,43 @@
   background: #2a9d8f; color: #fff; font-size: 14px; font-weight: 700;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.mg-count { font-family: var(--display); font-size: 22px; font-weight: 700; }
+.mg-count {
+  font-family: var(--display); font-weight: 700;
+  font-size: clamp(16px, var(--mg-plate, 92px) * 0.26, 26px);
+  min-width: 24px; text-align: center;
+}
 
-.m1-board-head { font-family: var(--serif); font-size: 16px; color: var(--ink-soft); }
+/* ── the draggable pelmeni PILE (Stage 1, Issue 2) ───────────────────────────── */
+.mg-pile {
+  flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  align-self: center;
+}
+.mg-pile-bowl {
+  display: flex; flex-wrap: wrap; align-content: center; justify-content: center;
+  gap: 4px; width: 132px; padding: 14px 12px;
+  border: 2.5px solid var(--ink-mute);
+  border-radius: 14px 14px 50% 50% / 14px 14px 30% 30%;
+  background: radial-gradient(ellipse at 50% 30%, #fffdf6 0%, #efe3c6 78%, #e3d2ab 100%);
+  box-shadow: inset 0 6px 12px rgba(20,12,6,0.12);
+}
+.mg-pile-piece {
+  display: inline-flex; cursor: grab; touch-action: none;
+  transition: transform 0.08s;
+}
+.mg-pile-piece:hover { transform: scale(1.08); }
+.mg-pile-piece:active { cursor: grabbing; }
+.mg-pile-lab { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); text-align: center; max-width: 140px; }
+
+/* the floating ghost that follows the pointer mid-drag */
+.mg-drag-ghost {
+  position: absolute; pointer-events: none; z-index: 30;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(2px 3px 2px rgba(20,12,6,0.35));
+}
+
+.m1-board-head { font-family: var(--serif); font-size: 16px; color: var(--ink-soft); flex: 0 0 auto; }
 .m1-board-head b { color: var(--red); }
-.m1-bowl-hint { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 4px; }
+.m1-bowl-hint { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 0 0 auto; }
 .m1-bowl { font-family: var(--serif); font-size: 15px; color: var(--ink); }
 .m1-bowl-note { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
 
@@ -189,6 +247,7 @@
 }
 .m1-addstrip-op { color: var(--red); font-size: 28px; }
 .m1-addstrip-blank { color: var(--red); border-bottom: 3px dashed var(--red-soft); padding: 0 8px; }
+.m1-addstrip-hint { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-mute); }
 
 /* ── Stage 3 fade + collapse ──────────────────────────────────────────────── */
 .m1-faded .m1-fadecheck {
@@ -242,6 +301,22 @@
 .m1-fz-words .wp-answer .slate-row .slate-cell { width: 78px; height: 64px; }
 .m1-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 40px; }
 .m1-fz-words .wp-answer .slate-row .slate-ph { font-size: 24px; }
+
+/* Words (Stage 7) OPTIONAL scratch surface — a GENEROUS, full-width drawing slate
+   (was a cramped 255px box). Sized to match M3's words scratch (~756×246) and the
+   Show-Work slate so "show your work" reads as a real surface, not an afterthought.
+   The band is suppressed on this stage (words-only — the child extracts the math),
+   so the freed vertical room lets the slate run nearly the full card width and tall
+   without clipping the story card above or the answer/Check row below (the parent
+   .m1-fz-wp is a fixed, overflow-hidden 544px column). */
+.m1-words-scratch {
+  width: 100%;
+  max-width: 756px;
+  height: 280px;
+}
+/* tighten the dashed setup wrapper around the big slate so the extra height stays
+   inside the fixed words column (no clip of the answer row). */
+.m1-fz-words .wp-setup { padding: 6px 10px; margin: 2px 0 8px; }
 
 /* the count × size setup row (Applied gate / Words scratch) */
 .m1-setup-row { display: inline-flex; align-items: center; gap: 12px; }

@@ -157,6 +157,13 @@
 
 /* ── the baking tray manipulative ────────────────────────────────────────── */
 .m2-tray { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+/* When the tray carries a Spin control (Stage 2 · Bind), lay it out HORIZONTALLY
+   with the spin button to the LEFT of the tray. A spun 6×4 tray is taller than the
+   proof zone; stacking the button beneath it ate the vertical budget and clipped
+   the control. Side-by-side lets the tray claim the full height (FitStage scales it
+   to fit) and keeps the spin button fully on screen. row-reverse → spin (DOM-last)
+   renders on the left. */
+.m2-tray:has(.m2-tray-spin) { flex-direction: row-reverse; align-items: center; gap: 18px; }
 .m2-tray-cell:hover:not(:disabled) { transform: translateY(-1px); }
 .m2-tray-spin, .m2-score-btn {
   font-family: var(--serif); font-size: 15px; font-weight: 600;
@@ -185,6 +192,52 @@
 .m2-distrib-row .slate-row .slate-ph { font-size: 20px; }
 .m2-distrib-row .slate-guess { position: absolute; }
 
+/* ── Stage 1 bun drag-to-place ────────────────────────────────────────────── */
+/* the tray sits inside a positioned dropzone so the highlight ring can overlay it */
+.m2-tray-dropzone { position: relative; display: inline-flex; }
+.m2-tray-dropzone.is-dragging .m2-tray-cell { cursor: copy; }
+/* the highlight ring drawn over the empty cell under the dragged bun */
+.m2-cell-highlight {
+  position: absolute; pointer-events: none; z-index: 5;
+  border: 3px solid var(--red); border-radius: 11px;
+  background: rgba(214, 64, 48, 0.14);
+  box-shadow: 0 0 0 3px rgba(214,64,48,0.18);
+}
+/* Stage 1 layout: pile of buns on the LEFT, tray on the right — same motive as the
+   spun tray (don't stack controls under a large tray and clip them). */
+.m2-fill-row { display: flex; align-items: center; justify-content: center; gap: 28px; }
+/* the bun "source" the child drags from — a literal heaped PILE of buns. The
+   pile is the drag handle (pointerdown anywhere on it grabs a bun); a caption
+   sits beneath it. */
+.m2-fill-source { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+.m2-bun-pile {
+  all: unset; box-sizing: border-box; cursor: grab;
+  position: relative; width: 128px; height: 86px;
+  touch-action: none;
+}
+.m2-bun-pile:active:not(:disabled) { cursor: grabbing; }
+.m2-bun-pile:hover:not(:disabled) .m2-pile-bun { filter: brightness(1.04); }
+.m2-bun-pile.is-spent { opacity: 0.4; cursor: default; }
+/* one bun in the pile — positioned/sized inline; back rows sit darker for depth */
+.m2-pile-bun {
+  position: absolute; border-radius: 50%;
+  border: 2px solid #8a6a3a;
+  background: radial-gradient(circle at 38% 32%, #e8c98a, #b8893f 70%);
+  box-shadow: inset 0 -3px 4px rgba(120,80,30,0.5), 1px 2px 3px rgba(28,22,18,0.28);
+}
+.m2-pile-cap {
+  font-family: var(--serif); font-size: 13px; font-weight: 600; color: var(--ink-mute);
+}
+/* the ghost bun that follows the pointer in real time */
+.m2-bun-ghost {
+  position: fixed; z-index: 9999; pointer-events: none;
+  width: 34px; height: 34px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid #8a6a3a;
+  background: radial-gradient(circle at 38% 32%, #e8c98a, #b8893f 70%);
+  box-shadow: inset 0 -2px 3px rgba(120,80,30,0.5), 2px 4px 8px rgba(28,22,18,0.3);
+}
+
 /* ── Stage 4 workbench build controls ────────────────────────────────────── */
 .m2-build-empty { font-family: var(--serif); font-size: 18px; color: var(--ink-mute); font-style: italic; }
 .m2-build-controls { display: flex; align-items: flex-end; gap: 14px; margin-top: 14px; }
@@ -199,6 +252,14 @@
 }
 .m2-build-btns button:hover { border-color: var(--red); background: #fff8ea; }
 .m2-build-dim-val { min-width: 28px; text-align: center; font-family: var(--display); font-size: 24px; color: var(--ink); }
+
+/* ── Stage 5 NUMBERS — sparse stage, so the write surface is sized up generously
+   to fill the empty answer card (matches the roomy feel of the Applied stage). */
+.m2-fz-answer-big .m2-fz-expr { font-size: 60px; }
+.m2-fz-answer-big .m2-fz-op { font-size: 54px; }
+.m2-fz-answer-big .m2-fz-slate .slate-row .slate-cell { width: 132px; height: 116px; }
+.m2-fz-answer-big .m2-fz-slate .slate-row .slate-committed-digit { font-size: 66px; }
+.m2-fz-answer-big .m2-fz-slate .slate-row .slate-ph { font-size: 40px; }
 
 /* ── Stage 5 bare equation ───────────────────────────────────────────────── */
 .m2-bigeq { display: flex; align-items: center; gap: 22px; }
@@ -224,6 +285,22 @@
 .m2-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 40px; }
 .m2-fz-words .wp-answer .slate-row .slate-ph { font-size: 24px; }
 
+/* Words stage (7) — the equation band is suppressed (the child reads the prose and
+   extracts the math), so the page has room for a GENEROUS full-width drawing slate.
+   This is the optional "show your work" scratch, sized to match M3's reference
+   (~756×246). Tighten the stack so the story card and the answer/Check row never
+   clip inside the fixed .m2-fz-wp (1040×544). Scoped to .m2-fz-words so the Applied
+   stage (m2-fz-applied) is untouched. */
+.m2-fz-words .wp { gap: 8px; }
+.m2-fz-words .wp-setup { margin: 2px 0 6px; padding: 10px 12px; }
+.m2-words-scratch {
+  position: relative;
+  width: 760px;
+  max-width: 100%;
+  height: 276px;
+  margin: 2px auto 0;
+}
+
 /* setup gate row (rows × columns) */
 .m2-setup-row { display: inline-flex; align-items: center; gap: 10px; }
 .m2-setup-x { font-family: var(--display); font-size: 24px; color: var(--red); }
@@ -233,6 +310,27 @@
 .m2-setup-ok {
   font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center;
 }
+
+/* ── Stage 6 APPLIED — sparse page, so the handwriting surfaces are sized up and
+   the whole block is vertically centered to use the empty lower half. Scoped to
+   .m2-fz-applied so the busier Words stage (with its scratch pad) keeps its sizing. */
+.m2-fz-applied .m2-fz-wp { justify-content: center; gap: 14px; }
+.m2-fz-applied .wp { gap: 16px; }
+.m2-fz-applied .wp-answer { gap: 10px; }
+.m2-fz-applied .wp-answer-lead { font-size: 18px; }
+
+/* the product write cell — the main answer surface */
+.m2-fz-applied .wp-answer .slate-row .slate-cell { width: 140px; height: 118px; }
+.m2-fz-applied .wp-answer .slate-row .slate-committed-digit { font-size: 72px; }
+.m2-fz-applied .wp-answer .slate-row .slate-ph { font-size: 44px; }
+
+/* the rows × columns setup gate cells */
+.m2-fz-applied .m2-setup-row { gap: 14px; }
+.m2-fz-applied .m2-setup-x { font-size: 36px; }
+.m2-fz-applied .m2-setup-row .slate-row .slate-cell { width: 100px; height: 92px; }
+.m2-fz-applied .m2-setup-row .slate-row .slate-committed-digit { font-size: 52px; }
+.m2-fz-applied .m2-setup-row .slate-row .slate-ph { font-size: 34px; }
+.m2-fz-applied .wp-setup-lead { font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
   .m2-stage-tab, .m2-tray-cell { transition: none; }

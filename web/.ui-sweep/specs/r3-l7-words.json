@@ -1,0 +1,13 @@
+{
+  "route": "r3",
+  "steps": [
+    { "waitFor": ".intro-continue" },
+    { "click": ".intro-continue" },
+    { "wait": 500 },
+    { "click": ".intro-continue" },
+    { "waitFor": ".beat-btn" },
+    { "wait": 300 },
+    { "clickNth": { "selector": ".beat-btn", "n": 8 } },
+    { "wait": 800 }
+  ]
+}

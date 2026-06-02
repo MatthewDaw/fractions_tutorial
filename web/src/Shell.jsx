@@ -11,9 +11,10 @@
 //     (entryScaffoldFor) and passes it as the `initialBeat` prop (via scaffoldMap's
 //     toBeatForLevel) so each lesson starts at the right support level.
 //   • The hash route is already id-agnostic — it is unchanged.
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import TitleScreen from "./TitleScreen.jsx";
 import WorldMap from "./WorldMap.jsx";
+import SettingsScreen from "./SettingsScreen.jsx";
 import EmptyRoom from "./EmptyRoom.jsx";
 import RoomIntro from "./RoomIntro.jsx";
 import LessonUnlikeDen from "./LessonUnlikeDen.jsx";
@@ -115,6 +116,13 @@ export default function Shell() {
   const [seenIntros, setSeenIntros] = useState(() => new Set());
   const toWorld = () => go("world");
 
+  // Remember the last non-settings screen so the Settings "Done" button returns
+  // the player exactly where they opened it from (title, world, a room…).
+  const prevRouteRef = useRef("world");
+  useEffect(() => { if (route !== "settings") prevRouteRef.current = route; }, [route]);
+  const openSettings = () => go("settings");
+  const closeSettings = () => go(prevRouteRef.current || "world");
+
   // ---- Engine mastery map (U11) --------------------------------------------
   // We load the mastery map once on mount, and re-load whenever the route
   // changes back to "world" (i.e. when the child returns from a room).
@@ -135,7 +143,11 @@ export default function Shell() {
   let screen, showingIntro = false;
   const room = (route === "title" || route === "mom") ? null : ROOMS.find((r) => r.id === route);
 
-  if (route === "title") {
+  if (route === "settings") {
+    // Settings screen — voice/music volume + answer input mode. Overlay-style: it
+    // remembers where it was opened from and returns there on "Done".
+    screen = <SettingsScreen onBack={closeSettings} />;
+  } else if (route === "title") {
     // Title / intro screen — the app's landing. START drops into the world map.
     screen = <TitleScreen onStart={() => go("world")} />;
   } else if (route === "mom") {
@@ -186,7 +198,13 @@ export default function Shell() {
     <>
       {screen}
       <TapToRead />
-      <BackgroundMusic scene={sceneFor(route, showingIntro)} showControl={route === "world" || route === "title"} />
+      <BackgroundMusic scene={sceneFor(route, showingIntro)} />
+      {(route === "title" || route === "world") && (
+        <button className="settings-fab" onClick={openSettings} title="Settings" aria-label="Settings">
+          <img src="/settings-gear.png" width="20" height="20" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
+          <span className="settings-fab-label">Settings</span>
+        </button>
+      )}
     </>
   );
 }

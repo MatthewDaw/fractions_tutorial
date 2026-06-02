@@ -92,6 +92,31 @@
 .r4-card-note { font-family: var(--display); font-size: 11px; letter-spacing: .02em; color: var(--ink); line-height: 1.4; text-transform: uppercase; }
 .r4-card-note b { color: var(--red); }
 
+/* The shared <QuestionBand> (mounted directly under the stage tabs) is now the
+   single canonical question display on EVERY stage; the old in-topbar header eq
+   (.r4-hdr-q) and the in-canvas/story band (.r4-s-q) were removed from the JSX.
+   Size the band's BigFrac fraction so it reads big and bold like a display eq. */
+.question-band .qb-terms .bignum,
+.question-band .qb-answer .bignum { line-height: 1; }
+.question-band .qb-terms .bignum .n,
+.question-band .qb-terms .bignum .d,
+.question-band .qb-answer .bignum .n,
+.question-band .qb-answer .bignum .d { font-size: 23px; }
+.question-band .qb-terms .bignum .bar,
+.question-band .qb-answer .bignum .bar { width: 30px; height: 3px; margin: 2px 0; }
+.question-band .qb-answer .bignum .n,
+.question-band .qb-answer .bignum .d { color: var(--red); }
+/* keep the band's chip vertical padding tight so the stacked fraction adds the
+   least possible height under the tabs (preserves the .r4-s zone budget). */
+.question-band .qb-chip { padding-top: 6px; padding-bottom: 6px; align-items: center; }
+
+/* With the centre header equation removed from the topbar (it now lives in the
+   QuestionBand below the tabs), the shared topbar's middle 1fr column is empty,
+   which would leave the toolbar controls floating in it instead of the far right.
+   Re-pin the controls to the right edge — scoped to THIS lesson via the r4 stage
+   bar so no other room's topbar is affected. */
+.page:has(.r4-stagebar) .topbar .controls { grid-column: 3; justify-self: end; }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    THE INTERACTION ARC — stage selector + the per-stage writing/fade additions.
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -195,7 +220,7 @@
 /* TOP-LEFT — the block / equation zone. Clipped so blocks can never paint past it. */
 .r4-s-blocks {
   position: absolute; left: 0; top: 0;
-  width: 800px; height: 348px;
+  width: 800px; height: 296px;
   border: 2px solid #1a0f08;
   box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
   background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
@@ -210,7 +235,7 @@
 /* TOP-RIGHT — the tool/hint rail. Fixed rect; one panel; clipped. */
 .r4-s-rail {
   position: absolute; right: 0; top: 0;
-  width: 452px; height: 348px;
+  width: 452px; height: 296px;
   box-sizing: border-box;
   display: flex; flex-direction: column;
 }
@@ -221,7 +246,7 @@
    this card's top = 800−196−headers; the play region budget leaves ≥30px). */
 .r4-s-answer {
   position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 200px;
+  width: 800px; height: 196px;
   box-sizing: border-box;
   border: 2px solid var(--ink);
   background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
@@ -268,7 +293,7 @@
 /* BOTTOM-RIGHT — Cook + ribbon, fixed rect; ribbon clamped to 5 lines. */
 .r4-s-tutor {
   position: absolute; right: 0; bottom: 0;
-  width: 452px; height: 200px;
+  width: 452px; height: 196px;
   box-sizing: border-box;
   display: flex; align-items: flex-end; gap: 10px;
 }
@@ -282,18 +307,31 @@
 /* ── WORDS / APPLIED mode — story top, answer card + tutor bottom ───────────── */
 .r4-s-story {
   position: absolute; left: 0; top: 0;
-  width: 800px; height: 348px;
+  width: 800px; height: 296px;
   box-sizing: border-box;
   display: flex; flex-direction: column; gap: 12px;
   overflow: hidden;
 }
-.r4-s-card { width: 100%; box-sizing: border-box; margin: 0; padding: 16px 26px 16px; flex: 0 0 auto; }
+
+/* The question for the prose stages is now the shared <QuestionBand> mounted
+   under the stage tabs (the old in-story .r4-s-q band was removed from the JSX),
+   so the story zone's full height is free for the recipe + the (Words) larger
+   optional scratch surface. */
+.r4-s-card { width: 100%; box-sizing: border-box; margin: 0; padding: 12px 26px; flex: 0 0 auto; }
+/* Show Work step: the card + 360px blank slate are taller than the 348px story
+   zone, so they ride inside a FitStage that downscales the stack to fit (never
+   clips). Restore the column gap the bare .r4-s-story had, and fix the inner
+   width so the 800px slate (not max-content shrink) sets the column width. */
+.r4-s-story > .r4-s-fit .fit-stage-content { gap: 12px; width: 800px; }
 /* clamp the story to 3 lines so a longer/different-font story can't grow the card
    into the setup gate below it. */
+/* the story/recipe copy is now SECONDARY to the big question band above it —
+   smaller and lighter so the math stays the most readable thing on the page. */
 .r4-s-story-text {
-  font-size: 21px; line-height: 1.4; margin: 0;
+  font-size: 17px; line-height: 1.38; margin: 0; color: var(--ink-mute);
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
+.r4-s-story-text b { color: var(--ink); }
 .r4-s-setup {
   flex: 0 0 auto; box-sizing: border-box;
   display: flex; flex-direction: column; gap: 8px;
@@ -332,6 +370,81 @@
 
 /* the Numbers-stage bare equation fills its zone, centered (already inset:0). */
 .r4-s-canvas .r4-bare-eq { inset: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHANGE C — ENLARGED WRITING SURFACES
+   The Words-stage optional "show your work" scratch was a cramped 150px box in
+   a mostly-empty story zone. With the in-story question band removed, the story
+   zone (318px) has room: let its setup region GROW and the scratch surface fill
+   it, so the optional scratch is now as generous as the Show-Work drawing slate.
+   Scoped to Words via .r4-s-setup:has(.r4-s-scratch-surface). ═══════════════════ */
+.r4-s-setup:has(.r4-s-scratch-surface) {
+  flex: 1 1 auto; min-height: 0;
+}
+.r4-s-scratch-surface { flex: 1 1 auto; min-height: 240px; }
+
+/* ── WORDS-ONLY STAGE — no QuestionBand, so the prose is the only cue ───────────
+   The final words-only stage omits the shared <QuestionBand> (removed in the JSX
+   for stage === "words"), so the child must read the recipe and pull the math.
+   That also frees the ~70px the band used: the play region grows, so give the
+   story zone (and with it the optional drawing slate) extra height and make the
+   scratch a GENEROUS full-width slate — ~744 wide × ~240 tall, consistent with
+   M3's ~756×246 reference. Tighten the secondary copy so the card stays compact
+   and the slate gets the room. Scoped to the words-only stage via .r4-s-onlywords
+   so Applied (which keeps its band + setup gate) is untouched. ═════════════════ */
+.r4-s-onlywords .r4-s-story { height: 372px; gap: 8px; }
+/* the recipe copy is purely a prompt here — keep the card tight so the slate
+   dominates the freed vertical space. */
+.r4-s-onlywords .r4-s-card { padding: 8px 26px; }
+.r4-s-onlywords .r4-s-story-text { font-size: 16px; line-height: 1.32; -webkit-line-clamp: 2; }
+/* the optional drawing slate: a generous, full-width slate (~744 wide; the setup
+   region flexes to fill the rest of the 372px story zone, leaving ~240 tall once
+   the compact card is subtracted — on par with M3's ~756×246 scratch). The
+   scratch fills the setup, so it never forces an overflow that would clip the
+   card or the answer/Check row below. */
+.r4-s-onlywords .r4-s-setup { padding: 8px 16px; gap: 6px; min-height: 0; }
+.r4-s-onlywords .r4-s-scratch-surface {
+  width: 744px; min-height: 0; margin: 0 auto; align-self: stretch;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHANGE B — DRAG-TO-PLACE: fuse / factor chips drag onto their drop target.
+   The dragged chip is mirrored by a pointer-following GHOST; the drop target
+   (the bar canvas for fuse, the fade equation for factor) shows a soft band
+   while dragging and a stronger red when the pointer is over it (.is-hot).
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* the in-flight chip dims in the tray while its ghost flies */
+.r4-fuse-btn.is-dragging, .r4-factor-btn.is-dragging { opacity: 0.4; }
+
+/* drop targets: a dashed accept-band while dragging; red wash when hot */
+.r4-droptarget { outline: 2px dashed var(--red); outline-offset: -4px; transition: background .12s ease, outline-color .12s ease; }
+.r4-droptarget.is-hot { outline-color: var(--red-deep); background: rgba(163,42,34,0.10); }
+/* the canvas already clips/positions absolutely — keep the accept outline inside */
+.r4-s-canvas.r4-droptarget { outline-offset: -6px; }
+
+/* the pointer-following ghost (position:fixed, set inline; centered on cursor) */
+.r4-drag-ghost {
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 10px;
+  box-sizing: border-box;
+}
+.r4-drag-ghost-fuse {
+  padding: 6px 13px; border: 1.5px solid var(--ink); background: var(--paper-1);
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.22);
+}
+.r4-drag-ghost-fuse .r4-fuse-k {
+  display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto;
+  font-family: var(--display); font-size: 18px; color: var(--paper-1); background: var(--red); border: 1.5px solid var(--red-deep);
+}
+.r4-drag-ghost-lab { font-family: var(--display); font-size: 13px; letter-spacing: .02em; color: var(--ink); }
+.r4-drag-ghost-factor {
+  min-width: 52px; justify-content: center; padding: 7px 14px;
+  font-family: var(--display); font-size: 19px; color: var(--paper-1);
+  background: var(--red); border: 1.5px solid var(--red-deep);
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.22);
+}
+.r4-drag-ghost.is-hot { filter: brightness(1.04); transform: translate(-50%, -50%) scale(1.05); }
 
 @media (prefers-reduced-motion: reduce) {
   .r4-stagechip, .r4-factor-btn { transition: none; }

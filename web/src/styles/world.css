@@ -150,39 +150,20 @@
 .intro-again:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.28); }
 .intro-again:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 
-/* global background-music control — fixed in the viewport corner, outside the
-   scaled #stage, so it's available on every screen. Volume slider + mute toggle. */
-/* The music control is the ONLY audio control, and it renders ONLY on the world
-   map / title screen (Shell gates it via showControl) — never on a lesson, where a
-   single per-lesson voice toggle lives in the top-right cluster. Since no lesson
-   control sits beside it on those screens, it sits in the top-right corner. */
-.music-control { position: fixed; top: 14px; right: 14px; z-index: 9000;
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 4px 8px; background: rgba(237,226,200,0.55);
-  border: 1px solid rgba(28,22,18,0.18); }
-
-.music-toggle {
-  width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
-  cursor: pointer; appearance: none; padding: 0; border: 1.5px solid var(--ink);
-  background: rgba(237,226,200,0.92); color: var(--ink); box-shadow: 2px 2px 0 rgba(28,22,18,0.30); }
-.music-toggle:hover { background: rgba(163,42,34,0.12); color: var(--red); }
-.music-toggle.off { color: var(--ink-mute); background: rgba(237,226,200,0.65); }
-.music-toggle:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
-.music-toggle:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
-
-/* Volume slider — vintage look: ink-bordered cream track, red thumb. A chunky
-   thumb and full-height hit area keep it draggable on a tablet. */
-.music-vol { appearance: none; -webkit-appearance: none; width: 104px; height: 40px;
-  background: transparent; cursor: pointer; margin: 0; }
-.music-vol:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
-.music-vol::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
-  border: 1.5px solid var(--ink); background: rgba(237,226,200,0.92); box-shadow: 1px 1px 0 rgba(28,22,18,0.25); }
-.music-vol::-moz-range-track { height: 6px; border-radius: 3px;
-  border: 1.5px solid var(--ink); background: rgba(237,226,200,0.92); box-shadow: 1px 1px 0 rgba(28,22,18,0.25); }
-.music-vol::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -8px;
-  width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--red);
-  box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
-.music-vol::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%;
-  border: 1.5px solid var(--ink); background: var(--red); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
-.music-control.off .music-vol::-webkit-slider-thumb { background: var(--ink-mute); }
-.music-control.off .music-vol::-moz-range-thumb { background: var(--ink-mute); }
+/* global Settings button — fixed in the viewport corner, outside the scaled
+   #stage, so it sits in the same spot on every screen it appears on. It replaces
+   the old inline music control: volume + mute (now also input mode) live on the
+   Settings screen it opens. Shell renders it only on the title/world screens. */
+.settings-fab {
+  position: fixed; top: 14px; right: 14px; z-index: 9000;
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  appearance: none; padding: 8px 13px; border: 1.5px solid var(--ink);
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink); background: rgba(237,226,200,0.92); box-shadow: 2px 2px 0 rgba(28,22,18,0.30);
+  transition: transform .12s ease, box-shadow .12s ease, color .12s ease, background .12s ease;
+}
+.settings-fab svg { display: block; }
+.settings-fab:hover { background: rgba(163,42,34,0.12); color: var(--red); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.30); }
+.settings-fab:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
+.settings-fab:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.settings-fab-label { line-height: 1; }

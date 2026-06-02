@@ -37,6 +37,7 @@ import Slate from "./components/Slate.jsx";
 import { CAST } from "./components/momsroom/cast.jsx";
 import { PROPS } from "./components/momsroom/props.jsx";
 import ScratchCanvas from "./components/momsroom/ScratchCanvas.jsx";
+import SettingsButton from "./SettingsButton.jsx";
 import { useVoice } from "./voice.js";
 import { LINES, speakerOf, MEOW_SFX } from "./voiceLines.js";
 import {
@@ -136,7 +137,7 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
   // stored so ReturnToKitchen can re-pose the exact stumping recipe.
   const [stumpingRecipeId, setStumpingRecipeId] = useState(null);
 
-  const { soundOn, speaking, say, stopVoice, toggleSound } = useVoice();
+  const { speaking, say, stopVoice } = useVoice();
   const banterTimer = useRef(null);
 
   // ---- useLessonEngine: kitchen context (inKitchen = true) -----------------
@@ -418,18 +419,20 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
         </div>
         <div className="controls">
           {onBack && <button className="ctrl-btn" title="Back to the kitchen map" onClick={() => { stopVoice(); onBack(); }}>←</button>}
-          <button className={"ctrl-btn" + (soundOn ? " on" : "")} title={soundOn ? "Turn sound off" : "Turn sound on"} onClick={toggleSound}>
-            {soundOn ? (
-              <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><path d="M12 5 Q15 8 12 11" stroke="currentColor" strokeWidth="1.5" fill="none" /><path d="M13.5 3 Q18 8 13.5 13" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
-            ) : (
-              <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><line x1="12" y1="5" x2="17" y2="11" stroke="currentColor" strokeWidth="1.6" /><line x1="17" y1="5" x2="12" y2="11" stroke="currentColor" strokeWidth="1.6" /></svg>
-            )}
-          </button>
+          <SettingsButton />
           <button className="ctrl-btn" title="Start over (clears progress)" onClick={restart}>⟲</button>
         </div>
       </div>
 
-      <div className="goal">
+      {/* ── WORDS-ONLY ROOM — no bare equation. ─────────────────────────────────
+          This room is word-problems THROUGHOUT: the child must READ the prose story
+          below and extract the math themselves. Rendering the derived recipe equation
+          (e.g. na/da + nb/db) up here would give the answer's structure away, so it
+          is intentionally NOT shown. The prose story in the (now primary) goal band
+          below is the question; work is shown on the generous scratch slate; the final
+          value goes in the answer card. (bandExpr/bandAnswer kept out of the render.) ── */}
+
+      <div className="goal mr-goal-primary">
         <button className={"speaker" + (speaking ? " speaking" : "")} onClick={() => q && say(`mr_mom_goal_${q.id}`)} disabled={!q}>
           <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
           Read aloud
@@ -454,10 +457,12 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
       <div className="mr-s">
         {/* ── PROP / STORY ZONE (fixed rect, top-left) ── */}
         <div className="mr-s-stage">
+          {/* small, non-overlapping stage tag (the QUESTION itself now lives in the
+              full-width band up top; this is only a quiet status, pinned out of the
+              prop's way so it never covers the manipulative). */}
           {q && (
-            <div className={"eqstate eqfloat" + (solved && lookResult !== "notyet" ? " ok" : "") + (isLook ? " mr-peek" : "")}>
+            <div className={"mr-stage-tag" + (isLook ? " mr-peek" : "")}>
               <span className="g">{stageTag}</span>
-              {solved ? (isLook ? (lookResult === "skip" ? "you can skip it!" : "next lesson") : "solved!") : "what's the number?"}
             </div>
           )}
 
@@ -499,7 +504,7 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
         {/* ── ANSWER CARD — write area + Check as ONE unit (fixed rect, bottom-left) ── */}
         <div className="mr-s-answer">
           <div className="mr-s-write">
-            <div className="mr-final-label">Final answer</div>
+            <div className="mr-final-label">Write your answer</div>
             <div className={"mr-s-slate" + (bad ? " mr-bad" : "") + (isMixed ? " is-mixed" : "")}>
               {isMixed ? (
                 <>
@@ -547,7 +552,7 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
                 </span>
               )}
             </div>
-            <div className="mr-s-cap">{q ? (solved ? `that's ${targetLabel(q)}` : q.ask) : ""}</div>
+            <div className="mr-s-cap">{q && solved ? `that's ${targetLabel(q)}` : ""}</div>
           </div>
 
           <div className="mr-s-marks">

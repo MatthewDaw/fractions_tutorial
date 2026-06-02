@@ -1,0 +1,6 @@
+{ "route": "m3", "steps": [
+  { "waitFor": ".intro-continue" }, { "click": ".intro-continue" }, { "wait": 400 },
+  { "click": ".intro-continue" }, { "waitFor": ".m3-stage-tab" }, { "wait": 500 },
+  { "drag": { "from": ".m3-scoop", "to": ".m3-jar-body" } }, { "wait": 250 },
+  { "drag": { "from": ".m3-scoop", "to": ".m3-jar-body" } }, { "wait": 250 },
+  { "drag": { "from": ".m3-scoop", "to": ".m3-jar-body" } }, { "wait": 400 } ] }

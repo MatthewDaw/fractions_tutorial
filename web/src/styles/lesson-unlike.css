@@ -17,6 +17,29 @@
 .beat-select .beat-btn.on .lu-stylus { color: var(--paper-1); }
 
 /* ════════════════════════════════════════════════════════════════════════════
+   QUESTION BAND — the SHARED <QuestionBand> now owns the question display
+   ════════════════════════════════════════════════════════════════════════════
+   The ad-hoc .lu-qband band (a custom equation chip under the .goal banner) has
+   been REMOVED in favour of the shared <QuestionBand> component, which mounts as a
+   full-width row DIRECTLY under the stage-selector tabs (.beat-select) on EVERY
+   stage — the bare equation with the answer "?" that fills in once solved. Its
+   styling lives in the shared questionband.css; nothing is restyled here so the
+   band reads identically across every lesson. (Below, the fixed-zone stage absorbs
+   the band's column height: the top zone clips, the ans/tutor cards stay pinned to
+   the bottom.) */
+
+/* NOTE on the secondary copy: the .goal banner (shared, NOT restyled here — the
+   .page[data-vox-speaker="cook"] hook is shared by other lessons) keeps its native
+   19px serif. The question band above is 40px bold display ink-on-paper, so the
+   math is unambiguously the most readable thing on the page; the goal reads as the
+   quieter helper/story line by comparison. (A shared change to make .goal-text the
+   formally-secondary style across all lessons is flagged in the report, not made.)
+
+   The question band consumes ~64px of column height; the fixed-zone stage below
+   absorbs it (top zone clips, ans/tutor stay pinned to the bottom). The .lu-top
+   height is trimmed (below) so band + stage + bottom cards fit the 1280×800 frame. */
+
+/* ════════════════════════════════════════════════════════════════════════════
    DETERMINISTIC FIXED-ZONE STAGE (mirrors AppR1's .r1-s1)
    The strip/picker/numbers beats are laid out as fixed, non-overlapping
    rectangles inside the 1280×800 stage so the same assets land in the same place
@@ -36,17 +59,17 @@
    rectangle so the block area can never grow downward into the answer card. */
 .lu-top {
   position: absolute; left: 0; right: 0; top: 0;
-  height: 402px;
+  height: 372px;
   margin-top: 0;
   overflow: hidden;            /* clip: blocks/numbers can never paint past the zone */
 }
 /* the diagram inside the top zone is itself a fixed rectangle (its .canvas is the
    fixed 720×346 board); clip it so nothing bleeds out of the zone. */
-.lu-top .diagram { height: 402px; box-sizing: border-box; }
+.lu-top .diagram { height: 372px; box-sizing: border-box; }
 /* the rail (picker / knives / bare-eq) is clamped to the top zone so its content
    can never push past it; the panel scrolls internally only if a font overflows. */
-.lu-top .rail { max-height: 402px; }
-.lu-top .rail .panel { max-height: 402px; overflow: hidden; }
+.lu-top .rail { max-height: 372px; }
+.lu-top .rail .panel { max-height: 372px; overflow: hidden; }
 /* compress the L4 worksheet + picker readouts so the whole picker (incl. the
    Slice & Check / New problem buttons) fits the fixed top zone height. */
 .lu-top .rail .panel { padding: 9px 12px 9px; }
@@ -209,12 +232,55 @@
   max-height: 100%; overflow: hidden;     /* clip to the canvas — never bleed up/down */
   padding: 6px 10px;
 }
-.lu-wp-mount .wp { gap: 10px; transform: scale(0.92); transform-origin: center top; }
-.lu-wp-mount .wp-story { font-size: 21px; }
-.lu-wp-mount .wp-card { padding: 16px 24px 14px; }
+.lu-wp-mount .wp { gap: 8px; transform: scale(0.9); transform-origin: center top; width: 100%; }
+.lu-wp-mount .wp-story { font-size: 20px; }
+.lu-wp-mount .wp-card { padding: 12px 22px 10px; }
 /* tighten the answer block so card + lead + Slate + Check stack inside the canvas */
-.lu-wp-mount .wp-answer { gap: 8px; }
+.lu-wp-mount .wp-answer { gap: 6px; }
 .lu-wp-mount .slate-fraction { transform: scale(0.78); transform-origin: center top; }
+
+/* ENLARGED optional "show your work" scratch on Words (L7): the box was a tiny
+   150px strip; it is now a GENEROUS full-width drawing surface (matching the
+   roomy Show-Work slate's feel) so a child has real room to work out the recipe.
+   The wp column above is trimmed (smaller story/padding) to keep card + scratch +
+   answer inside the clipped canvas. */
+.lu-wp-mount .wp-setup { width: 100%; }
+.lu-wp-mount .wp-setup-row { width: 100%; }
+.lu-words-scratch { width: 100% !important; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   WORDS-ONLY STAGE (L7) — the GENEROUS full-width scratch slate
+   ════════════════════════════════════════════════════════════════════════════
+   On Words (L7) there is NO bare equation band (the <QuestionBand> is omitted in
+   the component) and the .lu-ans answer card is gone (the answer Slate lives
+   inside the <WordProblem> card here). That frees the whole bottom-left of the
+   stage, so the word-problem zone takes the FULL stage height (down to just above
+   the bottom-right tutor) instead of the 372px block-zone box. The reclaimed room
+   lets the optional drawing slate be a roomy ~720×290 surface — consistent with
+   M3's ~756×246 words scratch — with the story card + answer/Check still visible
+   above it (no clipping of the card or the Check row). Scoped to .lu-words so the
+   other stages keep the fixed 372px top zone unchanged. */
+.lu-words .lu-top { height: 600px; }
+.lu-words .lu-top .diagram { height: 600px; }
+.lu-words .lu-top .rail { max-height: 600px; }
+.lu-words .lu-top .rail .panel { max-height: 600px; }
+/* the shared .canvas is a fixed 720×346 board; on L7 let it grow tall so the
+   absolutely-positioned wp-mount (inset:0) has the full height to lay out card +
+   scratch + answer without clipping. Width stays 720 (the target slate width). */
+.lu-words .lu-top .canvas { height: 584px; }
+/* render the word-problem column at full size on L7 (no 0.9 squeeze) — there is
+   room now — and stack it from the top so the story leads, scratch in the middle,
+   answer + Check beneath, all inside the taller canvas. */
+.lu-words .lu-wp-mount { transform: none; padding: 2px 0; align-items: flex-start; }
+.lu-words .lu-wp-mount .wp { transform: none; gap: 10px; max-width: 720px; }
+.lu-words .lu-wp-mount .slate-fraction { transform: scale(0.78); transform-origin: center top; }
+/* trim the story card a touch so the roomy scratch + answer/Check still clear the
+   tutor zone, but keep it fully readable (no clamp on the prose the child reads). */
+.lu-words .lu-wp-mount .wp-card { padding: 9px 22px 7px; }
+.lu-words .lu-wp-mount .wp-story { font-size: 18px; }
+.lu-words .lu-wp-mount .wp-setup { margin: 0; }
+.lu-words .lu-wp-mount .wp-setup-lead { font-size: 12px; margin-bottom: 2px; }
+.lu-words .lu-wp-mount .wp-answer { gap: 4px; }
 
 /* ---- Applied stage (LA): worded question + the setup gate ------------------ */
 /* one full-width card (the .play grid would otherwise pin it to the left track) */

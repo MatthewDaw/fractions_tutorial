@@ -57,6 +57,10 @@
 .r1-stage-name { font-size: 14px; font-weight: 600; }
 .r1-stage-sub { font-size: 11px; opacity: 0.8; }
 
+/* (The lesson's old in-zone .r1-qband band was removed: the shared <QuestionBand>
+   now mounts ONCE at page level, directly under .r1-stages and above .goal — see
+   AppR1's return block. Nothing here styles it; questionband.css owns it.) */
+
 /* ════════════════════════════════════════════════════════════════════════════
    STAGE 1 · MANIPULATE — DETERMINISTIC FIXED-ZONE LAYOUT
    The whole stage is laid out as fixed, non-overlapping rectangles so the same
@@ -69,27 +73,28 @@
    guaranteed gap between them. Heights never depend on text content (clamped),
    so a longer string / different font can never grow a zone into its neighbour.
    ════════════════════════════════════════════════════════════════════════════ */
-.r1-s1 { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+.r1-s1 { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 6px; }
 
 /* fixed column geometry: blocks (left, wide) + hint rail (right). */
 .r1-s1-blocks {
   position: absolute; left: 0; top: 0;
-  width: 800px; height: 348px;
+  width: 800px; height: 350px;
   border: 2px solid #1a0f08;
   box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
   background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
   overflow: hidden;            /* clip: blocks can NEVER paint past the zone */
   box-sizing: border-box;
   padding: 6px 12px;
+  display: flex; flex-direction: column;
 }
 /* the canvas is sized to its CONTENT (number line ≈380px + labels), not 720px,
    then CENTERED in the zone so whitespace sits evenly on both sides instead of
    pooling on the right (Issue A). Absolute children use ORIGIN-based coords. */
-.r1-s1-canvas { width: 524px; height: 336px; margin: 0 auto; }
+.r1-s1-canvas { width: 524px; height: 336px; margin: 0 auto; flex: 0 0 auto; }
 
 .r1-s1-rail {
   position: absolute; right: 0; top: 0;
-  width: 396px; height: 348px;
+  width: 396px; height: 350px;
   box-sizing: border-box;
   display: flex; flex-direction: column;
 }
@@ -100,7 +105,7 @@
    it (blocks 348 + this card's top offset) is guaranteed. */
 .r1-s1-answer {
   position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 196px;
+  width: 800px; height: 140px;
   box-sizing: border-box;
   border: 2px solid var(--ink);
   background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
@@ -146,7 +151,7 @@
    so a longer status string can never change the zone height. */
 .r1-s1-tutor {
   position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 196px;
+  width: 396px; height: 140px;
   box-sizing: border-box;
   display: flex; align-items: flex-end; gap: 10px;
 }
@@ -171,19 +176,20 @@
    so a longer string / different font (Safari vs Chromium) can NEVER reflow one
    zone onto another. Geometry is identical to .r1-s1* so all stages line up.
    ════════════════════════════════════════════════════════════════════════════ */
-.r1-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+.r1-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 6px; }
 
 .r1-fz-stage {
   position: absolute; left: 0; top: 0;
-  width: 800px; height: 348px;
+  width: 800px; height: 350px;
   border: 2px solid #1a0f08;
   box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
   background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
   overflow: hidden;            /* clip: content can NEVER paint past the zone */
   box-sizing: border-box;
   padding: 6px 12px;
+  display: flex; flex-direction: column;
 }
-.r1-fz-canvas { position: relative; width: 776px; height: 336px; margin: 0 auto; }
+.r1-fz-canvas { position: relative; width: 776px; height: 336px; margin: 0 auto; flex: 0 0 auto; }
 /* the bare-equation stage centers its single equation in the zone */
 .r1-fz-canvas-center {
   display: flex; flex-direction: column;
@@ -192,7 +198,7 @@
 
 .r1-fz-rail {
   position: absolute; right: 0; top: 0;
-  width: 396px; height: 348px;
+  width: 396px; height: 350px;
   box-sizing: border-box;
   display: flex; flex-direction: column;
 }
@@ -203,7 +209,7 @@
    geometry to .r1-s1-answer so the write area sits in the same place every time. */
 .r1-fz-answer {
   position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 196px;
+  width: 800px; height: 140px;
   box-sizing: border-box;
   border: 2px solid var(--ink);
   background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
@@ -246,7 +252,7 @@
 
 .r1-fz-tutor {
   position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 196px;
+  width: 396px; height: 140px;
   box-sizing: border-box;
   display: flex; align-items: flex-end; gap: 10px;
 }
@@ -264,28 +270,31 @@
    its own .wp-answer-row, so "Check beside the write area" holds inside the card. */
 .r1-fz-words .r1-fz-wp {
   position: absolute; left: 0; top: 0;
-  width: 1040px; height: 544px;
+  width: 1040px; height: 486px;
   box-sizing: border-box; overflow: hidden;
   display: flex; flex-direction: column; align-items: center;
 }
-.r1-fz-words .r1-fz-tutor { width: 220px; height: 196px; }
+.r1-fz-words .r1-fz-tutor { width: 220px; height: 150px; }
 /* Tighten the embedded card + Slates so the WHOLE column (story + setup + answer
    + Check) fits inside the fixed 544px zone WITHOUT clipping. We shrink the real
    cell box sizes (not transform:scale, which keeps the original layout footprint
    and was leaving the answer row to overflow the zone). Answer cells stay
    comfortably large for a child's digit; the optional/setup cells are smaller. */
-.r1-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
-.r1-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
+.r1-fz-words .wp { gap: 8px; width: 100%; align-items: center; }
+.r1-fz-words .wp-card { padding: 10px 24px 9px; max-width: 760px; }
 .r1-fz-words .wp-card-head { margin-bottom: 8px; }
 .r1-fz-words .wp-story { font-size: 18px; }
 .r1-fz-words .wp-setup { gap: 4px; }
 .r1-fz-words .wp-answer { gap: 6px; }
-/* answer Slate — kept large for handwriting */
-.r1-fz-words .wp-answer .slate-fraction .slate-cell { width: 80px; height: 64px; }
-.r1-fz-words .wp-answer .slate-fraction .slate-bar { width: 80px; }
-.r1-fz-words .wp-answer .slate-fraction .slate-fixed { font-size: 38px; }
-.r1-fz-words .wp-answer .slate-fraction .slate-committed-digit { font-size: 40px; }
-.r1-fz-words .wp-answer .slate-fraction .slate-ph { font-size: 24px; }
+/* answer Slate — GENEROUSLY large for handwriting, matching the block stages'
+   96×78 cells. The word stages are wrapped in <FitStage axis="y">, which uniformly
+   downscales the whole column only if it would overflow, so we can size the writing
+   cells comfortably here and never clip the answer/Check below. */
+.r1-fz-words .wp-answer .slate-fraction .slate-cell { width: 96px; height: 78px; }
+.r1-fz-words .wp-answer .slate-fraction .slate-bar { width: 96px; }
+.r1-fz-words .wp-answer .slate-fraction .slate-fixed { font-size: 42px; }
+.r1-fz-words .wp-answer .slate-fraction .slate-committed-digit { font-size: 46px; }
+.r1-fz-words .wp-answer .slate-fraction .slate-ph { font-size: 28px; }
 .r1-fz-words .wp-answer .slate-fraction { gap: 4px; }
 /* setup ExpressionSlate — smaller (scratch / gate), real box reduction */
 .r1-fz-words .expr-slate { gap: 12px; }
@@ -332,21 +341,8 @@
   color: var(--paper-1);
   font-style: normal; font-weight: 700; font-size: 14px;
 }
-.r1-leadeq {
-  position: absolute;
-  left: 40px; top: 232px;
-  display: inline-flex; align-items: center; gap: 10px;
-  font-family: var(--serif);
-  font-size: 38px;
-  font-weight: 700;
-  color: var(--ink);
-}
-.r1-leadeq .qop { color: var(--red); font-size: 30px; }
-.r1-leadeq-blank {
-  color: var(--red);
-  border-bottom: 3px dashed var(--red-soft);
-  padding: 0 6px;
-}
+/* (the old in-canvas .r1-leadeq for Fade was removed — the prominent .r1-qband at
+   the top of the proof zone now carries the equation on every stage.) */
 
 /* ── Stage 5 (Numbers) bare equation ──────────────────────────────────────────
    EQUATION ALIGNMENT: every term is a real <BigFrac> (.bignum), so 2/7, 3/7 and
@@ -387,6 +383,23 @@
   font-size: 13px;
   color: var(--red-deep);
   align-self: center;
+}
+
+/* ── Stage 7 (Words) · GENEROUS optional drawing slate ─────────────────────────
+   The words-only stage hides the bare equation (the child reads the prose and
+   extracts the math), so the freed space goes to a full-width, tall scratch slate
+   — sized to the card's content width (~720px) and ~300px tall, consistent with
+   the other lessons' words scratch. The whole column is wrapped in
+   <FitStage axis="y">, which uniformly downscales only if it would overflow, so
+   this generous slate never clips the story card or the answer/Check row. The
+   slate sizes + centres itself (explicit width + margin:auto), so this rule is
+   scoped to the Words stage alone and never touches Applied (6) or Show Work. */
+.r1-words-scratch {
+  position: relative;
+  width: 740px;
+  max-width: 100%;
+  height: 300px;
+  margin: 0 auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

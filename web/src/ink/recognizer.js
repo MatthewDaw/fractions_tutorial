@@ -248,32 +248,96 @@ function pdollarDigit(strokes) {
 }
 
 // ---- public: split a multi-digit scribble into digits, left-to-right -------
-// Strokes are clustered by horizontal position so "15" (two stroke groups) reads
-// as two digits while a multi-stroke "8" stays one. `gap` is in the same pixel
-// space as the points.
-function bbox(stroke) {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const [x, y] of stroke) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-  return { minX, maxX, minY, maxY, cx: (minX + maxX) / 2 };
+// The hard case is a child writing "42" in one box: a handwritten 4 (or 7) has a
+// wide crossbar that reaches under the next digit, so grouping strokes by
+// bounding-box overlap swallowed the "2" into the "4" and the CNN read the merged
+// blob as one wrong digit. Instead we split on the WHITESPACE between digits as
+// seen in the ink's horizontal projection: digits within a numeral overlap in x,
+// but adjacent numerals leave an empty vertical band. A force-split fallback
+// covers genuinely touching digits (no whitespace) by even spacing.
+
+// Densify a polyline to ~`step`-spaced points so the x-projection is gap-free
+// along each stroke (raw points can be far apart on fast strokes).
+function densify(stroke, step) {
+  if (stroke.length <= 1) return stroke.slice();
+  const out = [];
+  for (let i = 1; i < stroke.length; i++) {
+    const [ax, ay] = stroke[i - 1], [bx, by] = stroke[i];
+    const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / step));
+    for (let t = 0; t < n; t++) out.push([ax + (bx - ax) * t / n, ay + (by - ay) * t / n]);
+  }
+  out.push(stroke[stroke.length - 1]);
+  return out;
 }
 
-// Split a multi-digit scribble into digit groups, left-to-right, by horizontal
-// position (so "15" → two groups while a multi-stroke "8" stays one).
-function segment(strokes, opts = {}) {
-  const valid = strokes.filter((s) => s && s.length > 1);
-  if (!valid.length) return [];
-  const boxes = valid.map((s) => ({ s, b: bbox(s) }));
-  boxes.sort((p, q) => p.b.cx - q.b.cx);
-  const heights = boxes.map((p) => p.b.maxY - p.b.minY).sort((a, b) => a - b);
-  const medH = heights[Math.floor(heights.length / 2)] || 1;
-  const gap = opts.gap != null ? opts.gap : medH * 0.45;
-  const groups = [];
-  let cur = null, curMaxX = -Infinity;
-  for (const { s, b } of boxes) {
-    if (cur && b.minX <= curMaxX + gap) { cur.push(s); curMaxX = Math.max(curMaxX, b.maxX); }
-    else { cur = [s]; groups.push(cur); curMaxX = b.maxX; }
+function strokeCx(s) { let a = Infinity, b = -Infinity; for (const [x] of s) { if (x < a) a = x; if (x > b) b = x; } return (a + b) / 2; }
+function groupCx(g) { let sum = 0, n = 0; for (const s of g) { sum += strokeCx(s); n++; } return n ? sum / n : 0; }
+
+// Bin whole strokes into the slots between sorted x-cut positions, by stroke
+// center. Keeping each stroke intact means a 4's crossbar stays with the 4 even
+// when its right end pokes past the cut.
+function assignByCuts(strokes, cuts) {
+  const bins = Array.from({ length: cuts.length + 1 }, () => []);
+  for (const s of strokes) {
+    const cx = strokeCx(s);
+    let k = 0; while (k < cuts.length && cx > cuts[k]) k++;
+    bins[k].push(s);
   }
-  return groups;
+  return bins.filter((b) => b.length);
+}
+
+// Fallback for digits written close together / touching (a gap too small for the
+// whitespace test to catch). A numeral advances the pen by ≈0.65·H horizontally,
+// so a group wider than that probably holds more than one digit: estimate the
+// count from width and even-split. The 0.65·H advance keeps a lone wide "4" or
+// "0" (≲0.95·H) as a single digit while splitting a ≥1.1·H two-digit blob.
+function forceSplitWide(seg, H) {
+  if (seg.length <= 1) return [seg];
+  let a = Infinity, b = -Infinity;
+  for (const s of seg) for (const [x] of s) { if (x < a) a = x; if (x > b) b = x; }
+  const k = Math.min(3, Math.max(1, Math.round((b - a) / (0.65 * H))));
+  if (k <= 1) return [seg];
+  const cuts = [];
+  for (let i = 1; i < k; i++) cuts.push(a + ((b - a) * i) / k);
+  return assignByCuts(seg, cuts);
+}
+
+// Split a multi-digit scribble into digit groups, left-to-right. `opts.gapFrac`
+// is the minimum empty-band width (as a fraction of ink height) that separates
+// two digits.
+function segment(strokes, opts = {}) {
+  const valid = strokes.filter((s) => s && s.length > 0);
+  if (!valid.length) return [];
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const s of valid) for (const [x, y] of s) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+  const H = Math.max(1, maxY - minY), W = Math.max(1, maxX - minX);
+
+  // Horizontal ink-occupancy histogram (which x-columns contain ink).
+  const step = Math.max(0.5, H * 0.06);
+  const BINS = Math.max(4, Math.min(512, Math.round(W / step)));
+  const bw = W / BINS;
+  const occ = new Uint16Array(BINS);
+  for (const s of valid) for (const [x] of densify(s, step)) {
+    let bi = Math.floor((x - minX) / bw);
+    if (bi < 0) bi = 0; else if (bi >= BINS) bi = BINS - 1;
+    occ[bi] = 1;
+  }
+  // Cut at the center of each empty band wide enough to separate digits. The
+  // threshold is measured in pixels (a fraction of ink height) so it doesn't
+  // depend on bin resolution.
+  const minGapPx = (opts.gapFrac != null ? opts.gapFrac : 0.09) * H;
+  const cuts = [];
+  let run = 0, sawInk = false;
+  for (let i = 0; i < BINS; i++) {
+    if (!occ[i]) { if (sawInk) run++; }
+    else { if (run * bw >= minGapPx) cuts.push(minX + (i - run / 2) * bw); run = 0; sawInk = true; }
+  }
+
+  const segs = assignByCuts(valid, cuts);
+  const out = [];
+  for (const seg of segs) out.push(...forceSplitWide(seg, H));
+  out.sort((p, q) => groupCx(p) - groupCx(q));
+  return out;
 }
 
 // ---- public: recognize one digit (CNN, with $P fallback while loading) ------

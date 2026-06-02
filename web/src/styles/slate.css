@@ -67,6 +67,21 @@
   opacity: 0.28; pointer-events: none;
 }
 
+/* TYPING mode — a numeric input filling the cell, styled to read like a written
+   digit. Same footprint as .slate-canvas so row/fraction layouts are unchanged. */
+.slate-input {
+  all: unset; box-sizing: border-box;
+  width: 100%; height: 100%;
+  display: block; text-align: center;
+  font-family: var(--display); font-size: 64px; color: var(--ink);
+  caret-color: var(--red); cursor: text;
+}
+.slate-fraction .slate-input { font-size: 48px; }
+.expr-slate .slate-input { font-size: 46px; }
+.slate-input::placeholder { color: var(--ink-soft); opacity: 0.3; }
+.slate-input:focus { background: rgba(163, 42, 34, 0.04); }
+.slate-slot.is-typed.is-disabled .slate-input { cursor: not-allowed; }
+
 /* the committed digit — large, sits over the cell; tap to rewrite */
 .slate-committed-digit {
   all: unset; cursor: pointer; box-sizing: border-box;

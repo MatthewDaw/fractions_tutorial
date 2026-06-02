@@ -1,0 +1,6 @@
+{ "route": "m3", "steps": [
+  { "waitFor": ".intro-continue" }, { "click": ".intro-continue" }, { "wait": 400 },
+  { "click": ".intro-continue" }, { "waitFor": ".m3-stage-tab" }, { "wait": 500 },
+  { "click": ".m3-scoop" }, { "wait": 150 },
+  { "click": ".m3-scoop" }, { "wait": 150 },
+  { "click": ".m3-scoop" }, { "wait": 400 } ] }

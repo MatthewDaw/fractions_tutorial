@@ -1,0 +1,5 @@
+{ "route": "m2", "steps": [
+  { "waitFor": ".intro-continue" }, { "click": ".intro-continue" }, { "wait": 500 },
+  { "click": ".intro-continue" }, { "waitFor": ".m2-stage-tab" }, { "wait": 300 },
+  { "clickNth": { "selector": ".m2-stage-tab", "n": 2 } }, { "wait": 400 },
+  { "click": ".m2-score-btn" }, { "wait": 500 } ] }

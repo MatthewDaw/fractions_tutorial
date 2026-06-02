@@ -4,9 +4,9 @@
 // THE FULL 7-STAGE INTERACTION ARC (mirrors AppR1). The manipulative (a baking
 // tray) carries three new ideas as the support fades:
 //
-//   1 · Manipulate — the tray IS the problem. An empty 4×6 tray; tap the INTERIOR
-//        cells to drop buns, count the filled cells into a plain count box. No
-//        writing on the Slate yet (interior-only fill is the perimeter guard).
+//   1 · Manipulate — the tray IS the problem. An empty 4×6 tray; DRAG a bun onto the
+//        INTERIOR cells to drop buns, count the filled cells into a plain count box.
+//        No writing on the Slate yet (interior-only fill is the perimeter guard).
 //   2 · Bind       — the full tray PLUS the written 4 × 6 = __; a SPIN button
 //        rotates the tray to 6 × 4 with the count unchanged (COMMUTATIVITY).
 //   3 · Fade       — the tray dims to a faint check; a SCORE line cuts a column
@@ -33,6 +33,10 @@ import Rosette from "./components/Rosette.jsx";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
 import BakingTray from "./components/BakingTray.jsx";
+import BlankSlate from "./components/BlankSlate.jsx";
+import QuestionBand from "./components/QuestionBand.jsx";
+import FitStage from "./components/FitStage.jsx";
+import SettingsButton from "./SettingsButton.jsx";
 import { useVoice } from "./voice.js";
 import { useLessonEngine } from "./runtime/useLessonEngine.js";
 import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
@@ -52,6 +56,7 @@ const STAGES = [
   { n: 4, key: "4-workbench",  tab: "Workbench",  sub: "build the array" },
   { n: 5, key: "5-numbers",    tab: "Numbers",    sub: "bare 4 × 6 = ?" },
   { n: 6, key: "6-applied",    tab: "Applied",    sub: "setup, then total" },
+  { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
   { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
 ];
 
@@ -82,6 +87,17 @@ const WORD_BANK = [
 // owner → in-character label + voice-key prefix (mr_<owner>_<slug>_<1|2|3>)
 const OWNER_LABEL = { kid: "Malysh", grandpa: "Grandpa", cat: "The cat" };
 
+// The Stage-1 drag SOURCE is drawn as a literal heaped pile of buns (not a single
+// chip) so the child sees an inexhaustible mound to drag from. Positions form a
+// mound: a wide bottom row, fewer in the middle, a couple on top. `z` layers them
+// back-to-front for overlap; `s` is each bun's diameter (px). Cosmetic only — a
+// pointerdown anywhere on the pile starts the same grabBun drag.
+const BUN_PILE = [
+  { x: 2,  y: 48, s: 34, z: 1 }, { x: 30, y: 50, s: 36, z: 1 }, { x: 60, y: 49, s: 35, z: 1 }, { x: 90, y: 50, s: 34, z: 1 },
+  { x: 16, y: 26, s: 35, z: 2 }, { x: 46, y: 24, s: 37, z: 2 }, { x: 76, y: 26, s: 35, z: 2 },
+  { x: 34, y: 4,  s: 34, z: 3 }, { x: 62, y: 5,  s: 33, z: 3 },
+];
+
 // ---------------- main ----------------
 export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }) {
   // Find the initial stage from the beat key (deep-link from a seeded mastery map).
@@ -102,9 +118,17 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   const presentEmittedRef = useRef(false);
 
   // --- Stage 1/2/3 tray state ---
-  const [filled, setFilled] = useState(0);     // filled interior cells
+  // Per-cell fill: a Set of filled interior cell indices (child drags a bun onto EACH cell).
+  const [filled, setFilled] = useState(() => new Set());
+  const filledCount = filled.size;
   const [rotated, setRotated] = useState(false); // Stage 2 spin (rows↔cols)
   const [scored, setScored] = useState(false);  // Stage 3 score line shown
+
+  // --- Stage 1 bun drag-to-place (pointer-following ghost + highlighted cell) ---
+  const [bunDrag, setBunDrag] = useState(null);   // {x,y} cursor while dragging a bun
+  const [hotCell, setHotCell] = useState(null);   // index of the cell under the pointer
+  const trayZoneRef = useRef(null);
+  const bunDragRef = useRef(false);
 
   // --- Slate (single whole-number product slot), shared by write stages ---
   const [slate, setSlate] = useState({ product: "" });
@@ -120,6 +144,9 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   const [setup, setSetup] = useState({ a: "", b: "" });
   const [setupOk, setSetupOk] = useState(false);
 
+  // --- mandatory "show your work" blank-slate gate (between Applied & Words) ---
+  const [showWorkInked, setShowWorkInked] = useState(false);
+
   // --- shared outcome state ---
   const [solved, setSolved] = useState(false);
   const [stars, setStars] = useState(0);
@@ -127,7 +154,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   const [cook, setCook] = useState("idle");
   const [status, setStatus] = useState({ tone: "normal", text: STAGE_INTRO(startN, problemFor(startN)) });
 
-  const { soundOn, speaking, say, stopVoice, toggleSound } = useVoice();
+  const { speaking, say, stopVoice } = useVoice();
   const stageRef = useRef(stage), solvedRef = useRef(solved);
   useEffect(() => { stageRef.current = stage; }, [stage]);
   useEffect(() => { solvedRef.current = solved; }, [solved]);
@@ -160,10 +187,12 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     setStage(n); stageRef.current = n;
     setSolved(false); solvedRef.current = false;
     setStars(0); setBadInput(false);
-    setFilled(0); setRotated(false); setScored(false);
+    setFilled(new Set()); setRotated(false); setScored(false);
+    setBunDrag(null); setHotCell(null); bunDragRef.current = false;
     setSlate({ product: "" }); setPartA({ product: "" }); setPartB({ product: "" });
     setBuildRows(0); setBuildCols(0);
     setSetup({ a: "", b: "" }); setSetupOk(false);
+    setShowWorkInked(false);
     setCook("idle");
     const stageKey = STAGES.find((s) => s.n === n)?.key || "1-manipulate";
     setStatus({ tone: "normal", text: STAGE_INTRO(n, problemFor(n)) });
@@ -176,12 +205,13 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   }
 
   function nextStage() {
-    const n = Math.min(7, stageRef.current + 1);
-    if (n === stageRef.current) {
+    const idx = STAGES.findIndex((s) => s.n === stageRef.current);
+    const next = idx >= 0 && idx < STAGES.length - 1 ? STAGES[idx + 1] : null;
+    if (!next) {
       setStatus({ tone: "ok", text: "That's the whole tray — from counting buns to reading a story and knowing the product. Brilliant, povaryonok!" });
       return;
     }
-    goStage(n);
+    goStage(next.n);
   }
 
   // ---- engine integration helpers ----
@@ -190,8 +220,9 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     if (dec.kind === "FadeScaffold") {
       nextStage();
     } else if (dec.kind === "RaiseScaffold") {
-      const prev = Math.max(1, stageRef.current - 1);
-      if (prev !== stageRef.current) goStage(prev);
+      const idx = STAGES.findIndex((s) => s.n === stageRef.current);
+      const prev = idx > 0 ? STAGES[idx - 1] : null;
+      if (prev) goStage(prev.n);
     } else if (isCorrect) {
       nextStage();
     }
@@ -227,14 +258,84 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
 
   const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 3);
 
-  // ---- tray tap: fill cells (Stage 1) with self-correction telemetry ----
-  function onTrayFill(nextCount) {
+  // ---- tray cell toggle: flip a single cell (Stage 1) with self-correction telemetry.
+  //      Reached only via drag-drop (grabBun) or keyboard a11y — never a plain tap. ----
+  function onTrayFill(index) {
     if (solvedRef.current) return;
     selfCorrectionsRef.current += 1;
-    if (nextCount < filled) emit({ type: "remove_block", payload: { node_id: "MULT_ARRAYS" } });
-    else emit({ type: "place_block", payload: { node_id: "MULT_ARRAYS" } });
-    setFilled(nextCount);
+    const removing = filled.has(index);
+    emit({ type: removing ? "remove_block" : "place_block", payload: { node_id: "MULT_ARRAYS" } });
+    setFilled((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   }
+
+  // ---- Stage 1 bun drag: a ghost bun follows the pointer; the cell under it
+  //      highlights; releasing over a cell toggles it (empty→fill, filled→clear).
+  //      Drag is the ONLY pointer placement gesture; keyboard Enter/Space on a
+  //      focused cell (BakingTray's onKeyDown → onFill) is the non-pointer a11y path. ----
+  function cellIndexAt(clientX, clientY) {
+    const zone = trayZoneRef.current;
+    if (!zone) return null;
+    const cells = zone.querySelectorAll(".m2-tray-cell");
+    for (let i = 0; i < cells.length; i++) {
+      const r = cells[i].getBoundingClientRect();
+      if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) return i;
+    }
+    return null;
+  }
+
+  // position the highlight ring over the hot cell, in the dropzone's OWN (unscaled)
+  // coordinate space. We use offsetLeft/offsetTop (relative to the offset parent)
+  // rather than getBoundingClientRect so the ring isn't double-scaled by FitStage's
+  // transform — the dropzone and the ring share the same scaled ancestor.
+  function cellHighlightStyle(idx) {
+    const zone = trayZoneRef.current;
+    if (!zone) return { display: "none" };
+    const cells = zone.querySelectorAll(".m2-tray-cell");
+    const el = cells[idx];
+    if (!el) return { display: "none" };
+    // offset coords accumulate up to the nearest positioned ancestor; the dropzone
+    // is position:relative so these resolve within it regardless of the transform.
+    let x = 0, y = 0, node = el;
+    while (node && node !== zone) { x += node.offsetLeft; y += node.offsetTop; node = node.offsetParent; }
+    const w = el.offsetWidth, h = el.offsetHeight;
+    return { left: x - 4, top: y - 4, width: w + 8, height: h + 8 };
+  }
+
+  function grabBun(e) {
+    if (solvedRef.current || filledCount >= PRODUCT) return;
+    if (e && e.preventDefault) e.preventDefault();
+    if (!e || e.clientX == null) return; // keyboard/synthetic — tray taps handle it
+    bunDragRef.current = true;
+    setBunDrag({ x: e.clientX, y: e.clientY });
+    const move = (ev) => { setBunDrag({ x: ev.clientX, y: ev.clientY }); setHotCell(cellIndexAt(ev.clientX, ev.clientY)); };
+    const up = (ev) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      const idx = cellIndexAt(ev.clientX, ev.clientY);
+      bunDragRef.current = false;
+      setBunDrag(null); setHotCell(null);
+      // drop on ANY cell → toggle it (empty fills via place_block; filled clears via
+      // remove_block — preserving the old tap-toggle self-correction, now drag-driven).
+      // dropping off-tray cancels.
+      if (idx != null && !solvedRef.current) onTrayFill(idx);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
+  // The dropzone wrapper also forwards moves (touch) so the highlight tracks even
+  // when the pointer capture stays on the source button.
+  function onTrayPointerMove(e) {
+    if (!bunDragRef.current) return;
+    setBunDrag({ x: e.clientX, y: e.clientY });
+    setHotCell(cellIndexAt(e.clientX, e.clientY));
+  }
+  function onTrayPointerUp() { /* global pointerup handles the drop */ }
 
   // The effective dimensions (Stage 2 spin swaps rows/cols; count is invariant).
   const effRows = rotated ? COLS : ROWS;
@@ -244,11 +345,11 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   function checkStage1() {
     if (solved) { nextStage(); return; }
     const n = parseInt(slate.product, 10);
-    const full = filled >= PRODUCT;
+    const full = filledCount >= PRODUCT;
     if (!full) {
       setCook("think");
-      setStatus({ tone: "warn", text: `Fill every cup in the tray first — ${ROWS} rows of ${COLS}. Tap the inside cups.` });
-      say("Fill every cup in the tray first. Tap the inside cups.");
+      setStatus({ tone: "warn", text: `Fill every cup in the tray first — ${ROWS} rows of ${COLS}. Drag a bun onto the inside cups.` });
+      say("Fill every cup in the tray first. Drag a bun onto the inside cups.");
       return;
     }
     if (!(n > 0)) {
@@ -409,7 +510,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
 
   // ---- "ready to check" glow ----
   const answerReady = !solved && (
-    stage === 1 ? (filled >= PRODUCT && slate.product !== "")
+    stage === 1 ? (filledCount >= PRODUCT && slate.product !== "")
     : stage === 3 ? (slate.product !== "" || (partA.product !== "" && partB.product !== ""))
     : stage === 4 ? (buildRows > 0 && buildCols > 0)
     : stage === 6 ? (setupOk && slate.product !== "")
@@ -419,12 +520,12 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   // ---- stage selector strip ----
   const Selector = (
     <div className="m2-stages" role="tablist" aria-label="Lesson stages">
-      {STAGES.map((s) => (
+      {STAGES.map((s, i) => (
         <button
-          key={s.n}
+          key={s.key}
           role="tab"
           aria-selected={stage === s.n}
-          className={"m2-stage-tab" + (stage === s.n ? " is-active" : "") + (stage > s.n ? " is-done" : "")}
+          className={"m2-stage-tab" + (stage === s.n ? " is-active" : "") + (STAGES.findIndex((x) => x.n === stage) > i ? " is-done" : "")}
           onClick={() => goStage(s.n)}
           title={s.sub}
         >
@@ -455,13 +556,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
           </button>
         )}
-        <button className={"ctrl-btn" + (soundOn ? " on" : "")} title={soundOn ? "Turn sound off" : "Turn sound on"} onClick={toggleSound}>
-          {soundOn ? (
-            <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><path d="M12 5 Q15 8 12 11" stroke="currentColor" strokeWidth="1.5" fill="none" /><path d="M13.5 3 Q18 8 13.5 13" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
-          ) : (
-            <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 6 H5 L9 2 V14 L5 10 H2 Z" fill="currentColor" /><line x1="12" y1="5" x2="17" y2="11" stroke="currentColor" strokeWidth="1.6" /><line x1="17" y1="5" x2="12" y2="11" stroke="currentColor" strokeWidth="1.6" /></svg>
-          )}
-        </button>
+        <SettingsButton />
         <button className="ctrl-btn" title="Start over" onClick={reset}>⟲</button>
       </div>
     </div>
@@ -491,6 +586,34 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     />
   );
 
+  // ---- the shared QuestionBand, mounted full-width directly under the tabs ----
+  // Shows THIS lesson's current question (bare equation; "?" → solved product).
+  const band = (() => {
+    if (stage === 1) {
+      return <QuestionBand lead="the question" expr={<>{ROWS} <span className="qb-op">×</span> {COLS}</>} answer={solved ? PRODUCT : "?"} />;
+    }
+    if (stage === 2) {
+      return <QuestionBand lead="the question" expr={<>{effRows} <span className="qb-op">×</span> {effCols}</>} answer={solved ? PRODUCT : "?"} />;
+    }
+    if (stage === 3) {
+      return <QuestionBand lead="the question" expr={<>{ROWS} <span className="qb-op">×</span> {COLS}</>} answer={solved ? PRODUCT : "?"} />;
+    }
+    if (stage === 4) {
+      return <QuestionBand lead="build a tray that makes" expr={<>{ROWS} <span className="qb-op">×</span> {COLS}</>} answer={PRODUCT} />;
+    }
+    if (stage === 5) {
+      return <QuestionBand lead="the question" expr={<>{ROWS} <span className="qb-op">×</span> {COLS}</>} answer={solved ? PRODUCT : "?"} />;
+    }
+    if (stage === 6) {
+      return <QuestionBand lead="the question — find the product" expr={<>{wp.rows} <span className="qb-op">×</span> {wp.cols}</>} answer={solved ? wp.answer : "?"} />;
+    }
+    if (stage === "sw") {
+      return <QuestionBand lead="show how you found" expr={<>{ROWS} <span className="qb-op">×</span> {COLS}</>} answer={PRODUCT} />;
+    }
+    // stage 7 — words
+    return <QuestionBand lead="the question — find the product" expr={<>{wp.rows} <span className="qb-op">×</span> {wp.cols}</>} answer={solved ? wp.answer : "?"} />;
+  })();
+
   // ---- Per-stage body ----
   let body = null;
 
@@ -499,17 +622,52 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <div className="m2-fz">
         <div className="m2-fz-stage">
-          <div className="m2-fz-canvas m2-fz-canvas-center">
-            <BakingTray rows={ROWS} cols={COLS} filled={filled} onFill={onTrayFill} />
-            <div className="m2-cap">Tap the inside cups — fill all {ROWS} rows of {COLS}, then count the buns.</div>
-          </div>
+          <FitStage className="m2-fz-canvas m2-fz-canvas-center">
+            {/* pile-of-buns SOURCE sits to the LEFT of the tray so the tray keeps
+                the full vertical budget (a tall rotated/large tray never gets
+                squeezed by controls stacked beneath it). */}
+            <div className="m2-fill-row">
+              <div className="m2-fill-source">
+                <button
+                  type="button"
+                  className={"m2-bun-pile" + (filledCount >= PRODUCT || solved ? " is-spent" : "")}
+                  onPointerDown={grabBun}
+                  disabled={filledCount >= PRODUCT || solved}
+                  style={{ touchAction: "none" }}
+                  aria-label="a pile of buns — drag one onto a cup to fill it"
+                >
+                  {BUN_PILE.map((b, i) => (
+                    <span
+                      key={i}
+                      className="m2-pile-bun"
+                      aria-hidden="true"
+                      style={{ left: b.x, top: b.y, width: b.s, height: b.s, zIndex: b.z }}
+                    />
+                  ))}
+                </button>
+                <span className="m2-pile-cap">Drag a bun onto a cup</span>
+              </div>
+              <div
+                className={"m2-tray-dropzone" + (bunDrag ? " is-dragging" : "")}
+                ref={trayZoneRef}
+                onPointerMove={onTrayPointerMove}
+                onPointerUp={onTrayPointerUp}
+              >
+                <BakingTray rows={ROWS} cols={COLS} filled={filled} onFill={onTrayFill} />
+                {bunDrag && hotCell != null && (
+                  <span className="m2-cell-highlight" style={cellHighlightStyle(hotCell)} aria-hidden="true" />
+                )}
+              </div>
+            </div>
+            <div className="m2-cap">Drag a bun onto each inside cup — fill all {ROWS} rows of {COLS}, then count.</div>
+          </FitStage>
         </div>
 
         <div className="m2-fz-rail">
           <div className="panel">
             <h3>Rows × Columns</h3>
-            <div className="hint">A tray is a rectangle. Fill every cup, then count them up — by rows is fastest: {COLS}, {COLS * 2}, {COLS * 3}, {PRODUCT}.</div>
-            <div className="m2-count-readout">filled: <b>{filled}</b> / {PRODUCT}</div>
+            <div className="hint">A tray is a rectangle. Drag a bun to every cup one by one, then count them up — by rows is fastest: {COLS}, {COLS * 2}, {COLS * 3}, {PRODUCT}.</div>
+            <div className="m2-count-readout">filled: <b>{filledCount}</b> / {PRODUCT}</div>
           </div>
         </div>
 
@@ -517,9 +675,9 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
           <div className="m2-fz-eqrow">
             <span className="m2-fz-expr">{ROWS} × {COLS}</span>
             <span className="m2-fz-op">=</span>
-            <span className="m2-fz-slate">{ProductSlate({ disabled: filled < PRODUCT || solved })}</span>
+            <span className="m2-fz-slate">{ProductSlate({ disabled: filledCount < PRODUCT || solved })}</span>
           </div>
-          <div className="m2-fz-cap">{solved ? `full marks — ${ROWS} × ${COLS} = ${PRODUCT}!` : filled >= PRODUCT ? "count the buns — write the product" : "fill the whole tray to unlock the answer"}</div>
+          <div className="m2-fz-cap">{solved ? `full marks — ${ROWS} × ${COLS} = ${PRODUCT}!` : filledCount >= PRODUCT ? "count the buns — write the product" : "fill the whole tray to unlock the answer"}</div>
           <div className="m2-fz-marks">
             {solved && <Rosette count={stars} />}
             <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={checkStage1}>{solved ? "Next stage ▸" : "Check"}</button>
@@ -534,10 +692,10 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <div className="m2-fz">
         <div className="m2-fz-stage">
-          <div className="m2-fz-canvas m2-fz-canvas-center">
+          <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             <BakingTray rows={effRows} cols={effCols} filled={effRows * effCols} onFill={() => {}} onRotate={() => { setRotated((r) => !r); setCook("idle"); setStatus({ tone: "ok", text: `Spun it — now it's ${effCols} × ${effRows}, but the buns never changed. Still ${PRODUCT}.` }); }} readOnly />
             <div className="m2-cap">{rotated ? `${effRows} rows of ${effCols} — same tray, ${PRODUCT} buns.` : `${ROWS} rows of ${COLS}. Tap "Spin the tray" to see it the other way.`}</div>
-          </div>
+          </FitStage>
         </div>
 
         <div className="m2-fz-rail">
@@ -568,13 +726,13 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <div className="m2-fz">
         <div className="m2-fz-stage">
-          <div className="m2-fz-canvas m2-fz-canvas-center">
+          <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             <BakingTray rows={ROWS} cols={COLS} filled={PRODUCT} onFill={() => {}} ghost={!scored} scoreAt={scored ? SCORE_COL : null} readOnly />
             {!scored && (
               <button type="button" className="m2-score-btn" onClick={() => { setScored(true); setCook("idle"); setStatus({ tone: "normal", text: `Cut! Now it's two pieces: ${ROWS} × ${SCORE_COL} and ${ROWS} × ${COLS - SCORE_COL}. Read each product, then add.` }); }}>✂ Score the tray</button>
             )}
             <div className="m2-cap">{scored ? `Two pieces: ${ROWS} × ${SCORE_COL} and ${ROWS} × ${COLS - SCORE_COL}. Multiply each, then add.` : `A big tray — score it into two easy pieces.`}</div>
-          </div>
+          </FitStage>
         </div>
 
         <div className="m2-fz-rail">
@@ -613,14 +771,14 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <div className="m2-fz">
         <div className="m2-fz-stage">
-          <div className="m2-fz-canvas m2-fz-canvas-center">
+          <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             {buildRows > 0 && buildCols > 0 ? (
               <BakingTray rows={buildRows} cols={buildCols} filled={built} onFill={() => {}} readOnly />
             ) : (
               <div className="m2-build-empty">Pick the rows and columns →</div>
             )}
-            <div className="m2-cap">Build a tray that makes {ROWS} × {COLS} = {PRODUCT}. Rows × columns must reach {PRODUCT}.</div>
-          </div>
+            <div className="m2-cap">Set the rows and columns so rows × columns reach {PRODUCT}.</div>
+          </FitStage>
         </div>
 
         <div className="m2-fz-rail">
@@ -671,7 +829,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     body = (
       <div className="m2-fz">
         <div className="m2-fz-stage">
-          <div className="m2-fz-canvas m2-fz-canvas-center">
+          <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             <div className="m2-bigeq">
               <span className="m2-bigeq-f">{ROWS}</span>
               <span className="m2-bigeq-op">×</span>
@@ -680,7 +838,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
               <span className="m2-bigeq-q">{solved ? PRODUCT : "?"}</span>
             </div>
             <div className="m2-cap">No tray now — picture the rows, and write the product.</div>
-          </div>
+          </FitStage>
         </div>
 
         <div className="m2-fz-rail">
@@ -690,7 +848,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
           </div>
         </div>
 
-        <div className="m2-fz-answer">
+        <div className="m2-fz-answer m2-fz-answer-big">
           <div className="m2-fz-eqrow">
             <span className="m2-fz-expr">{ROWS} × {COLS}</span>
             <span className="m2-fz-op">=</span>
@@ -709,7 +867,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   } else if (stage === 6) {
     // STAGE 6 · APPLIED — word problem (numerals shown) + REQUIRED setup gate.
     body = (
-      <div className="m2-fz m2-fz-words">
+      <div className="m2-fz m2-fz-words m2-fz-applied">
         <div className="m2-fz-wp">
           <WordProblem
             story={wp.story}
@@ -744,6 +902,43 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
         <Tutor cook={cook} status={status} narrow />
       </div>
     );
+  } else if (stage === "sw") {
+    // SHOW WORK — mandatory blank-slate step between Applied and Words.
+    // Ungraded: the child must put ink down before the Next button unlocks.
+    const wordsKey = STAGES.find((s) => s.key === "7-words")?.n ?? 7;
+    body = (
+      <div className="m2-fz">
+        <div className="m2-fz-stage">
+          <div className="m2-fz-canvas m2-fz-canvas-center">
+            <div className="bs-surface" style={{ position: "relative", width: 800, height: 252 }}>
+              <BlankSlate
+                key="showwork:m2"
+                hint="show your work here — write anything you like ✎"
+                onInkChange={setShowWorkInked}
+                ariaLabel="show your work"
+              />
+            </div>
+            <div className="m2-cap">Show your work — write out how you found the product. Anything you like.</div>
+          </div>
+        </div>
+
+        <div className="m2-fz-rail">
+          <div className="panel">
+            <h3>Show Your Work</h3>
+            <div className="hint">No tray, no slots — just a blank sheet. Sketch the rows, skip-count, or write the multiplication. When you've shown your work, tap Next.</div>
+          </div>
+        </div>
+
+        <div className="m2-fz-answer">
+          <div className="m2-fz-cap">{showWorkInked ? "looks good — tap Next when you're ready" : "write something on the sheet to continue"}</div>
+          <div className="m2-fz-marks">
+            <button className={"check" + (showWorkInked ? " ready" : "")} disabled={!showWorkInked} onClick={() => goStage(wordsKey)}>Next ▸</button>
+          </div>
+        </div>
+
+        <Tutor cook={cook} status={status} />
+      </div>
+    );
   } else {
     // STAGE 7 · WORDS — prose only; optional ungraded scratch never gates.
     body = (
@@ -755,13 +950,11 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             readAloud={() => say(wp.read)}
             speaking={speaking}
             answerLead="Write how many in all"
-            setupLead="Optional — jot rows × columns first"
+            setupLead="Optional — show your work first"
             setup={
-              <span className="m2-setup-row">
-                <Slate slots={[{ key: "a", label: "rows" }]} values={{ a: setup.a }} onChange={(k, v) => setSetup((s) => ({ ...s, a: onlyDigits(v) }))} layout="row" disabled={solved} ariaLabel="optional rows" />
-                <span className="m2-setup-x">×</span>
-                <Slate slots={[{ key: "b", label: "columns" }]} values={{ b: setup.b }} onChange={(k, v) => setSetup((s) => ({ ...s, b: onlyDigits(v) }))} layout="row" disabled={solved} ariaLabel="optional columns" />
-              </span>
+              <div className="bs-surface m2-words-scratch">
+                <BlankSlate key="words-scratch" hint="optional — show your work here ✎" />
+              </div>
             }
             slots={[{ key: "product", label: "product" }]}
             values={slate}
@@ -782,9 +975,21 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     <div className="page" data-vox-speaker="cook">
       <div className="foxing" />
       {TopBar}
-      {Goal}
       {Selector}
+      {/* The bare-equation QuestionBand shows the math on every stage EXCEPT the
+          final words-only stage (7), where the whole point is for the child to
+          read the prose and extract the math themselves — showing the equation
+          would give it away. (Applied (6) intentionally keeps numerals.) */}
+      {stage !== 7 && band}
+      {Goal}
       {body}
+      {bunDrag && (
+        <span
+          className="m2-bun-ghost"
+          style={{ left: bunDrag.x, top: bunDrag.y }}
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 }
@@ -802,12 +1007,13 @@ function Tutor({ cook, status, narrow = false }) {
 // Intro line per stage (also the ribbon's initial text).
 function STAGE_INTRO(n, prob) {
   switch (n) {
-    case 1: return `A baking tray — ${ROWS} rows of ${COLS} cups. Tap the inside cups to fill it, then count the buns.`;
+    case 1: return `A baking tray — ${ROWS} rows of ${COLS} cups. Drag a bun onto the inside cups to fill it, then count the buns.`;
     case 2: return `Write ${ROWS} × ${COLS}, then spin the tray to see ${COLS} × ${ROWS} fills the very same cups.`;
     case 3: return `A big tray. Score it into two easy pieces and read each product, or just write ${ROWS} × ${COLS}.`;
     case 4: return `The Workbench — set the rows and columns to build ${ROWS} × ${COLS}, then read the total.`;
     case 5: return `Just the numbers: ${ROWS} × ${COLS} = ? Write the product on the Slate.`;
     case 6: return `A question in words. Write rows × columns first, then give the product.`;
+    case "sw": return `Show your work — a blank sheet. Write out how you find the product, then tap Next.`;
     case 7: return `A story this time — find the rows and columns, and write how many in all.`;
     default: return "";
   }

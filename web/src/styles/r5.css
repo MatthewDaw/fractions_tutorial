@@ -12,7 +12,7 @@
    are applied inline from denominatorColors so every block matches its size. */
 .r5-block {
   position: relative; box-sizing: border-box; display: grid; place-items: center;
-  border: 1.5px solid var(--ink); height: 30px; cursor: grab;
+  border: 1.5px solid var(--ink); height: 30px; cursor: grab; touch-action: none;
   box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 -3px 6px rgba(20,12,6,0.18);
 }
 .r5-block.is-grabbing { cursor: grabbing; }
@@ -109,6 +109,13 @@
    children use ORIGIN-based coords, so centering only shifts the whole board. */
 .r5-z-board .r5-canvas { margin: 0 auto; }
 
+/* FitStage wrapper inside the board zone: it fills the zone and auto-downscales
+   the canvas so the tallest improper-fraction stack (9/7's column, future 11/4)
+   shrinks to fit instead of clipping. The canvas keeps its fixed geometry; we
+   drop its top margin so FitStage's center-origin scale stays vertically even. */
+.r5-board-fit { width: 100%; height: 100%; }
+.r5-board-fit .r5-canvas { margin: 0 auto; }
+
 .r5-z-rail {
   position: absolute; right: 0; top: 0;
   width: 396px; height: 362px;
@@ -194,6 +201,24 @@
 }
 
 /* the floating help/status badge already exists as .eqstate.eqfloat; nothing new. */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   QUESTION BAND — R5 now mounts the SHARED <QuestionBand> (questionband.css)
+   directly under the stage-selector tabs on every stage. The old ad-hoc
+   .r5-question band (and the in-canvas .eqstate float that overlapped the board)
+   were removed. The only R5-owned rule left here makes the goal/story copy that
+   FOLLOWS the shared band read as clearly SECONDARY helper text. Scoped to R5's
+   exact sibling markup (.question-band immediately followed by .goal) so it never
+   touches other lessons or the shared stylesheet. */
+.question-band + .goal { height: 46px; }
+.question-band + .goal .goal-text { font-size: 15px; color: var(--ink-mute); }
+.question-band + .goal .goal-text b { color: var(--ink); font-weight: 600; }
+
+/* The question band costs vertical space; recover it from the fixed-zone board so
+   the stage-1–4 layout still fits inside the 800px stage. FitStage auto-downscales
+   the canvas, so a slightly shorter board zone never clips the blocks/ruler. */
+.r5-stage { margin-top: 6px; }
+.r5-z-board, .r5-z-rail { height: 326px; }
 
 /* the drag ghost block that follows the pointer */
 .r5-ghost { position: fixed; z-index: 60; pointer-events: none; opacity: 0.92;
@@ -291,6 +316,13 @@
 
 /* WORDS — the shared <WordProblem> mount (story + optional scratch + answer). */
 .r5-wp-mount { display: block; width: 100%; }
+
+/* The optional "show your work" scratch on the Words stage is GENEROUSLY large —
+   a full-width slate (~740×300, consistent with M3's ~756×246 reference) so a
+   child can actually sketch the grouping / division, not squeeze it into a sliver.
+   The JSX sets the explicit 740×300 box; this floors the height and lets the slate
+   shrink to the centered .wp column on narrow widths without collapsing. */
+.r5-scratch-surface { min-height: 300px; width: 100%; max-width: 740px; }
 
 /* The word→math SETUP surface (Applied gate + Words scratch): a single improper
    fraction written on a small Slate, with its Check button / confirmation beside

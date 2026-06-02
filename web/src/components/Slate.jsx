@@ -34,18 +34,28 @@
 // model file the recognizer itself fetches. prefers-reduced-motion respected in
 // slate.css. Large targets, denominator colors via the shared palette.
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { recognizeDigit } from "../ink/recognizer.js";
+import { recognizeDigit, recognizeNumber } from "../ink/recognizer.js";
 import { denomColor } from "../denominatorColors.js";
+import { getInputMode, subscribeSettings } from "../settings.js";
 import "../styles/slate.css";
 
 const INK = "#1c1612";        // the child's own handwriting ink (ROLE_COLORS.childInk)
 const RECOGNIZE_DELAY = 500;  // ms of stillness after a stroke before we read it
 
+// Live answer-input mode from Settings: "stylus" (handwrite) or "typing" (use the
+// device keyboard). Subscribing here means flipping the Settings toggle re-renders
+// every mounted Slate instantly, with no reload.
+function useInputMode() {
+  const [mode, setMode] = useState(getInputMode);
+  useEffect(() => subscribeSettings((s) => setMode(s.inputMode)), []);
+  return mode;
+}
+
 // ── one writable / fixed slot ────────────────────────────────────────────────
 // Captures strokes, inks them, and offers the recognizer's guess for accept /
 // re-trace. A locked/fixed slot is read-only and just paints its digit.
 function SlateSlot({
-  slotKey, label, locked, value, onCommit, onSubmit, disabled, autoFocus,
+  slotKey, label, locked, value, onCommit, onSubmit, disabled, autoFocus, typed, multiDigit,
 }) {
   const canvasRef = useRef(null);
   const strokesRef = useRef([]);     // [[ [x,y], ... ], ...] in canvas css px
@@ -53,7 +63,9 @@ function SlateSlot({
   const drawingRef = useRef(false);
   const timerRef = useRef(null);
   const tokenRef = useRef(0);        // drops stale async reads (clear/redraw mid-flight)
-  const [guess, setGuess] = useState({ digit: null, confident: false });
+  // `text` is the recognizer's best read — a single digit for stacked fraction
+  // cells, or a 1–3 digit NUMBER for a whole-number (row) cell (e.g. "12").
+  const [guess, setGuess] = useState({ text: null, confident: false });
   const [hasInk, setHasInk] = useState(false);
 
   const isLocked = locked || disabled;
@@ -103,7 +115,7 @@ function SlateSlot({
     tokenRef.current++;
     strokesRef.current = [];
     setHasInk(false);
-    setGuess({ digit: null, confident: false });
+    setGuess({ text: null, confident: false });
     redraw();
     if (emit) onCommit("");
   }
@@ -118,11 +130,21 @@ function SlateSlot({
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       const token = ++tokenRef.current;
-      // The recognizer reads the whole pad as ONE digit (a slot is one numeral).
-      recognizeDigit(strokesRef.current).then((res) => {
-        if (token !== tokenRef.current) return; // superseded by a newer stroke / clear
-        setGuess({ digit: res.digit, confident: !!res.confident });
-      }).catch(() => {});
+      // A whole-number (row) cell reads the pad as a MULTI-DIGIT number — strokes
+      // are clustered by horizontal position into digit groups and classified
+      // left-to-right (so "12" reads as "12", not just "2"). A stacked fraction
+      // cell holds a single numeral, so it stays single-digit recognition.
+      if (multiDigit) {
+        recognizeNumber(strokesRef.current).then((res) => {
+          if (token !== tokenRef.current) return; // superseded by a newer stroke / clear
+          setGuess({ text: res.text || null, confident: !!res.confident });
+        }).catch(() => {});
+      } else {
+        recognizeDigit(strokesRef.current).then((res) => {
+          if (token !== tokenRef.current) return;
+          setGuess({ text: res.digit != null ? String(res.digit) : null, confident: !!res.confident });
+        }).catch(() => {});
+      }
     }, RECOGNIZE_DELAY);
   }
 
@@ -150,10 +172,11 @@ function SlateSlot({
     scheduleRecognize();
   }
 
-  // Accept the recognizer's best-guess → commit it as this slot's digit.
+  // Accept the recognizer's best-guess → commit it as this slot's value (the full
+  // multi-digit number for a whole-number cell, a single digit for a fraction cell).
   function accept() {
-    if (guess.digit == null) return;
-    onCommit(String(guess.digit));
+    if (guess.text == null || guess.text === "") return;
+    onCommit(String(guess.text));
   }
   // Re-trace: wipe the ink and the guess so the child writes again.
   function retrace() { wipe(true); }
@@ -167,6 +190,35 @@ function SlateSlot({
       <div className="slate-slot is-locked">
         <div className="slate-cell" aria-label={label ? `${label}: ${value}` : `${value}`}>
           <span className="slate-fixed">{value}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // TYPING mode: a numeric keyboard cell instead of the writing canvas. Same
+  // controlled contract (onCommit(value)/onSubmit), so every Slate call site works
+  // unchanged. Accepts digits only; up to two so multi-digit answers (e.g. 12) and
+  // two-digit denominators (e.g. /12) are typeable — the stacked stylus path could
+  // only ever hold one digit per cell. Enter submits.
+  if (typed) {
+    const onTypeChange = (e) => onCommit(e.target.value.replace(/[^0-9]/g, "").slice(0, 2));
+    const onTypeKey = (e) => { if (e.key === "Enter") { e.preventDefault(); onSubmit && onSubmit(); } };
+    return (
+      <div className={"slate-slot is-typed" + (committed ? " is-committed" : "") + (disabled ? " is-disabled" : "")}>
+        <div className={"slate-cell" + (committed ? " committed" : "")}>
+          <input
+            className="slate-input"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={2}
+            value={value ?? ""}
+            disabled={disabled}
+            autoFocus={autoFocus}
+            aria-label={label ? `type the ${label} number` : "type a number"}
+            onChange={onTypeChange}
+            onKeyDown={onTypeKey}
+          />
         </div>
       </div>
     );
@@ -216,9 +268,9 @@ function SlateSlot({
       </div>
 
       {/* verifier-assisted: the recognizer's best guess → accept or re-trace */}
-      {!committed && hasInk && guess.digit != null && (
+      {!committed && hasInk && guess.text != null && guess.text !== "" && (
         <div className={"slate-guess" + (guess.confident ? "" : " unsure")}>
-          <span className="slate-guess-read">I read <b>{guess.digit}</b></span>
+          <span className="slate-guess-read">I read <b>{guess.text}</b></span>
           <button type="button" className="slate-guess-yes" onClick={accept} title="Yes, that's right">✓</button>
           <button type="button" className="slate-guess-no" onClick={retrace} title="No — let me write it again">↺</button>
         </div>
@@ -239,9 +291,16 @@ export default function Slate({
   ariaLabel,
   className = "",
 }) {
+  const inputMode = useInputMode();
+  const typed = inputMode === "typing";
+  // A "row" Slate holds whole-number answers (a single cell may be 1–3 digits, e.g.
+  // "12"), so its cells recognize a MULTI-DIGIT number. A "fraction" Slate stacks one
+  // numeral per cell, so those stay single-digit. A slot may force either via
+  // slot.multiDigit. (TYPING mode already accepts two digits per cell.)
   const renderSlot = (slot) => {
     const locked = !!(slot.locked || slot.fixed);
     const value = locked ? (slot.digit != null ? String(slot.digit) : (values[slot.key] ?? "")) : (values[slot.key] ?? "");
+    const multiDigit = slot.multiDigit != null ? slot.multiDigit : layout !== "fraction";
     return (
       <SlateSlot
         key={slot.key}
@@ -251,6 +310,8 @@ export default function Slate({
         value={value}
         disabled={disabled}
         autoFocus={autoFocusKey === slot.key}
+        typed={typed}
+        multiDigit={multiDigit}
         onCommit={(v) => onChange(slot.key, v)}
         onSubmit={onSubmit}
       />

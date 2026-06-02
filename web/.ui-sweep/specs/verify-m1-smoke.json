@@ -1,0 +1,10 @@
+{
+  "route": "m1",
+  "steps": [
+    { "waitFor": ".intro-continue" },
+    { "click": ".intro-continue" },
+    { "wait": 600 },
+    { "click": ".intro-continue" },
+    { "wait": 800 }
+  ]
+}

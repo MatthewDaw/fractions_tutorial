@@ -1,0 +1,13 @@
+{
+  "route": "m2",
+  "steps": [
+    { "waitFor": ".intro-continue" },
+    { "click": ".intro-continue" },
+    { "wait": 600 },
+    { "click": ".intro-continue" },
+    { "waitFor": ".m2-stage-tab" },
+    { "wait": 400 },
+    { "clickNth": { "selector": ".m2-stage-tab", "n": 5 } },
+    { "wait": 900 }
+  ]
+}

@@ -20,6 +20,16 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { LINES, speakerOf } from "./voiceLines.js";
 import { audioBus } from "./audioBus.js";
 import { speechify } from "./speechify.js";
+import { getSettings, subscribeSettings } from "./settings.js";
+
+// Narration volume from the shared Settings store (voiceVol, 0-100 → 0-1). Applied
+// to every clip's audio.volume; updated live and pushed to whatever is playing.
+const clampGain = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+let voiceGain = clampGain(getSettings().voiceVol / 100);
+subscribeSettings((s) => {
+  voiceGain = clampGain(s.voiceVol / 100);
+  if (current && current.audio) { try { current.audio.volume = voiceGain; } catch (_) {} }
+});
 
 const VOICE_BASE = import.meta.env.BASE_URL + "voice/";
 const TTS_URL = import.meta.env.BASE_URL + "api/tts";
@@ -67,6 +77,7 @@ export function stopVoiceGlobal() {
 function playUrl(url, objectUrl = null) {
   haltAudio();
   const audio = new Audio(url);
+  audio.volume = voiceGain; // honor the Settings voice-volume level
   const entry = { audio, url: objectUrl };
   current = entry;
   const finish = () => {
