@@ -628,7 +628,7 @@ describe('WorldMap — two-level shelf/submenu rendering', () => {
     unmount();
   });
 
-  it('shows "Review" badge on a lesson card inside a shelf', async () => {
+  it('shows "Cook again" badge on a lesson card inside a shelf', async () => {
     kitchenProgressMock.masteryStatusFor.mockReturnValue('needs-review');
     kitchenProgressMock.suggestedNextRoom.mockReturnValue(null);
 
@@ -637,7 +637,7 @@ describe('WorldMap — two-level shelf/submenu rendering', () => {
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: {} })
     );
     fireEvent.click(document.querySelectorAll('.shelf')[0]);
-    expect(screen.queryAllByText('Review').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Cook again').length).toBeGreaterThan(0);
     unmount();
   });
 
