@@ -24,7 +24,7 @@ This document proves each claim in **three layers**, so a skeptic can check the 
 | Oscillation (wiggling) → nudge ("take your time") | **3** self-corrections | `OSCILLATION_THRESHOLD` (tier2.js) |
 | Errors → raise support | **2** in a row | `raiseErrorsM` |
 | Clean corrects → fade support / unlock next level | **3** in a row | `fadeStreakK` |
-| Too-fast "correct" → transfer probe (guard) | latency **< 800 ms** (runtime) | `_isTooFastCorrect` |
+| Too-fast "correct" → transfer probe (guard) | latency **< `PARAMS.latencyFloorMs`** (1200 ms, unified) | `_isTooFastCorrect` |
 | Mastery gate (accuracy) | `P_known ≥ **0.95**` | `gateThreshold` |
 | Independence | ≥2 correct at scaffold **≥ L3**, hint-free | gate condition 2 |
 | Transfer | ≥2 correct on **≥2 distinct surface forms** | gate condition 3 |

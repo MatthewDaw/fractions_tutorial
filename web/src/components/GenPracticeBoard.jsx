@@ -15,6 +15,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Slate from "./Slate.jsx";
 import { gradeAnswer, answerShape } from "../generators/grade.js";
+import { hintsFor } from "../generators/hints.js";
 import "../styles/gen-practice.css";
 
 const OK_LINES = [
@@ -63,15 +64,21 @@ const RETEACH = {
 export default function GenPracticeBoard({ skill, scaffold, title }) {
   const { prob, solved, badInput, status, award, reportAttempt, flashBad, setStatus } = scaffold;
   const shape = answerShape(skill);
+  const hints = hintsFor(skill);
   const [vals, setVals] = useState({});
   const [reteach, setReteach] = useState(null);
+  // How many hint rungs the learner has revealed for THIS problem (0 = none).
+  // Recorded as hint_max_rung on the attempt, so a hinted correct does not count
+  // as hint-free toward the fade streak / independence gate.
+  const [hintRung, setHintRung] = useState(0);
   // Which problem already showed a reteach beat (once-per-problem guard).
   const reteachKeyRef = useRef(null);
 
-  // Reset the inputs (and any reteach beat) whenever a new variation arrives.
+  // Reset the inputs, reteach, and hint ladder whenever a new variation arrives.
   useEffect(() => {
     setVals({});
     setReteach(null);
+    setHintRung(0);
     reteachKeyRef.current = null;
   }, [prob?.skill, prob?.level, prob?.index, prob?.surfaceForm]);
 
@@ -81,7 +88,9 @@ export default function GenPracticeBoard({ skill, scaffold, title }) {
   function submit(answer, answerValue) {
     const g = gradeAnswer(prob, answer);
     if (g.correct) {
-      award(okLine(prob), null, answerValue, { stars: g.stars });
+      // hintMaxRung carries the help the learner leaned on → the engine won't
+      // count a hinted correct toward independence or the clean fade streak.
+      award(okLine(prob), null, answerValue, { stars: g.stars, hintMaxRung: hintRung });
     } else {
       reportAttempt({ correct: false, answerValue, errorSignature: g.errorSignature, stars: g.stars });
       flashBad();
@@ -204,6 +213,29 @@ export default function GenPracticeBoard({ skill, scaffold, title }) {
         >
           {solved ? "✓" : "Check"}
         </button>
+      )}
+      {/* Hint ladder — a real strategy hint (not the answer). Revealing one is
+          recorded as hint usage, so a hinted correct doesn't count toward the
+          independence gate or the clean fade streak. */}
+      {hints.length > 0 && !solved && (
+        <div className="gen-practice__hints">
+          {hintRung < hints.length && (
+            <button
+              type="button"
+              className="gen-practice__hint-btn"
+              onClick={() => setHintRung((r) => Math.min(hints.length, r + 1))}
+            >
+              {hintRung === 0 ? "Need a hint?" : "Another hint?"}
+            </button>
+          )}
+          {hintRung > 0 && (
+            <ol className="gen-practice__hint-list">
+              {hints.slice(0, hintRung).map((h, i) => (
+                <li key={i}>{h}</li>
+              ))}
+            </ol>
+          )}
+        </div>
       )}
       {reteach && (
         <div className="gen-practice__reteach" data-vox={`${reteach.title}. ${reteach.body}`}>

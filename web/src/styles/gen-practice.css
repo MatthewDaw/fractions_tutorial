@@ -35,6 +35,31 @@
 .gen-practice .ribbon--ok { color: #2c5a2c; }
 .gen-practice .ribbon--warn { color: var(--red-deep, #6e1c16); }
 
+/* Hint ladder — a quiet "Need a hint?" affordance and the revealed strategy
+   steps. Understated so it invites a stuck learner without nagging the rest. */
+.gen-practice__hints { max-width: 520px; text-align: center; }
+.gen-practice__hint-btn {
+  background: transparent;
+  border: 1px dashed var(--ink-mute, #6b5a47);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font: italic 14px/1 var(--serif, Georgia, serif);
+  color: var(--ink-mute, #6b5a47);
+  cursor: pointer;
+}
+.gen-practice__hint-btn:hover { color: var(--ink, #1c1612); border-color: var(--ink, #1c1612); }
+.gen-practice__hint-list {
+  margin: 10px auto 0;
+  padding-left: 22px;
+  text-align: left;
+  max-width: 480px;
+  font-family: var(--serif, Georgia, serif);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-soft, #3a2e24);
+}
+.gen-practice__hint-list li { margin-bottom: 4px; }
+
 /* U5 reteach beat — a short corrective card on a diagnosed misconception. Warm,
    not alarming: an invitation to look again, not a failure stamp. */
 .gen-practice__reteach {

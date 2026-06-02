@@ -103,6 +103,34 @@ describe('CLAIM 3 through the runtime — held at level until a clean streak, th
     for (let i = 1; i < levels.length; i++) expect(levels[i]).toBeGreaterThanOrEqual(levels[i - 1]);
   });
 
+  it('leaning on HINTS does not fast-track mastery — hinted corrects are not clean', () => {
+    // A hint-free student fades after the k=3 clean streak…
+    {
+      const { result } = drive('SIMPLIFY', 'r4', gradeSimplify);
+      let faded = false;
+      for (let i = 0; i < 4 && !faded; i++) {
+        const p = result.current.problem;
+        clock += 1500;
+        act(() => result.current.submit(reduced(p))); // hint-free
+        if (getSnapshot().decision?.kind === 'FadeScaffold') faded = true;
+      }
+      expect(faded).toBe(true);
+    }
+    // …but a student who uses a hint on every problem does NOT fade off the same
+    // streak, because a hinted correct is not hint-free (engine independence guard).
+    {
+      resetEngineStore();
+      localStorage.clear();
+      const { result } = drive('SIMPLIFY', 'r4', gradeSimplify);
+      for (let i = 0; i < 4; i++) {
+        const p = result.current.problem;
+        clock += 1500;
+        act(() => result.current.submit(reduced(p), { hintMaxRung: 2 })); // leaned on a hint
+        expect(getSnapshot().decision?.kind).not.toBe('FadeScaffold');
+      }
+    }
+  });
+
   it('a too-fast (guessed) correct is caught — next problem is a different surface form', () => {
     const { result } = drive('SIMPLIFY', 'r4', gradeSimplify);
     const before = result.current.surfaceForm;
