@@ -209,4 +209,8 @@ export interface SkillNode {
     P_G: number;
     P_L0: number;
   };
+  /** Optional CCSS standard codes this node addresses (e.g. ['3.NF.A.2']). */
+  standards?: string[];
+  /** Optional CCSS grade band ('3' | '4' | '5'). */
+  grade?: string;
 }

@@ -11,6 +11,13 @@
 // (the room `id`s are historical; the labels here are the source of truth for the
 // kitchen's on-screen skill names.)
 
+// NOTE: the new CCSS gap-fill rooms (nl "On the Number Line", s1 "Taking Away",
+// cmp "Compare & Check") are intentionally NOT in this kitchen CURRICULUM. The
+// kitchen is the word-problem transfer layer over the fraction-ARITHMETIC strand,
+// and each entry here requires a matching BANK[roomId] with kitchen props/banter
+// (none authored for nl/s1/cmp yet). enterStage/firstTask index BANK[roomId]
+// directly, so adding an id without a BANK entry would crash the flow. They live
+// on the world map and engine graph; they simply don't pose kitchen recipes.
 export const CURRICULUM = ["r1", "r3", "r2", "r4", "r5"];
 
 export const ROOM_SKILL = {
@@ -43,8 +50,8 @@ const Q = {
   },
   sausage: {
     id: "sausage", owner: "grandpa", prop: "SausageChain", initState: "counting", solvedState: "wrapped_into_units",
-    caption: "Grandpa grilled four ninths of the sausage chain, then added three ninths more. How much is on the plate now?",
-    ask: "The total", answerType: "fraction", op: "add", operands: [[4, 9], [3, 9]], target: [7, 9],
+    caption: "Grandpa grilled four eighths of the sausage chain, then added three eighths more. How much is on the plate now?",
+    ask: "The total", answerType: "fraction", op: "add", operands: [[4, 8], [3, 8]], target: [7, 8],
     nudgeKey: "mr_mom_nudge_samebottom", banter: ["mr_gp_sausage_1", "mr_mom_sausage_2", "mr_gp_sausage_3"],
   },
   eggs: {
@@ -85,7 +92,7 @@ const Q = {
   },
   carrots: {
     id: "carrots", owner: "grandpa", prop: "Bundles", propProps: { kind: "carrots" }, initState: "bundling", solvedState: "bundled",
-    caption: "Six ninths of the carrots are loose. Tie them into the biggest equal bundles. Write the tidy fraction.",
+    caption: "Eight twelfths of the carrots are loose. Tie them into the biggest equal bundles. Write the tidy fraction.",
     ask: "Tidy it down", answerType: "fraction", op: "simplify", target: [2, 3], requireSimplified: true,
     nudgeKey: "mr_mom_nudge_tidy", banter: ["mr_gp_carrots_1", "mr_mom_carrots_2", "mr_gp_carrots_3"],
   },

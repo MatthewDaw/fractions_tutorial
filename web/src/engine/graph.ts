@@ -82,6 +82,24 @@ const MULT_FACTS: SkillNode = {
   transfer_forms: ['facts_bare', 'facts_transfer'],
 };
 
+// CCSS 3.NF.A.2 — a fraction is a NUMBER located as a point on the line. Inserted
+// before ADD_SAME_DEN (a grade-3 foundation under the fraction-adding strand).
+const FRACTION_ON_LINE: SkillNode = {
+  id: 'FRACTION_ON_LINE',
+  roomId: 'nl',
+  prereqs: [],
+  scaffold_ladder: [
+    ['nl_visual'],   // L0 — drag the point on a partitioned 0→1 line
+    ['nl_guided'],   // L1 — guided placement
+    ['nl_partial'],  // L2 — name the marked point
+    ['nl_bare'],     // L3 — place past 1 (a/b > 1)
+    ['nl_transfer'], // L4 — novel denominator / value transfer
+  ],
+  transfer_forms: ['nl_bare', 'nl_transfer'],
+  grade: '3',
+  standards: ['3.NF.A.2'],
+};
+
 const ADD_SAME_DEN: SkillNode = {
   id: 'ADD_SAME_DEN',
   roomId: 'r1',
@@ -94,6 +112,43 @@ const ADD_SAME_DEN: SkillNode = {
     ['same_den_transfer'],         // L4 — novel denominator transfer
   ],
   transfer_forms: ['same_den_bare', 'same_den_transfer'],
+};
+
+// CCSS 4.NF.B.3a (subtract like-den) + 4.NF.B.3b (decompose). Inserted after
+// ADD_SAME_DEN (its single prereq) — subtraction mirrors same-denominator adding.
+const SUB_SAME_DEN: SkillNode = {
+  id: 'SUB_SAME_DEN',
+  roomId: 's1',
+  prereqs: ['ADD_SAME_DEN'],
+  scaffold_ladder: [
+    ['sub_same_visual'],   // L0 — decompose 5/8 into unit fractions
+    ['sub_same_guided'],   // L1 — drag pieces off (take away)
+    ['sub_same_partial'],  // L2 — locked-den Slate, count what's left
+    ['sub_same_bare'],     // L3 — bare 7/8 − 3/8
+    ['sub_same_transfer'], // L4 — kitchen word problem transfer
+  ],
+  transfer_forms: ['sub_same_bare', 'sub_same_transfer'],
+  grade: '4',
+  standards: ['4.NF.B.3a', '4.NF.B.3b'],
+};
+
+// CCSS 3.NF.A.3d / 4.NF.A.2 / 5.NF.A.2 — compare fractions and reason about a
+// sum's size from benchmarks. Inserted after SUB_SAME_DEN; prereq FRACTION_ON_LINE
+// (comparison is reasoning about points on the line).
+const COMPARE_BENCHMARK: SkillNode = {
+  id: 'COMPARE_BENCHMARK',
+  roomId: 'cmp',
+  prereqs: ['FRACTION_ON_LINE'],
+  scaffold_ladder: [
+    ['cmp_visual'],   // L0 — pick < = > from two number lines
+    ['cmp_guided'],   // L1 — same-numerator comparison
+    ['cmp_partial'],  // L2 — nearest benchmark {0, 1/2, 1}
+    ['cmp_bare'],     // L3 — reason about a sum's size (no computing)
+    ['cmp_transfer'], // L4 — novel comparison / reasonableness transfer
+  ],
+  transfer_forms: ['cmp_bare', 'cmp_transfer'],
+  grade: '4',
+  standards: ['3.NF.A.3d', '4.NF.A.2', '5.NF.A.2'],
 };
 
 const ADD_UNLIKE_NESTED: SkillNode = {
@@ -168,7 +223,12 @@ const ALL_NODES: readonly SkillNode[] = [
   MULT_EQUAL_GROUPS,
   MULT_ARRAYS,
   MULT_FACTS,
+  // CCSS gap-fill: FRACTION_ON_LINE precedes ADD_SAME_DEN (grade-3 foundation).
+  FRACTION_ON_LINE,
   ADD_SAME_DEN,
+  // SUB_SAME_DEN after ADD_SAME_DEN; COMPARE_BENCHMARK after SUB_SAME_DEN.
+  SUB_SAME_DEN,
+  COMPARE_BENCHMARK,
   ADD_UNLIKE_NESTED,
   ADD_UNLIKE_COPRIME,
   SIMPLIFY,
@@ -229,7 +289,10 @@ export {
   MULT_EQUAL_GROUPS,
   MULT_ARRAYS,
   MULT_FACTS,
+  FRACTION_ON_LINE,
   ADD_SAME_DEN,
+  SUB_SAME_DEN,
+  COMPARE_BENCHMARK,
   ADD_UNLIKE_NESTED,
   ADD_UNLIKE_COPRIME,
   SIMPLIFY,

@@ -98,8 +98,14 @@ function inkConfidence(numPadRef, denPadRef) {
 // per whole (UNIT) is derived per problem as SPAN / answerWholes, so a 1-whole
 // problem uses the full width (large blocks) and a 2-whole problem packs two
 // wholes into the same span. The ruler never leaves empty space on the right.
-const ORIGIN = 60, SPAN = 600, CW = 720, CH = 360, LINE_Y = 322, BAR_H = 72;
-const HOME = { A: { x: ORIGIN, y: 250 }, B: { x: ORIGIN, y: 86 } };
+// Vertical layout is tuned so the WHOLE diagram (both strip lanes + their floating
+// fraction labels + the ruler) fits inside the shared LessonBoard split-stage track
+// without clipping. X coords (ORIGIN/SPAN/UNIT) are UNCHANGED so the drag-snap +
+// width math is untouched; only the Y lanes + ruler line moved, and the drag-Y clamp
+// (CH-BAR_H) tracks the taller strips. The whole diagram is then vertically centered
+// in the stage via a CSS wrapper (.lu-diagram), not by rewriting these coords.
+const ORIGIN = 60, SPAN = 600, CW = 720, CH = 296, LINE_Y = 256, BAR_H = 78;
+const HOME = { A: { x: ORIGIN, y: 156 }, B: { x: ORIGIN, y: 68 } };
 
 // ---- the joined strip ----
 // Once joined, every block is one common size (denominator D), so the whole
@@ -951,7 +957,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
               answerLead="Write the total"
               setupLead="Optional — show your work here first"
               setup={
-                <div className="lu-words-scratch bs-surface" style={{ position: "relative", width: "100%", height: 240 }}>
+                <div className="lu-words-scratch bs-surface" style={{ position: "relative", width: "100%", height: 132 }}>
                   <BlankSlate
                     key="words-scratch"
                     hint="optional — show your work here ✎"
@@ -987,8 +993,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       <>
       <LessonBoard
         variant="split"
-        footHeight={190}
-        railWidth={396}
+        footHeight={150}
+        railWidth={360}
         stage={
           <div className="canvas lu-canvas" id="r2canvas">
             {!noBars && (
@@ -1081,7 +1087,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                     {aNum}/{aDen} <b>×{cm.multA}/{cm.multA}</b> → {cm.scaledANum}/{cm.common}
                     <span className="lu-cross-plus">+</span>
                     {bNum}/{bDen} <b>×{cm.multB}/{cm.multB}</b> → {cm.scaledBNum}/{cm.common}
-                    <span className="lu-cross-note">common bottom = {aDen} × {bDen} = {cm.common}</span>
+                    <span className="lu-cross-note">Rename BOTH to equivalent fractions over the same bottom {cm.common}, then add like same-denominators: {cm.scaledANum}/{cm.common} + {cm.scaledBNum}/{cm.common}.</span>
+                    <span className="lu-cross-note lu-cross-shortcut"><b>Fast way:</b> the common bottom is just {aDen} × {bDen} = {cm.common} — a shortcut, not the reason it works.</span>
                   </div>
                 </div>
               ) : (
@@ -1103,8 +1110,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                 <div className="hint">
                   {isL4
                     ? (showCross
-                        ? "Pick the common bottom — each fraction is renamed by the OTHER's bottom (top & bottom together), then count the total."
-                        : "Pick the common bottom — rename the strip that doesn't fit yet (top & bottom together), then count the total.")
+                        ? "Pick the common bottom, then rename BOTH fractions as equivalent fractions over it (top & bottom together) and add like same-denominators. Fast way to find that bottom: multiply the two bottoms."
+                        : "Pick the common bottom — rename the strip that doesn't fit into an equivalent fraction over it (top & bottom together), then add like same-denominators.")
                     : (framing.pickHint || "Choose the common block size — both strips multiply to reach it (top & bottom the same).")}
                 </div>
                 <div className="worksheet">
@@ -1143,11 +1150,11 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                 <div className="hint">
                   {isL5
                     ? (showCross
-                        ? "The bars are behind, faded — just a reminder. Cross-multiply: rename BOTH (each by the other's bottom), add the tops, write the whole answer."
-                        : "The bars are behind, faded — just a reminder. Rename the one that doesn't fit, add the tops, and write the whole answer.")
+                        ? "The bars are behind, faded — just a reminder. Rename BOTH fractions as equivalent fractions over a common bottom, then add like same-denominators. (The fast way to get that bottom is to multiply each by the other's bottom.)"
+                        : "The bars are behind, faded — just a reminder. Rename the one that doesn't fit into an equivalent fraction over the common bottom, then add like same-denominators.")
                     : (showCross
-                        ? "Nothing but the numbers. Cross-multiply — rename BOTH fractions by the other's bottom, add the tops, write the total."
-                        : "Nothing but the numbers. Rename just the one that doesn't fit, add the tops, write the total.")}
+                        ? "Nothing but the numbers. Rename BOTH fractions as equivalent fractions over a common bottom, then add like same-denominators. Fast way: the common bottom is the two bottoms multiplied."
+                        : "Nothing but the numbers. Rename just the one that doesn't fit into an equivalent fraction over the common bottom, then add like same-denominators.")}
                 </div>
                 <div className="bare-eq">{eqLead} = <b>?</b></div>
               </>

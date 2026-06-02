@@ -22,8 +22,9 @@ export const LINES = {
 
   goal:
     "Babushka needs one half of a dough strip plus one third of a dough strip. " +
-    "The blocks are different sizes — slice them until every block is the same size, " +
-    "join them, then write the total.",
+    "The blocks are different sizes — rename BOTH as equivalent fractions over the same bottom, " +
+    "so every block is the same size, then add them like same-denominators. " +
+    "A fast way to find that shared bottom is to multiply the two bottoms — but the reason it works is the equivalent fractions.",
   denPrompt: "Same size blocks! Now write the bottom number — how big is each block?",
   dontFit: "They don't fit. Make the blocks the same size first.",
   joined: "Joined! Count every block and write the top number.",
@@ -71,6 +72,46 @@ export const LINES = {
   r5LeftoverOnly: "Careful — the leftover is only the pieces outside the whole. One whole took seven, so two are left.",
   r5NotQuite: "Not quite. One whole filled, two sevenths sit in the leftover tray. Write one whole and the leftover on top.",
   r5FullMarks: "Yes! Nine sevenths is one whole and two sevenths. Full marks!",
+
+  // --- Simplify (R4) partial-credit line: a correct same-amount answer that is
+  // not yet in lowest terms. Spoken on the two-star accept (CCSS: four eighths is
+  // correct because it equals one half). ---
+  r3Partial: "Right — that is the same amount, so it is correct! Two marks. Can you find its smallest name? Divide the top and the bottom once more.",
+
+  // ===========================================================================
+  // CCSS GAP-FILL LESSONS (plan 007): nl "On the Number Line" (FRACTION_ON_LINE),
+  // s1 "Taking Away" (SUB_SAME_DEN), cmp "Compare & Check" (COMPARE_BENCHMARK).
+  // Babushka-voiced goal lines (mom); the rest are the coaching Cook by default.
+  // Fractions spelled out for the neural voice.
+  // ===========================================================================
+
+  // --- nl "On the Number Line" (CCSS 3.NF.A.2) ---
+  nlGoal:
+    "A fraction is a number — a single point on the line. Cut the line from zero to one into equal parts, then count from zero to find the point.",
+  nlPlace:
+    "Count the equal parts from zero. The bottom number is how many parts the whole is cut into; the top number is how many you count along.",
+  nlWin:
+    "Yes! That point IS the number — a fraction lives on the line, just like a whole number.",
+
+  // --- s1 "Taking Away" (CCSS 4.NF.B.3a + 4.NF.B.3b). Anchor five eighths minus two eighths. ---
+  s1Goal:
+    "Babushka had five eighths of a loaf and used two eighths. The pieces are the same size, so take the tops apart and keep the bottom the same.",
+  s1Decompose:
+    "Five eighths is just five little one eighth pieces put together: one eighth plus one eighth plus one eighth plus one eighth plus one eighth. Break them apart so we can take some away.",
+  s1TakeAway:
+    "Take two eighths away and count what is left. Keep the bottom number the same — we only take pieces from the top.",
+  s1Win:
+    "Yes! Five eighths take away two eighths is three eighths. Subtract the tops, keep the bottom the same!",
+
+  // --- cmp "Compare & Check" (CCSS 3.NF.A.3d / 4.NF.A.2 / 5.NF.A.2) ---
+  cmpGoal:
+    "Which fraction is bigger? Look at the two lines — the mark farther to the right is the larger amount. Pick the sign that goes between them: less than, equal, or greater than.",
+  cmpBenchmark:
+    "Pick the nearest landmark: zero, one half, or one. The half way mark is called out on the line so you can compare against it.",
+  cmpReason:
+    "Do not add it up — just reason about the size. One half is exactly a half, and two thirds is more than a half, so the total must be more than one whole.",
+  cmpWin:
+    "Yes! You reasoned it out without ever adding. A fraction's size tells you a lot.",
 
   // ===========================================================================
   // BABUSHKA'S ROOM — story / word problems. Babushka poses each problem (mr_mom_goal_*),
@@ -141,8 +182,8 @@ export const LINES = {
 
   // --- R1: sausage chain (Grandpa) — 4/9 + 3/9 = 7/9 on the plate ---
   mr_mom_goal_sausage:
-    "Grandpa grilled four ninths of the sausage chain, then added three ninths more. How much is on the plate now?",
-  mr_gp_sausage_1: "Four ninths, then three ninths more — seven ninths of sausage on one plate. I may weep.",
+    "Grandpa grilled four eighths of the sausage chain, then added three eighths more. How much is on the plate now?",
+  mr_gp_sausage_1: "Four eighths, then three eighths more — seven eighths of sausage on one plate. I may weep.",
   mr_mom_sausage_2: "He cried fewer tears at our wedding than he is crying right now.",
   mr_gp_sausage_3: "You did not sizzle in the pan, my love. The sausage, it sizzles.",
 
@@ -183,8 +224,8 @@ export const LINES = {
 
   // --- R3: carrots (Grandpa) — 6/9 tidies to 2/3 (the messy-workshop callback) ---
   mr_mom_goal_carrots:
-    "Six ninths of the carrots are loose. Tie them into the biggest equal bundles. Write the tidy fraction.",
-  mr_gp_carrots_1: "Six loose carrots, tied into two thirds — neat as a row of soldiers, eh, malysh?",
+    "Eight twelfths of the carrots are loose. Tie them into the biggest equal bundles. Write the tidy fraction.",
+  mr_gp_carrots_1: "Eight loose carrots, tied into two thirds — neat as a row of soldiers, eh, malysh?",
   mr_mom_carrots_2: "If only your workshop learned the same lesson, Papa.",
   mr_gp_carrots_3: "My workshop has a system! The system is chaos. It works for me.",
 
@@ -385,6 +426,10 @@ export const LINE_SPEAKER = {
   r3Goal: "mom",
   r4Goal: "mom",
   r5Goal: "mom",
+  // CCSS gap-fill lessons — the goal lines are Babushka; coaching stays Cook.
+  nlGoal: "mom",
+  s1Goal: "mom",
+  cmpGoal: "mom",
 };
 
 // Resolve a clip key (lesson line OR intro cue) to its speaker id.

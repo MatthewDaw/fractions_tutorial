@@ -50,7 +50,7 @@ import "./styles/r4.css";
 // the whole SPAN — the GroupBar fills the width and cells are as big as possible.
 // The filled region's right edge is fixed at ORIGIN + value·SPAN and never moves
 // while grouping — that's the persistent fill-edge ("same amount") marker.
-const ORIGIN = 60, SPAN = 600, LINE_Y = 232, BAR_Y = 150;
+const ORIGIN = 90, SPAN = 660, LINE_Y = 188, BAR_Y = 96;
 
 // The worked example. ORIGINAL is the unsimplified fraction; VALUE its true amount.
 const START_NUM = 8, START_DEN = 12;
@@ -368,21 +368,15 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
       return false;
     }
     const fully = gcd(tn, td) === 1;
-    if (requireLowest && !fully) {
-      setCook("think");
-      setStatus({ tone: "warn", text: `${tn}/${td} is the same amount, but not its simplest name yet. Divide top and bottom again to reach lowest terms.` });
-      say("r4Bigger");
-      // Report as incorrect (not-simplified).
-      reportAttempt({ correct: false, answerValue: [tn, td], errorSignature: "not_simplified", stars: 0 });
-      return false;
-    }
-    // success
+    // CCSS: 4/8 IS correct (it equals 1/2). A same-amount answer that is not yet in
+    // lowest terms is ACCEPTED as correct with two stars and a gentle nudge — never
+    // rejected. Fully-reduced earns the full three. (Even on requireLowest stages.)
     const st = fully ? 3 : 2;
     setSolved(true); solvedRef.current = true; setStars(st); setCook("cheer");
     setStatus({ tone: "ok", text: fully
       ? `Yes! ${START_NUM}/${START_DEN} = ${tn}/${td} — the same amount, its simplest name, povaryonok! Next stage!`
-      : `Same amount — ${tn}/${td} equals ${START_NUM}/${START_DEN}. Two marks. Take it all the way to lowest terms — its simplest name.` });
-    say(fully ? "r3FullMarks" : "r3Partial");
+      : `Right — ${tn}/${td} is the same amount as ${START_NUM}/${START_DEN}, so that's correct! Two marks — can you find its smallest name? Divide top and bottom once more.` });
+    say(fully ? "r3FullMarks" : "r4Bigger");
     return true;
   }
 
@@ -414,7 +408,9 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     const ok = gradeSlate({ requireLowest: true });
     if (ok) {
       const tn = parseInt(slate.n, 10), td = parseInt(slate.d, 10);
-      const dec = reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: null, stars: 3 });
+      // Same amount is correct; full marks only when fully reduced (CCSS 4/8 == 1/2).
+      const st = gcd(tn, td) === 1 ? 3 : 2;
+      const dec = reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: st === 3 ? null : "not_simplified", stars: st });
       setTimeout(() => applyEngineDecision(dec, true), 1500);
     }
   }
@@ -423,7 +419,8 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     const ok = gradeSlate({ requireLowest: true, n: v.n, d: v.d });
     if (ok) {
       const tn = parseInt(v.n, 10), td = parseInt(v.d, 10);
-      reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: null, stars: 3 });
+      const st = gcd(tn, td) === 1 ? 3 : 2;
+      reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: st === 3 ? null : "not_simplified", stars: st });
       // last stage — just settle; the selector lets a demo user loop back.
     }
   }
@@ -459,7 +456,8 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     const ok = gradeSlate({ requireLowest: true, n: v.n, d: v.d });
     if (ok) {
       const tn = parseInt(v.n, 10), td = parseInt(v.d, 10);
-      const dec = reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: null, stars: 3 });
+      const st = gcd(tn, td) === 1 ? 3 : 2;
+      const dec = reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: st === 3 ? null : "not_simplified", stars: st });
       setTimeout(() => applyEngineDecision(dec, true), 1500);
     }
   }
@@ -548,11 +546,13 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     body = (
       <LessonBoard
         variant="split"
-        footHeight={196}
+        footHeight={132}
         railWidth={452}
+        rowGap={12}
+        marginTop={8}
         rail={null}
         stage={
-          <FitStage className="r4-s-fit" axis="y">
+          <FitStage className="r4-s-fit r4-s-fit-showwork" axis="y">
             <div className="wp-card r4-s-card">
               <div className="wp-card-head">
                 <span className="wp-tag">Show Your Work</span>
@@ -563,7 +563,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
             </div>
             <div className="r4-s-setup">
               <span className="r4-s-setup-lead">Show your work here</span>
-              <div className="bs-surface" style={{ position: "relative", width: 800, height: 360 }}>
+              <div className="bs-surface" style={{ position: "relative", width: 1080, height: 420 }}>
                 <BlankSlate
                   key={`showwork:${stage}`}
                   hint="show your work here — write anything you like ✎"
@@ -599,8 +599,10 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     body = (
       <LessonBoard
         variant="split"
-        footHeight={196}
+        footHeight={158}
         railWidth={452}
+        rowGap={12}
+        marginTop={8}
         rail={null}
         className={stage === "words" ? "r4-s-onlywords" : ""}
         stage={
@@ -873,8 +875,10 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     body = (
       <LessonBoard
         variant="split"
-        footHeight={196}
+        footHeight={150}
         railWidth={452}
+        rowGap={12}
+        marginTop={8}
         rail={railNode}
         stage={canvas}
         answer={answerNode}
