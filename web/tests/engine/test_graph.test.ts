@@ -13,7 +13,6 @@ import {
   allNodes,
   mostUpstreamUnmastered,
   MULT_EQUAL_GROUPS,
-  MULT_ARRAYS,
   MULT_FACTS,
   ADD_SAME_DEN,
   ADD_UNLIKE_NESTED,
@@ -28,7 +27,7 @@ import {
 // rooms.js exports ROOMS as a plain array of objects; we inline the ids here
 // so the test runs in jsdom without the import-chain touching JSX/React.
 // ---------------------------------------------------------------------------
-const KNOWN_ROOM_IDS = new Set(['m1', 'm2', 'm3', 'r1', 'r2', 'r3', 'r4', 'r5']);
+const KNOWN_ROOM_IDS = new Set(['m1', 'm3', 'nl', 'r1', 's1', 'cmp', 'r2', 'r3', 'r4', 'r5']);
 
 // ---------------------------------------------------------------------------
 // 1. Prerequisite structure
@@ -40,13 +39,8 @@ describe('prerequisite edges', () => {
     expect(MULT_EQUAL_GROUPS.prereqs).toHaveLength(0);
   });
 
-  it('MULT_ARRAYS has MULT_EQUAL_GROUPS as its sole prerequisite', () => {
-    expect(MULT_ARRAYS.prereqs).toContain('MULT_EQUAL_GROUPS');
-    expect(MULT_ARRAYS.prereqs).toHaveLength(1);
-  });
-
-  it('MULT_FACTS has MULT_ARRAYS as its sole prerequisite', () => {
-    expect(MULT_FACTS.prereqs).toContain('MULT_ARRAYS');
+  it('MULT_FACTS has MULT_EQUAL_GROUPS as its sole prerequisite (arrays cut)', () => {
+    expect(MULT_FACTS.prereqs).toContain('MULT_EQUAL_GROUPS');
     expect(MULT_FACTS.prereqs).toHaveLength(1);
   });
 
@@ -99,10 +93,6 @@ describe('roomId validity', () => {
     expect(MULT_EQUAL_GROUPS.roomId).toBe('m1');
   });
 
-  it('MULT_ARRAYS maps to m2', () => {
-    expect(MULT_ARRAYS.roomId).toBe('m2');
-  });
-
   it('MULT_FACTS maps to m3', () => {
     expect(MULT_FACTS.roomId).toBe('m3');
   });
@@ -127,8 +117,8 @@ describe('roomId validity', () => {
     expect(IMPROPER_TO_MIXED.roomId).toBe('r5');
   });
 
-  it('there are exactly eight nodes (3 multiplication + 5 fraction)', () => {
-    expect(allNodes()).toHaveLength(8);
+  it('there are exactly ten nodes (2 multiplication + 8 fraction)', () => {
+    expect(allNodes()).toHaveLength(10);
   });
 });
 
@@ -177,10 +167,11 @@ describe('mostUpstreamUnmastered', () => {
 
   it('skips mastered nodes and returns the next deepest unmastered', () => {
     const ids = allNodes().map((n) => n.id);
-    // Pretend the whole multiplication strand is mastered → next is ADD_SAME_DEN.
-    const mastered = new Set(['MULT_EQUAL_GROUPS', 'MULT_ARRAYS', 'MULT_FACTS']);
+    // Multiplication strand (now 2 nodes) mastered → next is FRACTION_ON_LINE,
+    // the most-upstream fraction node in teaching order.
+    const mastered = new Set(['MULT_EQUAL_GROUPS', 'MULT_FACTS']);
     const result = mostUpstreamUnmastered(ids, (id) => mastered.has(id));
-    expect(result?.id).toBe('ADD_SAME_DEN');
+    expect(result?.id).toBe('FRACTION_ON_LINE');
   });
 
   it('returns null when all nodes in the set are mastered', () => {
@@ -211,10 +202,11 @@ describe('mostUpstreamUnmastered', () => {
 
   it('returns the deepest unmastered when called with all node ids and multiple mastered', () => {
     const ids = allNodes().map((n) => n.id);
-    // Mult strand + the first two fraction nodes mastered → next is ADD_UNLIKE_COPRIME.
+    // Everything upstream of ADD_UNLIKE_COPRIME mastered → it is the next target.
     const mastered = new Set([
-      'MULT_EQUAL_GROUPS', 'MULT_ARRAYS', 'MULT_FACTS',
-      'ADD_SAME_DEN', 'ADD_UNLIKE_NESTED',
+      'MULT_EQUAL_GROUPS', 'MULT_FACTS',
+      'FRACTION_ON_LINE', 'ADD_SAME_DEN', 'SUB_SAME_DEN', 'COMPARE_BENCHMARK',
+      'ADD_UNLIKE_NESTED',
     ]);
     const result = mostUpstreamUnmastered(ids, (id) => mastered.has(id));
     expect(result?.id).toBe('ADD_UNLIKE_COPRIME');

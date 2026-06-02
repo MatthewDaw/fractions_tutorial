@@ -33,7 +33,6 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { LINES, SPEAKERS, speakerOf, MEOW_SFX } from "../src/voiceLines.js";
 import { INTRO_CUES as M1 } from "../src/introM1.js";
-import { INTRO_CUES as M2 } from "../src/introM2.js";
 import { INTRO_CUES as M3 } from "../src/introM3.js";
 import { INTRO_CUES as R1 } from "../src/introR1.js";
 import { INTRO_CUES as R2 } from "../src/introR2.js";
@@ -102,7 +101,7 @@ async function synthSfx(apiKey, prompt) {
 // else is speech routed by speakerOf().  `room` is just a grouping label.
 function allJobs() {
   const ALL_CUES = [
-    ["m1", M1], ["m2", M2], ["m3", M3],
+    ["m1", M1], ["m3", M3],
     ["r1", R1], ["r2", R2], ["r3", R3], ["r4", R4], ["r5", R5],
   ];
   const introKeys = new Set();
@@ -110,7 +109,6 @@ function allJobs() {
 
   const roomOfKey = (key) => {
     if (/^m1i_|_m1$|^mr_mom_(goal_1|nudge_1)$/.test(key)) return "m1";
-    if (/^m2i_|_m2$/.test(key)) return "m2";
     if (/^m3i_/.test(key)) return "m3";
     if (/^r1/.test(key) || key.endsWith("_choc") || key.endsWith("_cracker") || key.endsWith("_sausage") || key.endsWith("_eggs")) return "r1";
     if (/^r2/.test(key)) return "r2";
@@ -148,7 +146,6 @@ function allJobs() {
 
   function roomFromIntro(key) {
     if (key.startsWith("m1i_")) return "m1";
-    if (key.startsWith("m2i_")) return "m2";
     if (key.startsWith("m3i_")) return "m3";
     return "core";
   }

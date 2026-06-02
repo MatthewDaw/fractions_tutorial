@@ -21,7 +21,6 @@ import { INTRO_CUES as INTRO_CUES_R3, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R3 
 import { INTRO_CUES as INTRO_CUES_R4, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R4 } from "./introR4.js";
 import { INTRO_CUES as INTRO_CUES_R5, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R5 } from "./introR5.js";
 import { INTRO_CUES as INTRO_CUES_M1, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M1 } from "./introM1.js";
-import { INTRO_CUES as INTRO_CUES_M2, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M2 } from "./introM2.js";
 import { INTRO_CUES as INTRO_CUES_M3, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M3 } from "./introM3.js";
 import SettingsButton from "./SettingsButton.jsx";
 import { getSettings } from "./settings.js";
@@ -37,7 +36,6 @@ const INTROS = {
   r4: { cues: INTRO_CUES_R4, persistKey: STAGE_PERSIST_KEY_R4 },
   r5: { cues: INTRO_CUES_R5, persistKey: STAGE_PERSIST_KEY_R5 },
   m1: { cues: INTRO_CUES_M1, persistKey: STAGE_PERSIST_KEY_M1 },
-  m2: { cues: INTRO_CUES_M2, persistKey: STAGE_PERSIST_KEY_M2 },
   m3: { cues: INTRO_CUES_M3, persistKey: STAGE_PERSIST_KEY_M3 },
 };
 

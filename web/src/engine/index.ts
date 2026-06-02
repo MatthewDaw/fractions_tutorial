@@ -48,7 +48,6 @@ export {
   mostUpstreamUnmastered,
   // Named node constants (useful for tests and policy code)
   MULT_EQUAL_GROUPS,
-  MULT_ARRAYS,
   MULT_FACTS,
   ADD_SAME_DEN,
   ADD_UNLIKE_NESTED,

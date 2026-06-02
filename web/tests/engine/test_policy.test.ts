@@ -110,7 +110,6 @@ function emptyBehavior(observations: Observation[] = []): RecentBehavior {
 function allWeakMastery(): Record<string, MasteryEstimate> {
   return {
     MULT_EQUAL_GROUPS: weakEst(0.2),
-    MULT_ARRAYS: weakEst(0.2),
     MULT_FACTS: weakEst(0.2),
     ADD_SAME_DEN: weakEst(0.3),
     ADD_UNLIKE_NESTED: weakEst(0.2),
@@ -129,7 +128,6 @@ function multMasteredFractionsWeak(): Record<string, MasteryEstimate> {
   return {
     ...allWeakMastery(),
     MULT_EQUAL_GROUPS: masteredEst(),
-    MULT_ARRAYS: masteredEst(),
     MULT_FACTS: masteredEst(),
   };
 }
@@ -138,7 +136,6 @@ function multMasteredFractionsWeak(): Record<string, MasteryEstimate> {
 function allMasteredMastery(): Record<string, MasteryEstimate> {
   return {
     MULT_EQUAL_GROUPS: masteredEst(),
-    MULT_ARRAYS: masteredEst(),
     MULT_FACTS: masteredEst(),
     ADD_SAME_DEN: masteredEst(),
     ADD_UNLIKE_NESTED: masteredEst(),
@@ -748,20 +745,26 @@ describe('nextDecision — RouteToRoom', () => {
     }
   });
 
-  it('in kitchen with the multiplication strand mastered → routes to ADD_SAME_DEN', () => {
-    // Mult foundations done → the first unmastered node is the first fraction node.
+  it('in kitchen with the multiplication strand mastered → routes to FRACTION_ON_LINE', () => {
+    // Mult foundations done → the first unmastered node is the most-upstream
+    // fraction node, which (after the CCSS gap-fill) is FRACTION_ON_LINE.
     const state = baseState({ inKitchen: true });
     const decision = nextDecision(state, multMasteredFractionsWeak(), emptyBehavior(), NOW);
     expect(decision.kind).toBe('RouteToRoom');
     if (decision.kind === 'RouteToRoom') {
-      expect(decision.node).toBe('ADD_SAME_DEN');
+      expect(decision.node).toBe('FRACTION_ON_LINE');
     }
   });
 
-  it('in kitchen with mult strand + ADD_SAME_DEN mastered → routes to ADD_UNLIKE_NESTED', () => {
+  it('in kitchen with everything up to ADD_UNLIKE_NESTED mastered → routes to ADD_UNLIKE_NESTED', () => {
+    // Master the whole upstream fraction chain (number line, same-den, subtract,
+    // compare) so the next unmastered node in teaching order is ADD_UNLIKE_NESTED.
     const mastery = {
       ...multMasteredFractionsWeak(),
+      FRACTION_ON_LINE: masteredEst(),
       ADD_SAME_DEN: masteredEst(),
+      SUB_SAME_DEN: masteredEst(),
+      COMPARE_BENCHMARK: masteredEst(),
     };
     const state = baseState({ inKitchen: true });
     const decision = nextDecision(state, mastery, emptyBehavior(), NOW);

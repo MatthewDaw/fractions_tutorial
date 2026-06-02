@@ -389,9 +389,11 @@ import { ROOMS } from '../../src/rooms.js';
 describe('rooms.js — nodeId field present (additive, R19)', () => {
   const EXPECTED = {
     m1: 'MULT_EQUAL_GROUPS',
-    m2: 'MULT_ARRAYS',
     m3: 'MULT_FACTS',
+    nl: 'FRACTION_ON_LINE',
     r1: 'ADD_SAME_DEN',
+    s1: 'SUB_SAME_DEN',
+    cmp: 'COMPARE_BENCHMARK',
     r3: 'ADD_UNLIKE_NESTED',
     r2: 'ADD_UNLIKE_COPRIME',
     r4: 'SIMPLIFY',
@@ -414,11 +416,11 @@ describe('rooms.js — nodeId field present (additive, R19)', () => {
 
   it('existing fields (no, title, built, pos, intro) are unchanged', () => {
     const r1 = ROOMS.find((r) => r.id === 'r1');
-    // Plan 006 renumbered the fraction rooms to no:4..8 (mult strand takes 1..3).
+    // With arrays cut, the mult strand is m1=1, m3=2; nl=3; r1=4.
     expect(r1.no).toBe(4);
     expect(r1.title).toBe('Same Denominators');
     expect(r1.built).toBe(true);
-    expect(r1.pos).toMatchObject({ x: 300, y: 220 });
+    expect(r1.pos).toMatchObject({ x: 1100, y: 420 });
     expect(r1.intro).toContain('r1-same-denominators');
   });
 
@@ -553,13 +555,13 @@ describe('WorldMap — mastery status rendering', () => {
     kitchenProgressMock.suggestedNextRoom.mockReturnValue(null);
   });
 
-  it('renders all 8 room cards (pre-engine state: null masteryMap)', async () => {
-    // 8 = 3 multiplication-foundation rooms (plan 006) + 5 fraction rooms.
+  it('renders all 10 room cards (pre-engine state: null masteryMap)', async () => {
+    // 10 = 2 multiplication-foundation rooms (arrays cut) + 8 fraction rooms.
     const { default: WorldMap } = await import('../../src/WorldMap.jsx');
     const { unmount } = render(
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: null })
     );
-    expect(document.querySelectorAll('.wcard').length).toBe(8);
+    expect(document.querySelectorAll('.wcard').length).toBe(10);
     unmount();
   });
 

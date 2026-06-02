@@ -272,8 +272,8 @@ export const LINES = {
   mr_cat_halfpie_3: "Mrr.",
 
   // ===========================================================================
-  // MULTIPLICATION ROOMS (m1 Equal Groups, m2 Baking Trays, m3 Times Facts).
-  // Intro narration (m1i_/m2i_/m3i_) is the Cook; in-room goal/nudge lines are
+  // MULTIPLICATION ROOMS (m1 Equal Groups, m3 Times Facts).
+  // Intro narration (m1i_/m3i_) is the Cook; in-room goal/nudge lines are
   // Babushka (mr_mom_*); Words-stage story read-alouds are the owner character
   // (mr_kid_/mr_grandpa_). Products spelled out in words for the voice.
   // ===========================================================================
@@ -291,30 +291,6 @@ export const LINES = {
     "Babushka has three plates, and she wants the same four pelmeni on every plate — add the group again and again, or multiply.",
   mr_mom_nudge_1:
     "Same plates either way, povaryonok — three plates of four. Set the plates first, then the pelmeni on each.",
-
-  // --- m2 "Baking Trays" intro (Cook). Worked example 4 × 6 = 24. ---
-  m2i_intro: "Loose buns all over — too messy to count.",
-  m2i_tidy: "Tidy them into a tray: four rows of six.",
-  m2i_count: "Count by rows — six, twelve, eighteen, twenty-four.",
-  m2i_spin: "Spin the tray: four rows of six, or six rows of four — still twenty-four.",
-  m2i_score: "Score it: four sixes is four fours and four twos — sixteen plus eight is twenty-four.",
-  m2i_close: "A tray is a rectangle, povaryonok — rows times columns.",
-
-  // --- m2 in-room (Babushka). Goal caption + every award; setup nudge. ---
-  mr_mom_goal_m2:
-    "Babushka's tray has four rows of six buns — a rectangle. Count it as rows times columns: four times six.",
-  mr_mom_nudge_m2:
-    "Rows times columns, povaryonok — set how many rows, then how many in each row. Either way around makes the same tray.",
-
-  // --- m2 Words-stage banter (owner character, after a correct answer).
-  // Only 4×6 (kid) and 5×8 (grandpa) are reachable as wired; the cat lines
-  // (3×4, 8×2) are MEOW SFX (see MEOW_SFX) with Babushka carrying the count. ---
-  mr_kid_4x6_1: "Four rows of six — that's twenty-four buns! I counted every single row!",
-  mr_grandpa_5x8_1: "Five rows of eight, lined up like soldiers — forty pelmeni, malysh. Not one out of place.",
-  mr_cat_3x4_1: "Mrow?",
-  mr_grandpa_6x7_1: "Six by seven, split into the easy pieces — forty-two squares of pryanik altogether.",
-  mr_kid_7x9_1: "Seven rows of nine — I split the big rack and got sixty-three cookies!",
-  mr_cat_8x2_1: "Mrrr.",
 
   // --- m3 "Times Facts" intro (Cook). Worked example 7 × 8 = 56, products in words. ---
   m3i_intro: "Seven empty jars, and a scoop that holds eight.",
@@ -381,9 +357,6 @@ export const MEOW_SFX = {
   mr_cat_muffin_3: "a single short, innocent, questioning little house cat mew",
   mr_cat_halfpie_1: "a single grand, declarative, theatrical house cat meow",
   mr_cat_halfpie_3: "a single smug, dismissive, clipped house cat meow",
-  // m2 Baking Trays cat banter (unreachable as wired, kept for completeness):
-  mr_cat_3x4_1: "a single curious, questioning little house cat mew, rising at the end",
-  mr_cat_8x2_1: "a single low, guarding, possessive house cat meow",
 };
 
 // ── Speakers ────────────────────────────────────────────────────────────────

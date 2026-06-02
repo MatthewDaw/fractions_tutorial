@@ -10,7 +10,6 @@ mkdirSync(OUT, { recursive: true });
 // file, equation beat seconds (some get an extra pre-beat shot)
 const JOBS = [
   ["m1-equal-groups",       [14.0, 18.0]],
-  ["m2-baking-trays",       [21.0]],
   ["m3-times-facts",        [13.0]],
   ["r1-same-denominators",  [19.0]],
   ["r2-same-size-pieces-v2",[18.7]],

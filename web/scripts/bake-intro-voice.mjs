@@ -23,7 +23,6 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { SPEAKERS, speakerOf } from "../src/voiceLines.js";
 import { INTRO_CUES as M1 } from "../src/introM1.js";
-import { INTRO_CUES as M2 } from "../src/introM2.js";
 import { INTRO_CUES as M3 } from "../src/introM3.js";
 import { INTRO_CUES as R1 } from "../src/introR1.js";
 import { INTRO_CUES as R2 } from "../src/introR2.js";
@@ -47,7 +46,7 @@ const dry = args.includes("--dry");
 
 // Every intro cue sheet, in room order. Each cue: { gate, pause, key, text }.
 const ALL_CUES = [
-  ["m1", M1], ["m2", M2], ["m3", M3],
+  ["m1", M1], ["m3", M3],
   ["r1", R1], ["r2", R2], ["r3", R3], ["r4", R4], ["r5", R5],
 ];
 

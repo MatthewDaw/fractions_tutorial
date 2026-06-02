@@ -89,11 +89,11 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
     }
   }
 
-  // ---- AppM1/M2/M3 (multiplication foundations) ----------------------------
+  // ---- AppM1/M3 (multiplication foundations) -------------------------------
   // r1-style numeric-prefixed keys "1-manipulate" … "7-words". 7-stage arc:
   // 1 Manipulate, 2 Bind, 3 Fade, 4 Workbench, 5 Numbers, 6 Applied, 7 Words.
   // scaffold_ladder arc = 0,1,2,1,3,3,4 (Workbench=L1, Applied=L3).
-  if (id === 'm1' || id === 'm2' || id === 'm3') {
+  if (id === 'm1' || id === 'm3') {
     const n = parseStageN(beat);
     switch (n) {
       case 1: return 0;
@@ -207,7 +207,7 @@ export function toBeatForLevel(lessonId, designLevel) {
     return map[level] ?? '1';
   }
 
-  if (id === 'm1' || id === 'm2' || id === 'm3') {
+  if (id === 'm1' || id === 'm3') {
     // L0..L4 → Manipulate/Bind/Fade/Numbers/Words; Workbench(L1) and Applied(L3)
     // are reachable only by sequential play or the header selector (R-M2).
     const map = ['1-manipulate', '2-bind', '3-fade', '5-numbers', '7-words'];
