@@ -27,9 +27,10 @@
 
 import { isMastered } from './engine/gate.js';
 import { allNodes, mostUpstreamUnmastered } from './engine/graph.js';
-import { migrateFromKitchenProgress as engineMigrate, loadLog, saveLog } from './engine/index.js';
+import { migrateFromKitchenProgress as engineMigrate, loadLog, saveLog, appendEvent } from './engine/index.js';
 import { measurementReduce } from './engine/measurementReduce.js';
 import { generatorSkills } from './generators/index.js';
+import { PROBE_DELAYS_MS } from './engine/decay.js';
 
 // ---------------------------------------------------------------------------
 // Legacy storage key (unchanged from original — keeps existing data intact)
@@ -207,4 +208,53 @@ export function eligibleMixSkills(masteryMap) {
     if (introduced) out.push(node.id);
   }
   return out;
+}
+
+/**
+ * U7: which mastered nodes have a spaced-retention probe DUE now. A probe becomes
+ * due once the first PROBE_DELAYS_MS interval has elapsed since mastery was last
+ * confirmed (mastered_at, or the last probe timestamp if one fired). Pure given
+ * `now` (the caller injects Date.now() at the React boundary — the engine fold
+ * stays wall-clock-free).
+ *
+ * @param {Record<string, import('./engine/types.js').MasteryEstimate>|null} masteryMap
+ * @param {number} now — ms epoch
+ * @returns {string[]} engine node ids whose probe is due
+ */
+export function dueProbes(masteryMap, now) {
+  if (!masteryMap) return [];
+  const interval = PROBE_DELAYS_MS[0];
+  const out = [];
+  for (const node of allNodes()) {
+    const est = masteryMap[node.id];
+    if (!est || !isMastered(est) || est.mastered_at == null) continue;
+    const since = est.last_retention_probe != null ? est.last_retention_probe : est.mastered_at;
+    if (now - since >= interval) out.push(node.id);
+  }
+  return out;
+}
+
+/**
+ * U7: record a retention-probe result for a node by appending a `retention_probe`
+ * event to the engine log. measurementReduce folds it: a pass stamps the timestamp
+ * (resetting the spaced-review clock); a fail clears transfer_passed and drops
+ * P_known below the gate, re-opening the node for review. The React layer may read
+ * Date.now() here; only the engine fold is wall-clock-free.
+ *
+ * @param {string} nodeId
+ * @param {boolean} correct — did the child pass the probe?
+ * @param {number} [now]
+ */
+export function recordRetentionProbe(nodeId, correct, now = Date.now()) {
+  try {
+    let log = loadLog();
+    log = appendEvent(log, {
+      type: 'retention_probe',
+      payload: { node_id: nodeId, correct: !!correct, probe_t: now },
+      modality: 'tap',
+      t: now,
+      actor: 'human',
+    });
+    saveLog(log);
+  } catch (_) { /* storage unavailable — skip */ }
 }

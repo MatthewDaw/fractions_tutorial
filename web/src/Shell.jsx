@@ -36,10 +36,11 @@ import r2Unit from "./lessons/r2-unit.js";
 import r3NonUnit from "./lessons/r3-nonunit.js";
 import { ROOMS } from "./rooms.js";
 import { sceneFor } from "./music.js";
-import { entryScaffoldFor, eligibleMixSkills } from "./kitchenProgress.js";
+import { entryScaffoldFor, eligibleMixSkills, dueProbes, recordRetentionProbe } from "./kitchenProgress.js";
 import { toBeatForLevel } from "./runtime/scaffoldMap.js";
 import { loadLog, migrateFromKitchenProgress } from "./engine/index.js";
 import { measurementReduce } from "./engine/measurementReduce.js";
+import { isMastered } from "./engine/gate.js";
 
 function useStageFit() {
   useLayoutEffect(() => {
@@ -124,6 +125,9 @@ export default function Shell() {
   // Remember the last non-settings screen so the Settings "Done" button returns
   // the player exactly where they opened it from (title, world, a room…).
   const prevRouteRef = useRef("world");
+  // U7: the node whose retention probe is being taken this lesson visit (set when a
+  // due lesson is opened; settled into a retention_probe event on return).
+  const probingNodeRef = useRef(null);
   useEffect(() => { if (route !== "settings" && route !== "concepts") prevRouteRef.current = route; }, [route]);
   const openSettings = () => go("settings");
   const closeSettings = () => go(prevRouteRef.current || "world");
@@ -137,9 +141,24 @@ export default function Shell() {
   const [masteryMap, setMasteryMap] = useState(null);
 
   useEffect(() => {
-    // Refresh mastery map whenever the child returns to the world map, or enters
-    // mixed review (U8 — its eligible-skill set is derived from the live map).
+    // U7: opening a lesson whose retention probe is DUE marks it — the outcome of
+    // this visit is recorded as a probe on return.
+    const enteredRoom = ROOMS.find((r) => r.id === route);
+    if (enteredRoom && enteredRoom.nodeId &&
+        dueProbes(masteryMap, Date.now()).includes(enteredRoom.nodeId)) {
+      probingNodeRef.current = enteredRoom.nodeId;
+    }
+    // Returning to the map / kitchen / review: settle any pending probe (a pass
+    // keeps the node mastered and resets the spaced-review clock; a fail demotes it
+    // → "Cook again"), then refresh the live mastery map (U8's eligible set reads it).
     if (route === "world" || route === "title" || route === "review") {
+      if (probingNodeRef.current) {
+        const node = probingNodeRef.current;
+        probingNodeRef.current = null;
+        const fresh = loadMasteryMap();
+        const est = fresh && fresh[node];
+        recordRetentionProbe(node, !!(est && isMastered(est)));
+      }
       setMasteryMap(loadMasteryMap());
     }
   }, [route]);
