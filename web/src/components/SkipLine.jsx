@@ -25,6 +25,7 @@
 // Whole-number objects: a fixed neutral tone; correct/incorrect use ROLE_COLORS
 // (handled by the parent via the `state` map it passes through className hints).
 import React, { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function SkipLine({
   sequence = [],
@@ -146,11 +147,15 @@ export default function SkipLine({
         </div>
       )}
 
-      {/* the drag ghost chip that follows the pointer */}
-      {drag && (
+      {/* the drag ghost chip that follows the pointer. Portaled to <body> so its
+          position:fixed resolves against the VIEWPORT — the app's #stage carries a
+          transform: scale() (Shell.useStageFit), which would otherwise become the
+          containing block for this fixed ghost and drift it up-left of the cursor. */}
+      {drag && createPortal(
         <div className="m3-skipline-ghost" style={{ left: drag.x - 26, top: drag.y - 20 }} aria-hidden="true">
           {drag.val}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

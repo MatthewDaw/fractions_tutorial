@@ -54,14 +54,13 @@ export const LINES = {
   r3FullMarks: "Yes! Three eighths plus one quarter is five eighths. Full marks!",
   r3SameAs: "Right! That is the same as five eighths.",
 
-  // --- Lesson 4 (Tidying Up / simplify). Worked example 8/12 → 2/3. ---
+  // --- Lesson 4 (Simplify). Worked example 8/12 → 2/3. ---
   r4Goal:
-    "Babushka's recipe came out as eight twelfths — too many tiny pieces. " +
-    "Fuse equal groups into the fewest, biggest blocks, keeping the amount the same.",
-  r4Fewest: "Fewest pieces! You fused them into the biggest blocks. Divide the top and bottom by the same number, then write the tidied fraction.",
-  r4Bigger: "Bigger blocks now — you divided the top and bottom by the same number, and the amount held. Can you tidy it further?",
-  r4Uneven: "That group size doesn't come out even — the top and bottom can't both split into that many. Try another group size.",
-  r4KeepSame: "Keep the same amount — it has to stay equal to eight twelfths. Divide the top and bottom by the same number.",
+    "Babushka's recipe came out as eight out of twelve. Group the cells and divide the top and bottom by the same number to find its simplest name, keeping the amount exactly the same.",
+  r4Fewest: "Lowest terms! You divided the top and the bottom by the same number — that's dividing by one — so the amount never changed. Eight twelfths and two thirds are the same amount; two thirds is just its simplest name.",
+  r4Bigger: "Good — you divided the top and bottom by the same number, and the filled edge held, so it's still the same amount. You can group it further to reach its simplest name.",
+  r4Uneven: "That group size doesn't come out even — the top and bottom can't both split into that many. Pick a number that divides both evenly.",
+  r4KeepSame: "Keep it the same amount — your answer has to stay equal to eight twelfths. Divide the top and the bottom by the same number, so you're really dividing by one.",
 
   // --- Lesson 5 (Whole Units / improper → mixed). Worked example 9/7 → 1 and 2/7. ---
   r5Goal:

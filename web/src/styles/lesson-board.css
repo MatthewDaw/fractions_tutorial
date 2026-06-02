@@ -1,0 +1,174 @@
+/* lesson-board.css — THE one shared layout for every lesson's play area.
+   Replaces the seven hand-rolled, near-identical "four fixed rectangles" layouts
+   (the per-lesson m1-fz, m2-fz, m3-fz, r1-fz, r1-s1, r4-s, r5-z and lu zone sets).
+
+   WHY THIS EXISTS (the bug it kills): every lesson used to pin four
+   position:absolute boxes inside a flex parent —
+     stage   (top-left, fixed height)
+     rail    (top-right, fixed height)
+     answer  (bottom-left, fixed height, bottom:0)
+     tutor   (bottom-right, fixed height, bottom:0)
+   When the flex parent shrank below stage-height + answer-height (a shorter
+   viewport, a font reflow, a taller goal band), the stage kept its fixed height
+   and the answer bar — pinned to bottom:0 — slid UP and painted ON TOP of the
+   interaction area. The answer fill-in literally intersected the place you drag.
+
+   THE FIX: one CSS grid. The stage lives in row 1 (minmax(0,1fr) — it absorbs
+   ALL the slack and can shrink to nothing) and the answer/tutor live in row 2 (a
+   fixed foot height). They are SEPARATE GRID TRACKS, so they can never share a
+   pixel of Y-space — overlap is structurally impossible, on every device, always.
+   Stage content that would overflow its (now flexible) box is downscaled by
+   <FitStage>, never clipped into the bar below.
+
+   Tunable per lesson via CSS custom properties (props on <LessonBoard>):
+     --lboard-rail-w   right column width            (default 396px)
+     --lboard-foot-h   answer + tutor row height     (default 196px)
+     --lboard-tutor-w  tutor column width, wide mode  (default 240px)
+     --lboard-col-gap / --lboard-row-gap / --lboard-mt                          */
+
+.lboard {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;                 /* let it shrink inside the .page flex column */
+  margin-top: var(--lboard-mt, 10px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--lboard-rail-w, 396px);
+  grid-template-rows: minmax(0, 1fr) var(--lboard-foot-h, 196px);
+  grid-template-areas:
+    "stage rail"
+    "ans   tutor";
+  column-gap: var(--lboard-col-gap, 20px);
+  row-gap: var(--lboard-row-gap, 14px);
+}
+
+/* No rail: the stage spans the full width up top; answer + tutor still split the
+   foot row (e.g. a full-width Workbench/BlockSandbox stage). */
+.lboard.is-norail {
+  grid-template-areas:
+    "stage stage"
+    "ans   tutor";
+}
+
+/* ── the four zones ───────────────────────────────────────────────────────── */
+
+/* STAGE — the proof / interaction zone. Bordered, clipped, fills row 1. The inner
+   per-lesson canvas (.m1-canvas / .r5-canvas / FitStage …) handles its own layout. */
+.lboard-stage {
+  grid-area: stage;
+  min-height: 0; min-width: 0;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255, 200, 140, 0.18), inset 0 2px 10px rgba(20, 12, 6, 0.18);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255, 245, 220, 0.55), transparent 70%), var(--paper-1);
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+}
+/* A lesson can opt the stage out of the border/paper treatment (e.g. it wraps its
+   own bordered surface) with className="bare". */
+.lboard-stage.bare {
+  border: none; box-shadow: none; background: none; padding: 0;
+}
+
+/* RAIL — the hint column (top-right). Holds one or more .panel cards. */
+.lboard-rail {
+  grid-area: rail;
+  min-height: 0; min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.lboard-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
+/* multiple stacked panels keep their natural heights and share the column */
+.lboard-rail.is-stack .panel { height: auto; }
+
+/* ANSWER — the equation + Check bar (bottom-left). The bordered card is .lbar,
+   rendered by <AnswerBar> as this zone's child. */
+.lboard-answer { grid-area: ans; min-width: 0; min-height: 0; }
+
+/* TUTOR — Cook + speech ribbon (bottom-right). Rendered by <TutorRibbon>. */
+.lboard-tutor { grid-area: tutor; min-width: 0; min-height: 0; }
+
+/* ── WIDE variant — word-problem stages ───────────────────────────────────────
+   The WordProblem card carries its own setup + answer + Check, so there is no
+   separate answer zone. The story column fills the height; the Cook sits in a
+   narrow right column, bottom-aligned. Still two real grid tracks → no overlap. */
+.lboard.is-wide {
+  grid-template-columns: minmax(0, 1fr) var(--lboard-tutor-w, 240px);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "wp tutor";
+}
+.lboard-wp {
+  grid-area: wp;
+  min-width: 0; min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.lboard.is-wide .lboard-tutor { align-self: end; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   THE ANSWER CARD (.lbar) — equation row + caption + marks (Rosette + Check).
+   Was duplicated as .m1-fz-answer / .m2-fz-answer / .m3-fz-answer / .r1-fz-answer
+   / .r4-s-answer / .r5-z-answer / .lu-ans in seven stylesheets.
+   ════════════════════════════════════════════════════════════════════════════ */
+.lbar {
+  height: 100%;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28, 22, 18, 0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28, 22, 18, 0.16);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  column-gap: 18px;
+  row-gap: 2px;
+  padding: 12px 22px;
+}
+.lbar-eq {
+  grid-column: 1; grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.lbar-cap {
+  grid-column: 1; grid-row: 2;
+  align-self: end;
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 480px;
+}
+.lbar-marks {
+  grid-column: 2; grid-row: 1 / span 2;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.lbar-marks .check { min-width: 150px; height: 56px; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   THE TUTOR (.ltutor) — Cook sprite + speech ribbon (+ optional Rosette).
+   Was .m1-fz-tutor / .m2-fz-tutor / … / .lu-tutor.
+   ════════════════════════════════════════════════════════════════════════════ */
+.ltutor {
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+/* override the global absolute .cook-stage / offset .ribbon so they sit inside
+   this flex row rather than the .hud layout they were first written for. */
+.ltutor .cook-stage {
+  position: relative; left: 0; bottom: 0;
+  width: 118px; flex: 0 0 auto; pointer-events: none;
+}
+.ltutor .ribbon {
+  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
+  height: 96px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+}
+.ltutor-rosette { flex: 0 0 auto; align-self: center; }

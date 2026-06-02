@@ -68,8 +68,8 @@
 .r4-dot.fewest { border-color: var(--red); background: var(--red); }
 .r4-meter-note { font-family: var(--serif); font-style: italic; font-size: 11px; color: var(--red-deep); margin-top: 4px; line-height: 1.2; }
 
-/* tidied-state badge in the canvas (mirrors .eqstate.eqfloat usage) */
-.eqstate.r4-tidy.ok { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+/* simplest-name-state badge in the canvas (mirrors .eqstate.eqfloat usage) */
+.eqstate.r4-simplestflag.ok { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
 
 /* the worked-example value readout under the big fraction (the amount holds).
    Dropped BELOW the number line + its labels so the ruler can't run through it:
@@ -110,33 +110,10 @@
    least possible height under the tabs (preserves the .r4-s zone budget). */
 .question-band .qb-chip { padding-top: 6px; padding-bottom: 6px; align-items: center; }
 
-/* With the centre header equation removed from the topbar (it now lives in the
-   QuestionBand below the tabs), the shared topbar's middle 1fr column is empty,
-   which would leave the toolbar controls floating in it instead of the far right.
-   Re-pin the controls to the right edge — scoped to THIS lesson via the r4 stage
-   bar so no other room's topbar is affected. */
-.page:has(.r4-stagebar) .topbar .controls { grid-column: 3; justify-self: end; }
-
 /* ═══════════════════════════════════════════════════════════════════════════
-   THE INTERACTION ARC — stage selector + the per-stage writing/fade additions.
+   THE INTERACTION ARC — the per-stage writing/fade additions. The stage selector
+   ("top bar") is now the shared <StageTabs>; see stagetabs.css.
    ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── stage selector: jump to any of the five arc stages in one click ───────── */
-.r4-stagebar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
-.r4-stagechip { all: unset; cursor: pointer; box-sizing: border-box; display: flex; align-items: center; gap: 9px;
-  padding: 7px 11px; border: 1.5px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.14); }
-.r4-stagechip:hover { background: var(--paper-2); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.16); }
-.r4-stagechip:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
-.r4-stagechip.active { background: var(--ink); box-shadow: 1px 1px 0 rgba(28,22,18,0.2); }
-.r4-stagechip.active .r4-stage-tag { color: var(--paper-1); }
-.r4-stagechip.active .r4-stage-blurb { color: rgba(237,226,200,0.78); }
-.r4-stagechip.active .r4-stage-n { background: var(--red); border-color: var(--red-deep); color: var(--paper-1); }
-.r4-stage-n { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto;
-  font-family: var(--display); font-size: 15px; color: var(--paper-1); background: var(--ink); border: 1.5px solid var(--ink); }
-.r4-stage-tx { display: flex; flex-direction: column; line-height: 1.18; min-width: 0; }
-.r4-stage-tag { font-family: var(--display); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); }
-.r4-stage-blurb { font-family: var(--serif); font-style: italic; font-size: 10.5px; color: var(--ink-mute);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── the fading bar (Stage 3 Fade): dim to a faint check ───────────────────── */
 .plank.r4-ghost { opacity: 0.32; filter: grayscale(0.35); transition: opacity .5s ease, filter .5s ease; }
@@ -202,58 +179,28 @@
 .r4-setup-ok { font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center; }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   THE TIDYING ROOM — DETERMINISTIC FIXED-ZONE LAYOUT (stages 1–5)
-   Mirrors R1 stage 1: the whole play region is a set of fixed, non-overlapping
-   rectangles inside the 1280×800 stage. The bar/fuse-tool sit in a TOP zone; the
-   equation + answer Slate + Check read as ONE bordered card pinned to the BOTTOM
-   with the Slate clearly SEPARATED below the block space and Check IMMEDIATELY to
-   its right; the Cook + ribbon live bottom-right. Heights NEVER depend on text
-   content (clamped), so a longer string / a different font (Safari vs Chromium)
-   can never reflow one zone onto another.
-     · .r4-s-blocks  — block-manipulation / bare-equation zone (top-left,  fixed)
-     · .r4-s-rail    — per-stage tool + hint + meter            (top-right, fixed)
-     · .r4-s-answer  — 8/12 = [Slate] + Check, ONE card         (bottom-left, fixed)
-     · .r4-s-tutor   — Cook + speech ribbon                     (bottom-right, fixed)
+   THE TIDYING ROOM — STAGE CONTENT (layout now from the shared <LessonBoard>).
+   The four hand-pinned rectangles (.r4-s / .r4-s-blocks / .r4-s-rail / absolute
+   .r4-s-answer / .r4-s-tutor) were deleted — the lesson-board CSS grid owns the
+   zones now. What remains here is the CONTENT inside those zones: the canvas
+   (which flexes to fill .lboard-stage), the equation row, the answer-card inner
+   styling (.r4-s-answer rides on .lbar), the story/setup, and the GroupBar.
    ════════════════════════════════════════════════════════════════════════════ */
-.r4-s { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
 
-/* TOP-LEFT — the block / equation zone. Clipped so blocks can never paint past it. */
-.r4-s-blocks {
-  position: absolute; left: 0; top: 0;
-  width: 800px; height: 296px;
-  border: 2px solid #1a0f08;
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
-  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
-  overflow: hidden;
-  box-sizing: border-box;
-  padding: 8px 12px;
-}
 /* the canvas holds its ORIGIN-based absolute children (ruler at 60→660, bar at
-   BAR_Y=150, labels at LINE_Y+12=244); sized to that content and centered. */
-.r4-s-canvas { width: 720px; height: 320px; margin: 0 auto; }
-
-/* TOP-RIGHT — the tool/hint rail. Fixed rect; one panel; clipped. */
-.r4-s-rail {
-  position: absolute; right: 0; top: 0;
-  width: 452px; height: 296px;
-  box-sizing: border-box;
-  display: flex; flex-direction: column;
+   BAR_Y=150, labels at LINE_Y+12=244). It is NOT FitStage-wrapped: instead it
+   flexes to fill .lboard-stage (height:100%, min-height:0) so the absolute
+   children keep their fixed ORIGIN geometry without overflowing the grid track. */
+.r4-s-canvas {
+  position: relative; width: 100%; max-width: 720px; height: 100%;
+  min-height: 0; margin: 0 auto; box-sizing: border-box;
 }
-.r4-s-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
 
-/* BOTTOM-LEFT — EQUATION + ANSWER as ONE bordered card, clearly BELOW the blocks.
-   Pinned to the bottom; fixed height; the gap above it is guaranteed (blocks=348,
-   this card's top = 800−196−headers; the play region budget leaves ≥30px). */
-.r4-s-answer {
-  position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 196px;
-  box-sizing: border-box;
-  border: 2px solid var(--ink);
-  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
-  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
-  display: flex; flex-direction: column; justify-content: center;
-  gap: 6px;
-  padding: 12px 26px;
+/* the answer-card inner layout. The card FRAME (border/paper/shadow) is .lbar
+   from lesson-board.css; R4's answer uses its OWN inner markup (.r4-s-eqrow +
+   .r4-s-cap), so override .lbar's grid back to a centered flex column. */
+.lbar.r4-s-answer {
+  display: flex; flex-direction: column; justify-content: center; gap: 6px;
 }
 
 /* the equation row: every term on ONE midline (align-items:center). The "8/12"
@@ -290,24 +237,13 @@
   height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 700px;
 }
 
-/* BOTTOM-RIGHT — Cook + ribbon, fixed rect; ribbon clamped to 5 lines. */
-.r4-s-tutor {
-  position: absolute; right: 0; bottom: 0;
-  width: 452px; height: 196px;
-  box-sizing: border-box;
-  display: flex; align-items: flex-end; gap: 10px;
-}
-.r4-s-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
-.r4-s-tutor .ribbon {
-  margin-left: 0; margin-bottom: 14px; max-width: 280px; flex: 1 1 auto;
-  height: 96px; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
-}
+/* (the Cook + ribbon zone is now the shared <TutorRibbon> / .ltutor — the old
+   absolute .r4-s-tutor rect was deleted.) */
 
-/* ── WORDS / APPLIED mode — story top, answer card + tutor bottom ───────────── */
+/* ── WORDS / APPLIED mode — the story card + setup gate, the STAGE content of a
+   wide-ish split board. It fills the .lboard-stage zone (no absolute rect). ── */
 .r4-s-story {
-  position: absolute; left: 0; top: 0;
-  width: 800px; height: 296px;
+  width: 100%; height: 100%;
   box-sizing: border-box;
   display: flex; flex-direction: column; gap: 12px;
   overflow: hidden;
@@ -322,7 +258,8 @@
    zone, so they ride inside a FitStage that downscales the stack to fit (never
    clips). Restore the column gap the bare .r4-s-story had, and fix the inner
    width so the 800px slate (not max-content shrink) sets the column width. */
-.r4-s-story > .r4-s-fit .fit-stage-content { gap: 12px; width: 800px; }
+.r4-s-fit { width: 100%; height: 100%; }
+.r4-s-fit .fit-stage-content { gap: 12px; width: 800px; }
 /* clamp the story to 3 lines so a longer/different-font story can't grow the card
    into the setup gate below it. */
 /* the story/recipe copy is now SECONDARY to the big question band above it —
@@ -350,8 +287,11 @@
 .r4-s-setup-row .slate-fraction { position: relative; }
 .r4-s-setup-row .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; z-index: 4; }
 
-/* the answer card in words mode — prompt on top, Slate + Check beside, one card */
-.r4-s-answer-words { justify-content: center; gap: 8px; }
+/* the answer card in words mode — prompt on top, Slate + Check beside, one card.
+   Rides on .lbar (frame), but uses its own inner markup → flex column override. */
+.lbar.r4-s-answer-words {
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+}
 .r4-s-ansprompt {
   font-family: var(--display); font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink);
   height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
@@ -392,7 +332,7 @@
    M3's ~756×246 reference. Tighten the secondary copy so the card stays compact
    and the slate gets the room. Scoped to the words-only stage via .r4-s-onlywords
    so Applied (which keeps its band + setup gate) is untouched. ═════════════════ */
-.r4-s-onlywords .r4-s-story { height: 372px; gap: 8px; }
+.r4-s-onlywords .r4-s-story { height: 100%; gap: 8px; }
 /* the recipe copy is purely a prompt here — keep the card tight so the slate
    dominates the freed vertical space. */
 .r4-s-onlywords .r4-s-card { padding: 8px 26px; }
@@ -447,7 +387,100 @@
 .r4-drag-ghost.is-hot { filter: brightness(1.04); transform: translate(-50%, -50%) scale(1.05); }
 
 @media (prefers-reduced-motion: reduce) {
-  .r4-stagechip, .r4-factor-btn { transition: none; }
+  .r4-factor-btn { transition: none; }
   .r4-fade-out.on { animation: none; }
   .plank.r4-ghost { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE GROUPBAR (CCSS 4.NF.A.1) — ONE fixed-width whole, re-partitioned.
+   Replaces the old FuseBar visual. The whole bar (= 1) is a fixed SPAN that
+   NEVER changes width across 8/12 → 4/6 → 2/3, so the amount is visibly
+   invariant: only the cut lines move. The first `num` cells are filled, the
+   rest are empty/outlined so "8 OUT OF 12" reads literally. A persistent
+   fill-edge marker at left = num*(SPAN/den) = VALUE*SPAN is IDENTICAL for
+   every equivalent name and proves the amount holds.
+
+   Fill hue follows the denominator (thirds orange, sixths gold, twelfths
+   neutral) — the component paints .is-filled with denomColor(den) inline, so
+   the rules below are the structural baseline + the neutral (twelfths)
+   default; the inline color wins for thirds/sixths. Class names are EXACTLY
+   storyboard.groupBar.classNames. ═══════════════════════════════════════════ */
+
+/* outer wrapper: holds the track + the absolutely-positioned fill-edge + the
+   division annotations. Sits inside .r4-s-canvas; never absolute-fills it. */
+.r4-groupbar { position: relative; box-sizing: border-box; }
+.r4-groupbar.is-ghost { opacity: 0.32; filter: grayscale(0.35); transition: opacity .5s ease, filter .5s ease; }
+
+/* the track = the full bar SPAN. Width is CONSTANT for every grouping (set by
+   the component as the fixed SPAN), which is what makes the amount invariant. */
+.r4-gb-track {
+  position: relative; display: flex; box-sizing: border-box;
+  border: 2px solid var(--ink); background: var(--paper-1);
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.16);
+}
+
+/* each cell = SPAN/den (width set inline by the component). The cell width
+   animates as cells merge (12 → 6 → 3) while the filled run's extent holds. */
+.r4-gb-cell {
+  position: relative; box-sizing: border-box; height: 100%;
+  transition: width .42s cubic-bezier(.34,1.45,.6,1), background .3s ease;
+}
+/* filled cells: painted with denomColor(den) inline; neutral twelfths default. */
+.r4-gb-cell.is-filled { background: var(--paper-3); }
+/* empty cells: outlined / transparent so "8 OUT OF 12" is literally visible —
+   filled vs empty, not just a shaded stub. */
+.r4-gb-cell.is-empty { background: transparent; }
+
+/* internal cut lines between cells */
+.r4-gb-cut { border-right: 1.5px solid rgba(28,22,18,0.55); }
+.r4-gb-cut:last-child { border-right: none; }
+
+/* the FIXED fill-edge: absolutely positioned at left = num*(SPAN/den) =
+   VALUE*SPAN — IDENTICAL across 8/12, 4/6, 2/3. It NEVER changes x. */
+.r4-gb-filledge {
+  position: absolute; top: -8px; bottom: -8px; width: 0;
+  border-left: 2.5px solid var(--red); z-index: 3;
+}
+.r4-gb-filledge.pulse { animation: r4EdgePulse .6s ease-in-out; }
+@keyframes r4EdgePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(163,42,34,0); }
+  45% { box-shadow: 0 0 0 5px rgba(163,42,34,0.28); }
+}
+/* the "same amount" cap riding the fill-edge */
+.r4-gb-edgecap {
+  position: absolute; top: -19px; left: 5px; white-space: nowrap;
+  font-family: var(--display); font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--red);
+}
+
+/* the count chip above the filled run: "<num> of <den>" */
+.r4-gb-counttag {
+  position: absolute; top: -34px; left: 0; white-space: nowrap;
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.04em;
+  color: var(--ink); background: var(--paper-2);
+  border: 1.5px solid var(--ink); padding: 2px 8px;
+  box-shadow: 2px 2px 0 rgba(28,22,18,0.16);
+}
+
+/* division-legality annotation: "div k" over the top, "div k" under the
+   bottom, plus "div k/k = div 1" — the legality is ON SCREEN, not just spoken. */
+.r4-gb-divrow { position: relative; display: flex; flex-direction: column; gap: 6px; margin-top: 22px; align-items: center; }
+.r4-gb-div {
+  font-family: var(--stencil); font-weight: 700; font-size: 13px; color: var(--red);
+  border: 1.5px solid var(--red); padding: 1px 7px; background: rgba(163,42,34,0.07);
+  white-space: nowrap; line-height: 1.3;
+}
+.r4-gb-div.pop { animation: r4Stamp .45s cubic-bezier(.34,1.56,.64,1); }
+/* the "div k/k = div 1" chip — the proof that dividing top AND bottom by the
+   same number is dividing by 1, so the amount cannot change. */
+.r4-gb-divone {
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.04em;
+  color: var(--paper-1); background: var(--red); border: 1.5px solid var(--red-deep);
+  padding: 2px 9px; white-space: nowrap; line-height: 1.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .r4-gb-cell { transition: none; }
+  .r4-gb-filledge.pulse, .r4-gb-div.pop { animation: none; }
 }

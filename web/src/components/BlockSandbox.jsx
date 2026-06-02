@@ -30,6 +30,7 @@
 //     onPlace() / onRemove()   — optional telemetry for the engine
 //     title, hint              — rail copy
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import BigFrac from "./BigFrac.jsx";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize, denomName } from "../denominatorColors.js";
 import "../styles/sandbox.css";
@@ -323,8 +324,13 @@ export default function BlockSandbox({
       </div>
 
       {/* the DRAG GHOST — a copy of the grabbed block that follows the pointer in
-          real time while dragging (fixed-positioned, pointer-events:none). */}
-      {drag && (
+          real time while dragging (fixed-positioned, pointer-events:none). Portaled
+          to <body> so its position:fixed resolves against the VIEWPORT: the app's
+          #stage carries a transform: scale() (Shell.useStageFit), and a transformed
+          ancestor becomes the containing block for fixed descendants — without the
+          portal the ghost's clientX/clientY land in the stage's scaled, offset
+          coordinate space and the block drifts up-left of the real cursor. */}
+      {drag && createPortal(
         <div className="sandbox-ghost" aria-hidden="true"
           style={{ left: drag.x, top: drag.y, background: denomColor(drag.d), color: denomTextColor(drag.d) }}>
           <span className="sandbox-ghost-hatch" style={{ backgroundImage: denomHatch(drag.d), backgroundSize: denomHatchSize(drag.d) }} />
@@ -332,7 +338,8 @@ export default function BlockSandbox({
             <span className="sandbox-seg" style={{ backgroundImage: segLines(drag.d) }} />
           )}
           <span className="sandbox-ghost-lab">{isNumber ? drag.d : "1/" + drag.d}</span>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -13,6 +13,7 @@
 // affordances (sweep animation, cut-ticks, hover-cut ghost), since in L2 the child
 // chooses the size via the picker instead of dragging a knife.
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "../denominatorColors.js";
+import Knife from "./Knife.jsx";
 
 export default function Plank({ baseNum, baseDen, m, unit, tone, sliceTick = 0, matched = false, hoverCut = false, bodyRef = null, faded = false }) {
   const value = baseNum / baseDen;
@@ -51,6 +52,15 @@ export default function Plank({ baseNum, baseDen, m, unit, tone, sliceTick = 0, 
         <div key={sliceTick} className={!faded && sliceTick > 0 ? "sweep" : ""} />
         {hoverCut && <div className="cut-ghost" />}
       </div>
+      {/* The knife visibly travels ACROSS the strip on each cut — tip-leading,
+          right→left — so the child SEES it slice the blocks into pieces. Lives
+          OUTSIDE .plank-body (which clips) so the whole knife shows above the
+          strip; keyed by sliceTick so every fresh cut re-triggers the sweep. */}
+      {!faded && sliceTick > 0 && (
+        <div key={`slice-${sliceTick}`} className="plank-slice" style={{ "--plankW": `${totalW}px` }} aria-hidden="true">
+          <span className="slice-blade"><Knife n={m} dragging scale={0.4} /></span>
+        </div>
+      )}
     </div>
   );
 }

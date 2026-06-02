@@ -5,116 +5,30 @@
    guard/correct/incorrect via the ROLE_COLORS hues (#2a9d8f / #d1495b), never
    denomTone. Layout mirrors r1.css's deterministic fixed-zone contract. */
 
-/* ── stage selector strip (reachability: jump to any stage) ───────────────── */
-.m3-stages {
-  display: flex;
-  gap: 8px;
-  margin: 4px 22px 2px;
-  flex-wrap: nowrap;
-  height: 50px;
-  box-sizing: border-box;
-}
-.m3-stage-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px 6px 8px;
-  border: 1.5px solid var(--paper-3);
-  border-radius: 8px;
-  background: var(--paper-1);
-  color: var(--ink-mute);
-  cursor: pointer;
-  font-family: var(--serif);
-  text-align: left;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-.m3-stage-tab:hover { border-color: var(--ink-mute); color: var(--ink); }
-.m3-stage-tab.is-active {
-  border-color: var(--red);
-  background: #fff8ea;
-  color: var(--ink);
-  box-shadow: 0 1px 0 var(--red-deep);
-}
-.m3-stage-tab.is-done .m3-stage-n {
-  background: var(--ink-mute);
-  color: var(--paper-1);
-  border-color: var(--ink-mute);
-}
-.m3-stage-n {
-  flex: 0 0 auto;
-  width: 26px; height: 26px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  border: 1.5px solid var(--paper-3);
-  background: var(--paper-2);
-  font-weight: 700; font-size: 15px; color: var(--ink);
-}
-.m3-stage-tab.is-active .m3-stage-n {
-  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
-}
-.m3-stage-txt { display: flex; flex-direction: column; line-height: 1.1; }
-.m3-stage-name { font-size: 14px; font-weight: 600; }
-.m3-stage-sub { font-size: 11px; opacity: 0.8; }
+/* Stage selector ("top bar") is now the shared <StageTabs> — see stagetabs.css. */
 
 /* THE QUESTION BAND is now the SHARED <QuestionBand> (questionband.css) mounted
    once in the page column directly under these tabs — no lesson-local band markup
    or styles remain here, and nothing renders over the jar/manipulative anymore. */
 
 /* ════════════════════════════════════════════════════════════════════════════
-   SHARED DETERMINISTIC FIXED-ZONE LAYOUT (.m3-fz*) — the 1280×800 4-zone grid:
-     · .m3-fz-stage   — manipulative / proof zone   top-left  (800×348)
-     · .m3-fz-rail    — hint rail                    top-right (396×348)
-     · .m3-fz-answer  — equation + Slate + Check     bottom-left (800×196)
-     · .m3-fz-tutor   — Cook + speech ribbon         bottom-right (396×196)
-   Every zone is a fixed rectangle with clamped text, so a longer string / a
-   different font can never reflow one zone onto another (mirrors r1.css).
+   The four-zone play layout (stage · rail · answer · tutor) now lives in the
+   shared <LessonBoard> / lesson-board.css — the old absolute .m3-fz-* rectangles
+   (.m3-fz / -stage / -rail / -answer / -eqrow / -cap / -marks / -tutor) are gone
+   (they were the source of the answer-bar-over-stage overlap). What stays here is
+   only m3-SPECIFIC content: the FitStage canvas wrapper and the equation-row
+   pieces (.m3-fz-fact / -op / -slate) that ride inside the shared <AnswerBar>.
    ════════════════════════════════════════════════════════════════════════════ */
-.m3-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 8px; }
-
-.m3-fz-stage {
-  position: absolute; left: 0; top: 0;
-  width: 800px; height: 300px;
-  border: 2px solid #1a0f08;
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
-  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
-  overflow: hidden;
-  box-sizing: border-box;
-  padding: 6px 12px;
-  /* a column so the QUESTION BAND pins to the top and the canvas takes the rest */
-  display: flex; flex-direction: column;
-}
-/* with the question band present the canvas takes the remaining height; it keeps a
-   floor so the manipulative never collapses (FitStage downscales to whatever fits) */
-.m3-fz-canvas { position: relative; width: 776px; flex: 1 1 auto; min-height: 0; margin: 0 auto; }
+/* the FitStage canvas fills the (now flexible) shared stage box; FitStage measures
+   the leftover height and downscales its child so the manipulative always fits. */
+.m3-fz-canvas { position: relative; width: 100%; max-width: 776px; flex: 1 1 auto; min-height: 0; margin: 0 auto; }
 .m3-fz-canvas-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
 /* When the centered canvas is a <FitStage>, its children render inside
    .fit-stage-content (which has its own centering but no gap) — restore the 8px
    vertical rhythm between the big equation, caption, and prompt dots there. */
 .m3-fz-canvas-center .fit-stage-content { gap: 8px; }
 
-.m3-fz-rail {
-  position: absolute; right: 0; top: 0;
-  width: 396px; height: 300px;
-  box-sizing: border-box;
-  display: flex; flex-direction: column;
-}
-.m3-fz-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
-
-.m3-fz-answer {
-  position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 196px;
-  box-sizing: border-box;
-  border: 2px solid var(--ink);
-  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
-  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 18px; row-gap: 2px;
-  padding: 12px 22px;
-}
-.m3-fz-eqrow { grid-column: 1; grid-row: 1 / span 2; display: inline-flex; align-items: center; gap: 16px; }
+/* equation-row pieces rendered inside the shared <AnswerBar eq={…}> */
 .m3-fz-fact { font-family: var(--display); font-size: 46px; color: var(--ink); }
 .m3-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
 .m3-fz-slate { display: inline-flex; position: relative; }
@@ -123,27 +37,6 @@
 .m3-fz-slate .slate-row .slate-committed-digit { font-size: 48px; }
 .m3-fz-slate .slate-row .slate-ph { font-size: 30px; }
 .m3-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
-
-.m3-fz-cap {
-  grid-column: 1; grid-row: 2; align-self: end;
-  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
-  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 360px;
-}
-.m3-fz-marks { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.m3-fz-marks .check { min-width: 150px; height: 56px; }
-
-.m3-fz-tutor {
-  position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 196px;
-  box-sizing: border-box;
-  display: flex; align-items: flex-end; gap: 10px;
-}
-.m3-fz-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
-.m3-fz-tutor .ribbon {
-  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
-  height: 96px; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
-}
 
 /* ── hint-rail fact card (the small "what we're building" badge) ──────────── */
 .m3-factcard {
@@ -380,37 +273,12 @@
   box-shadow: 3px 4px 0 rgba(28,22,18,0.3);
 }
 
-/* ── Stage 4 (workbench): shared <BlockSandbox> working area + bottom answer bar ─
-   A flex column filling the stage: the QUESTION BAND on top, the sandbox .play in
-   the middle (it flexes/clips to fit), and the BIG BROWN ANSWER BAR pinned at the
-   bottom — the same .m3-fz-answer visuals every other stage uses, restated in
-   normal flow (not absolute) so it sits BELOW the number-line workbench. The
-   tutor (Cook + ribbon) tucks into the answer bar's right edge. */
-.m3-workbench {
-  position: relative; flex: 1 1 auto; min-height: 0; margin-top: 8px;
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  grid-template-rows: 1fr auto;
-  column-gap: 16px; row-gap: 8px;
-}
-/* the sandbox .play working area fills the top band, both columns. The shared
-   QuestionBand now lives in the page column (above the tabs row), so nothing
-   covers this working area. */
-.m3-workbench-area { grid-column: 1 / -1; grid-row: 1; min-height: 0; display: flex; }
-.m3-workbench-area .play { flex: 1 1 auto; margin-top: 0; }
-/* restate the brown answer bar in flow (override the absolute fixed-zone version),
-   pinned to the bottom-left — the same visuals every other stage uses. The top
-   QuestionBand aligns with this bottom brown answer bar across the stage width. */
-.m3-workbench-answer {
-  position: static; grid-column: 1; grid-row: 2;
-  width: 100%; height: 150px;
-}
-/* the tutor sits to the right of the bottom bar (bottom-right, like .m3-fz-tutor) */
-.m3-workbench-tutor { grid-column: 2; grid-row: 2; min-height: 0; }
-.m3-workbench-tutor .m3-fz-tutor {
-  position: static; width: 100%; height: 150px;
-}
-.m3-workbench-tutor .m3-fz-tutor .ribbon { height: 84px; -webkit-line-clamp: 4; max-width: none; }
+/* ── Stage 4 (workbench): the BlockSandbox stage. The four-zone layout is now the
+   shared <LessonBoard variant="split" rail={null} stageClassName="bare">, which
+   gives the sandbox a full-width top track and the shared <AnswerBar> + tutor in
+   the foot row — so the old bespoke .m3-workbench grid is gone. The sandbox's
+   .play just needs to fill the (bare) stage box. */
+.lboard-stage.bare .play { flex: 1 1 auto; margin-top: 0; height: 100%; }
 
 /* ── Stage 5 (numbers): the bare fact equation ────────────────────────────── */
 .m3-bigeq { display: flex; align-items: center; gap: 22px; }
@@ -426,14 +294,11 @@
 .m3-prompt-dot.is-active { border-color: var(--red); background: var(--red-soft); }
 .m3-prompt-dot.is-done { border-color: #2a9d8f; background: #2a9d8f; }
 
-/* ── Stages 6/7 · word-problem fixed-zone layout (mirrors r1) ──────────────── */
-.m3-fz-words .m3-fz-wp {
-  position: absolute; left: 0; top: 0;
-  width: 1040px; height: 496px;
-  box-sizing: border-box; overflow: hidden;
-  display: flex; flex-direction: column; align-items: center;
-}
-.m3-fz-words .m3-fz-tutor { width: 220px; height: 196px; }
+/* ── Stages 6,7 word-problem content tweaks ───────────────────────────────────
+   The wide layout (story column + narrow tutor) is the shared <LessonBoard
+   variant="wide">; these rules — scoped by the className="m3-fz-words" the board
+   carries — only tune the WordProblem card/Slate sizing inside it. The old fixed
+   .m3-fz-wp / .m3-fz-tutor layout rectangles are gone. */
 .m3-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
 .m3-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
 .m3-fz-words .wp-card-head { margin-bottom: 8px; }
@@ -473,7 +338,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .m3-stage-tab, .m3-scoop, .m3-skipline-chip { transition: none; }
+  .m3-scoop, .m3-skipline-chip { transition: none; }
   .m3-cluster { animation: none; }
   .m3-setup-row.is-shake { animation: none; }
 }

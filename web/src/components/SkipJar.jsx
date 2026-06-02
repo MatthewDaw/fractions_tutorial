@@ -20,6 +20,7 @@
 // (colorblind-safe hue + hatch + readable outline) so all "groups of 8" share one
 // distinct, glyph-backed color — same visual approach as BlockSandbox's number mode.
 import React, { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { denomColor, denomTone, denomHatch, denomHatchSize } from "../denominatorColors.js";
 
 export default function SkipJar({
@@ -176,8 +177,12 @@ export default function SkipJar({
         )}
       </div>
 
-      {/* the scoop ghost that follows the pointer while dragging into the jar */}
-      {drag && (
+      {/* the scoop ghost that follows the pointer while dragging into the jar.
+          Portaled to <body> so its position:fixed resolves against the VIEWPORT —
+          the app's #stage carries a transform: scale() (Shell.useStageFit), which
+          would otherwise become the containing block for this fixed ghost and drift
+          it up-left of the real cursor. */}
+      {drag && createPortal(
         <div className="m3-scoop-ghost" style={{ left: drag.x, top: drag.y }} aria-hidden="true">
           <span className="m3-scoop-bowl">
             {Array.from({ length: groupSize }, (_, k) => (
@@ -185,7 +190,8 @@ export default function SkipJar({
             ))}
           </span>
           <span className="m3-scoop-ghost-lab">+{groupSize}</span>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

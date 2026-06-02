@@ -33,6 +33,10 @@
 //   variant    : "plate" | "bowl" — "bowl" is the Workbench prop-variant (BowlGroup)
 //   readOnly   : boolean    — disable interaction (solved / Fade)
 //   pile       : boolean    — show the draggable pelmeni pile + drag-to-fill (Stage 1)
+//   pileTotal  : number     — how many pelmeni the pile holds to begin with. The pile
+//                 DEPLETES as pieces land on plates (remaining = pileTotal − placed),
+//                 and refills when a plate is emptied. Defaults to cap × #plates, so
+//                 the bowl empties to zero exactly when every plate is full.
 import React, { useRef, useState, useLayoutEffect, useCallback } from "react";
 import { ROLE_COLORS } from "../denominatorColors.js";
 
@@ -89,6 +93,7 @@ export default function PlateGroup({
   variant = "plate",
   readOnly = false,
   pile = false,
+  pileTotal = null,
 }) {
   const isBowl = variant === "bowl";
 
@@ -212,13 +217,20 @@ export default function PlateGroup({
   }
 
   // PILE layout (Stage 1): the draggable bowl of pelmeni sits left, the plate
-  // stack right. The pile shows a generous heap of dumplings the child drags out.
-  const PILE_N = 9;
+  // stack right. The pile holds exactly the supply still to be placed: it starts at
+  // `pileTotal` (defaulting to cap × #plates) and DEPLETES one dumpling for each
+  // pelmeni already on a plate, so the bowl empties to zero as the plates fill (and
+  // refills when a plate is cleared). A refused drop onto a full plate places nothing,
+  // so the count is unchanged and the dumpling visibly "spills back".
+  const placed = plates.reduce((a, c) => a + c, 0);
+  const total = pileTotal != null ? pileTotal : cap * plates.length;
+  const remaining = Math.max(0, total - placed);
+  const empty = remaining === 0;
   return (
     <div className="mg-fit mg-fit-pile" ref={wrapRef}>
-      <div className="mg-pile" role="group" aria-label="pile of pelmeni — drag onto a plate">
-        <div className="mg-pile-bowl">
-          {Array.from({ length: PILE_N }).map((_, k) => (
+      <div className="mg-pile" role="group" aria-label={`pile of pelmeni — ${remaining} left, drag onto a plate`}>
+        <div className={"mg-pile-bowl" + (empty ? " is-empty" : "")}>
+          {Array.from({ length: remaining }).map((_, k) => (
             <span
               key={k}
               className="mg-pile-piece"
@@ -235,7 +247,7 @@ export default function PlateGroup({
             </span>
           ))}
         </div>
-        <div className="mg-pile-lab">🥟 drag a pelmeni onto a plate</div>
+        <div className="mg-pile-lab">{empty ? "bowl empty — all on the plates ✓" : `🥟 ${remaining} left — drag onto a plate`}</div>
       </div>
       {stack}
       {drag && (

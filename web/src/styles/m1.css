@@ -17,84 +17,28 @@
 }
 .m1-goal-text b { font-style: normal; color: var(--red); }
 
-/* ── stage selector strip (reachability) ──────────────────────────────────── */
-.m1-stages {
-  display: flex; gap: 8px; margin: 4px 22px 2px;
-  flex-wrap: nowrap; height: 50px; box-sizing: border-box;
-}
-.m1-stage-tab {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 12px 6px 8px;
-  border: 1.5px solid var(--paper-3); border-radius: 8px;
-  background: var(--paper-1); color: var(--ink-mute);
-  cursor: pointer; font-family: var(--serif); text-align: left;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-.m1-stage-tab:hover { border-color: var(--ink-mute); color: var(--ink); }
-.m1-stage-tab.is-active {
-  border-color: var(--red); background: #fff8ea; color: var(--ink);
-  box-shadow: 0 1px 0 var(--red-deep);
-}
-.m1-stage-tab.is-done .m1-stage-n {
-  background: var(--ink-mute); color: var(--paper-1); border-color: var(--ink-mute);
-}
-.m1-stage-n {
-  flex: 0 0 auto; width: 26px; height: 26px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1.5px solid var(--paper-3);
-  background: var(--paper-2); font-weight: 700; font-size: 15px; color: var(--ink);
-}
-.m1-stage-tab.is-active .m1-stage-n {
-  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
-}
-.m1-stage-txt { display: flex; flex-direction: column; line-height: 1.1; }
-.m1-stage-name { font-size: 14px; font-weight: 600; }
-.m1-stage-sub { font-size: 11px; opacity: 0.8; }
+/* Stage selector ("top bar") is now the shared <StageTabs> — see stagetabs.css. */
 
 /* ════════════════════════════════════════════════════════════════════════════
-   SHARED FIXED-ZONE LAYOUT (.m1-fz*) — four fixed rectangles inside the stage:
-     · .m1-fz-stage   — board / proof zone        (top-left,   800×348)
-     · .m1-fz-rail    — "count the groups" hint    (top-right,  396×348)
-     · .m1-fz-answer  — equation + count/Slate + Check  (bottom-left,  800×196)
-     · .m1-fz-tutor   — Cook + speech ribbon       (bottom-right, 396×196)
+   The four-zone play layout (stage · rail · answer · tutor) now lives in the
+   shared <LessonBoard> / lesson-board.css — the old absolute .m1-fz-* rectangles
+   are gone (they were the source of the answer-bar-over-stage overlap). What stays
+   here is only m1-SPECIFIC content: the plate canvas and the equation-row pieces
+   that ride inside the shared <AnswerBar>.
    ════════════════════════════════════════════════════════════════════════════ */
-.m1-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
 
-.m1-fz-stage {
-  position: absolute; left: 0; top: 0;
-  width: 800px; height: 348px;
-  border: 2px solid #1a0f08;
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
-  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
-  overflow: hidden; box-sizing: border-box; padding: 6px 12px;
-}
+/* the plate canvas fills the (now flexible) stage box; PlateGroup measures the
+   leftover height to size the plates so all N always fit — no fixed 336px that
+   would clip when the honest stage height is shorter. */
 .m1-canvas {
-  position: relative; width: 776px; height: 336px; margin: 0 auto;
+  position: relative; width: 100%; max-width: 776px; height: 100%; margin: 0 auto;
+  min-height: 0; box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
   gap: 14px; padding-top: 10px;
 }
 .m1-canvas-center { justify-content: center; gap: 6px; }
 
-.m1-fz-rail {
-  position: absolute; right: 0; top: 0;
-  width: 396px; height: 348px; box-sizing: border-box;
-  display: flex; flex-direction: column;
-}
-.m1-fz-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
-
-.m1-fz-answer {
-  position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 196px; box-sizing: border-box;
-  border: 2px solid var(--ink);
-  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
-  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
-  display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto;
-  align-items: center; column-gap: 18px; row-gap: 2px; padding: 12px 22px;
-}
-.m1-fz-eqrow {
-  grid-column: 1; grid-row: 1 / span 2;
-  display: inline-flex; align-items: center; gap: 16px;
-}
+/* equation-row pieces rendered inside the shared <AnswerBar eq={…}> */
 .m1-fz-frac { font-family: var(--display); font-size: 40px; color: var(--ink); }
 .m1-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
 .m1-fz-slate { display: inline-flex; position: relative; }
@@ -103,29 +47,6 @@
 .m1-fz-slate .slate-row .slate-committed-digit { font-size: 46px; }
 .m1-fz-slate .slate-row .slate-ph { font-size: 28px; }
 .m1-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
-
-.m1-fz-cap {
-  grid-column: 1; grid-row: 2; align-self: end;
-  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
-  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 360px;
-}
-.m1-fz-marks {
-  grid-column: 2; grid-row: 1 / span 2;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-}
-.m1-fz-marks .check { min-width: 150px; height: 56px; }
-
-.m1-fz-tutor {
-  position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 196px; box-sizing: border-box;
-  display: flex; align-items: flex-end; gap: 10px;
-}
-.m1-fz-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
-.m1-fz-tutor .ribbon {
-  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
-  height: 96px; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
-}
 
 /* the count box (Stage 1) — a plain numeric box, not a Slate */
 .m1-countbox { display: inline-flex; }
@@ -209,12 +130,14 @@
 }
 .mg-pile-bowl {
   display: flex; flex-wrap: wrap; align-content: center; justify-content: center;
-  gap: 4px; width: 132px; padding: 14px 12px;
+  gap: 4px; width: 132px; min-height: 96px; padding: 14px 12px;
   border: 2.5px solid var(--ink-mute);
   border-radius: 14px 14px 50% 50% / 14px 14px 30% 30%;
   background: radial-gradient(ellipse at 50% 30%, #fffdf6 0%, #efe3c6 78%, #e3d2ab 100%);
   box-shadow: inset 0 6px 12px rgba(20,12,6,0.12);
 }
+/* drained bowl — keeps its shape, just reads emptier */
+.mg-pile-bowl.is-empty { opacity: 0.6; }
 .mg-pile-piece {
   display: inline-flex; cursor: grab; touch-action: none;
   transition: transform 0.08s;
@@ -283,14 +206,10 @@
   height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 
-/* ── Stages 6,7 word-problem fixed-zone layout ────────────────────────────── */
-.m1-fz-words .m1-fz-wp {
-  position: absolute; left: 0; top: 0;
-  width: 1040px; height: 544px;
-  box-sizing: border-box; overflow: hidden;
-  display: flex; flex-direction: column; align-items: center;
-}
-.m1-fz-words .m1-fz-tutor { width: 220px; height: 196px; }
+/* ── Stages 6,7 word-problem content tweaks ───────────────────────────────────
+   The wide layout (story column + narrow tutor) is the shared <LessonBoard
+   variant="wide">; these rules — scoped by the className="m1-fz-words" the board
+   carries — only tune the WordProblem card/Slate sizing inside it. */
 .m1-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
 .m1-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
 .m1-fz-words .wp-card-head { margin-bottom: 8px; }
@@ -335,6 +254,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .m1-stage-tab, .mg-vessel { transition: none; }
+  .mg-vessel { transition: none; }
   .m1-setup-row.is-shake { animation: none; }
 }

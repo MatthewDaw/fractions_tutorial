@@ -1,7 +1,7 @@
 // introR4.js — narration cue sheet + transcript for the R4 "Simplify" intro
 // video (public/intros/r4-simplify.html).
 //
-// The video is a ~36s hand-animated timeline whose on-screen captions appear at
+// The video is a ~27s hand-animated timeline whose on-screen captions appear at
 // fixed timecodes (see the BEATS table in the html). Each cue pairs one beat with:
 //   - `gate`:  the second the line's beat begins on screen (matches the caption)
 //   - `pause`: a breath (seconds) required AFTER the previous line finishes
@@ -18,13 +18,13 @@ export const STAGE_PERSIST_KEY = "simplify.v1";
 export const INTRO_DURATION = 27;
 
 // gates track the video's BEATS table:
-//   eight twelfths 1.5, fuse equal groups 5.8, into one sixth 10.5,
-//   fuse again to thirds 14.7, amount never changed 19.4, tidied up 23.7.
+//   8 of 12 1.5, watch the edge 5, group by 2 -> 4/6 9, group again -> 2/3 13,
+//   divide top+bottom = divide by 1 17.5, 8/12 = 2/3 simplest 22.
 export const INTRO_CUES = [
-  { gate: 1.5,  pause: 0,   key: "r4i_intro",   text: "Eight twelfths — a bar of many tiny pieces." },
-  { gate: 5.8,  pause: 0.5, key: "r4i_fuse",    text: "Let's fuse equal groups into fewer, bigger pieces." },
-  { gate: 10.5, pause: 0.5, key: "r4i_sixth",   text: "Two twelfths fuse into one sixth — now it's four sixths." },
-  { gate: 14.7, pause: 0.5, key: "r4i_thirds",  text: "Keep going — fuse again into the biggest pieces: two thirds." },
-  { gate: 19.4, pause: 0.5, key: "r4i_same",    text: "The amount never changed — the bar is the same length." },
-  { gate: 23.7, pause: 0.5, key: "r4i_tidy",    text: "Eight twelfths is two thirds, tidied up." },
+  { gate: 1.5,  pause: 0.3, key: "r4i_intro",    text: "Babushka's answer came out as eight out of twelve. One whole, cut into twelve equal pieces, with eight of them filled." },
+  { gate: 5,    pause: 0.5, key: "r4i_edge",     text: "Watch the right edge of the filled part. We are about to rename this fraction, but that edge will never move — the amount stays the same." },
+  { gate: 9,    pause: 0.5, key: "r4i_group",    text: "Group the pieces by twos. Twelve cells become six, and the eight filled become four. Four out of six — and look, the filled edge did not move at all." },
+  { gate: 13,   pause: 0.5, key: "r4i_again",    text: "Group again by twos. Six cells become three, and the four filled become two. Two out of three — and that filled edge has still not moved." },
+  { gate: 17.5, pause: 0.5, key: "r4i_byone",    text: "Here is why this is allowed. We divided the top and the bottom by the same number. Same number over same number is one — and dividing by one can never change the amount." },
+  { gate: 22,   pause: 0.5, key: "r4i_simplest", text: "So eight twelfths is exactly two thirds. The same amount, just written with the smallest numbers — its simplest name." },
 ];

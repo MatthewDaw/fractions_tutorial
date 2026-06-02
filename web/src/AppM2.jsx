@@ -24,22 +24,24 @@
 // multiplication misconception fingerprints as 'other' (the ErrorSignature union
 // is fraction-only in v1).
 //
+// LAYOUT/CONTROLLER: the page chrome (LessonShell), the four-zone play area
+// (LessonBoard) and the answer/tutor/rail/goal cards are the shared lesson library;
+// the engine wiring + stage nav + outcome state are the shared useLessonScaffold
+// hook. Only the m2-SPECIFIC manipulatives, equation pieces, and copy live here.
+//
 // Voice keys referenced here (added centrally in a later phase — missing audio
 // MUST degrade gracefully): mr_mom_goal_m2, mr_mom_nudge_m2, and the in-room
 // banter/cue keys spelled inline. say() is a no-op-safe fallback if a clip is absent.
-import React, { useState, useEffect, useRef } from "react";
-import Cook from "./components/Cook.jsx";
-import Rosette from "./components/Rosette.jsx";
+import React, { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
 import BakingTray from "./components/BakingTray.jsx";
 import BlankSlate from "./components/BlankSlate.jsx";
 import QuestionBand from "./components/QuestionBand.jsx";
 import FitStage from "./components/FitStage.jsx";
-import SettingsButton from "./SettingsButton.jsx";
-import { useVoice } from "./voice.js";
-import { useLessonEngine } from "./runtime/useLessonEngine.js";
-import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
+import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
+import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import "./styles/m2.css";
 
 // The single worked example threaded through the taught stages: 4 × 6 = 24.
@@ -59,6 +61,8 @@ const STAGES = [
   { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
   { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
 ];
+
+const NODE = "MULT_ARRAYS";
 
 // ── Word-problem bank (m2) — verbatim from the plan ──────────────────────────
 // owner is kid | grapa(grandpa) | cat; Babushka narrates all (never owns).
@@ -98,6 +102,14 @@ const BUN_PILE = [
   { x: 34, y: 4,  s: 34, z: 3 }, { x: 62, y: 5,  s: 33, z: 3 },
 ];
 
+// Which word problem a stage uses (Applied=6, Words=7 pull from the bank). Module
+// scope so STAGE_INTRO / the scaffold's introFor can resolve it without the hook.
+function problemFor(n) {
+  if (n === 6) return WORD_BANK[0]; // 4×6 buns — matches the worked example
+  if (n === 7) return WORD_BANK[1]; // 5×8 pelmeni — prose only, no equation
+  return null;
+}
+
 // ---------------- main ----------------
 export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }) {
   // Find the initial stage from the beat key (deep-link from a seeded mastery map).
@@ -105,17 +117,6 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     const f = STAGES.find((s) => s.key === initialBeat || s.n === initialBeat || String(s.n) === String(initialBeat));
     return f ? f.n : 1;
   })();
-  const [stage, setStage] = useState(startN);
-
-  // --- Engine integration ---
-  const { emit, judgeAndAdvance } = useLessonEngine({
-    nodeId: "MULT_ARRAYS",
-    lessonConfig: { lessonId: "m2", initialBeat: initialBeat != null ? String(initialBeat) : String(startN) },
-  });
-
-  // Track place/remove self-corrections for the current attempt.
-  const selfCorrectionsRef = useRef(0);
-  const presentEmittedRef = useRef(false);
 
   // --- Stage 1/2/3 tray state ---
   // Per-cell fill: a Set of filled interior cell indices (child drags a bun onto EACH cell).
@@ -147,114 +148,52 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   // --- mandatory "show your work" blank-slate gate (between Applied & Words) ---
   const [showWorkInked, setShowWorkInked] = useState(false);
 
-  // --- shared outcome state ---
-  const [solved, setSolved] = useState(false);
-  const [stars, setStars] = useState(0);
-  const [badInput, setBadInput] = useState(false);
-  const [cook, setCook] = useState("idle");
-  const [status, setStatus] = useState({ tone: "normal", text: STAGE_INTRO(startN, problemFor(startN)) });
+  // --- shared controller backbone (engine wiring + stage nav + outcome state) ---
+  // The hook owns everything identical across lessons; M2 supplies only its stage
+  // model (advance/back/scaffold key), its intro copy, and its per-stage reset.
+  // Map a stage value (number | "sw") to its scaffold key string.
+  const SCAFFOLD_KEY = (key) => STAGES.find((s) => s.n === key || s.key === key)?.key ?? "1-manipulate";
+  const {
+    stage, goStage, nextStage,
+    emit, reportAttempt, award, flashBad,
+    solved, solvedRef, stars, cook, setCook, status, setStatus,
+    say, speaking, selfCorrectionsRef,
+  } = useLessonScaffold({
+    nodeId: NODE,
+    lessonId: "m2",
+    initialStage: startN,
+    // Linear advance/back over the STAGES list (numeric stages with the string "sw"
+    // step threaded between 6 and 7).
+    advance: (cur) => {
+      const i = STAGES.findIndex((s) => s.n === cur);
+      return i >= 0 && i < STAGES.length - 1 ? STAGES[i + 1].n : cur;
+    },
+    back: (cur) => {
+      const i = STAGES.findIndex((s) => s.n === cur);
+      return i > 0 ? STAGES[i - 1].n : cur;
+    },
+    scaffoldKeyFor: SCAFFOLD_KEY,
+    introFor: (n) => ({ tone: "normal", text: STAGE_INTRO(n, problemFor(n)) }),
+    resetStage: () => {
+      setFilled(new Set()); setRotated(false); setScored(false);
+      setBunDrag(null); setHotCell(null); bunDragRef.current = false;
+      setSlate({ product: "" }); setPartA({ product: "" }); setPartB({ product: "" });
+      setBuildRows(0); setBuildCols(0);
+      setSetup({ a: "", b: "" }); setSetupOk(false);
+      setShowWorkInked(false);
+    },
+    onEnd: () => setStatus({ tone: "ok", text: "That's the whole tray — from counting buns to reading a story and knowing the product. Brilliant, povaryonok!" }),
+  });
 
-  const { speaking, say, stopVoice } = useVoice();
-  const stageRef = useRef(stage), solvedRef = useRef(solved);
-  useEffect(() => { stageRef.current = stage; }, [stage]);
-  useEffect(() => { solvedRef.current = solved; }, [solved]);
+  // Selector clicks pass a STAGES `key` string; normalize to the stage VALUE
+  // (a number, or "sw") the render branches compare against.
+  const toStageVal = (key) => {
+    const d = STAGES.find((s) => s.n === key || s.key === key);
+    return d ? d.n : key;
+  };
 
-  // Clean up audio on unmount.
-  useEffect(() => () => stopVoice(), []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Emit problem_present for the initial stage on mount.
-  useEffect(() => {
-    if (!presentEmittedRef.current) {
-      presentEmittedRef.current = true;
-      emit({
-        type: "problem_present",
-        payload: { node_id: "MULT_ARRAYS", scaffold_level: toScaffoldLevel("m2", STAGES.find((s) => s.n === startN)?.key || "1-manipulate") },
-      });
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Which word problem this stage uses (Applied=6, Words=7 pull from the bank).
-  function problemFor(n) {
-    if (n === 6) return WORD_BANK[0]; // 4×6 buns — matches the worked example
-    if (n === 7) return WORD_BANK[1]; // 5×8 pelmeni — prose only, no equation
-    return null;
-  }
+  // The word problem this stage uses (Applied=6, Words=7).
   const wp = problemFor(stage);
-
-  // ---- enter a stage cleanly (selector click OR auto-advance) ----
-  function goStage(n) {
-    stopVoice();
-    setStage(n); stageRef.current = n;
-    setSolved(false); solvedRef.current = false;
-    setStars(0); setBadInput(false);
-    setFilled(new Set()); setRotated(false); setScored(false);
-    setBunDrag(null); setHotCell(null); bunDragRef.current = false;
-    setSlate({ product: "" }); setPartA({ product: "" }); setPartB({ product: "" });
-    setBuildRows(0); setBuildCols(0);
-    setSetup({ a: "", b: "" }); setSetupOk(false);
-    setShowWorkInked(false);
-    setCook("idle");
-    const stageKey = STAGES.find((s) => s.n === n)?.key || "1-manipulate";
-    setStatus({ tone: "normal", text: STAGE_INTRO(n, problemFor(n)) });
-    selfCorrectionsRef.current = 0;
-    presentEmittedRef.current = true;
-    emit({
-      type: "problem_present",
-      payload: { node_id: "MULT_ARRAYS", scaffold_level: toScaffoldLevel("m2", stageKey) },
-    });
-  }
-
-  function nextStage() {
-    const idx = STAGES.findIndex((s) => s.n === stageRef.current);
-    const next = idx >= 0 && idx < STAGES.length - 1 ? STAGES[idx + 1] : null;
-    if (!next) {
-      setStatus({ tone: "ok", text: "That's the whole tray — from counting buns to reading a story and knowing the product. Brilliant, povaryonok!" });
-      return;
-    }
-    goStage(next.n);
-  }
-
-  // ---- engine integration helpers ----
-  function applyEngineDecision(dec, isCorrect) {
-    if (!dec) return;
-    if (dec.kind === "FadeScaffold") {
-      nextStage();
-    } else if (dec.kind === "RaiseScaffold") {
-      const idx = STAGES.findIndex((s) => s.n === stageRef.current);
-      const prev = idx > 0 ? STAGES[idx - 1] : null;
-      if (prev) goStage(prev.n);
-    } else if (isCorrect) {
-      nextStage();
-    }
-  }
-
-  function reportAttempt({ correct, answerValue, errorSignature, stars: starCount }) {
-    const dec = judgeAndAdvance(
-      { value: answerValue, modality: "tap", recognizerConfidence: null },
-      {
-        correct,
-        errorSignature: errorSignature ?? null,
-        stars: starCount ?? 0,
-        hintMaxRung: 0,
-        selfCorrections: selfCorrectionsRef.current,
-        surfaceForm: "stage-" + stageRef.current,
-      }
-    );
-    selfCorrectionsRef.current = 0;
-    return dec;
-  }
-
-  function award(line, voiceKeyOrText, answerValue) {
-    setSolved(true); solvedRef.current = true; setStars(3); setCook("cheer");
-    setStatus({ tone: "ok", text: line });
-    if (voiceKeyOrText) say(voiceKeyOrText);
-    const dec = reportAttempt({ correct: true, answerValue: answerValue ?? [PRODUCT, 1], errorSignature: null, stars: 3 });
-    applyEngineDecision(dec, true);
-  }
-
-  function flashBad() {
-    setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
-  }
 
   const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 3);
 
@@ -264,7 +203,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     if (solvedRef.current) return;
     selfCorrectionsRef.current += 1;
     const removing = filled.has(index);
-    emit({ type: removing ? "remove_block" : "place_block", payload: { node_id: "MULT_ARRAYS" } });
+    emit({ type: removing ? "remove_block" : "place_block", payload: { node_id: NODE } });
     setFilled((prev) => {
       const next = new Set(prev);
       if (next.has(index)) next.delete(index);
@@ -506,6 +445,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     award(`Yes — ${wp.rows} × ${wp.cols} = ${want}! ${owner} is proud of you.`, `mr_${wp.owner}_${wp.rows}x${wp.cols}_1`, [want, 1]);
   }
 
+  // ---- header reset ----
   function reset() { goStage(1); }
 
   // ---- "ready to check" glow ----
@@ -517,60 +457,17 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
     : (slate.product !== "")
   );
 
-  // ---- stage selector strip ----
-  const Selector = (
-    <div className="m2-stages" role="tablist" aria-label="Lesson stages">
-      {STAGES.map((s, i) => (
-        <button
-          key={s.key}
-          role="tab"
-          aria-selected={stage === s.n}
-          className={"m2-stage-tab" + (stage === s.n ? " is-active" : "") + (STAGES.findIndex((x) => x.n === stage) > i ? " is-done" : "")}
-          onClick={() => goStage(s.n)}
-          title={s.sub}
-        >
-          <span className="m2-stage-n">{s.n}</span>
-          <span className="m2-stage-txt">
-            <span className="m2-stage-name">{s.tab}</span>
-            <span className="m2-stage-sub">{s.sub}</span>
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-
-  const TopBar = (
-    <div className="topbar">
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <span className="num-mark">№{no}</span>
-        <div>
-          <div className="puzzle-tag">Lesson {no} · Baking Trays</div>
-          <div className="puzzle-title">{title}</div>
-        </div>
-      </div>
-      <div />
-      <div className="controls">
-        {onBack && <button className="ctrl-btn" title="Back to the lesson map" onClick={onBack}>←</button>}
-        {onRewatchIntro && (
-          <button className="ctrl-btn" title="Rewatch the intro video" aria-label="Rewatch the intro video" onClick={onRewatchIntro}>
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
-          </button>
-        )}
-        <SettingsButton />
-        <button className="ctrl-btn" title="Start over" onClick={reset}>⟲</button>
-      </div>
-    </div>
-  );
+  // ---- stage selector strip (reachability: jump to any stage) ----
+  const curKey = STAGES.find((s) => s.n === stage || s.key === stage)?.key;
 
   const Goal = (
-    <div className="goal">
-      <button className={"speaker" + (speaking ? " speaking" : "")} onClick={() => say("mr_mom_goal_m2")}>
-        <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
-        Read aloud
-      </button>
-      <div className="goal-text" data-vox="mr_mom_goal_m2" data-vox-speaker="mom">Babushka's tray has <b>{ROWS} rows</b> of <b>{COLS} buns</b> — a rectangle. Count it as rows times columns: <b>{ROWS} × {COLS}</b>.</div>
-    </div>
+    <LessonGoal say={say} speaking={speaking} voiceKey="mr_mom_goal_m2" voxSpeaker="mom">
+      Babushka's tray has <b>{ROWS} rows</b> of <b>{COLS} buns</b> — a rectangle. Count it as rows times columns: <b>{ROWS} × {COLS}</b>.
+    </LessonGoal>
   );
+
+  // The Cook + speech ribbon, shared by every stage.
+  const Tutor = <TutorRibbon cook={cook} status={status} />;
 
   // ---- the single product Slate (layout="row", one whole-number slot) ----
   const ProductSlate = ({ disabled, autoFocus = true }) => (
@@ -620,8 +517,10 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
   if (stage === 1) {
     // STAGE 1 · MANIPULATE — the tray IS the problem; fill interior cells, count.
     body = (
-      <div className="m2-fz">
-        <div className="m2-fz-stage">
+      <LessonBoard
+        footHeight={196}
+        railWidth={396}
+        stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             {/* pile-of-buns SOURCE sits to the LEFT of the tray so the tray keeps
                 the full vertical budget (a tall rotated/large tray never gets
@@ -634,9 +533,13 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
                   onPointerDown={grabBun}
                   disabled={filledCount >= PRODUCT || solved}
                   style={{ touchAction: "none" }}
-                  aria-label="a pile of buns — drag one onto a cup to fill it"
+                  aria-label={`a pile of buns — ${Math.max(0, PRODUCT - filledCount)} left, drag one onto a cup to fill it`}
                 >
-                  {BUN_PILE.map((b, i) => (
+                  {/* The heap visibly DEPLETES as cups fill: render a slice of the buns
+                      proportional to how many are still to be placed, taking them off
+                      the TOP of the pile first (high indices) so it drains naturally to
+                      an empty bowl when every cup is full. */}
+                  {BUN_PILE.slice(0, Math.ceil(BUN_PILE.length * Math.max(0, PRODUCT - filledCount) / PRODUCT)).map((b, i) => (
                     <span
                       key={i}
                       className="m2-pile-bun"
@@ -645,7 +548,7 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
                     />
                   ))}
                 </button>
-                <span className="m2-pile-cap">Drag a bun onto a cup</span>
+                <span className="m2-pile-cap">{filledCount >= PRODUCT ? "all buns placed ✓" : `${PRODUCT - filledCount} buns left — drag onto a cup`}</span>
               </div>
               <div
                 className={"m2-tray-dropzone" + (bunDrag ? " is-dragging" : "")}
@@ -661,71 +564,74 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             </div>
             <div className="m2-cap">Drag a bun onto each inside cup — fill all {ROWS} rows of {COLS}, then count.</div>
           </FitStage>
-        </div>
-
-        <div className="m2-fz-rail">
-          <div className="panel">
-            <h3>Rows × Columns</h3>
-            <div className="hint">A tray is a rectangle. Drag a bun to every cup one by one, then count them up — by rows is fastest: {COLS}, {COLS * 2}, {COLS * 3}, {PRODUCT}.</div>
+        }
+        rail={
+          <HintRail heading="Rows × Columns" hint={`A tray is a rectangle. Drag a bun to every cup one by one, then count them up — by rows is fastest: ${COLS}, ${COLS * 2}, ${COLS * 3}, ${PRODUCT}.`}>
             <div className="m2-count-readout">filled: <b>{filledCount}</b> / {PRODUCT}</div>
-          </div>
-        </div>
-
-        <div className="m2-fz-answer">
-          <div className="m2-fz-eqrow">
-            <span className="m2-fz-expr">{ROWS} × {COLS}</span>
-            <span className="m2-fz-op">=</span>
-            <span className="m2-fz-slate">{ProductSlate({ disabled: filledCount < PRODUCT || solved })}</span>
-          </div>
-          <div className="m2-fz-cap">{solved ? `full marks — ${ROWS} × ${COLS} = ${PRODUCT}!` : filledCount >= PRODUCT ? "count the buns — write the product" : "fill the whole tray to unlock the answer"}</div>
-          <div className="m2-fz-marks">
-            {solved && <Rosette count={stars} />}
-            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={checkStage1}>{solved ? "Next stage ▸" : "Check"}</button>
-          </div>
-        </div>
-
-        <Tutor cook={cook} status={status} />
-      </div>
+          </HintRail>
+        }
+        answer={
+          <AnswerBar
+            eq={
+              <>
+                <span className="m2-fz-expr">{ROWS} × {COLS}</span>
+                <span className="m2-fz-op">=</span>
+                <span className="m2-fz-slate">{ProductSlate({ disabled: filledCount < PRODUCT || solved })}</span>
+              </>
+            }
+            cap={solved ? `full marks — ${ROWS} × ${COLS} = ${PRODUCT}!` : filledCount >= PRODUCT ? "count the buns — write the product" : "fill the whole tray to unlock the answer"}
+            solved={solved}
+            ready={answerReady}
+            stars={stars}
+            onCheck={checkStage1}
+            checkLabel={solved ? "Next stage ▸" : "Check"}
+          />
+        }
+        tutor={Tutor}
+      />
     );
   } else if (stage === 2) {
     // STAGE 2 · BIND — full tray + written 4 × 6 = __; SPIN for commutativity.
     body = (
-      <div className="m2-fz">
-        <div className="m2-fz-stage">
+      <LessonBoard
+        footHeight={196}
+        railWidth={396}
+        stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             <BakingTray rows={effRows} cols={effCols} filled={effRows * effCols} onFill={() => {}} onRotate={() => { setRotated((r) => !r); setCook("idle"); setStatus({ tone: "ok", text: `Spun it — now it's ${effCols} × ${effRows}, but the buns never changed. Still ${PRODUCT}.` }); }} readOnly />
             <div className="m2-cap">{rotated ? `${effRows} rows of ${effCols} — same tray, ${PRODUCT} buns.` : `${ROWS} rows of ${COLS}. Tap "Spin the tray" to see it the other way.`}</div>
           </FitStage>
-        </div>
-
-        <div className="m2-fz-rail">
-          <div className="panel">
-            <h3>The Same Either Way</h3>
-            <div className="hint">Write {ROWS} × {COLS}, then spin the tray: {COLS} × {ROWS} fills the very same cups. Rows times columns is the same number either way around.</div>
-          </div>
-        </div>
-
-        <div className="m2-fz-answer">
-          <div className="m2-fz-eqrow">
-            <span className="m2-fz-expr">{effRows} × {effCols}</span>
-            <span className="m2-fz-op">=</span>
-            <span className="m2-fz-slate">{ProductSlate({ disabled: solved })}</span>
-          </div>
-          <div className="m2-fz-cap">{solved ? `full marks — ${PRODUCT} either way!` : "write the product, then Check"}</div>
-          <div className="m2-fz-marks">
-            {solved && <Rosette count={stars} />}
-            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={checkProduct}>{solved ? "Next stage ▸" : "Check"}</button>
-          </div>
-        </div>
-
-        <Tutor cook={cook} status={status} />
-      </div>
+        }
+        rail={
+          <HintRail heading="The Same Either Way" hint={`Write ${ROWS} × ${COLS}, then spin the tray: ${COLS} × ${ROWS} fills the very same cups. Rows times columns is the same number either way around.`} />
+        }
+        answer={
+          <AnswerBar
+            eq={
+              <>
+                <span className="m2-fz-expr">{effRows} × {effCols}</span>
+                <span className="m2-fz-op">=</span>
+                <span className="m2-fz-slate">{ProductSlate({ disabled: solved })}</span>
+              </>
+            }
+            cap={solved ? `full marks — ${PRODUCT} either way!` : "write the product, then Check"}
+            solved={solved}
+            ready={answerReady}
+            stars={stars}
+            onCheck={checkProduct}
+            checkLabel={solved ? "Next stage ▸" : "Check"}
+          />
+        }
+        tutor={Tutor}
+      />
     );
   } else if (stage === 3) {
     // STAGE 3 · FADE — tray dims; SCORE a column → two partial products (distrib).
     body = (
-      <div className="m2-fz">
-        <div className="m2-fz-stage">
+      <LessonBoard
+        footHeight={196}
+        railWidth={396}
+        stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             <BakingTray rows={ROWS} cols={COLS} filled={PRODUCT} onFill={() => {}} ghost={!scored} scoreAt={scored ? SCORE_COL : null} readOnly />
             {!scored && (
@@ -733,44 +639,46 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             )}
             <div className="m2-cap">{scored ? `Two pieces: ${ROWS} × ${SCORE_COL} and ${ROWS} × ${COLS - SCORE_COL}. Multiply each, then add.` : `A big tray — score it into two easy pieces.`}</div>
           </FitStage>
-        </div>
-
-        <div className="m2-fz-rail">
-          <div className="panel">
-            <h3>Split a Hard Tray</h3>
-            <div className="hint">Cut the {ROWS} × {COLS} tray after column {SCORE_COL}: that's {ROWS} × {SCORE_COL} = {PART_A} and {ROWS} × {COLS - SCORE_COL} = {PART_B}. Add the two pieces — or just write {ROWS} × {COLS}.</div>
-          </div>
-        </div>
-
-        <div className="m2-fz-answer m2-fz-answer-distrib">
-          <div className="m2-distrib-row">
-            <span className="m2-distrib-part">
-              <span className="m2-distrib-lab">{ROWS} × {SCORE_COL} =</span>
-              <Slate slots={[{ key: "product", label: "first product" }]} values={partA} onChange={(k, v) => setPartA({ product: onlyDigits(v) })} onSubmit={checkFade} layout="row" disabled={solved || !scored} ariaLabel="first partial product" />
-            </span>
-            <span className="m2-distrib-plus">+</span>
-            <span className="m2-distrib-part">
-              <span className="m2-distrib-lab">{ROWS} × {COLS - SCORE_COL} =</span>
-              <Slate slots={[{ key: "product", label: "second product" }]} values={partB} onChange={(k, v) => setPartB({ product: onlyDigits(v) })} onSubmit={checkFade} layout="row" disabled={solved || !scored} ariaLabel="second partial product" />
-            </span>
-            <span className="m2-distrib-eq">→ {ROWS} × {COLS} =</span>
-            <span className="m2-fz-slate">{ProductSlate({ disabled: solved, autoFocus: false })}</span>
-          </div>
-          <div className="m2-fz-marks">
-            {solved && <Rosette count={stars} />}
-            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={checkFade}>{solved ? "Next stage ▸" : "Check"}</button>
-          </div>
-        </div>
-
-        <Tutor cook={cook} status={status} />
-      </div>
+        }
+        rail={
+          <HintRail heading="Split a Hard Tray" hint={`Cut the ${ROWS} × ${COLS} tray after column ${SCORE_COL}: that's ${ROWS} × ${SCORE_COL} = ${PART_A} and ${ROWS} × ${COLS - SCORE_COL} = ${PART_B}. Add the two pieces — or just write ${ROWS} × ${COLS}.`} />
+        }
+        answer={
+          <AnswerBar
+            className="m2-fz-answer-distrib"
+            eq={
+              <div className="m2-distrib-row">
+                <span className="m2-distrib-part">
+                  <span className="m2-distrib-lab">{ROWS} × {SCORE_COL} =</span>
+                  <Slate slots={[{ key: "product", label: "first product" }]} values={partA} onChange={(k, v) => setPartA({ product: onlyDigits(v) })} onSubmit={checkFade} layout="row" disabled={solved || !scored} ariaLabel="first partial product" />
+                </span>
+                <span className="m2-distrib-plus">+</span>
+                <span className="m2-distrib-part">
+                  <span className="m2-distrib-lab">{ROWS} × {COLS - SCORE_COL} =</span>
+                  <Slate slots={[{ key: "product", label: "second product" }]} values={partB} onChange={(k, v) => setPartB({ product: onlyDigits(v) })} onSubmit={checkFade} layout="row" disabled={solved || !scored} ariaLabel="second partial product" />
+                </span>
+                <span className="m2-distrib-eq">→ {ROWS} × {COLS} =</span>
+                <span className="m2-fz-slate">{ProductSlate({ disabled: solved, autoFocus: false })}</span>
+              </div>
+            }
+            solved={solved}
+            ready={answerReady}
+            stars={stars}
+            onCheck={checkFade}
+            checkLabel={solved ? "Next stage ▸" : "Check"}
+          />
+        }
+        tutor={Tutor}
+      />
     );
   } else if (stage === 4) {
     // STAGE 4 · WORKBENCH — BakingTray-backed BUILD (2-D dimensions + total).
     const built = buildRows * buildCols;
     body = (
-      <div className="m2-fz">
-        <div className="m2-fz-stage">
+      <LessonBoard
+        footHeight={196}
+        railWidth={396}
+        stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             {buildRows > 0 && buildCols > 0 ? (
               <BakingTray rows={buildRows} cols={buildCols} filled={built} onFill={() => {}} readOnly />
@@ -779,12 +687,9 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             )}
             <div className="m2-cap">Set the rows and columns so rows × columns reach {PRODUCT}.</div>
           </FitStage>
-        </div>
-
-        <div className="m2-fz-rail">
-          <div className="panel">
-            <h3>Build the Array</h3>
-            <div className="hint">Set the rows, set the columns, and the tray draws itself. Make {ROWS} × {COLS} (or {COLS} × {ROWS}) and read the {PRODUCT}.</div>
+        }
+        rail={
+          <HintRail heading="Build the Array" hint={`Set the rows, set the columns, and the tray draws itself. Make ${ROWS} × ${COLS} (or ${COLS} × ${ROWS}) and read the ${PRODUCT}.`}>
             <div className="m2-build-controls">
               <div className="m2-build-dim">
                 <span className="m2-build-dim-lab">rows</span>
@@ -805,30 +710,35 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
               </div>
             </div>
             <div className="m2-count-readout">total: <b>{built}</b></div>
-          </div>
-        </div>
-
-        <div className="m2-fz-answer">
-          <div className="m2-fz-eqrow">
-            <span className="m2-fz-expr">{buildRows || "?"} × {buildCols || "?"}</span>
-            <span className="m2-fz-op">=</span>
-            <span className="m2-fz-expr">{built || "?"}</span>
-          </div>
-          <div className="m2-fz-cap">{solved ? `built it — ${PRODUCT}!` : "set rows and columns, then Build it"}</div>
-          <div className="m2-fz-marks">
-            {solved && <Rosette count={stars} />}
-            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={checkBuild}>{solved ? "Next stage ▸" : "Build it ▸"}</button>
-          </div>
-        </div>
-
-        <Tutor cook={cook} status={status} />
-      </div>
+          </HintRail>
+        }
+        answer={
+          <AnswerBar
+            eq={
+              <>
+                <span className="m2-fz-expr">{buildRows || "?"} × {buildCols || "?"}</span>
+                <span className="m2-fz-op">=</span>
+                <span className="m2-fz-expr">{built || "?"}</span>
+              </>
+            }
+            cap={solved ? `built it — ${PRODUCT}!` : "set rows and columns, then Build it"}
+            solved={solved}
+            ready={answerReady}
+            stars={stars}
+            onCheck={checkBuild}
+            checkLabel={solved ? "Next stage ▸" : "Build it ▸"}
+          />
+        }
+        tutor={Tutor}
+      />
     );
   } else if (stage === 5) {
     // STAGE 5 · NUMBERS — a BARE expression; write the product. No tray.
     body = (
-      <div className="m2-fz">
-        <div className="m2-fz-stage">
+      <LessonBoard
+        footHeight={196}
+        railWidth={396}
+        stage={
           <FitStage className="m2-fz-canvas m2-fz-canvas-center">
             <div className="m2-bigeq">
               <span className="m2-bigeq-f">{ROWS}</span>
@@ -839,36 +749,39 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             </div>
             <div className="m2-cap">No tray now — picture the rows, and write the product.</div>
           </FitStage>
-        </div>
-
-        <div className="m2-fz-rail">
-          <div className="panel">
-            <h3>Write the Product</h3>
-            <div className="hint">{ROWS} rows of {COLS}. Skip-count if you need to ({COLS}, {COLS * 2}, …) or split it ({ROWS} × 5 = {ROWS * 5}, then {ROWS} more) — then write {PRODUCT}.</div>
-          </div>
-        </div>
-
-        <div className="m2-fz-answer m2-fz-answer-big">
-          <div className="m2-fz-eqrow">
-            <span className="m2-fz-expr">{ROWS} × {COLS}</span>
-            <span className="m2-fz-op">=</span>
-            <span className="m2-fz-slate">{ProductSlate({ disabled: solved })}</span>
-          </div>
-          <div className="m2-fz-cap">{solved ? `full marks — ${ROWS} × ${COLS} = ${PRODUCT}!` : "write the product on the Slate, then Check"}</div>
-          <div className="m2-fz-marks">
-            {solved && <Rosette count={stars} />}
-            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={checkProduct}>{solved ? "Next stage ▸" : "Check"}</button>
-          </div>
-        </div>
-
-        <Tutor cook={cook} status={status} />
-      </div>
+        }
+        rail={
+          <HintRail heading="Write the Product" hint={`${ROWS} rows of ${COLS}. Skip-count if you need to (${COLS}, ${COLS * 2}, …) or split it (${ROWS} × 5 = ${ROWS * 5}, then ${ROWS} more) — then write ${PRODUCT}.`} />
+        }
+        answer={
+          <AnswerBar
+            className="m2-fz-answer-big"
+            eq={
+              <>
+                <span className="m2-fz-expr">{ROWS} × {COLS}</span>
+                <span className="m2-fz-op">=</span>
+                <span className="m2-fz-slate">{ProductSlate({ disabled: solved })}</span>
+              </>
+            }
+            cap={solved ? `full marks — ${ROWS} × ${COLS} = ${PRODUCT}!` : "write the product on the Slate, then Check"}
+            solved={solved}
+            ready={answerReady}
+            stars={stars}
+            onCheck={checkProduct}
+            checkLabel={solved ? "Next stage ▸" : "Check"}
+          />
+        }
+        tutor={Tutor}
+      />
     );
   } else if (stage === 6) {
     // STAGE 6 · APPLIED — word problem (numerals shown) + REQUIRED setup gate.
     body = (
-      <div className="m2-fz m2-fz-words m2-fz-applied">
-        <div className="m2-fz-wp">
+      <LessonBoard
+        variant="wide"
+        className="m2-fz-words m2-fz-applied"
+        tutorWidth={220}
+        content={
           <WordProblem
             story={wp.story}
             tag="Babushka's kitchen"
@@ -898,17 +811,19 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             checkLabel={solved ? "Next stage ▸" : "Check"}
             checkDisabled={!setupOk}
           />
-        </div>
-        <Tutor cook={cook} status={status} narrow />
-      </div>
+        }
+        tutor={<TutorRibbon cook={cook} status={status} narrow />}
+      />
     );
   } else if (stage === "sw") {
     // SHOW WORK — mandatory blank-slate step between Applied and Words.
     // Ungraded: the child must put ink down before the Next button unlocks.
     const wordsKey = STAGES.find((s) => s.key === "7-words")?.n ?? 7;
     body = (
-      <div className="m2-fz">
-        <div className="m2-fz-stage">
+      <LessonBoard
+        footHeight={196}
+        railWidth={396}
+        stage={
           <div className="m2-fz-canvas m2-fz-canvas-center">
             <div className="bs-surface" style={{ position: "relative", width: 800, height: 252 }}>
               <BlankSlate
@@ -920,30 +835,31 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             </div>
             <div className="m2-cap">Show your work — write out how you found the product. Anything you like.</div>
           </div>
-        </div>
-
-        <div className="m2-fz-rail">
-          <div className="panel">
-            <h3>Show Your Work</h3>
-            <div className="hint">No tray, no slots — just a blank sheet. Sketch the rows, skip-count, or write the multiplication. When you've shown your work, tap Next.</div>
-          </div>
-        </div>
-
-        <div className="m2-fz-answer">
-          <div className="m2-fz-cap">{showWorkInked ? "looks good — tap Next when you're ready" : "write something on the sheet to continue"}</div>
-          <div className="m2-fz-marks">
-            <button className={"check" + (showWorkInked ? " ready" : "")} disabled={!showWorkInked} onClick={() => goStage(wordsKey)}>Next ▸</button>
-          </div>
-        </div>
-
-        <Tutor cook={cook} status={status} />
-      </div>
+        }
+        rail={
+          <HintRail heading="Show Your Work" hint="No tray, no slots — just a blank sheet. Sketch the rows, skip-count, or write the multiplication. When you've shown your work, tap Next." />
+        }
+        answer={
+          <AnswerBar
+            eq={null}
+            cap={showWorkInked ? "looks good — tap Next when you're ready" : "write something on the sheet to continue"}
+            ready={showWorkInked}
+            onCheck={() => goStage(wordsKey)}
+            checkLabel="Next ▸"
+            checkDisabled={!showWorkInked}
+          />
+        }
+        tutor={Tutor}
+      />
     );
   } else {
     // STAGE 7 · WORDS — prose only; optional ungraded scratch never gates.
     body = (
-      <div className="m2-fz m2-fz-words">
-        <div className="m2-fz-wp">
+      <LessonBoard
+        variant="wide"
+        className="m2-fz-words"
+        tutorWidth={220}
+        content={
           <WordProblem
             story={wp.story}
             tag="Babushka's Recipe"
@@ -965,42 +881,46 @@ export default function AppM2({ no, title, onBack, onRewatchIntro, initialBeat }
             onCheck={checkWordAnswer}
             checkLabel={solved ? "Finish ▸" : "Check"}
           />
-        </div>
-        <Tutor cook={cook} status={status} narrow />
-      </div>
+        }
+        tutor={<TutorRibbon cook={cook} status={status} narrow />}
+      />
     );
   }
 
   return (
-    <div className="page" data-vox-speaker="cook">
-      <div className="foxing" />
-      {TopBar}
-      {Selector}
-      {/* The bare-equation QuestionBand shows the math on every stage EXCEPT the
-          final words-only stage (7), where the whole point is for the child to
-          read the prose and extract the math themselves — showing the equation
-          would give it away. (Applied (6) intentionally keeps numerals.) */}
-      {stage !== 7 && band}
-      {Goal}
-      {body}
-      {bunDrag && (
+    <LessonShell
+      no={no}
+      tag="Baking Trays"
+      title={title}
+      onBack={onBack}
+      onRewatchIntro={onRewatchIntro}
+      onReset={reset}
+      tabs={{
+        stages: STAGES.map((s) => ({ key: s.key, badge: s.n, title: s.tab, sub: s.sub })),
+        current: curKey,
+        onSelect: (key) => goStage(toStageVal(key)),
+      }}
+      // The bare-equation QuestionBand shows the math on every stage EXCEPT the
+      // final words-only stage (7), where the whole point is for the child to read
+      // the prose and extract the math themselves — showing the equation would give
+      // it away. (Applied (6) intentionally keeps numerals.)
+      band={stage !== 7 ? band : null}
+      goal={Goal}
+      // Portaled to <body> so its position:fixed resolves against the VIEWPORT —
+      // the app's #stage carries a transform: scale() (Shell.useStageFit), which
+      // would otherwise become the containing block for this fixed ghost and drift
+      // it up-left of the real cursor.
+      extra={bunDrag && createPortal(
         <span
           className="m2-bun-ghost"
           style={{ left: bunDrag.x, top: bunDrag.y }}
           aria-hidden="true"
-        />
+        />,
+        document.body
       )}
-    </div>
-  );
-}
-
-// Cook + ribbon tutor zone (bottom-right fixed rect).
-function Tutor({ cook, status, narrow = false }) {
-  return (
-    <div className={"m2-fz-tutor" + (narrow ? " m2-fz-tutor-narrow" : "")}>
-      <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-      <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
-    </div>
+    >
+      {body}
+    </LessonShell>
   );
 }
 

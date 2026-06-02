@@ -1,0 +1,16 @@
+{
+  "route": "r4",
+  "steps": [
+    { "waitFor": ".intro-continue" },
+    { "click": ".intro-continue" },
+    { "wait": 700 },
+    { "click": ".intro-continue" },
+    { "wait": 700 },
+    { "click": ".intro-continue" },
+    { "wait": 500 },
+    { "waitFor": ".stage-tab" },
+    { "wait": 400 },
+    { "clickNth": { "selector": ".stage-tab", "n": 4 } },
+    { "wait": 800 }
+  ]
+}

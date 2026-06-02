@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Lesson 4 — Simplify intro</title>
+<title>Lesson 7 — Simplify intro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
@@ -40,10 +40,11 @@
   }
   #kicker.on{opacity:.95; transform:none;}
 
-  /* ── the board: one bar of pieces + a stacked fraction label to its left ── */
-  #board{ position:relative; width:560px; max-width:92vw; }
+  /* ── the board: one GroupBar (fixed-width whole) + a stacked fraction label ── */
+  #board{ position:relative; width:600px; max-width:94vw; transition:opacity .6s ease; }
 
-  .barrow{ display:flex; align-items:center; gap:24px; margin:14px 0; }
+  .barrow{ display:flex; align-items:center; gap:24px; margin:30px 0; transition:opacity .6s ease; }
+
   /* the stacked fraction label to the left of the bar */
   .flab{ display:flex; flex-direction:column; align-items:center; width:54px; flex:0 0 auto;
     font-family:"Russo One",sans-serif; line-height:1; color:var(--neutral); transition:color .7s ease; }
@@ -53,55 +54,128 @@
   #board.toSix .flab{ color:var(--sixths); }
   #board.toThirds .flab{ color:var(--thirds); }
 
-  /* a bar = a sequence of equal pieces; the bar's TOTAL width is the AMOUNT and
-     never changes — only how many cuts there are changes. */
-  #barWrap{ position:relative; }
-  .bar-track{ display:flex; gap:0; height:54px; align-items:stretch; }
-  .pc{
-    height:100%; border:2px solid rgba(20,14,10,.5); border-right-width:1px;
-    background:var(--neutral);
-    display:flex; align-items:center; justify-content:center;
-    font-family:"Russo One",sans-serif; font-size:13px; color:rgba(255,250,235,.92);
-    transition:background .7s ease, opacity .5s ease;
-  }
-  .pc:last-child{ border-right-width:2px; }
-  #board.toSix .pc{ background:var(--sixths); }
-  #board.toThirds .pc{ background:var(--thirds); }
+  /* ── GroupBar ──────────────────────────────────────────────────────────────
+     ONE fixed-width whole (the track). Its width = SPAN and is CONSTANT for
+     every grouping — that constancy is what makes the amount visibly invariant.
+     The track holds `den` equal cells; the first `num` are .is-filled, the rest
+     are .is-empty (outlined) so "8 OUT OF 12" is literally visible.            */
+  .r4-groupbar{ position:relative; transition:opacity .6s ease; }
+  .r4-groupbar.is-ghost{ opacity:.14; }
 
-  /* the held right edge — a vertical tick that stays put the whole time */
-  #edge{
-    position:absolute; top:-12px; bottom:-12px; width:3px; background:var(--red);
-    opacity:0; transition:opacity .6s ease;
+  .r4-gb-track{ display:flex; gap:0; height:58px; align-items:stretch; position:relative;
+    border:2px solid rgba(20,14,10,.55); border-radius:3px; overflow:hidden; }
+  .r4-gb-cell{
+    height:100%; position:relative;
+    border-right:1px solid var(--cut, rgba(20,14,10,.45));
+    display:flex; align-items:center; justify-content:center;
+    transition:background .6s ease, border-color .6s ease, color .6s ease;
   }
-  #edge.on{ opacity:.85; }
-  #edgeLabel{
-    position:absolute; top:-40px; transform:translateX(-50%);
+  .r4-gb-cell:last-child{ border-right:none; }
+  .r4-gb-cell.is-filled{ background:var(--neutral); }
+  .r4-gb-cell.is-empty{ background:transparent;
+    background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.07) 0 6px, transparent 6px 12px); }
+  #board.toSix .r4-gb-cell.is-filled{ background:var(--sixths); }
+  #board.toThirds .r4-gb-cell.is-filled{ background:var(--thirds); }
+
+  /* internal cut line (drawn as the cell's right border above; kept for spec parity) */
+  .r4-gb-cut{ position:absolute; top:0; bottom:0; width:1px; background:rgba(20,14,10,.45); }
+
+  /* grouping overlay: a bracket/tie under each bundle of k cells */
+  .r4-gb-group{ position:absolute; top:100%; height:14px; pointer-events:none; }
+  .r4-gb-grouptie{ position:absolute; left:6%; right:6%; top:6px; height:8px;
+    border:2px solid var(--red); border-top:none; border-radius:0 0 6px 6px; opacity:0;
+    transition:opacity .45s ease; }
+  .r4-gb-grouptie.on{ opacity:.7; }
+
+  /* the held fill-edge: x = num*(SPAN/den) = VALUE*SPAN — IDENTICAL for 8/12,4/6,2/3 */
+  .r4-gb-filledge{
+    position:absolute; top:-14px; bottom:-14px; width:3px; background:var(--red);
+    opacity:0; transition:opacity .6s ease; z-index:4;
+  }
+  .r4-gb-filledge.on{ opacity:.9; }
+  .r4-gb-edgecap{
+    position:absolute; top:-40px; left:50%; transform:translateX(-50%);
     font-family:"Russo One",sans-serif; font-size:11px; letter-spacing:.12em;
     text-transform:uppercase; color:var(--red); white-space:nowrap;
     opacity:0; transition:opacity .6s ease;
   }
-  #edgeLabel.on{ opacity:.9; }
+  .r4-gb-edgecap.on{ opacity:.92; }
 
-  /* the equation, revealed late and centered over a faded board */
+  /* count chip above the filled run: "<num> of <den>" */
+  .r4-gb-counttag{
+    position:absolute; top:-30px; left:0; transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:14px; color:var(--ink-soft);
+    white-space:nowrap; opacity:0; transition:opacity .5s ease, left .6s ease;
+  }
+  .r4-gb-counttag.on{ opacity:.95; }
+  .r4-gb-counttag b{ color:var(--neutral); }
+  #board.toSix .r4-gb-counttag b{ color:var(--sixths); }
+  #board.toThirds .r4-gb-counttag b{ color:var(--thirds); }
+
+  /* division-legality annotations */
+  .r4-gb-divrow{ position:absolute; left:0; right:0; pointer-events:none; }
+  .r4-gb-div{
+    position:absolute; transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:13px; color:var(--red);
+    white-space:nowrap; opacity:0; transition:opacity .45s ease;
+  }
+  .r4-gb-div.on{ opacity:.92; }
+  .r4-gb-div.top{ top:-58px; }
+  .r4-gb-div.bot{ top:calc(100% + 30px); }
+  .r4-gb-divone{
+    position:absolute; left:50%; top:calc(100% + 52px); transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:12px; letter-spacing:.04em;
+    color:var(--ink-soft); white-space:nowrap;
+    opacity:0; transition:opacity .45s ease;
+  }
+  .r4-gb-divone.on{ opacity:.85; }
+  .r4-gb-divone b{ color:var(--red); }
+
+  /* 0 / 1 ruler ticks (reuse the .nline/.ntick/.nlab idea) */
+  .nline{ position:absolute; left:0; right:0; top:calc(100% + 78px); height:0; }
+  .ntick{ position:absolute; top:-5px; width:2px; height:10px; background:var(--ink-soft); opacity:.55; }
+  .nlab{ position:absolute; top:4px; transform:translateX(-50%); font-family:"Russo One",sans-serif;
+    font-size:12px; color:var(--ink-soft); opacity:.7; }
+
+  /* ── the divide-by-one proof line (beat 5) ───────────────────────────────── */
+  #proof{
+    position:absolute; left:50%; top:46%; transform:translate(-50%,-50%) translateY(14px);
+    display:flex; flex-direction:column; align-items:center; gap:4px; z-index:7;
+    font-family:"Russo One",sans-serif; opacity:0;
+    transition:opacity .6s ease, transform .6s ease;
+  }
+  #proof.on{ opacity:1; transform:translate(-50%,-50%); }
+  #proof .prow{ display:flex; align-items:center; gap:14px; }
+  #proof .pf{ display:flex; flex-direction:column; align-items:center; line-height:1; color:var(--neutral); }
+  #proof .pf .n,#proof .pf .d{ font-size:40px; }
+  #proof .pf .bar{ width:42px; height:5px; background:currentColor; border-radius:2px; margin:6px 0; }
+  #proof .pdiv{ display:flex; flex-direction:column; align-items:center; gap:30px; color:var(--red); font-size:16px; }
+  #proof .pbr{ font-size:18px; color:var(--ink-soft); margin-top:10px; }
+  #proof .pbr b{ color:var(--red); }
+
+  /* the final equation, revealed late and centered over a faded board */
   #result{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(16px);
-    display:flex; align-items:center; gap:16px; z-index:7;
+    display:flex; flex-direction:column; align-items:center; gap:10px; z-index:7;
     font-family:"Russo One",sans-serif;
     opacity:0; transition:opacity .6s ease, transform .6s ease;
   }
   #result.on{ opacity:1; transform:translate(-50%,-50%); }
+  #result .eqrow{ display:flex; align-items:center; gap:16px; }
   #result .f{ display:flex; flex-direction:column; align-items:center; line-height:1; }
   #result .f .n,#result .f .d{ font-size:46px; }
   #result .f .bar{ width:48px; height:5px; background:currentColor; border-radius:2px; margin:6px 0; }
   #result .f12{ color:var(--neutral); } #result .f3{ color:var(--thirds); }
   #result .op{ font-size:34px; color:var(--ink-soft); }
-  /* when the result shows, recede the working bar so nothing collides */
-  #board.faded .barrow{ opacity:.14; }
-  #board.faded #edge,#board.faded #edgeLabel{ opacity:.14; }
+  #result .simplest{ font-family:"Russo One",sans-serif; font-size:12px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--thirds); opacity:.9; }
+
+  /* when the proof/result shows, recede the working bar so nothing collides */
+  #board.faded .barrow{ opacity:.16; }
 
   #caption{
     position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
-    width:min(700px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+    width:min(760px,94vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
   }
   #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
     transition:opacity .55s ease, transform .55s ease; }
@@ -119,26 +193,63 @@
     <div id="board">
       <div class="barrow">
         <div class="flab"><div class="n" id="fN">8</div><div class="bar"></div><div class="d" id="fD">12</div></div>
-        <div id="barWrap">
-          <div class="bar-track" id="bar"></div>
-          <div id="edge"><span id="edgeLabel">same amount</span></div>
+
+        <!-- GroupBar: one fixed-width whole -->
+        <div class="r4-groupbar" id="gb">
+          <div class="r4-gb-track" id="gbTrack"></div>
+
+          <!-- grouping ties (one per bundle) live here -->
+          <div class="r4-gb-group" id="gbGroup" style="left:0;right:0;"></div>
+
+          <!-- held fill-edge marker -->
+          <div class="r4-gb-filledge" id="edge"><span class="r4-gb-edgecap" id="edgeCap">same amount</span></div>
+
+          <!-- count chip "<num> of <den>" -->
+          <div class="r4-gb-counttag" id="countTag"><b><span id="ctN">8</span></b> of <span id="ctD">12</span></div>
+
+          <!-- division-legality annotations -->
+          <div class="r4-gb-divrow" id="divRow">
+            <span class="r4-gb-div top" id="divTop">÷&#8202;2</span>
+            <span class="r4-gb-div bot" id="divBot">÷&#8202;2</span>
+            <span class="r4-gb-divone" id="divOne">÷&#8202;2 / 2 = <b>÷&#8202;1</b></span>
+          </div>
+
+          <!-- 0 / 1 ruler -->
+          <div class="nline" id="nline">
+            <span class="ntick" style="left:0;"></span><span class="nlab" style="left:0;">0</span>
+            <span class="ntick" style="right:0;"></span><span class="nlab" id="nlab1">1</span>
+          </div>
         </div>
       </div>
 
+      <!-- beat 5: divide-by-one proof -->
+      <div id="proof">
+        <div class="prow">
+          <span class="pdiv">÷&#8202;k</span>
+          <span class="pf"><span class="n">8</span><span class="bar"></span><span class="d">12</span></span>
+          <span class="pdiv">÷&#8202;k</span>
+        </div>
+        <div class="pbr">k / k = <b>1</b> &nbsp;·&nbsp; dividing by 1 can't change the amount</div>
+      </div>
+
+      <!-- beat 6: final equation -->
       <div id="result">
-        <span class="f f12"><span class="n">8</span><span class="bar"></span><span class="d">12</span></span>
-        <span class="op">=</span>
-        <span class="f f3"><span class="n">2</span><span class="bar"></span><span class="d">3</span></span>
+        <div class="eqrow">
+          <span class="f f12"><span class="n">8</span><span class="bar"></span><span class="d">12</span></span>
+          <span class="op">=</span>
+          <span class="f f3"><span class="n">2</span><span class="bar"></span><span class="d">3</span></span>
+        </div>
+        <span class="simplest">simplest name</span>
       </div>
     </div>
 
     <div id="caption">
-      <div class="cap" data-i="0"><span class="nq">Eight twelfths</span> — a bar of many tiny pieces.</div>
-      <div class="cap" data-i="1">Let's fuse equal groups into fewer, bigger pieces.</div>
-      <div class="cap" data-i="2">Two twelfths fuse into <span class="g">one sixth</span> — now it's <span class="g">four sixths</span>.</div>
-      <div class="cap" data-i="3">Keep going — fuse again into the biggest pieces: <span class="o">two thirds</span>.</div>
-      <div class="cap" data-i="4">The amount never changed — the bar is the same length.</div>
-      <div class="cap" data-i="5"><span class="nq">Eight twelfths</span> is <span class="o">two thirds</span>, tidied up.</div>
+      <div class="cap" data-i="0">Babushka's answer came out as <span class="nq">8 out of 12</span> pieces.</div>
+      <div class="cap" data-i="1">Watch this edge. <span class="o">It never moves.</span></div>
+      <div class="cap" data-i="2">Group by 2: <span class="g">4 out of 6</span> — the edge holds.</div>
+      <div class="cap" data-i="3">Group again: <span class="o">2 out of 3</span> — still the same edge.</div>
+      <div class="cap" data-i="4">Divide top AND bottom by the same number = divide by <span class="o">1</span>. The amount can't change.</div>
+      <div class="cap" data-i="5"><span class="nq">8/12</span> = <span class="o">2/3</span> — the same amount, the simplest name.</div>
     </div>
   </div>
 
@@ -148,26 +259,56 @@
 <script>
 (function(){
   "use strict";
-  var PERSIST = "simplify.v1";
-  var DURATION = 27;            // seconds — tightened (~0.5s between lines)
-  var TOTAL = 432;              // px: the bar's full length (the AMOUNT) — held fixed
+  var PERSIST  = "simplify.v1";
+  var DURATION = 27;             // seconds — storyboard.introDurationSec
+  var SPAN     = 468;            // px: the whole bar's full length (the AMOUNT) — held fixed
+  var NUM      = 8, FULLDEN = 12;
+  var VALUE    = NUM / FULLDEN;  // 2/3 — the held fill fraction
+  var EDGE_X   = VALUE * SPAN;   // x of the held fill-edge: IDENTICAL for 8/12, 4/6, 2/3
 
   function el(id){ return document.getElementById(id); }
 
-  // build a bar of `n` equal pieces that together span TOTAL px (the held amount).
-  // the right edge therefore lands at the same x for every n — the whole point.
-  function buildBar(n){
-    var bar = el("bar"); bar.innerHTML = "";
-    var w = TOTAL / n;
-    for (var i=0;i<n;i++){
-      var d=document.createElement("div"); d.className="pc"; d.style.width=w+"px";
-      bar.appendChild(d);
+  // ── GroupBar: render ONE fixed-width whole as `den` equal cells, `num` filled.
+  //    The filled extent (left..EDGE_X) is identical for every (num,den) on the
+  //    same value, because num*(SPAN/den) === VALUE*SPAN === EDGE_X. ────────────
+  function renderGroup(num, den){
+    var track = el("gbTrack"); track.innerHTML = "";
+    var w = SPAN / den;
+    for (var i=0;i<den;i++){
+      var c = document.createElement("div");
+      c.className = "r4-gb-cell " + (i < num ? "is-filled" : "is-empty");
+      c.style.width = w + "px";
+      track.appendChild(c);
+    }
+    track.style.width = SPAN + "px";
+    // count chip rides above the middle of the filled run
+    el("ctN").textContent = num; el("ctD").textContent = den;
+    el("countTag").style.left = (EDGE_X/2) + "px";
+  }
+
+  // draw `den/k` grouping ties, each spanning a bundle of k cells (k=2 here)
+  function showTies(den, k){
+    var g = el("gbGroup"); g.innerHTML = "";
+    var groups = den / k, gw = SPAN / groups;
+    for (var i=0;i<groups;i++){
+      var wrap = document.createElement("div");
+      wrap.style.position="absolute"; wrap.style.left=(i*gw)+"px"; wrap.style.width=gw+"px";
+      wrap.style.top="0"; wrap.style.bottom="0";
+      var tie = document.createElement("div");
+      tie.className = "r4-gb-grouptie";
+      wrap.appendChild(tie); g.appendChild(wrap);
+      (function(t,d){ setTimeout(function(){ t.classList.add("on"); }, 80 + d*60); })(tie, i);
     }
   }
-  buildBar(12); // start: eight... well, twelve tiny twelfths (8 shown filled below)
+  function clearTies(){ el("gbGroup").innerHTML = ""; }
 
-  // place the held right-edge tick at the bar's far end (x = TOTAL)
-  el("edge").style.left = TOTAL + "px";
+  // position the held fill-edge + ruler "1" tick
+  el("edge").style.left = EDGE_X + "px";
+  el("nlab1").style.left = SPAN + "px";
+  el("nline").style.right = "auto"; el("nline").style.width = SPAN + "px";
+
+  // start: 8 out of 12 — many tiny neutral pieces, 8 filled / 4 empty
+  renderGroup(8, 12);
 
   var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
   function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
@@ -175,54 +316,91 @@
   function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.28)";
     setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
 
+  function flashEdge(scale){
+    var e=el("edge"); e.style.transition="transform .3s ease, opacity .6s ease";
+    e.style.transform="scaleX("+(scale||2.4)+")"; setTimeout(function(){ e.style.transform="scaleX(1)"; }, 320);
+  }
+
+  // position a "÷ k" annotation at a given x (over numerator / under denominator)
+  function placeDiv(node, x, text){ node.textContent = text; node.style.left = x + "px"; }
+
   var beatsDone = [];
 
+  // ── BEATS — keyed by storyboard gates ──────────────────────────────────────
   var BEATS = [
     [0.3, function(){ el("kicker").classList.add("on"); }],
 
-    // Beat 1 — eight twelfths: a bar of many tiny neutral pieces (12 cuts)
-    [1.5, function(){ showCap(0); buildBar(12); }],
+    // gate 1.5 — "8 out of 12": whole bar, 12 cells, 8 filled / 4 empty; count tag
+    [1.5, function(){
+      showCap(0);
+      renderGroup(8, 12);
+      el("countTag").classList.add("on");
+    }],
 
-    // Beat 2 — set up: we'll fuse equal groups into fewer, bigger pieces.
-    //          drop the held-edge tick in so the audience can watch it stay put.
-    [5.8, function(){
+    // gate 5 — "Watch this edge. It never moves." drop + pulse the fill-edge marker
+    [5, function(){
       showCap(1);
       el("edge").classList.add("on");
-      el("edgeLabel").classList.add("on");
+      el("edgeCap").classList.add("on");
+      flashEdge(2.0);
     }],
 
-    // Beat 3 — two twelfths fuse into one sixth → 8/12 becomes 4/6 (gold)
-    [10.5, function(){
+    // gate 9 — group by 2 → 4/6 (gold). 12 cells tied into 6, then merge to 6 cells.
+    //          fill-edge holds. annotate ÷2 over top, ÷2 under bottom, ÷2/2=÷1.
+    [9, function(){
       showCap(2);
-      buildBar(6);                 // 12 tiny pieces fuse two-by-two into 6 (same total width)
-      el("board").classList.add("toSix");
-      el("fN").textContent="4"; el("fD").textContent="6";
-      pulse(el("fD"));
+      showTies(12, 2);                         // tie 12 cells into 6 bundles
+      setTimeout(function(){
+        clearTies();
+        renderGroup(4, 6);                     // merge to 6 wider cells, 4 filled
+        el("board").classList.add("toSix");
+        el("fN").textContent="4"; el("fD").textContent="6";
+        el("countTag").classList.add("on");
+        pulse(el("fD")); flashEdge(1.8);
+        // div annotations: over the numerator run + under the bar
+        placeDiv(el("divTop"), EDGE_X/2, "÷ 2");
+        placeDiv(el("divBot"), SPAN/2,   "÷ 2");
+        el("divTop").classList.add("on"); el("divBot").classList.add("on"); el("divOne").classList.add("on");
+      }, 620);
     }],
 
-    // Beat 4 — keep going — fuse again into the biggest pieces: 2/3 (orange)
-    [14.7, function(){
+    // gate 13 — group again by 2 → 2/3 (orange). 6 cells tied into 3, merge to 3.
+    [13, function(){
       showCap(3);
-      buildBar(3);                 // 6 sixths fuse two-by-two into 3 thirds (same total width)
-      el("board").classList.remove("toSix");
-      el("board").classList.add("toThirds");
-      el("fN").textContent="2"; el("fD").textContent="3";
-      pulse(el("fD"));
+      showTies(6, 2);                          // tie 6 cells into 3 bundles
+      setTimeout(function(){
+        clearTies();
+        renderGroup(2, 3);                     // merge to 3 wide cells, 2 filled
+        el("board").classList.remove("toSix");
+        el("board").classList.add("toThirds");
+        el("fN").textContent="2"; el("fD").textContent="3";
+        el("countTag").classList.add("on");
+        pulse(el("fD")); flashEdge(1.8);
+        placeDiv(el("divTop"), EDGE_X/2, "÷ 2");
+        placeDiv(el("divBot"), SPAN/2,   "÷ 2");
+        el("divTop").classList.add("on"); el("divBot").classList.add("on"); el("divOne").classList.add("on");
+      }, 620);
     }],
 
-    // Beat 5 — the amount never changed — the bar is the same length (flash the edge)
-    [19.4, function(){
+    // gate 17.5 — "divide top AND bottom by the same number = divide by 1"
+    //             board fades; clean proof line floats up; fill-edge stays lit.
+    [17.5, function(){
       showCap(4);
-      var e=el("edge"); e.style.transition="transform .3s ease, opacity .6s ease";
-      e.style.transform="scaleX(2.4)"; setTimeout(function(){ e.style.transform="scaleX(1)"; }, 320);
+      el("divTop").classList.remove("on"); el("divBot").classList.remove("on"); el("divOne").classList.remove("on");
+      el("board").classList.add("faded");
+      el("gb").classList.add("is-ghost");
+      el("edge").classList.add("on");          // keep the edge lit under the proof
+      el("proof").classList.add("on");
+      pulse(el("proof"));
     }],
 
-    // Beat 6 — eight twelfths is two thirds, tidied up (equation over faded board)
-    [23.7, function(){
+    // gate 22 — "8/12 = 2/3 — the same amount, the simplest name." final equation
+    [22, function(){
       showCap(5);
-      el("board").classList.add("faded");
+      el("proof").classList.remove("on");
       el("result").classList.add("on");
       pulse(el("result"));
+      flashEdge(2.6);                          // final wide flash: same place reached
     }],
   ];
 
@@ -233,6 +411,23 @@
   // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
   try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
+
+  // reset all beat-driven DOM so seek() can replay cleanly
+  function resetVisual(){
+    el("kicker").classList.remove("on");
+    el("board").classList.remove("toSix","toThirds","faded");
+    el("gb").classList.remove("is-ghost");
+    el("edge").classList.remove("on"); el("edgeCap").classList.remove("on");
+    el("edge").style.transform="scaleX(1)";
+    el("countTag").classList.remove("on");
+    el("divTop").classList.remove("on"); el("divBot").classList.remove("on"); el("divOne").classList.remove("on");
+    el("proof").classList.remove("on"); el("result").classList.remove("on");
+    el("fN").textContent="8"; el("fD").textContent="12";
+    clearTies();
+    renderGroup(8,12);
+    caps.forEach(function(c){ c.classList.remove("on"); });
+  }
+
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
     if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
@@ -248,7 +443,11 @@
   window.__anim = {
     play:  function(){ paused=false; },
     pause: function(){ paused=true;  },
-    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; }
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[]; resetVisual();
+      // re-fire any beats at/under the seek target so the frame is consistent
+      applyBeats(elapsed);
+    }
   };
 })();
 </script>

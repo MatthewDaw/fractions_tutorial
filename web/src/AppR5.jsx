@@ -24,6 +24,7 @@
 // here. The Stage-5 story sits in the canvas; its answer is written on the same
 // HUD Slate the other writing stages use, so the stylus channel stays consistent.
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Cook from "./components/Cook.jsx";
 import Rosette from "./components/Rosette.jsx";
 import BigFrac from "./components/BigFrac.jsx";
@@ -34,11 +35,9 @@ import BlockSandbox from "./components/BlockSandbox.jsx";
 import QuestionBand from "./components/QuestionBand.jsx";
 import BlankSlate from "./components/BlankSlate.jsx";
 import FitStage from "./components/FitStage.jsx";
-import SettingsButton from "./SettingsButton.jsx";
-import { useVoice } from "./voice.js";
+import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, LessonGoal } from "./components/lesson";
 import { denomColor, denomTextColor, denomHatch, denomHatchSize } from "./denominatorColors.js";
-import { useLessonEngine } from "./runtime/useLessonEngine.js";
-import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
+import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import "./styles/r5.css";
 
 // ---- the problem bank -------------------------------------------------------
@@ -98,18 +97,32 @@ const STAGES = [
 const NEXT_STAGE = { "1-manipulate": "2-bind", "2-bind": "3-fade", "3-fade": "workbench", "workbench": "4-numbers", "4-numbers": "applied", "applied": "showwork", "showwork": "5-words" };
 
 // ---------------- main ----------------
+// ---- per-stage problem selection (the swap resetForStage used to inline) -----
+// 4-numbers carries the EXACT-WHOLE trap (14/7 = 2, empty leftover); applied and
+// 5-words wrap 11/4 (= 2 and 3/4); every other stage carries the anchor 9/7.
+function probForStage(s) {
+  return s === "4-numbers" ? { num: 14, den: 7 }
+    : (s === "5-words" || s === "applied") ? { num: 11, den: 4 }
+    : ANCHOR;  // 1-manipulate / 2-bind / 3-fade / workbench all carry the anchor 9/7
+}
+
+// ---- the per-stage opening greeting (was set inline by resetForStage) -------
+function stageGreeting(s) {
+  const p = probForStage(s);
+  return {
+    "1-manipulate": "Nine sevenths — more than one whole. Drag pieces into the whole-unit frame until it fills. No writing yet.",
+    "2-bind": "Group the pieces into a whole, then write the mixed number beside the blocks.",
+    "3-fade": "The blocks are just a faint check now. Choose how many wholes fit, then write the mixed number.",
+    "workbench": "The Workbench. Pull " + p.den + "ths from the bin and build " + p.num + "/" + p.den + " on the line, then count them up.",
+    "4-numbers": "Just the numbers: " + p.num + "/" + p.den + " = ? Write the whole mixed number on the Slate. (Watch the leftover!)",
+    "applied": "A question in words, with the amount shown. Write it as one improper fraction first, then give the mixed number.",
+    "showwork": "Show your work — write anything you like on the blank slate, then tap Next.",
+    "5-words": "A recipe — read it, find the improper fraction, and write the mixed number.",
+  }[s];
+}
+
 export default function AppR5({ no, title, onBack, onRewatchIntro }) {
-  // which stage of the arc is live (jump via the selector, or advance on solve)
-  const [stage, setStage] = useState("1-manipulate");
-
-  // --- Engine integration (U10) ---
-  const { emit, judgeAndAdvance, scaffoldLevel, decision } = useLessonEngine({
-    nodeId: "IMPROPER_TO_MIXED",
-    lessonConfig: { lessonId: "r5", initialBeat: "1-manipulate" },
-  });
-  const selfCorrectionsRef = useRef(0);
-  const presentEmittedRef = useRef(false);
-
+  // --- DOMAIN STATE (the parts the shared controller hook does NOT own) -------
   // the live improper fraction for this stage
   const [prob, _setProb] = useState(ANCHOR);
   const { num: NUMER, den: DEN } = prob;
@@ -119,15 +132,11 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
 
   // manipulate state: how many overflow pieces have been grouped into the frame
   const [placed, setPlaced] = useState(0);
-  const [solved, setSolved] = useState(false);
-  const [stars, setStars] = useState(0);
-  const [cook, setCook] = useState("idle");
   const [hotFrame, setHotFrame] = useState(false);
   const [drag, setDrag] = useState(null);              // { x, y } pointer pos while dragging
   const [wholesPick, setWholesPick] = useState(null);  // stage-3 symbolic "how many wholes" choice
   const [bad, setBad] = useState(false);               // shake the slate on a wrong write
   const [vals, setVals] = useState({ w: "", n: "" });  // the Slate's written digits
-  const [status, setStatus] = useState({ tone: "normal", text: "" });
   // ---- word→math translation surfaces (Applied gate + Words optional scratch) ----
   // Applied: the child TRANSCRIBES the improper fraction the words describe here;
   // once it matches the live problem the mixed-number answer unlocks (setupOk).
@@ -136,6 +145,55 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   const [setupOk, setSetupOk] = useState(false);
   // ---- mandatory "show your work" blank-slate gate (between Applied and Words) ----
   const [showWorkInked, setShowWorkInked] = useState(false);
+
+  // ---- SHARED CONTROLLER BACKBONE (engine wiring + stage nav + outcome state) --
+  // The hook owns everything identical across lessons; R5 supplies only its stage
+  // model (advance/back map), its per-stage greeting, and its per-stage reset
+  // (problem swap + domain state zeroing). advanceMode:"deferred" reproduces R5's
+  // setTimeout(...,1500) before the engine decision (the celebration lingers).
+  // R5 keeps its OWN `bad`/shakeBad shake (not the hook's flashBad/badInput) and
+  // its OWN `placed`/`prob` refs; from the hook it takes solvedRef/stageRef/
+  // selfCorrectionsRef + the nav/engine/outcome surface.
+  const {
+    stage, goStage, nextStage,
+    emit, reportAttempt, award, applyEngineDecision,
+    solved, solvedRef, stars, cook, setCook, status, setStatus,
+    say, speaking, selfCorrectionsRef, stageRef,
+  } = useLessonScaffold({
+    nodeId: "IMPROPER_TO_MIXED",
+    lessonId: "r5",
+    initialStage: "1-manipulate",
+    // R5's existing NEXT_STAGE map (8-stage non-contiguous arc). Returns undefined
+    // on the last stage → the hook calls onEnd, which REPLAYS the current stage
+    // (R5's original advance() re-dealt the last stage instead of stopping).
+    advance: (cur) => NEXT_STAGE[cur],
+    // R5's existing inline reverse map (RaiseScaffold target — one stage back).
+    back: (cur) => ({
+      "2-bind": "1-manipulate",
+      "3-fade": "2-bind",
+      "workbench": "3-fade",
+      "4-numbers": "workbench",
+      "applied": "4-numbers",
+      "showwork": "applied",
+      "5-words": "showwork",
+    }[cur]),
+    introFor: (s) => ({ tone: "normal", text: stageGreeting(s) }),
+    // The per-stage PROBLEM SWAP + domain state zeroing (R5's resetForStage body,
+    // minus the nav/emit/stopVoice/status the hook now handles itself).
+    resetStage: (s) => {
+      const p = probForStage(s);
+      _setProb(p); probRef.current = p;
+      placedRef.current = 0;
+      setPlaced(0);
+      setHotFrame(false); setDrag(null); setWholesPick(null); setBad(false);
+      setVals({ w: "", n: "" });
+      // reset the word→math surfaces (Applied gate + Words scratch) on every stage change
+      setSetupFrac({ num: "", den: "" }); setSetupOk(false);
+      setShowWorkInked(false);
+    },
+    // Last stage: REPLAY (re-enter the current stage), as R5's advance() did.
+    onEnd: () => goStage(stageRef.current),
+  });
 
   // ---- stage flavor flags -----------------------------------------------------
   const isManipulate = stage === "1-manipulate";
@@ -160,53 +218,9 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   const leftover = needsGroup ? NUMER - placed : REMAIN;
   const grouped = needsGroup ? locked : true;        // grouping precondition met?
 
-  const { speaking, say, stopVoice } = useVoice();
-  const placedRef = useRef(placed), solvedRef = useRef(solved), stageRef = useRef(stage);
+  // R5-OWNED ref: the live placement count (the hook owns solvedRef/stageRef).
+  const placedRef = useRef(placed);
   useEffect(() => { placedRef.current = placed; }, [placed]);
-  useEffect(() => { solvedRef.current = solved; }, [solved]);
-  useEffect(() => { stageRef.current = stage; }, [stage]);
-
-  // stopVoice on unmount so leaving the room never leaves audio playing
-  useEffect(() => () => stopVoice(), []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ---- engine integration helpers ------------------------------------------
-  function reportAttemptR5({ correct, answerValue, errorSignature, stars: starCount }) {
-    const currentStage = stageRef.current;
-    const dec = judgeAndAdvance(
-      { value: answerValue, modality: "tap", recognizerConfidence: null },
-      {
-        correct,
-        errorSignature: errorSignature ?? null,
-        stars: starCount ?? 0,
-        hintMaxRung: 0,
-        selfCorrections: selfCorrectionsRef.current,
-        surfaceForm: "stage-" + currentStage,
-      }
-    );
-    selfCorrectionsRef.current = 0;
-    return dec;
-  }
-
-  function applyEngineDecisionR5(dec, isCorrect) {
-    if (!dec) return;
-    if (dec.kind === "FadeScaffold") {
-      advance();
-    } else if (dec.kind === "RaiseScaffold") {
-      // Drop back one stage (preserve work via resetForStage).
-      const nb = {
-        "2-bind": "1-manipulate",
-        "3-fade": "2-bind",
-        "workbench": "3-fade",
-        "4-numbers": "workbench",
-        "applied": "4-numbers",
-        "showwork": "applied",
-        "5-words": "showwork",
-      }[stageRef.current];
-      if (nb) goStage(nb);
-    } else if (isCorrect) {
-      advance();
-    }
-  }
 
   // ---- ruler / canvas geometry, derived per problem ---------------------------
   // The ruler tops out at 2 wholes for the anchor; a 14/7 (= 2) or 11/4 (< 3)
@@ -290,7 +304,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   const shakeBad = () => { setBad(true); setTimeout(() => setBad(false), 460); };
 
   function checkWritten() {
-    if (solved) { advance(); return; }
+    if (solved) { nextStage(); return; }
     // group / choose precondition before writing counts
     if (needsGroup && !grouped) {
       setCook("think");
@@ -328,19 +342,19 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
           : "Not quite. " + WHOLES + " whole" + (WHOLES === 1 ? "" : "s") + " filled, " + REMAIN + " " + DEN + "ths left over." });
       say("r4NotQuite");
       // Report incorrect attempt to the engine.
-      reportAttemptR5({ correct: false, answerValue: [isNaN(w) ? 0 : w, NUMER], errorSignature: errSig, stars: 0 });
+      reportAttempt({ correct: false, answerValue: [isNaN(w) ? 0 : w, NUMER], errorSignature: errSig, stars: 0 });
       return;
     }
     finishSolved(3, "Yes! " + NUMER + "/" + DEN + " = " + WHOLES + (exactWhole ? "" : " and " + REMAIN + "/" + DEN) + ". " + (exactWhole ? "Exactly " + WHOLES + " wholes — nothing left over. " : "") + "Full marks, povaryonok!", [NUMER, DEN]);
   }
 
+  // R5's celebrate-then-advance. The hook's award sets solved/stars/cook=cheer,
+  // says "r5FullMarks", reports the correct attempt, and — under advanceMode
+  // "deferred" — applies the engine decision after deferredDelayMs (1500ms). That
+  // exactly reproduces R5's old finishSolved + setTimeout(...,1500); no manual
+  // timer here anymore.
   function finishSolved(st, text, answerValue) {
-    setSolved(true); setStars(st); setCook("cheer");
-    setStatus({ tone: "ok", text });
-    say("r5FullMarks");
-    // Report correct attempt to engine; apply decision to stage flow.
-    const dec = reportAttemptR5({ correct: true, answerValue: answerValue ?? null, errorSignature: null, stars: st });
-    setTimeout(() => applyEngineDecisionR5(dec, true), 1500);
+    award(text, "r5FullMarks", answerValue ?? null, { stars: st });
   }
 
   const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 2);
@@ -382,51 +396,13 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   }
 
   // ---- stage navigation -------------------------------------------------------
-  // Set the board to a fresh start for stage `s` (problem, placements, inputs).
-  function resetForStage(s) {
-    stopVoice();
-    const p = s === "4-numbers" ? { num: 14, den: 7 }
-      : (s === "5-words" || s === "applied") ? { num: 11, den: 4 }
-      : ANCHOR;  // 1-manipulate / 2-bind / 3-fade / workbench all carry the anchor 9/7
-    _setProb(p); probRef.current = p;
-    placedRef.current = 0; solvedRef.current = false;
-    setPlaced(0); setSolved(false); setStars(0); setCook("idle");
-    setHotFrame(false); setDrag(null); setWholesPick(null); setBad(false);
-    setVals({ w: "", n: "" });
-    // reset the word→math surfaces (Applied gate + Words scratch) on every stage change
-    setSetupFrac({ num: "", den: "" }); setSetupOk(false);
-    setShowWorkInked(false);
-    selfCorrectionsRef.current = 0;
-    const m = mixedOf(p.num, p.den);
-    const greet = {
-      "1-manipulate": "Nine sevenths — more than one whole. Drag pieces into the whole-unit frame until it fills. No writing yet.",
-      "2-bind": "Group the pieces into a whole, then write the mixed number beside the blocks.",
-      "3-fade": "The blocks are just a faint check now. Choose how many wholes fit, then write the mixed number.",
-      "workbench": "The Workbench. Pull " + p.den + "ths from the bin and build " + p.num + "/" + p.den + " on the line, then count them up.",
-      "4-numbers": "Just the numbers: " + p.num + "/" + p.den + " = ? Write the whole mixed number on the Slate. (Watch the leftover!)",
-      "applied": "A question in words, with the amount shown. Write it as one improper fraction first, then give the mixed number.",
-      "showwork": "Show your work — write anything you like on the blank slate, then tap Next.",
-      "5-words": "A recipe — read it, find the improper fraction, and write the mixed number.",
-    }[s];
-    setStatus({ tone: "normal", text: greet });
-    // Emit problem_present for this stage.
-    emit({
-      type: "problem_present",
-      payload: { node_id: "IMPROPER_TO_MIXED", scaffold_level: toScaffoldLevel("r5", s) },
-    });
-  }
-
-  function goStage(s) { setStage(s); resetForStage(s); }
-
-  function advance() {
-    stopVoice();
-    const nb = NEXT_STAGE[stageRef.current];
-    if (nb) { setStage(nb); resetForStage(nb); }
-    else { resetForStage(stageRef.current); }  // last stage: replay
-  }
-
-  // initialize the opening greeting once (also emits the first problem_present)
-  useEffect(() => { resetForStage("1-manipulate"); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // goStage / nextStage now come from the hook (they own the problem swap via
+  // resetStage, the greeting via introFor, the stopVoice, and the problem_present
+  // emit). The header ⟲ re-deals the CURRENT stage — which is exactly re-entering
+  // it, so resetForStage is now a thin wrapper over goStage (re-runs the per-stage
+  // problem swap + zeroing). The mount problem_present + opening greeting are
+  // emitted by the hook itself, so the old init useEffect is gone.
+  const resetForStage = (s) => goStage(s);
 
   // ---- the Slate slots (the mixed-number writing surface) ---------------------
   const exactWhole = REMAIN === 0;
@@ -463,87 +439,47 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   const TRAY_W = UNIT;
   const TRAY_H = 56;
 
-  return (
-    <div className="page" data-vox-speaker="cook">
-      <div className="foxing" />
+  // ── CANONICAL QUESTION BAND — the shared full-width band, mounted directly
+  //    under the stage-selector tabs on every stage EXCEPT the final words-only
+  //    stage ("5-words"). It shows this lesson's live improper fraction with a "?"
+  //    answer that becomes the solved mixed number once the stage is solved. The
+  //    goal/story copy below it is secondary helper text. Replaces the old ad-hoc
+  //    .r5-question band AND the in-canvas .eqstate float that used to overlap the
+  //    board. The Words stage deliberately HIDES this band: the child must read the
+  //    prose recipe and extract the improper fraction themselves — showing the bare
+  //    equation would give the answer away. (Applied keeps it: it shows the amount
+  //    on purpose.)
+  const Band = (
+    <QuestionBand
+      lead="write as a mixed number"
+      expr={<>{NUMER}/{DEN}</>}
+      answer={solved ? (REMAIN > 0 ? <>{WHOLES} and {REMAIN}/{DEN}</> : <>{WHOLES}</>) : "?"}
+    />
+  );
 
-      <div className="topbar">
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <span className="num-mark">№{no}</span>
-          <div>
-            <div className="puzzle-tag">Lesson {no} · Mixed Numbers</div>
-            <div className="puzzle-title">{title}</div>
-          </div>
-        </div>
+  const Goal = (
+    <LessonGoal say={say} speaking={speaking} voiceKey="r5Goal" voxSpeaker="mom">
+      {isWorkbench
+        ? <>Build <b>{NUMER}/{DEN}</b> on the Workbench — pull same-size blocks from the bin, stack them to the flag, and count them up.</>
+        : isApplied
+        ? <>A question in words, with the amount shown. Write it as one <b>improper fraction</b> first, then give the mixed number.</>
+        : isWords
+        ? "Read the recipe, find the fraction that's more than one whole, and write it as a mixed number."
+        : <>Babushka can't ask for <b>{NUMER}/{DEN}</b> of a tray — that's more than one whole. Group the pieces into <b>whole units</b>, then name the leftover.</>}
+    </LessonGoal>
+  );
 
-        {/* STAGE SELECTOR — jump to any stage of the arc in one click */}
-        <div className="beat-select" role="group" aria-label="lesson stage">
-          <span className="beat-lab">Stage</span>
-          {STAGES.map(([s, name, hint, label], i) => (
-            <button
-              key={s}
-              type="button"
-              className={"beat-btn" + (stage === s ? " on" : "")}
-              aria-pressed={stage === s}
-              title={name + " — " + hint}
-              onClick={() => goStage(s)}
-            >
-              {label ?? i + 1}
-            </button>
-          ))}
-        </div>
+  // The Cook + speech ribbon, shared by the fixed-zone stages.
+  const Tutor = <TutorRibbon cook={cook} status={status} />;
 
-        <div className="controls">
-          {onBack && <button className="ctrl-btn" title="Back to the lesson map" onClick={onBack}>←</button>}
-          {onRewatchIntro && (
-            <button className="ctrl-btn" title="Rewatch the intro video" aria-label="Rewatch the intro video" onClick={onRewatchIntro}>
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
-            </button>
-          )}
-          <SettingsButton />
-          <button className="ctrl-btn" title="Start over" onClick={() => resetForStage(stage)}>⟲</button>
-        </div>
-      </div>
+  let body = null;
 
-      {/* CANONICAL QUESTION BAND — the shared full-width band, mounted directly
-          under the stage-selector tabs (the topbar) on every stage EXCEPT the
-          final words-only stage ("5-words"). It shows this lesson's live improper
-          fraction with a "?" answer that becomes the solved mixed number once the
-          stage is solved. The goal/story copy below it is secondary helper text.
-          Replaces the old ad-hoc .r5-question band AND the in-canvas .eqstate
-          float that used to overlap the board.
-          The Words stage deliberately HIDES this band: the child must read the
-          prose recipe and extract the improper fraction themselves — showing the
-          bare equation would give the answer away. (Applied keeps it: it shows the
-          amount on purpose.) */}
-      {!isWords && (
-        <QuestionBand
-          lead="write as a mixed number"
-          expr={<>{NUMER}/{DEN}</>}
-          answer={solved ? (REMAIN > 0 ? <>{WHOLES} and {REMAIN}/{DEN}</> : <>{WHOLES}</>) : "?"}
-        />
-      )}
-
-      <div className="goal">
-        <button className={"speaker" + (speaking ? " speaking" : "")} onClick={() => say("r5Goal")}>
-          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
-          Read aloud
-        </button>
-        <div className="goal-text" data-vox="r5Goal" data-vox-speaker="mom">
-          {isWorkbench
-            ? <>Build <b>{NUMER}/{DEN}</b> on the Workbench — pull same-size blocks from the bin, stack them to the flag, and count them up.</>
-            : isApplied
-            ? <>A question in words, with the amount shown. Write it as one <b>improper fraction</b> first, then give the mixed number.</>
-            : isWords
-            ? "Read the recipe, find the fraction that's more than one whole, and write it as a mixed number."
-            : <>Babushka can't ask for <b>{NUMER}/{DEN}</b> of a tray — that's more than one whole. Group the pieces into <b>whole units</b>, then name the leftover.</>}
-        </div>
-      </div>
-
-      {isWorkbench ? (
-        /* WORKBENCH — the free block sandbox replaces the board entirely. It
-           renders its OWN .play (diagram + rail); we add a sibling .hud with the
-           Cook + status ribbon + a "Next ▸" that unlocks on solve. */
+  if (isWorkbench) {
+    /* WORKBENCH — the free block sandbox replaces the board entirely. It
+       renders its OWN .play (diagram + rail); we add a sibling .hud with the
+       Cook + status ribbon + a "Next ▸" that unlocks on solve. Left on the
+       shared .play/.hud layout (no overlap bug — not a fixed-zone stage). */
+    body = (
         <>
           <BlockSandbox
             bin={sandboxBin}
@@ -562,14 +498,16 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
             </div>
             <div className="marks">
               {solved && <Rosette count={stars} />}
-              <button className={"check" + (solved ? " done" : "")} onClick={advance} disabled={!solved}>{solved ? checkLabel : "Build it ▸"}</button>
+              <button className={"check" + (solved ? " done" : "")} onClick={nextStage} disabled={!solved}>{solved ? checkLabel : "Build it ▸"}</button>
             </div>
           </div>
         </>
-      ) : isApplied ? (
-        /* APPLIED — a worded question (the amount shown) with a REQUIRED setup gate:
-           write the improper fraction the words describe; only then does the
-           mixed-number answer unlock. */
+    );
+  } else if (isApplied) {
+    /* APPLIED — a worded question (the amount shown) with a REQUIRED setup gate:
+       write the improper fraction the words describe; only then does the
+       mixed-number answer unlock. Left on the shared .play/.hud layout. */
+    body = (
         <>
           <div className="play r5-applied-play">
             <WordProblem
@@ -638,10 +576,13 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
             {solved && <div className="marks"><Rosette count={stars} /></div>}
           </div>
         </>
-      ) : isShowWork ? (
-        /* SHOW WORK — a mandatory blank-slate step between Applied and Words. The
-           child writes anything they like; Next unlocks once ink is down. No
-           grading, no engine decision — advancement is a plain advance(). */
+    );
+  } else if (isShowWork) {
+    /* SHOW WORK — a mandatory blank-slate step between Applied and Words. The
+       child writes anything they like; Next unlocks once ink is down. No
+       grading, no engine decision — advancement is a plain nextStage(). Left on
+       the shared .play/.hud layout. */
+    body = (
         <>
           <div className="play">
             <div className="diagram">
@@ -670,14 +611,16 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
               <button
                 className={"check" + (showWorkInked ? " ready" : "")}
                 disabled={!showWorkInked}
-                onClick={advance}
+                onClick={nextStage}
               >Next ▸</button>
             </div>
           </div>
         </>
-      ) : isWords ? (
-        /* WORDS (beat 6, out of the s1–s5 sweep) — keeps the shared <WordProblem>
-           card flow. Not a fixed-zone stage; left on the existing .play layout. */
+    );
+  } else if (isWords) {
+    /* WORDS (beat 6, out of the s1–s5 sweep) — keeps the shared <WordProblem>
+       card flow. Not a fixed-zone stage; left on the existing .play layout. */
+    body = (
         <>
           <div className="play">
             <div className="diagram">
@@ -749,28 +692,20 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
             {solved && <div className="marks"><Rosette count={stars} /></div>}
           </div>
         </>
-      ) : (
-      /* ════════════════════════════════════════════════════════════════════════
-         STAGES 1–5 of the sweep (Manipulate / Bind / Fade / Numbers) —
-         DETERMINISTIC FIXED-ZONE LAYOUT (the R1-stage-1 exemplar applied here).
-         Four absolutely-positioned, fixed-size rectangles inside .r5-stage:
-           · .r5-z-board  — block board OR the bare equation (top-left, fixed h)
-           · .r5-z-rail   — the hint panel                    (top-right, fixed w/h)
-           · .r5-z-answer — the equation + mixed-number write composer + Check, as
-                            ONE bordered card pinned to the BOTTOM (tall: the
-                            composer is two slate columns), with a GUARANTEED gap
-                            above it so the board corner can never clip it
-           · .r5-z-tutor  — Cook + speech ribbon              (bottom-right, fixed)
-         Every zone is a fixed rectangle with clamped text, so a longer string or a
-         different font (Safari vs Chromium) can NEVER reflow one zone onto another.
-         ════════════════════════════════════════════════════════════════════════ */
-      <div className="r5-stage">
-        {/* ── BOARD ZONE (fixed rect, top-left) ──
-            Wrapped in <FitStage> so the tallest improper-fraction stack (the 9-high
-            9/7 overflow column, or any future 11/4-in-a-stack) auto-downscales to
-            fit the fixed zone instead of clipping top/bottom. The canvas keeps its
-            own 720×348 absolute geometry; FitStage only shrinks it uniformly. */}
-        <div className="r5-z-board">
+    );
+  } else {
+    /* ════════════════════════════════════════════════════════════════════════
+       STAGES 1–4 of the sweep (Manipulate / Bind / Fade / Numbers) — now the
+       shared <LessonBoard> split layout. The stage and the answer card live in
+       SEPARATE grid tracks (lesson-board.css), so the answer composer can never
+       overlap the board (the bug the old absolute .r5-z-* rectangles risked).
+       footHeight=236 reserves room for the TALL two-column mixed-number composer.
+       The board is wrapped in <FitStage> so the tallest improper-fraction stack
+       (the 9-high 9/7 overflow column) auto-downscales to fit the now-flexible
+       stage instead of clipping top/bottom — the canvas keeps its own 720×348
+       absolute geometry; FitStage only shrinks it uniformly.
+       ════════════════════════════════════════════════════════════════════════ */
+    const Stage = (
           <FitStage className="r5-board-fit">
           {/* STAGES 1–3: the manipulative board (live, or a faded ghost on stage 3) */}
           {showBoard && (
@@ -866,10 +801,10 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
             </div>
           )}
           </FitStage>
-        </div>
+    );
 
-        {/* ── HINT RAIL (fixed rect, top-right) ── */}
-        <div className="r5-z-rail">
+    // ── HINT RAIL (top-right) — one .panel card; goes in LessonBoard's rail slot.
+    const Rail = (
           <div className="panel">
             {isFade ? (
               <>
@@ -905,14 +840,15 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
               </>
             )}
           </div>
-        </div>
+    );
 
-        {/* ── EQUATION + MIXED-NUMBER COMPOSER + CHECK, ONE UNIT (fixed rect, bottom) ──
-            The equation prefix (NUMER/DEN =), the write composer ([whole] and
-            [fraction]) and the Check button read as ONE bordered card, pinned to the
-            bottom with a guaranteed gap above. The composer is tall (two slate
-            columns) — the card height accounts for it so the board can never clip it. */}
-        <div className="r5-z-answer">
+    // ── EQUATION + MIXED-NUMBER COMPOSER + CHECK — the shared <AnswerBar>. The
+    //    equation prefix (NUMER/DEN =) + the write composer ([whole] and
+    //    [fraction]) are the `eq`; AnswerBar supplies the card frame, caption, the
+    //    Rosette-on-solve and the Check button. Goes in LessonBoard's answer slot.
+    const Answer = (
+      <AnswerBar
+        eq={
           <div className="r5-ans-eqrow">
             <span className="r5-ans-frac">{NUMER}/{DEN}</span>
             <span className="r5-ans-op">=</span>
@@ -954,37 +890,65 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
               </span>
             )}
           </div>
-          <div className="r5-ans-cap">
-            {solved ? "full marks — " + NUMER + "/" + DEN + " = " + WHOLES + (REMAIN > 0 ? " and " + REMAIN + "/" + DEN : "") + "!"
-              : isManipulate ? "group every " + DEN + " pieces into a whole — by touch"
-              : (needsGroup && !grouped) ? "group the pieces into a whole to unlock the writing"
-              : (isFade && wholesPick !== WHOLES) ? "choose how many wholes fit, then write"
-              : "write the whole number" + (exactWhole ? " — it's exactly " + WHOLES + " wholes" : " and the leftover on top")}
-          </div>
-          <div className="r5-ans-marks">
-            {solved && <Rosette count={stars} />}
-            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={isManipulate ? advance : checkWritten}
-              disabled={isManipulate && !solved}>
-              {isManipulate && !solved ? "Group it ▸" : checkLabel}
-            </button>
-          </div>
-        </div>
+        }
+        cap={
+          solved ? "full marks — " + NUMER + "/" + DEN + " = " + WHOLES + (REMAIN > 0 ? " and " + REMAIN + "/" + DEN : "") + "!"
+            : isManipulate ? "group every " + DEN + " pieces into a whole — by touch"
+            : (needsGroup && !grouped) ? "group the pieces into a whole to unlock the writing"
+            : (isFade && wholesPick !== WHOLES) ? "choose how many wholes fit, then write"
+            : "write the whole number" + (exactWhole ? " — it's exactly " + WHOLES + " wholes" : " and the leftover on top")
+        }
+        solved={solved}
+        ready={answerReady}
+        stars={stars}
+        onCheck={isManipulate ? nextStage : checkWritten}
+        checkLabel={isManipulate && !solved ? "Group it ▸" : checkLabel}
+        checkDisabled={isManipulate && !solved}
+      />
+    );
 
-        {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
-        <div className="r5-z-tutor">
-          <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-          <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
-        </div>
-      </div>
-      )}
+    body = (
+      <LessonBoard
+        footHeight={236}
+        railWidth={396}
+        stage={Stage}
+        rail={Rail}
+        answer={Answer}
+        tutor={Tutor}
+      />
+    );
+  }
 
-      {/* the drag ghost block that follows the pointer */}
-      {drag && (
-        <div className="r5-ghost r5-block is-grabbing" style={{ left: drag.x - 45, top: drag.y - 15, width: 90, height: 30, background: denomColor(DEN), position: "fixed" }}>
-          <div className="r5-hatch" style={{ backgroundImage: denomHatch(DEN), backgroundSize: denomHatchSize(DEN) }} />
-          <span className="r5-lab" style={{ color: denomTextColor(DEN) }}>1/{DEN}</span>
-        </div>
-      )}
-    </div>
+  return (
+    <LessonShell
+      no={no}
+      tag="Mixed Numbers"
+      title={title}
+      onBack={onBack}
+      onRewatchIntro={onRewatchIntro}
+      onReset={() => resetForStage(stage)}
+      tabs={{
+        stages: STAGES.map(([key, title, sub, badge]) => ({ key, badge, title, sub })),
+        current: stage,
+        onSelect: goStage,
+      }}
+      band={!isWords ? Band : null}
+      goal={Goal}
+      extra={
+        /* the drag ghost block that follows the pointer. Portaled to <body> so its
+           position:fixed resolves against the VIEWPORT — the app's #stage carries a
+           transform: scale() (Shell.useStageFit), which would otherwise become the
+           containing block for this fixed ghost and drift it up-left of the cursor. */
+        drag && createPortal(
+          <div className="r5-ghost r5-block is-grabbing" style={{ left: drag.x - 45, top: drag.y - 15, width: 90, height: 30, background: denomColor(DEN), position: "fixed" }}>
+            <div className="r5-hatch" style={{ backgroundImage: denomHatch(DEN), backgroundSize: denomHatchSize(DEN) }} />
+            <span className="r5-lab" style={{ color: denomTextColor(DEN) }}>1/{DEN}</span>
+          </div>,
+          document.body
+        )
+      }
+    >
+      {body}
+    </LessonShell>
   );
 }

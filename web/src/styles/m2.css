@@ -6,108 +6,25 @@
    left, tutor bottom-right). Color follows R-M3: neutral food tones for pieces,
    ROLE_COLORS for guard/correct/incorrect only — no denominator palette. */
 
-/* ── stage selector strip ─────────────────────────────────────────────────── */
-.m2-stages {
-  display: flex;
-  gap: 8px;
-  margin: 4px 22px 2px;
-  flex-wrap: nowrap;
-  height: 50px;
-  box-sizing: border-box;
-}
-.m2-stage-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px 6px 8px;
-  border: 1.5px solid var(--paper-3);
-  border-radius: 8px;
-  background: var(--paper-1);
-  color: var(--ink-mute);
-  cursor: pointer;
-  font-family: var(--serif);
-  text-align: left;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-.m2-stage-tab:hover { border-color: var(--ink-mute); color: var(--ink); }
-.m2-stage-tab.is-active {
-  border-color: var(--red);
-  background: #fff8ea;
-  color: var(--ink);
-  box-shadow: 0 1px 0 var(--red-deep);
-}
-.m2-stage-tab.is-done .m2-stage-n {
-  background: var(--ink-mute);
-  color: var(--paper-1);
-  border-color: var(--ink-mute);
-}
-.m2-stage-n {
-  flex: 0 0 auto;
-  width: 26px; height: 26px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  border: 1.5px solid var(--paper-3);
-  background: var(--paper-2);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--ink);
-}
-.m2-stage-tab.is-active .m2-stage-n {
-  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
-}
-.m2-stage-txt { display: flex; flex-direction: column; line-height: 1.1; }
-.m2-stage-name { font-size: 14px; font-weight: 600; }
-.m2-stage-sub { font-size: 11px; opacity: 0.8; }
+/* Stage selector ("top bar") is now the shared <StageTabs> — see stagetabs.css. */
 
 /* ════════════════════════════════════════════════════════════════════════════
-   SHARED DETERMINISTIC FIXED-ZONE LAYOUT (.m2-fz*) — four fixed, non-overlapping
-   rectangles inside the 1280×800 stage. Identical contract to r1.css's .r1-fz*.
+   The four-zone play layout (stage · rail · answer · tutor) now lives in the
+   shared <LessonBoard> / lesson-board.css — the old absolute .m2-fz-* rectangles
+   are gone (they were the source of the answer-bar-over-stage overlap). What stays
+   here is only m2-SPECIFIC content: the stage canvas, the equation-row pieces that
+   ride inside the shared <AnswerBar>, and the distributivity answer row.
    ════════════════════════════════════════════════════════════════════════════ */
-.m2-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
-
-.m2-fz-stage {
-  position: absolute; left: 0; top: 0;
-  width: 800px; height: 348px;
-  border: 2px solid #1a0f08;
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
-  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
-  overflow: hidden;
-  box-sizing: border-box;
-  padding: 6px 12px;
-}
+/* the stage canvas wrapped by <FitStage>, which measures its natural size and
+   scales it to the (flexible) shared stage box — so the canvas keeps its honest
+   776×336 design size here. */
 .m2-fz-canvas { position: relative; width: 776px; height: 336px; margin: 0 auto; }
 .m2-fz-canvas-center {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 10px;
 }
 
-.m2-fz-rail {
-  position: absolute; right: 0; top: 0;
-  width: 396px; height: 348px;
-  box-sizing: border-box;
-  display: flex; flex-direction: column;
-}
-.m2-fz-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
-
-/* EQUATION + ANSWER + CHECK — ONE bordered unit, pinned bottom-left. */
-.m2-fz-answer {
-  position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 196px;
-  box-sizing: border-box;
-  border: 2px solid var(--ink);
-  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
-  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 18px; row-gap: 2px;
-  padding: 12px 22px;
-}
-.m2-fz-eqrow {
-  grid-column: 1; grid-row: 1 / span 2;
-  display: inline-flex; align-items: center; gap: 16px;
-}
+/* equation-row pieces rendered inside the shared <AnswerBar eq={…}> */
 .m2-fz-expr { font-family: var(--display); font-size: 46px; color: var(--ink); }
 .m2-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
 .m2-fz-slate { display: inline-flex; position: relative; }
@@ -117,32 +34,6 @@
 .m2-fz-slate .slate-row .slate-ph { font-size: 28px; }
 /* float the verifier guess chip so it never changes row height */
 .m2-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
-
-.m2-fz-cap {
-  grid-column: 1; grid-row: 2; align-self: end;
-  font-family: var(--serif); font-style: italic; font-size: 13px;
-  color: var(--ink-mute);
-  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 420px;
-}
-.m2-fz-marks {
-  grid-column: 2; grid-row: 1 / span 2;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-}
-.m2-fz-marks .check { min-width: 150px; height: 56px; }
-
-.m2-fz-tutor {
-  position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 196px;
-  box-sizing: border-box;
-  display: flex; align-items: flex-end; gap: 10px;
-}
-.m2-fz-tutor.m2-fz-tutor-narrow { width: 220px; }
-.m2-fz-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
-.m2-fz-tutor .ribbon {
-  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
-  height: 96px; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
-}
 
 /* ── shared in-zone captions / readouts ──────────────────────────────────── */
 .m2-cap {
@@ -174,14 +65,11 @@
 }
 .m2-tray-spin:hover, .m2-score-btn:hover { background: var(--red-deep); }
 
-/* ── Stage 3 distributivity answer card ──────────────────────────────────── */
-.m2-fz-answer-distrib {
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto;
-  align-items: center;
-}
+/* ── Stage 3 distributivity answer row — rides inside the shared <AnswerBar>'s
+   .lbar-eq slot; only the in-row content styling lives here (the card frame and
+   grid are .lbar in lesson-board.css). .m2-fz-answer-distrib stays a marker class
+   on the AnswerBar in case the distrib row ever needs a frame tweak. */
 .m2-distrib-row {
-  grid-column: 1; grid-row: 1;
   display: inline-flex; align-items: center; gap: 12px; flex-wrap: nowrap;
 }
 .m2-distrib-part { display: inline-flex; align-items: center; gap: 6px; }
@@ -267,14 +155,10 @@
 .m2-bigeq-q { color: var(--red-deep); }
 .m2-bigeq-op { font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red); }
 
-/* ── Stages 6,7 word-problem fixed zone ──────────────────────────────────── */
-.m2-fz-words .m2-fz-wp {
-  position: absolute; left: 0; top: 0;
-  width: 1040px; height: 544px;
-  box-sizing: border-box; overflow: hidden;
-  display: flex; flex-direction: column; align-items: center;
-}
-.m2-fz-words .m2-fz-tutor { width: 220px; height: 196px; }
+/* ── Stages 6,7 word-problem content tweaks ───────────────────────────────────
+   The wide layout (story column + narrow tutor) is the shared <LessonBoard
+   variant="wide">; these rules — scoped by the className="m2-fz-words" the board
+   carries — only tune the WordProblem card/Slate sizing inside it. */
 .m2-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
 .m2-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
 .m2-fz-words .wp-card-head { margin-bottom: 8px; }
@@ -289,8 +173,8 @@
    extracts the math), so the page has room for a GENEROUS full-width drawing slate.
    This is the optional "show your work" scratch, sized to match M3's reference
    (~756×246). Tighten the stack so the story card and the answer/Check row never
-   clip inside the fixed .m2-fz-wp (1040×544). Scoped to .m2-fz-words so the Applied
-   stage (m2-fz-applied) is untouched. */
+   clip inside the shared wide story column (.lboard-wp). Scoped to .m2-fz-words so
+   the Applied stage (m2-fz-applied) is untouched. */
 .m2-fz-words .wp { gap: 8px; }
 .m2-fz-words .wp-setup { margin: 2px 0 6px; padding: 10px 12px; }
 .m2-words-scratch {
@@ -314,7 +198,7 @@
 /* ── Stage 6 APPLIED — sparse page, so the handwriting surfaces are sized up and
    the whole block is vertically centered to use the empty lower half. Scoped to
    .m2-fz-applied so the busier Words stage (with its scratch pad) keeps its sizing. */
-.m2-fz-applied .m2-fz-wp { justify-content: center; gap: 14px; }
+.m2-fz-applied .lboard-wp { justify-content: center; gap: 14px; }
 .m2-fz-applied .wp { gap: 16px; }
 .m2-fz-applied .wp-answer { gap: 10px; }
 .m2-fz-applied .wp-answer-lead { font-size: 18px; }
@@ -333,5 +217,5 @@
 .m2-fz-applied .wp-setup-lead { font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .m2-stage-tab, .m2-tray-cell { transition: none; }
+  .m2-tray-cell { transition: none; }
 }

@@ -2,125 +2,33 @@
    classes (.page/.canvas/.hud/.ribbon/.joinbtn/.qeq/.check/.panel …) are reused
    by reference only; everything here is .r1-* so it never collides. */
 
-/* ── stage selector strip (reachability: jump to any stage) ───────────────── */
-.r1-stages {
-  display: flex;
-  gap: 8px;
-  margin: 4px 22px 2px;
-  /* DETERMINISM: fixed height + no-wrap so a different font can't wrap the tabs
-     to a second row and grow this strip, shoving the play region down. */
-  flex-wrap: nowrap;
-  height: 50px;
-  box-sizing: border-box;
-}
-.r1-stage-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px 6px 8px;
-  border: 1.5px solid var(--paper-3);
-  border-radius: 8px;
-  background: var(--paper-1);
-  color: var(--ink-mute);
-  cursor: pointer;
-  font-family: var(--serif);
-  text-align: left;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-.r1-stage-tab:hover { border-color: var(--ink-mute); color: var(--ink); }
-.r1-stage-tab.is-active {
-  border-color: var(--red);
-  background: #fff8ea;
-  color: var(--ink);
-  box-shadow: 0 1px 0 var(--red-deep);
-}
-.r1-stage-tab.is-done .r1-stage-n {
-  background: var(--ink-mute);
-  color: var(--paper-1);
-  border-color: var(--ink-mute);
-}
-.r1-stage-n {
-  flex: 0 0 auto;
-  width: 26px; height: 26px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  border: 1.5px solid var(--paper-3);
-  background: var(--paper-2);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--ink);
-}
-.r1-stage-tab.is-active .r1-stage-n {
-  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
-}
-.r1-stage-txt { display: flex; flex-direction: column; line-height: 1.1; }
-.r1-stage-name { font-size: 14px; font-weight: 600; }
-.r1-stage-sub { font-size: 11px; opacity: 0.8; }
+/* Stage selector ("top bar") is now the shared <StageTabs> — see stagetabs.css. */
 
 /* (The lesson's old in-zone .r1-qband band was removed: the shared <QuestionBand>
-   now mounts ONCE at page level, directly under .r1-stages and above .goal — see
+   now mounts ONCE at page level, directly under the stage tabs (.stage-tabs) and above .goal — see
    AppR1's return block. Nothing here styles it; questionband.css owns it.) */
 
 /* ════════════════════════════════════════════════════════════════════════════
-   STAGE 1 · MANIPULATE — DETERMINISTIC FIXED-ZONE LAYOUT
-   The whole stage is laid out as fixed, non-overlapping rectangles so the same
-   assets land in the same place on every device (Safari/Chromium, any aspect):
-     · .r1-s1-blocks  — block-manipulation zone   (top-left,  fixed h)
-     · .r1-s1-rail    — "keep the bottom" hint     (top-right, fixed w/h)
-     · .r1-s1-answer  — equation + answer Slate     (bottom-left, fixed h)
-     · .r1-s1-tutor   — Cook + speech ribbon        (bottom-right, fixed w/h)
-   Blocks are pinned to the TOP, the answer card + tutor to the BOTTOM, with a
-   guaranteed gap between them. Heights never depend on text content (clamped),
-   so a longer string / different font can never grow a zone into its neighbour.
+   STAGE 1 · MANIPULATE — CONTENT-ONLY RULES
+   The four-zone play layout (stage · rail · answer · tutor) now lives in the
+   shared <LessonBoard> / lesson-board.css — the old absolute .r1-s1-blocks /
+   .r1-s1-rail / .r1-s1-answer / .r1-s1-tutor rectangles are GONE (they were the
+   source of the answer-bar-over-blocks overlap). What stays here is only the
+   r1-SPECIFIC content: the block canvas (which holds ABSOLUTE-positioned children
+   anchored against ORIGIN/UNIT/LINE_Y pixel constants) and the equation-row
+   pieces that ride inside the shared <AnswerBar>.
    ════════════════════════════════════════════════════════════════════════════ */
-.r1-s1 { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 6px; }
 
-/* fixed column geometry: blocks (left, wide) + hint rail (right). */
-.r1-s1-blocks {
-  position: absolute; left: 0; top: 0;
-  width: 800px; height: 350px;
-  border: 2px solid #1a0f08;
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
-  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
-  overflow: hidden;            /* clip: blocks can NEVER paint past the zone */
-  box-sizing: border-box;
-  padding: 6px 12px;
-  display: flex; flex-direction: column;
+/* the block canvas fills the (now flexible) LessonBoard stage box; its
+   absolute children (number line, ticks, draggable stacks) keep their pixel
+   coords, so the canvas stays position:relative and content-width, anchored to
+   the top — the empty room below it absorbs the stage row's slack (no fixed
+   336px that would clip when the honest stage height is shorter). */
+.r1-s1-canvas {
+  position: relative; width: 524px; height: 100%; min-height: 0;
+  margin: 0 auto; flex: 1 1 auto;
 }
-/* the canvas is sized to its CONTENT (number line ≈380px + labels), not 720px,
-   then CENTERED in the zone so whitespace sits evenly on both sides instead of
-   pooling on the right (Issue A). Absolute children use ORIGIN-based coords. */
-.r1-s1-canvas { width: 524px; height: 336px; margin: 0 auto; flex: 0 0 auto; }
 
-.r1-s1-rail {
-  position: absolute; right: 0; top: 0;
-  width: 396px; height: 350px;
-  box-sizing: border-box;
-  display: flex; flex-direction: column;
-}
-.r1-s1-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
-
-/* EQUATION + ANSWER — ONE bordered unit, clearly BELOW the blocks (Issue B).
-   Pinned to the bottom of the stage-1 region; fixed height; the 30px gap above
-   it (blocks 348 + this card's top offset) is guaranteed. */
-.r1-s1-answer {
-  position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 140px;
-  box-sizing: border-box;
-  border: 2px solid var(--ink);
-  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
-  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 18px; row-gap: 2px;
-  padding: 12px 22px;
-}
-.r1-s1-eqrow {
-  grid-column: 1; grid-row: 1 / span 2;
-  display: inline-flex; align-items: center; gap: 16px;
-}
 .r1-s1-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
 .r1-s1-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
 .r1-s1-slate { display: inline-flex; }
@@ -134,97 +42,28 @@
 .r1-s1-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
 .r1-s1-slate .slate-fraction { position: relative; }
 
-.r1-s1-cap {
-  grid-column: 1; grid-row: 2; align-self: end;
-  font-family: var(--serif); font-style: italic; font-size: 13px;
-  color: var(--ink-mute);
-  /* clamp: a longer caption can never grow the card */
-  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 320px;
-}
-.r1-s1-marks {
-  grid-column: 2; grid-row: 1 / span 2;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-}
-.r1-s1-marks .check { min-width: 150px; height: 56px; }
-
-/* TUTOR ZONE — Cook + ribbon, fixed rect bottom-right; ribbon text is clamped
-   so a longer status string can never change the zone height. */
-.r1-s1-tutor {
-  position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 140px;
-  box-sizing: border-box;
-  display: flex; align-items: flex-end; gap: 10px;
-}
-.r1-s1-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
-.r1-s1-tutor .ribbon {
-  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
-  /* clamp to 5 lines so font/length never reflows the zone */
-  height: 96px; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
-}
-
 /* ════════════════════════════════════════════════════════════════════════════
-   STAGES 2,3,5 · SHARED DETERMINISTIC FIXED-ZONE LAYOUT (.r1-fz*)
-   The exact same contract as Stage 1's .r1-s1* exemplar: four fixed,
-   non-overlapping rectangles inside the 1280×800 stage —
-     · .r1-fz-stage   — proof zone (blocks in 2/3, bare equation in 5)  top-left
-     · .r1-fz-rail    — "keep the bottom" hint                          top-right
-     · .r1-fz-answer  — equation + answer Slate + Check (ONE card)      bottom-left
-     · .r1-fz-tutor   — Cook + speech ribbon                            bottom-right
-   Proof zone pinned to the TOP, the answer card + tutor to the BOTTOM, with a
-   guaranteed gap between. Every zone is a fixed-size rectangle with clamped text,
-   so a longer string / different font (Safari vs Chromium) can NEVER reflow one
-   zone onto another. Geometry is identical to .r1-s1* so all stages line up.
+   STAGES 2,3,5 · CONTENT-ONLY RULES (.r1-fz*)
+   The four-zone play layout (stage · rail · answer · tutor) is the shared
+   <LessonBoard> — the old absolute .r1-fz-stage / .r1-fz-rail / .r1-fz-answer /
+   .r1-fz-tutor rectangles are GONE. What stays is the r1-SPECIFIC content: the
+   proof canvas (absolute block stack in 2/3, centered bare equation in 5) and the
+   equation-row pieces that ride inside the shared <AnswerBar>.
    ════════════════════════════════════════════════════════════════════════════ */
-.r1-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 6px; }
 
-.r1-fz-stage {
-  position: absolute; left: 0; top: 0;
-  width: 800px; height: 350px;
-  border: 2px solid #1a0f08;
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
-  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
-  overflow: hidden;            /* clip: content can NEVER paint past the zone */
-  box-sizing: border-box;
-  padding: 6px 12px;
-  display: flex; flex-direction: column;
+/* the proof canvas fills the (now flexible) LessonBoard stage box; its absolute
+   children (.r1-bind-stack, .r1-fadecheck) keep their pixel coords, so the canvas
+   stays position:relative and content-width, anchored to the top. */
+.r1-fz-canvas {
+  position: relative; width: 776px; height: 100%; min-height: 0;
+  margin: 0 auto; flex: 1 1 auto;
 }
-.r1-fz-canvas { position: relative; width: 776px; height: 336px; margin: 0 auto; flex: 0 0 auto; }
-/* the bare-equation stage centers its single equation in the zone */
+/* the bare-equation stage centers its single equation in the (full-height) box */
 .r1-fz-canvas-center {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 4px;
 }
 
-.r1-fz-rail {
-  position: absolute; right: 0; top: 0;
-  width: 396px; height: 350px;
-  box-sizing: border-box;
-  display: flex; flex-direction: column;
-}
-.r1-fz-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
-
-/* EQUATION + ANSWER + CHECK — ONE bordered unit, pinned to the bottom-left, a
-   guaranteed gap above it (stage zone 348 + this card's offset). Identical
-   geometry to .r1-s1-answer so the write area sits in the same place every time. */
-.r1-fz-answer {
-  position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 140px;
-  box-sizing: border-box;
-  border: 2px solid var(--ink);
-  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
-  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 18px; row-gap: 2px;
-  padding: 12px 22px;
-}
-.r1-fz-eqrow {
-  grid-column: 1; grid-row: 1 / span 2;
-  display: inline-flex; align-items: center; gap: 16px;
-}
 .r1-fz-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
 .r1-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
 .r1-fz-slate { display: inline-flex; }
@@ -238,48 +77,14 @@
 /* the verifier guess chip floats so it can't change the row's height */
 .r1-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
 
-.r1-fz-cap {
-  grid-column: 1; grid-row: 2; align-self: end;
-  font-family: var(--serif); font-style: italic; font-size: 13px;
-  color: var(--ink-mute);
-  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 360px;
-}
-.r1-fz-marks {
-  grid-column: 2; grid-row: 1 / span 2;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-}
-.r1-fz-marks .check { min-width: 150px; height: 56px; }
-
-.r1-fz-tutor {
-  position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 140px;
-  box-sizing: border-box;
-  display: flex; align-items: flex-end; gap: 10px;
-}
-.r1-fz-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
-.r1-fz-tutor .ribbon {
-  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
-  height: 96px; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
-}
-
-/* ── STAGES 6,7 · WORD-PROBLEM FIXED-ZONE LAYOUT ───────────────────────────────
-   The WordProblem column lives in a FIXED main rectangle (top-left, wide+tall)
-   that can never overflow the 1280×800 stage; the Cook + ribbon use the same
-   fixed tutor zone. The WordProblem keeps the answer Slate + Check together via
-   its own .wp-answer-row, so "Check beside the write area" holds inside the card. */
-.r1-fz-words .r1-fz-wp {
-  position: absolute; left: 0; top: 0;
-  width: 1040px; height: 486px;
-  box-sizing: border-box; overflow: hidden;
-  display: flex; flex-direction: column; align-items: center;
-}
-.r1-fz-words .r1-fz-tutor { width: 220px; height: 150px; }
-/* Tighten the embedded card + Slates so the WHOLE column (story + setup + answer
-   + Check) fits inside the fixed 544px zone WITHOUT clipping. We shrink the real
-   cell box sizes (not transform:scale, which keeps the original layout footprint
-   and was leaving the answer row to overflow the zone). Answer cells stay
-   comfortably large for a child's digit; the optional/setup cells are smaller. */
+/* ── STAGES 6,7,sw · WORD-PROBLEM CONTENT TWEAKS ───────────────────────────────
+   The wide layout (story column + narrow tutor) is the shared <LessonBoard
+   variant="wide">; the word column is wrapped in <FitStage axis="y"> so it
+   uniformly downscales only if it would overflow. The old absolute .r1-fz-wp /
+   .r1-fz-tutor rectangles are GONE. These rules — scoped by the className
+   "r1-fz-words" the board carries — only tune the WordProblem card + Slate sizing
+   inside it. Answer cells stay comfortably large for a child's digit; the
+   optional/setup cells are smaller. */
 .r1-fz-words .wp { gap: 8px; width: 100%; align-items: center; }
 .r1-fz-words .wp-card { padding: 10px 24px 9px; max-width: 760px; }
 .r1-fz-words .wp-card-head { margin-bottom: 8px; }
@@ -402,6 +207,4 @@
   margin: 0 auto;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .r1-stage-tab { transition: none; }
-}
+/* (Stage-tab reduced-motion handling now lives in stagetabs.css.) */
