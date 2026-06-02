@@ -230,12 +230,12 @@ export default function AppCompare({ no, title, onBack, onRewatchIntro }) {
     canvas = (
       <div className="canvas cmp-canvas" id="cmpcanvas">
         <span className="cmp-line-tag" style={{ left: 4, top: LINE_TOP - 14 }}><BigFrac num={item.a.num} den={item.a.den} /></span>
-        <NumberLine den={item.a.den} origin={ORIGIN} span={SPAN} lineY={LINE_TOP}
+        <NumberLine den={item.a.den} origin={ORIGIN} span={SPAN} lineY={LINE_TOP} fillToPoint
           point={item.a.num / item.a.den}
           marks={[{ value: item.a.num / item.a.den, label: `${item.a.num}/${item.a.den}` }]} />
 
         <span className="cmp-line-tag" style={{ left: 4, top: LINE_TOP + LINE_GAP - 14 }}><BigFrac num={item.b.num} den={item.b.den} /></span>
-        <NumberLine den={item.b.den} origin={ORIGIN} span={SPAN} lineY={LINE_TOP + LINE_GAP}
+        <NumberLine den={item.b.den} origin={ORIGIN} span={SPAN} lineY={LINE_TOP + LINE_GAP} fillToPoint
           point={item.b.num / item.b.den}
           marks={[{ value: item.b.num / item.b.den, label: `${item.b.num}/${item.b.den}` }]} />
 
@@ -270,7 +270,7 @@ export default function AppCompare({ no, title, onBack, onRewatchIntro }) {
     canvas = (
       <div className="canvas cmp-canvas" id="cmpcanvas">
         <span className="cmp-line-tag big" style={{ left: 4, top: 150 }}><BigFrac num={BENCH_ITEM.num} den={BENCH_ITEM.den} /></span>
-        <NumberLine den={BENCH_ITEM.den} origin={ORIGIN} span={SPAN} lineY={170}
+        <NumberLine den={BENCH_ITEM.den} origin={ORIGIN} span={SPAN} lineY={170} fillToPoint
           benchmarkHalf
           point={BENCH_ITEM.num / BENCH_ITEM.den}
           marks={[{ value: BENCH_ITEM.num / BENCH_ITEM.den, label: `${BENCH_ITEM.num}/${BENCH_ITEM.den}` }]} />
@@ -305,12 +305,12 @@ export default function AppCompare({ no, title, onBack, onRewatchIntro }) {
         </div>
 
         <span className="cmp-line-tag" style={{ left: 4, top: LINE_TOP - 14 }}><BigFrac num={REASON_ITEM.a.num} den={REASON_ITEM.a.den} /></span>
-        <NumberLine den={REASON_ITEM.a.den} origin={ORIGIN} span={SPAN} lineY={LINE_TOP}
+        <NumberLine den={REASON_ITEM.a.den} origin={ORIGIN} span={SPAN} lineY={LINE_TOP} fillToPoint
           benchmarkHalf point={REASON_ITEM.a.num / REASON_ITEM.a.den}
           marks={[{ value: REASON_ITEM.a.num / REASON_ITEM.a.den, label: `${REASON_ITEM.a.num}/${REASON_ITEM.a.den}` }]} />
 
         <span className="cmp-line-tag" style={{ left: 4, top: LINE_TOP + LINE_GAP - 14 }}><BigFrac num={REASON_ITEM.b.num} den={REASON_ITEM.b.den} /></span>
-        <NumberLine den={REASON_ITEM.b.den} origin={ORIGIN} span={SPAN} lineY={LINE_TOP + LINE_GAP}
+        <NumberLine den={REASON_ITEM.b.den} origin={ORIGIN} span={SPAN} lineY={LINE_TOP + LINE_GAP} fillToPoint
           benchmarkHalf point={REASON_ITEM.b.num / REASON_ITEM.b.den}
           marks={[{ value: REASON_ITEM.b.num / REASON_ITEM.b.den, label: `${REASON_ITEM.b.num}/${REASON_ITEM.b.den}` }]} />
 

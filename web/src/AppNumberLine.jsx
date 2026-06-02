@@ -113,10 +113,11 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
   // ── the placed-point handler the NumberLine calls on pointer-up. It hands back
   // a value in WHOLES snapped to the nearest 1/den; convert to a tick index and
   // judge against the target. Used by 1-place and 3-numbers. ──
-  function onPlace(valInWholes) {
+  function onPlace(valInWholes, info) {
     if (solvedRef.current) return;
     const k = Math.round(valInWholes * P.den);   // snap to nearest tick index
     setPointK(k); setPlaced(true);
+    if (info && info.live) return;               // gliding under the finger — only judge on release
     const stg = stageRef.current;
     if (k === TARGET_K) {
       setCook("cheer");
@@ -209,6 +210,8 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
             span={SPAN}
             lineY={LINE_Y}
             marks={marks}
+            labelParts
+            fillToPoint
             point={pointVal}
             draggablePoint={drags && !solved}
             onPlace={onPlace}

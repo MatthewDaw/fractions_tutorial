@@ -15,6 +15,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import TitleScreen from "./TitleScreen.jsx";
 import WorldMap from "./WorldMap.jsx";
 import SettingsScreen from "./SettingsScreen.jsx";
+import ConceptMap from "./ConceptMap.jsx";
 import EmptyRoom from "./EmptyRoom.jsx";
 import RoomIntro from "./RoomIntro.jsx";
 import LessonUnlikeDen from "./LessonUnlikeDen.jsx";
@@ -122,9 +123,11 @@ export default function Shell() {
   // Remember the last non-settings screen so the Settings "Done" button returns
   // the player exactly where they opened it from (title, world, a room…).
   const prevRouteRef = useRef("world");
-  useEffect(() => { if (route !== "settings") prevRouteRef.current = route; }, [route]);
+  useEffect(() => { if (route !== "settings" && route !== "concepts") prevRouteRef.current = route; }, [route]);
   const openSettings = () => go("settings");
   const closeSettings = () => go(prevRouteRef.current || "world");
+  const openConcepts = () => go("concepts");
+  const closeConcepts = () => go(prevRouteRef.current || "world");
 
   // ---- Engine mastery map (U11) --------------------------------------------
   // We load the mastery map once on mount, and re-load whenever the route
@@ -150,6 +153,11 @@ export default function Shell() {
     // Settings screen — voice/music volume + answer input mode. Overlay-style: it
     // remembers where it was opened from and returns there on "Done".
     screen = <SettingsScreen onBack={closeSettings} />;
+  } else if (route === "concepts") {
+    // Concept Mastery Map — the visual connection to the measurement engine:
+    // CCSS grade → cluster → standard → skill node → atomic card, with rolled-up
+    // mastery. Overlay-style, like Settings: returns to where it was opened from.
+    screen = <ConceptMap onBack={closeConcepts} />;
   } else if (route === "title") {
     // Title / intro screen — the app's landing. START drops into the world map.
     screen = <TitleScreen onStart={() => go("world")} />;
@@ -206,10 +214,20 @@ export default function Shell() {
       <TapToRead />
       <BackgroundMusic scene={sceneFor(route, showingIntro)} />
       {(route === "title" || route === "world") && (
-        <button className="settings-fab" onClick={openSettings} title="Settings" aria-label="Settings">
-          <img src="/settings-gear.png" width="20" height="20" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
-          <span className="settings-fab-label">Settings</span>
-        </button>
+        <>
+          <button className="settings-fab" onClick={openSettings} title="Settings" aria-label="Settings">
+            <img src="/settings-gear.png" width="20" height="20" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
+            <span className="settings-fab-label">Settings</span>
+          </button>
+          <button className="settings-fab concepts-fab" onClick={openConcepts} title="Concept Mastery Map" aria-label="Concepts">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
+              <rect x="2" y="3" width="20" height="6" rx="1" fill="none" stroke="#1c1612" strokeWidth="2" />
+              <rect x="5" y="13" width="14" height="5" rx="1" fill="none" stroke="#a32a22" strokeWidth="2" />
+              <rect x="8" y="20" width="8" height="3" rx="1" fill="#a32a22" />
+            </svg>
+            <span className="settings-fab-label">Concepts</span>
+          </button>
+        </>
       )}
     </>
   );

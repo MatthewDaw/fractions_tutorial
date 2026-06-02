@@ -1,33 +1,35 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 /* ────────────────────────────────────────────────────────────────────────────
    NumberLine — shared, dependency-free fraction ruler.
 
    Generalizes the 0→2 ruler lifted out of AppR5 (its UNIT = span/wholes scale
    math + .nline/.ntick/.nlab render). Pure presentational, with an OPTIONAL
-   draggable point marker.
+   draggable point marker that GLIDES under the finger and snaps to the nearest
+   1/den only on release (so it feels like a physical bead on a wire, not a
+   value that teleports tick-to-tick).
 
    Props:
      wholes=1        how many whole units the line spans (0..wholes)
      den             equal partitions per whole (the denominator)
      origin=60       x of the "0" end, in stage-space px
-     span=600        px width of ONE whole unit's worth? NO — total px width of
-                     the whole line is `span`; UNIT (px per whole) = span/wholes.
+     span=600        total px width of the whole line; UNIT (px/whole)=span/wholes
      lineY=140       y of the line (the .nline top), in stage-space px
-     marks           optional extra labels: [{ value, label, ng? }]
-                     value is in wholes (e.g. 0.5), drawn as a .nlab
+     marks           optional extra labels: [{ value, label, ng? }] (value in wholes)
      point           numeric value in wholes (e.g. 0.75) → marker dot
      draggablePoint  if true, the dot is grabbable (pointerdown/move/up)
-     onPlace         called on pointer-up with the dropped value, snapped to
-                     the nearest 1/den (in wholes)
-     benchmarkHalf   if true, draw a labelled ½ reference tick
-     width           (unused override; layout derives from span) — accepted so
-                     callers can pass a measured value without breaking.
+     onPlace         (value, {live}) → called continuously while dragging with
+                     live:true (caption/preview ONLY — do NOT judge), and once on
+                     release with live:false (the committed, snapped value to judge)
+     benchmarkHalf   draw a tall, labelled ½ reference tick
+     labelParts      label every partition tick (¼, 2/4, …), not just the wholes
+     fillToPoint     paint a translucent bar from 0→point so the value reads as a
+                     LENGTH you can compare at a glance
+     fillColor       the fill bar color (default translucent red)
+     width           (unused; layout derives from span) — accepted for callers.
 
-   The line must live inside an element with id="r5canvas"/"nlcanvas" etc — it
-   only needs a positioned ancestor; the drag reads its OWN .nline rect, so it
-   is container-agnostic. Scale is calibrated by reading #stage width/1280 like
-   AppR1/AppR5, so pointer px map correctly into stage-space.
+   Scale is calibrated by reading #stage width/1280 like AppR1/AppR5, so pointer
+   px map correctly into stage-space under the stage's CSS transform.
    ──────────────────────────────────────────────────────────────────────────── */
 export function NumberLine({
   wholes = 1,
@@ -40,48 +42,59 @@ export function NumberLine({
   draggablePoint = false,
   onPlace,
   benchmarkHalf = false,
+  labelParts = false,
+  fillToPoint = false,
+  fillColor = "rgba(192,57,43,.16)",
   width,
 }) {
   const lineRef = useRef(null);
+  // while dragging we track a CONTINUOUS (un-snapped) value so the dot glides;
+  // the parent's `point` only updates on release. dragVal===null ⇒ not dragging.
+  const [dragVal, setDragVal] = useState(null);
+
   const UNIT = span / wholes;                 // px per whole
   const TICKS = wholes * den;                 // total tick count (0..TICKS)
-  const xOf = (v) => origin + v * UNIT;       // value-in-wholes → stage-space x
+  const xOf = (v) => origin + v * UNIT;        // value-in-wholes → stage-space x
 
-  // whole-number labels + any extra `marks`
+  // labels: whole-numbers always; every partition tick too when labelParts.
   const labels = [];
   for (let k = 0; k <= TICKS; k++) {
-    if (k % den === 0) labels.push({ value: k / den, label: String(k / den), ng: true });
+    const isWhole = k % den === 0;
+    if (isWhole) labels.push({ value: k / den, label: String(k / den), ng: true });
+    else if (labelParts) labels.push({ value: k / den, label: `${k}/${den}`, part: true });
   }
   if (marks) for (const m of marks) labels.push({ value: m.value, label: m.label, ng: !!m.ng });
 
-  // ---- draggable point: snap to nearest 1/den, scale-calibrated by #stage ----
+  const shownPoint = dragVal != null ? dragVal : point;
+  const dragging = dragVal != null;
+
+  // ---- draggable point: glide continuously, snap to nearest 1/den on release ----
   function grabPoint(e) {
     if (!draggablePoint) return;
     if (e && e.preventDefault) e.preventDefault();
     const line = lineRef.current;
     if (!line) return;
-    const rect = line.getBoundingClientRect();
     const stage = document.getElementById("stage");
     const k = (stage ? stage.getBoundingClientRect().width / 1280 : 1) || 1;
 
     const valueAt = (clientX) => {
-      // clientX → stage-space px (÷k) → wholes from origin (÷UNIT), then clamp.
-      const px = (clientX - rect.left) / k;     // px from the line's left edge (= origin)
-      let v = px / UNIT;
-      return Math.max(0, Math.min(wholes, v));
+      const rect = line.getBoundingClientRect();          // live rect (robust to layout)
+      const px = (clientX - rect.left) / k;               // px from the line's left edge (=origin)
+      return Math.max(0, Math.min(wholes, px / UNIT));     // clamp to [0, wholes], un-snapped
     };
 
     const move = (ev) => {
       const v = valueAt(ev.clientX);
-      // live snap-to-tick so the dot tracks tick centers while dragging
-      const snapped = Math.round(v * den) / den;
-      onPlace && onPlace(snapped, { live: true });
+      setDragVal(v);                                       // smooth, un-snapped dot
+      // hand the caller a SNAPPED preview for captions; live:true ⇒ do not judge.
+      onPlace && onPlace(Math.round(v * den) / den, { live: true });
     };
     const up = (ev) => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       const snapped = Math.round(valueAt(ev.clientX) * den) / den;
-      onPlace && onPlace(snapped, { live: false });
+      setDragVal(null);                                    // release → settle (CSS eases to tick)
+      onPlace && onPlace(snapped, { live: false });        // the committed value to judge
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -96,21 +109,49 @@ export function NumberLine({
         style={{ top: lineY, left: origin, right: "auto", width: span }}
       />
 
-      {/* ticks: major (height 14) on whole boundaries, minor (7) elsewhere */}
-      {Array.from({ length: TICKS + 1 }).map((_, k) => (
+      {/* filled sweep 0→point: makes the value a LENGTH you can compare */}
+      {fillToPoint && shownPoint != null && (
         <span
-          key={"t" + k}
-          className="ntick"
-          style={{ left: xOf(k / den), top: lineY, height: k % den === 0 ? 14 : 7 }}
+          className="nl-fill"
+          style={{
+            position: "absolute",
+            left: origin,
+            top: lineY - 5,
+            width: Math.max(0, shownPoint * UNIT),
+            height: 10,
+            background: fillColor,
+            borderRadius: 5,
+            pointerEvents: "none",
+            transition: dragging ? "none" : "width .08s ease",
+            zIndex: 5,
+          }}
         />
-      ))}
+      )}
 
-      {/* whole-number + extra labels (whole numbers get the .ng class) */}
+      {/* ticks: major (taller, solid) on whole boundaries, partition ticks shorter */}
+      {Array.from({ length: TICKS + 1 }).map((_, k) => {
+        const major = k % den === 0;
+        return (
+          <span
+            key={"t" + k}
+            className={"ntick" + (major ? " is-major" : "")}
+            style={{
+              left: xOf(k / den),
+              top: lineY,
+              height: major ? 20 : 12,
+              width: major ? 2 : 1.5,
+              opacity: major ? 1 : 0.72,
+            }}
+          />
+        );
+      })}
+
+      {/* whole-number + partition + extra labels (whole numbers get the .ng class) */}
       {labels.map((l, i) => (
         <span
           key={"l" + i}
-          className={"nlab" + (l.ng ? " ng" : "")}
-          style={{ left: xOf(l.value), top: lineY + 12 }}
+          className={"nlab" + (l.ng ? " ng" : "") + (l.part ? " nl-partlab" : "")}
+          style={{ left: xOf(l.value), top: lineY + 16, opacity: l.part ? 0.7 : 1 }}
         >
           {l.label}
         </span>
@@ -121,35 +162,35 @@ export function NumberLine({
         <>
           <span
             className="ntick nl-half-tick"
-            style={{ left: xOf(0.5 * wholes), top: lineY - 6, height: 20, width: 2, opacity: 0.85 }}
+            style={{ left: xOf(0.5 * wholes), top: lineY - 8, height: 26, width: 3, opacity: 0.95 }}
           />
-          <span
-            className="nlab"
-            style={{ left: xOf(0.5 * wholes), top: lineY - 26 }}
-          >
+          <span className="nlab nl-half-lab" style={{ left: xOf(0.5 * wholes), top: lineY - 30 }}>
             ½
           </span>
         </>
       )}
 
-      {/* the point marker dot */}
-      {point != null && (
+      {/* the point marker dot — a grabbable bead that lifts when held */}
+      {shownPoint != null && (
         <span
-          className={"nl-point" + (draggablePoint ? " is-drag" : "")}
+          className={"nl-point" + (draggablePoint ? " is-drag" : "") + (dragging ? " is-grabbing" : "")}
           onPointerDown={grabPoint}
           style={{
             position: "absolute",
-            left: xOf(point),
+            left: xOf(shownPoint),
             top: lineY,
-            width: 16,
-            height: 16,
-            marginLeft: -8,
-            marginTop: -8,
+            width: 26,
+            height: 26,
+            marginLeft: -13,
+            marginTop: -13,
             borderRadius: "50%",
             background: "var(--red, #c0392b)",
-            border: "2px solid #fff",
-            boxShadow: "0 1px 4px rgba(0,0,0,.35)",
-            cursor: draggablePoint ? "grab" : "default",
+            border: "3px solid #fff",
+            boxShadow: dragging ? "0 5px 14px rgba(0,0,0,.42)" : "0 2px 6px rgba(0,0,0,.3)",
+            transform: dragging ? "scale(1.16)" : "scale(1)",
+            // 1:1 tracking while dragging; ease into the snapped tick on release
+            transition: dragging ? "none" : "left .09s ease, transform .12s ease, box-shadow .12s ease",
+            cursor: draggablePoint ? (dragging ? "grabbing" : "grab") : "default",
             touchAction: "none",
             zIndex: 26,
           }}
@@ -159,7 +200,7 @@ export function NumberLine({
   );
 }
 
-// Support BOTH import styles in the new lessons:
-//   AppNumberLine.jsx  →  import { NumberLine } from "./components/NumberLine.jsx"
-//   AppCompare.jsx     →  import NumberLine from "./components/NumberLine.jsx"
+// Support BOTH import styles:
+//   import { NumberLine } from "./components/NumberLine.jsx"
+//   import NumberLine    from "./components/NumberLine.jsx"
 export default NumberLine;

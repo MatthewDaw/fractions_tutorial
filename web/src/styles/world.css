@@ -167,3 +167,5 @@
 .settings-fab:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
 .settings-fab:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
 .settings-fab-label { line-height: 1; }
+/* Concepts FAB sits just to the left of the Settings FAB (same fixed bar). */
+.settings-fab.concepts-fab { right: 132px; }
