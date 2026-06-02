@@ -41,6 +41,7 @@ import BlankSlate from "./components/BlankSlate.jsx";
 import FitStage from "./components/FitStage.jsx";
 import QuestionBand from "./components/QuestionBand.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, LessonGoal } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 
@@ -69,6 +70,7 @@ const STAGES = [
   { id: "applied",    n: 5, tag: "Applied",    blurb: "Write the fraction, then its simplest name" },
   { id: "showwork",   n: "SW", tag: "Show Work", blurb: "Show your work on a blank slate" },
   { id: "words",      n: 6, tag: "Words",      blurb: "Read the recipe, write the simplest name" },
+  { id: "practice",   n: "★", tag: "Practice",  blurb: "Fresh problems — paced to your mastery" },
 ];
 
 // ── the ÷K chips that ride inside the shared BigFrac ─────────────────────────
@@ -147,7 +149,7 @@ function GroupBar({ num, den, unit, animKey, dim, lastK }) {
   );
 }
 
-export default function AppR4({ no, title, onBack, onRewatchIntro }) {
+export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecipe = null, onReturnToKitchen }) {
   // The fuse mechanic's live state (used by Manipulate, Bind, and seeded for Fade).
   const [num, setNum] = useState(START_NUM);
   const [den, setDen] = useState(START_DEN);
@@ -192,24 +194,33 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
   // per-stage reset. R4 keeps DOMAIN state (above) + bounceK (its own bad-input
   // flash, distinct from the hook's flashBad).
   const SCAFFOLD_KEY = (s) => s; // R4 stage ids ARE scaffoldMap keys ("manipulate"…)
-  const {
-    stage, goStage, nextStage,
-    emit, reportAttempt, applyEngineDecision,
-    solved, setSolved, solvedRef, stars, setStars, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef, stageRef,
-  } = useLessonScaffold({
+  const sc = useLessonScaffold({
     nodeId: "SIMPLIFY",
     lessonId: "r4",
     initialStage: "manipulate",
     stagesOrder: STAGES.map((s) => s.id),
     scaffoldKeyFor: SCAFFOLD_KEY,
+    // The final "practice" stage serves auto-generated SIMPLIFY variations, paced
+    // by the engine (re-roll on correct, fade on a clean streak, transfer probe).
+    generatedStages: ["practice"],
+    generatorSkill: "SIMPLIFY",
     introFor: (s) => initialStatus(s),
     resetStage: () => {
       setNum(START_NUM); setDen(START_DEN); setDivs([]); setFuseTick(0); setBounceK(0);
       setSlate({ n: "", d: "" }); setPickedK(0);
       setSetupAns({ n: "", d: "" }); setSetupOk(false); setShowWorkInked(false);
     },
+    // U3: certified mastery from a stumping kitchen recipe returns to the kitchen.
+    stumpingRecipe,
+    inKitchen: false,
+    onEnd: (dec) => { if (dec?.kind === "ReturnToKitchen") onReturnToKitchen?.(); },
   });
+  const {
+    stage, goStage, nextStage,
+    emit, reportAttempt, applyEngineDecision,
+    solved, setSolved, solvedRef, stars, setStars, cook, setCook, status, setStatus,
+    say, speaking, selfCorrectionsRef, stageRef,
+  } = sc;
 
   // Derived view state.
   const UNIT = SPAN;                       // 0→1 ruler fills the whole span
@@ -408,9 +419,14 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     const ok = gradeSlate({ requireLowest: true });
     if (ok) {
       const tn = parseInt(slate.n, 10), td = parseInt(slate.d, 10);
-      // Same amount is correct; full marks only when fully reduced (CCSS 4/8 == 1/2).
-      const st = gcd(tn, td) === 1 ? 3 : 2;
-      const dec = reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: st === 3 ? null : "not_simplified", stars: st });
+      // UX: a same-amount form earns two stars and an encouraging nudge (the lesson
+      // never punishes an equivalent). MASTERY: on a stage whose GOAL is the simplest
+      // name, a not-yet-reduced answer is NOT a demonstration of SIMPLIFY — reporting
+      // it as correct would inflate P_known (the brief's false-positive trap). So the
+      // engine `correct` is gated on full reduction; `not_simplified` records the gap.
+      const fully = gcd(tn, td) === 1;
+      const st = fully ? 3 : 2;
+      const dec = reportAttempt({ correct: fully, answerValue: [tn, td], errorSignature: fully ? null : "not_simplified", stars: st });
       setTimeout(() => applyEngineDecision(dec, true), 1500);
     }
   }
@@ -419,8 +435,10 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     const ok = gradeSlate({ requireLowest: true, n: v.n, d: v.d });
     if (ok) {
       const tn = parseInt(v.n, 10), td = parseInt(v.d, 10);
-      const st = gcd(tn, td) === 1 ? 3 : 2;
-      reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: st === 3 ? null : "not_simplified", stars: st });
+      // See submitNumbers: engine `correct` gated on full reduction (anti false-positive).
+      const fully = gcd(tn, td) === 1;
+      const st = fully ? 3 : 2;
+      reportAttempt({ correct: fully, answerValue: [tn, td], errorSignature: fully ? null : "not_simplified", stars: st });
       // last stage — just settle; the selector lets a demo user loop back.
     }
   }
@@ -456,8 +474,10 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     const ok = gradeSlate({ requireLowest: true, n: v.n, d: v.d });
     if (ok) {
       const tn = parseInt(v.n, 10), td = parseInt(v.d, 10);
-      const st = gcd(tn, td) === 1 ? 3 : 2;
-      const dec = reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: st === 3 ? null : "not_simplified", stars: st });
+      // See submitNumbers: engine `correct` gated on full reduction (anti false-positive).
+      const fully = gcd(tn, td) === 1;
+      const st = fully ? 3 : 2;
+      const dec = reportAttempt({ correct: fully, answerValue: [tn, td], errorSignature: fully ? null : "not_simplified", stars: st });
       setTimeout(() => applyEngineDecision(dec, true), 1500);
     }
   }
@@ -538,7 +558,10 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
   // ── Per-stage body ──────────────────────────────────────────────────────────
   let body = null;
 
-  if (stage === "showwork") {
+  if (stage === "practice") {
+    // PRACTICE — auto-generated SIMPLIFY variations, paced by the mastery engine.
+    body = <GenPracticeBoard skill="SIMPLIFY" scaffold={sc} />;
+  } else if (stage === "showwork") {
     // SHOW WORK — MANDATORY BLANK-SLATE STEP (between Applied and Words). A pure
     // presence gate: the child writes anything on a 100%-blank slate; "Next"
     // unlocks once any ink lands (onInkChange). Ungraded — no engine judge;
@@ -901,7 +924,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
         current: stage,
         onSelect: goStage,
       }}
-      band={stage !== "words" && stage !== "showwork" ? Band : null}
+      band={stage !== "words" && stage !== "showwork" && stage !== "practice" ? Band : null}
       goal={Goal}
       extra={Ghost}
     >

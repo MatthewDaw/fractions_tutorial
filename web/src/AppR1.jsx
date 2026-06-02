@@ -44,6 +44,7 @@ import ExpressionSlate from "./components/ExpressionSlate.jsx";
 import BlankSlate from "./components/BlankSlate.jsx";
 import FitStage from "./components/FitStage.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import "./styles/r1.css";
@@ -77,6 +78,10 @@ const STAGES = [
   // "showwork" -> level 3; the slate is ungraded — advancing is gated only on ink.
   { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
   { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
+  // Auto-generated, estimator-paced practice: the engine mints fresh ADD_SAME_DEN
+  // variations, re-rolls on a correct answer, fades to harder problems on a clean
+  // streak, and probes transfer. Purely additive — no teaching stage is touched.
+  { n: "practice", key: "practice", tab: "Practice", sub: "Fresh problems — paced to your mastery", badge: "★" },
 ];
 
 // ---- the merged stack (all a+b pieces, one locked denominator) --------------
@@ -108,7 +113,7 @@ function Combined({ a, b, den, reveal, dim = false }) {
 }
 
 // ---------------- main ----------------
-export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage }) {
+export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage, stumpingRecipe = null, onReturnToKitchen }) {
   // Which arc stage we're on. initialStage lets the orchestrator deep-link. The
   // stage VALUE is the STAGES `n` (1..7, or the string "sw" for the inserted
   // mandatory show-work step — so the numeric stages never renumber).
@@ -155,18 +160,17 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     const idx = STAGES.findIndex((s) => s.n === cur);
     return idx > 0 ? STAGES[idx - 1].n : cur;
   };
-  const {
-    stage, goStage, nextStage,
-    emit, reportAttempt, award, flashBad,
-    solved, solvedRef, stars, badInput, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef,
-  } = useLessonScaffold({
+  const sc = useLessonScaffold({
     nodeId: NODE,
     lessonId: "r1",
     initialStage: startN,
     advance: advanceByOrder,
     back: backByOrder,
     scaffoldKeyFor: SCAFFOLD_KEY,
+    // The final "practice" stage serves auto-generated ADD_SAME_DEN variations,
+    // paced by the engine (re-roll on correct, fade on a clean streak, transfer probe).
+    generatedStages: ["practice"],
+    generatorSkill: "ADD_SAME_DEN",
     introFor: (n) => ({ tone: "normal", text: STAGE_INTRO(n) }),
     resetStage: () => {
       setMerged(false); setMergeTick(0);
@@ -175,8 +179,21 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
       setShowWorkInked(false);
       setPosA(HOME.A); setPosB(HOME.B);
     },
-    onEnd: () => setStatus({ tone: "ok", text: "That's the whole arc — from dragging blocks to reading a story and writing the answer. Brilliant!" }),
+    // U3: when opened from a stumping kitchen recipe, certified mastery returns the
+    // child to the kitchen; otherwise the normal end-of-arc celebration line.
+    stumpingRecipe,
+    inKitchen: false,
+    onEnd: (dec) => {
+      if (dec?.kind === "ReturnToKitchen") { onReturnToKitchen?.(); return; }
+      setStatus({ tone: "ok", text: "That's the whole arc — from dragging blocks to reading a story and writing the answer. Brilliant!" });
+    },
   });
+  const {
+    stage, goStage, nextStage,
+    emit, reportAttempt, award, flashBad,
+    solved, solvedRef, stars, badInput, cook, setCook, status, setStatus,
+    say, speaking, selfCorrectionsRef,
+  } = sc;
 
   // Selector clicks pass a STAGES `key` string; normalize to the stage VALUE
   // (a number, or "sw") the render branches compare against.
@@ -428,7 +445,10 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
   // ---- Per-stage body -------------------------------------------------------
   let body = null;
 
-  if (stage === 1) {
+  if (stage === "practice") {
+    // PRACTICE — auto-generated ADD_SAME_DEN variations, paced by the mastery engine.
+    body = <GenPracticeBoard skill="ADD_SAME_DEN" scaffold={sc} />;
+  } else if (stage === 1) {
     // STAGE 1 · MANIPULATE — the blocks ARE the problem. No writing.
     // The four-zone play layout is now the shared <LessonBoard variant="split">:
     // the block canvas fills the (now flexible) stage box; the equation + numeric
@@ -839,14 +859,14 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
       onRewatchIntro={onRewatchIntro}
       onReset={reset}
       tabs={{
-        stages: STAGES.map((s) => ({ key: s.key, badge: s.n, title: s.tab, sub: s.sub })),
+        stages: STAGES.map((s) => ({ key: s.key, badge: s.badge ?? s.n, title: s.tab, sub: s.sub })),
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}
       // The bare equation reads in the same spot on every stage EXCEPT the final
       // words-only stage (7): there the child must read the PROSE and extract the
       // math themselves, so showing the equation would give the answer away.
-      band={stage !== 7 ? questionBand : null}
+      band={stage !== 7 && stage !== "practice" ? questionBand : null}
       goal={Goal}
     >
       {body}

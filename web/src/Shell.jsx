@@ -30,6 +30,7 @@ import AppCompare from "./AppCompare.jsx";
 import MomsRoom from "./MomsRoom.jsx";
 import BackgroundMusic from "./BackgroundMusic.jsx";
 import TapToRead from "./TapToRead.jsx";
+import EngineSurfaces from "./ui/EngineSurfaces.jsx";
 import r2Unit from "./lessons/r2-unit.js";
 import r3NonUnit from "./lessons/r3-nonunit.js";
 import { ROOMS } from "./rooms.js";
@@ -191,8 +192,20 @@ export default function Shell() {
     const entryDesignLevel = entryScaffoldFor(nodeId, masteryMap);
     const initialBeat = toBeatForLevel(room.id, entryDesignLevel);
 
+    // U3 wall→room→return: the kitchen stashes the stumping recipe id in
+    // sessionStorage before routing here (the hash route is stateless). Read it
+    // ONCE (then clear, so a stale key can't mislabel a later direct entry) and
+    // pass it down: a non-null value makes ReturnToKitchen legal in the lesson's
+    // policy, and onReturnToKitchen navigates back to the kitchen on mastery.
+    let stumpingRecipe = null;
+    try {
+      stumpingRecipe = sessionStorage.getItem("stumpingRecipeId") || null;
+      if (stumpingRecipe) sessionStorage.removeItem("stumpingRecipeId");
+    } catch { /* no sessionStorage available */ }
+    const onReturnToKitchen = () => go("mom");
+
     // `no` + `title` come from rooms.js so the in-room header matches the map.
-    const p = { no: room.no, title: room.title, onBack: toWorld, onRewatchIntro, initialBeat };
+    const p = { no: room.no, title: room.title, onBack: toWorld, onRewatchIntro, initialBeat, stumpingRecipe, onReturnToKitchen };
     if (room.id === "r1") screen = <AppR1 {...p} />;
     else if (room.id === "r2") screen = <LessonUnlikeDen {...p} lesson={r2Unit} />;
     else if (room.id === "r3") screen = <LessonUnlikeDen {...p} lesson={r3NonUnit} />;
@@ -206,26 +219,41 @@ export default function Shell() {
     else screen = <EmptyRoom room={room} onBack={toWorld} />;
   }
 
+  // Engine model surfaces (banner + Tier-2 nudge + inspector). The learner-facing
+  // banner/nudge are active inside a lesson or the kitchen (where attempts run);
+  // the inspector toggle is available there too as on-the-spot evidence.
+  const inLesson = Boolean(room) && !showingIntro;
+  const engineActive = inLesson || route === "mom";
+
   return (
     <>
       {screen}
       <TapToRead />
+      <EngineSurfaces
+        active={engineActive}
+        showInspector={engineActive && import.meta.env.DEV}
+        fallbackMasteryMap={masteryMap}
+      />
       <BackgroundMusic scene={sceneFor(route, showingIntro)} />
       {(route === "title" || route === "world") && (
-        <>
-          <button className="settings-fab" onClick={openSettings} title="Settings" aria-label="Settings">
-            <img src="/settings-gear.png" width="20" height="20" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
-            <span className="settings-fab-label">Settings</span>
-          </button>
+        <div className="fab-bar">
           <button className="settings-fab concepts-fab" onClick={openConcepts} title="Concept Mastery Map" aria-label="Concepts">
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
-              <rect x="2" y="3" width="20" height="6" rx="1" fill="none" stroke="#1c1612" strokeWidth="2" />
-              <rect x="5" y="13" width="14" height="5" rx="1" fill="none" stroke="#a32a22" strokeWidth="2" />
-              <rect x="8" y="20" width="8" height="3" rx="1" fill="#a32a22" />
-            </svg>
+            <span className="settings-fab-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
+                <rect x="2" y="3" width="20" height="6" rx="1" fill="none" stroke="#1c1612" strokeWidth="2" />
+                <rect x="5" y="13" width="14" height="5" rx="1" fill="none" stroke="#a32a22" strokeWidth="2" />
+                <rect x="8" y="20" width="8" height="3" rx="1" fill="#a32a22" />
+              </svg>
+            </span>
             <span className="settings-fab-label">Concepts</span>
           </button>
-        </>
+          <button className="settings-fab" onClick={openSettings} title="Settings" aria-label="Settings">
+            <span className="settings-fab-icon">
+              <img src="/settings-gear.png" width="20" height="20" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
+            </span>
+            <span className="settings-fab-label">Settings</span>
+          </button>
+        </div>
       )}
     </>
   );

@@ -365,6 +365,9 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
     // Fall back to the current task's room if no engine choice was recorded.
     const targetNodeId = wallNodeId ?? currentNodeId;
     const targetRoomId = NODE_TO_ROOM[targetNodeId] ?? task.roomId;
+    // U3: stash the stumping recipe id across the (stateless) hash route so the
+    // routed lesson can make ReturnToKitchen legal — Shell reads it once on entry.
+    try { sessionStorage.setItem("stumpingRecipeId", String(stumpingRecipeId ?? "")); } catch { /* no sessionStorage */ }
     onOpenRoom && onOpenRoom(targetRoomId);
   }
 

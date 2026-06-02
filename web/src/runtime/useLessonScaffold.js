@@ -62,6 +62,11 @@ export function useLessonScaffold({
   resetStage,
   surfaceFormFor,
   onEnd,
+  // U3: wall→room→return loop. When this lesson was opened from a stumping
+  // kitchen recipe, these make ReturnToKitchen legal in policy (forwarded to
+  // useLessonEngine). Default null/false preserves direct-entry behavior.
+  stumpingRecipe = null,
+  inKitchen = false,
   advanceMode = "immediate",
   deferredDelayMs = 1500,
   initialStatus,
@@ -113,7 +118,7 @@ export function useLessonScaffold({
 
   const { emit: emitRaw, judgeAndAdvance, isCertified } = useLessonEngine({
     nodeId: resolvedNodeId,
-    lessonConfig: { lessonId: resolvedLessonId, initialBeat: scaffoldKeyFor(initialStage) },
+    lessonConfig: { lessonId: resolvedLessonId, initialBeat: scaffoldKeyFor(initialStage), stumpingRecipe, inKitchen },
   });
   const { speaking, say, stopVoice } = useVoice();
 
@@ -351,6 +356,13 @@ export function useLessonScaffold({
       return;
     }
 
+    // U3: a fixed stage can also reach mastery → honor the same Return/Route exit
+    // the generated branch fires, so the wall→room→return loop closes from any
+    // terminal stage, not only the generated practice stage.
+    if (dec.kind === "ReturnToKitchen" || dec.kind === "RouteToRoom") {
+      cb.current.onEnd?.(dec);
+      return;
+    }
     if (dec.kind === "FadeScaffold") {
       nextStage();
     } else if (dec.kind === "RaiseScaffold") {

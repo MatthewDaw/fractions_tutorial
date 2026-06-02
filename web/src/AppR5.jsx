@@ -36,6 +36,7 @@ import QuestionBand from "./components/QuestionBand.jsx";
 import BlankSlate from "./components/BlankSlate.jsx";
 import FitStage from "./components/FitStage.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, LessonGoal } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { denomColor, denomTextColor, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import "./styles/r5.css";
@@ -93,8 +94,9 @@ const STAGES = [
   ["applied", "Applied", "A worded question — write the improper fraction, then the answer.", "A"],
   ["showwork", "Show Work", "Show your work on a blank slate.", "✎"],
   ["5-words", "Words", "A recipe story — read it, write the mixed number.", "5"],
+  ["practice", "Practice", "Fresh problems — paced to your mastery", "★"],
 ];
-const NEXT_STAGE = { "1-manipulate": "2-bind", "2-bind": "3-fade", "3-fade": "workbench", "workbench": "4-numbers", "4-numbers": "applied", "applied": "showwork", "showwork": "5-words" };
+const NEXT_STAGE = { "1-manipulate": "2-bind", "2-bind": "3-fade", "3-fade": "workbench", "workbench": "4-numbers", "4-numbers": "applied", "applied": "showwork", "showwork": "5-words", "5-words": "practice" };
 
 // ---------------- main ----------------
 // ---- per-stage problem selection (the swap resetForStage used to inline) -----
@@ -121,7 +123,7 @@ function stageGreeting(s) {
   }[s];
 }
 
-export default function AppR5({ no, title, onBack, onRewatchIntro }) {
+export default function AppR5({ no, title, onBack, onRewatchIntro, stumpingRecipe = null, onReturnToKitchen }) {
   // --- DOMAIN STATE (the parts the shared controller hook does NOT own) -------
   // the live improper fraction for this stage
   const [prob, _setProb] = useState(ANCHOR);
@@ -154,15 +156,15 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   // R5 keeps its OWN `bad`/shakeBad shake (not the hook's flashBad/badInput) and
   // its OWN `placed`/`prob` refs; from the hook it takes solvedRef/stageRef/
   // selfCorrectionsRef + the nav/engine/outcome surface.
-  const {
-    stage, goStage, nextStage,
-    emit, reportAttempt, award, applyEngineDecision,
-    solved, solvedRef, stars, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef, stageRef,
-  } = useLessonScaffold({
+  const sc = useLessonScaffold({
     nodeId: "IMPROPER_TO_MIXED",
     lessonId: "r5",
     initialStage: "1-manipulate",
+    // The final "practice" stage serves auto-generated IMPROPER_TO_MIXED variations,
+    // paced by the engine (re-roll on correct, fade on a clean streak, transfer probe
+    // including the exact-whole trap). GenPracticeBoard reads sc.prob and grades it.
+    generatedStages: ["practice"],
+    generatorSkill: "IMPROPER_TO_MIXED",
     // R5's existing NEXT_STAGE map (8-stage non-contiguous arc). Returns undefined
     // on the last stage → the hook calls onEnd, which REPLAYS the current stage
     // (R5's original advance() re-dealt the last stage instead of stopping).
@@ -176,6 +178,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
       "applied": "4-numbers",
       "showwork": "applied",
       "5-words": "showwork",
+      "practice": "5-words",
     }[cur]),
     introFor: (s) => ({ tone: "normal", text: stageGreeting(s) }),
     // The per-stage PROBLEM SWAP + domain state zeroing (R5's resetForStage body,
@@ -192,8 +195,20 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
       setShowWorkInked(false);
     },
     // Last stage: REPLAY (re-enter the current stage), as R5's advance() did.
-    onEnd: () => goStage(stageRef.current),
+    // U3: but a certified ReturnToKitchen navigates back to the kitchen instead.
+    stumpingRecipe,
+    inKitchen: false,
+    onEnd: (dec) => {
+      if (dec?.kind === "ReturnToKitchen") { onReturnToKitchen?.(); return; }
+      goStage(stageRef.current);
+    },
   });
+  const {
+    stage, goStage, nextStage,
+    emit, reportAttempt, award, applyEngineDecision,
+    solved, solvedRef, stars, cook, setCook, status, setStatus,
+    say, speaking, selfCorrectionsRef, stageRef,
+  } = sc;
 
   // ---- stage flavor flags -----------------------------------------------------
   const isManipulate = stage === "1-manipulate";
@@ -204,6 +219,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
   const isApplied = stage === "applied";      // worded question + a required setup gate
   const isShowWork = stage === "showwork";    // mandatory blank-slate "show your work" step
   const isWords = stage === "5-words";
+  const isPractice = stage === "practice";    // auto-generated, engine-paced practice loop
 
   // Stages that still SHOW the manipulative board. 1+2 show live blocks; 3 shows a
   // dimmed "ghost" check; 4+5 show no board at all (a bare equation / a story).
@@ -478,7 +494,12 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
 
   let body = null;
 
-  if (isWorkbench) {
+  if (isPractice) {
+    // PRACTICE — auto-generated IMPROPER_TO_MIXED variations, paced by the mastery
+    // engine. GenPracticeBoard reads sc.prob, renders the mixed-number input,
+    // grades via shared gradeAnswer, and drives award/reportAttempt itself.
+    body = <GenPracticeBoard skill="IMPROPER_TO_MIXED" scaffold={sc} />;
+  } else if (isWorkbench) {
     /* WORKBENCH — the free block sandbox replaces the board entirely. It
        renders its OWN .play (diagram + rail); we add a sibling .hud with the
        Cook + status ribbon + a "Next ▸" that unlocks on solve. Left on the
@@ -937,7 +958,7 @@ export default function AppR5({ no, title, onBack, onRewatchIntro }) {
         current: stage,
         onSelect: goStage,
       }}
-      band={!isWords ? Band : null}
+      band={!isWords && !isPractice ? Band : null}
       goal={Goal}
       extra={
         /* the drag ghost block that follows the pointer. Portaled to <body> so its
