@@ -7,7 +7,11 @@
   display: flex;
   gap: 8px;
   margin: 4px 22px 2px;
-  flex-wrap: wrap;
+  /* DETERMINISM: fixed height + no-wrap so a different font can't wrap the tabs
+     to a second row and grow this strip, shoving the play region down. */
+  flex-wrap: nowrap;
+  height: 50px;
+  box-sizing: border-box;
 }
 .r1-stage-tab {
   display: inline-flex;
@@ -53,25 +57,258 @@
 .r1-stage-name { font-size: 14px; font-weight: 600; }
 .r1-stage-sub { font-size: 11px; opacity: 0.8; }
 
-/* ── shared write-stage layout (blocks beside the Slate) ──────────────────── */
-.r1-write-play .r1-slate-wrap {
-  display: flex;
-  justify-content: center;
-  margin-top: 14px;
+/* ════════════════════════════════════════════════════════════════════════════
+   STAGE 1 · MANIPULATE — DETERMINISTIC FIXED-ZONE LAYOUT
+   The whole stage is laid out as fixed, non-overlapping rectangles so the same
+   assets land in the same place on every device (Safari/Chromium, any aspect):
+     · .r1-s1-blocks  — block-manipulation zone   (top-left,  fixed h)
+     · .r1-s1-rail    — "keep the bottom" hint     (top-right, fixed w/h)
+     · .r1-s1-answer  — equation + answer Slate     (bottom-left, fixed h)
+     · .r1-s1-tutor   — Cook + speech ribbon        (bottom-right, fixed w/h)
+   Blocks are pinned to the TOP, the answer card + tutor to the BOTTOM, with a
+   guaranteed gap between them. Heights never depend on text content (clamped),
+   so a longer string / different font can never grow a zone into its neighbour.
+   ════════════════════════════════════════════════════════════════════════════ */
+.r1-s1 { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+
+/* fixed column geometry: blocks (left, wide) + hint rail (right). */
+.r1-s1-blocks {
+  position: absolute; left: 0; top: 0;
+  width: 800px; height: 348px;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
+  overflow: hidden;            /* clip: blocks can NEVER paint past the zone */
+  box-sizing: border-box;
+  padding: 6px 12px;
+}
+/* the canvas is sized to its CONTENT (number line ≈380px + labels), not 720px,
+   then CENTERED in the zone so whitespace sits evenly on both sides instead of
+   pooling on the right (Issue A). Absolute children use ORIGIN-based coords. */
+.r1-s1-canvas { width: 524px; height: 336px; margin: 0 auto; }
+
+.r1-s1-rail {
+  position: absolute; right: 0; top: 0;
+  width: 396px; height: 348px;
+  box-sizing: border-box;
+  display: flex; flex-direction: column;
+}
+.r1-s1-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
+
+/* EQUATION + ANSWER — ONE bordered unit, clearly BELOW the blocks (Issue B).
+   Pinned to the bottom of the stage-1 region; fixed height; the 30px gap above
+   it (blocks 348 + this card's top offset) is guaranteed. */
+.r1-s1-answer {
+  position: absolute; left: 0; bottom: 0;
+  width: 800px; height: 196px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 18px; row-gap: 2px;
+  padding: 12px 22px;
+}
+.r1-s1-eqrow {
+  grid-column: 1; grid-row: 1 / span 2;
+  display: inline-flex; align-items: center; gap: 16px;
+}
+.r1-s1-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
+.r1-s1-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+.r1-s1-slate { display: inline-flex; }
+/* the handwriting cells stay comfortably large for a child's digit */
+.r1-s1-slate .slate-fraction .slate-cell { width: 96px; height: 78px; }
+.r1-s1-slate .slate-fraction .slate-bar { width: 96px; }
+.r1-s1-slate .slate-fraction .slate-fixed { font-size: 42px; }
+.r1-s1-slate .slate-fraction .slate-committed-digit { font-size: 46px; }
+.r1-s1-slate .slate-fraction .slate-ph { font-size: 28px; }
+/* the verifier guess chip floats so it can't change the row's height */
+.r1-s1-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
+.r1-s1-slate .slate-fraction { position: relative; }
+
+.r1-s1-cap {
+  grid-column: 1; grid-row: 2; align-self: end;
+  font-family: var(--serif); font-style: italic; font-size: 13px;
+  color: var(--ink-mute);
+  /* clamp: a longer caption can never grow the card */
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 320px;
+}
+.r1-s1-marks {
+  grid-column: 2; grid-row: 1 / span 2;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.r1-s1-marks .check { min-width: 150px; height: 56px; }
+
+/* TUTOR ZONE — Cook + ribbon, fixed rect bottom-right; ribbon text is clamped
+   so a longer status string can never change the zone height. */
+.r1-s1-tutor {
+  position: absolute; right: 0; bottom: 0;
+  width: 396px; height: 196px;
+  box-sizing: border-box;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.r1-s1-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.r1-s1-tutor .ribbon {
+  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
+  /* clamp to 5 lines so font/length never reflows the zone */
+  height: 96px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
 }
 
-/* ── Stage 2/3 bind canvas ────────────────────────────────────────────────── */
-.r1-bind-canvas { position: relative; }
+/* ════════════════════════════════════════════════════════════════════════════
+   STAGES 2,3,5 · SHARED DETERMINISTIC FIXED-ZONE LAYOUT (.r1-fz*)
+   The exact same contract as Stage 1's .r1-s1* exemplar: four fixed,
+   non-overlapping rectangles inside the 1280×800 stage —
+     · .r1-fz-stage   — proof zone (blocks in 2/3, bare equation in 5)  top-left
+     · .r1-fz-rail    — "keep the bottom" hint                          top-right
+     · .r1-fz-answer  — equation + answer Slate + Check (ONE card)      bottom-left
+     · .r1-fz-tutor   — Cook + speech ribbon                            bottom-right
+   Proof zone pinned to the TOP, the answer card + tutor to the BOTTOM, with a
+   guaranteed gap between. Every zone is a fixed-size rectangle with clamped text,
+   so a longer string / different font (Safari vs Chromium) can NEVER reflow one
+   zone onto another. Geometry is identical to .r1-s1* so all stages line up.
+   ════════════════════════════════════════════════════════════════════════════ */
+.r1-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+
+.r1-fz-stage {
+  position: absolute; left: 0; top: 0;
+  width: 800px; height: 348px;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
+  overflow: hidden;            /* clip: content can NEVER paint past the zone */
+  box-sizing: border-box;
+  padding: 6px 12px;
+}
+.r1-fz-canvas { position: relative; width: 776px; height: 336px; margin: 0 auto; }
+/* the bare-equation stage centers its single equation in the zone */
+.r1-fz-canvas-center {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+}
+
+.r1-fz-rail {
+  position: absolute; right: 0; top: 0;
+  width: 396px; height: 348px;
+  box-sizing: border-box;
+  display: flex; flex-direction: column;
+}
+.r1-fz-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
+
+/* EQUATION + ANSWER + CHECK — ONE bordered unit, pinned to the bottom-left, a
+   guaranteed gap above it (stage zone 348 + this card's offset). Identical
+   geometry to .r1-s1-answer so the write area sits in the same place every time. */
+.r1-fz-answer {
+  position: absolute; left: 0; bottom: 0;
+  width: 800px; height: 196px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 18px; row-gap: 2px;
+  padding: 12px 22px;
+}
+.r1-fz-eqrow {
+  grid-column: 1; grid-row: 1 / span 2;
+  display: inline-flex; align-items: center; gap: 16px;
+}
+.r1-fz-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
+.r1-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+.r1-fz-slate { display: inline-flex; }
+/* the handwriting cells stay comfortably large for a child's digit (match s1) */
+.r1-fz-slate .slate-fraction { position: relative; }
+.r1-fz-slate .slate-fraction .slate-cell { width: 96px; height: 78px; }
+.r1-fz-slate .slate-fraction .slate-bar { width: 96px; }
+.r1-fz-slate .slate-fraction .slate-fixed { font-size: 42px; }
+.r1-fz-slate .slate-fraction .slate-committed-digit { font-size: 46px; }
+.r1-fz-slate .slate-fraction .slate-ph { font-size: 28px; }
+/* the verifier guess chip floats so it can't change the row's height */
+.r1-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
+
+.r1-fz-cap {
+  grid-column: 1; grid-row: 2; align-self: end;
+  font-family: var(--serif); font-style: italic; font-size: 13px;
+  color: var(--ink-mute);
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 360px;
+}
+.r1-fz-marks {
+  grid-column: 2; grid-row: 1 / span 2;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.r1-fz-marks .check { min-width: 150px; height: 56px; }
+
+.r1-fz-tutor {
+  position: absolute; right: 0; bottom: 0;
+  width: 396px; height: 196px;
+  box-sizing: border-box;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.r1-fz-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.r1-fz-tutor .ribbon {
+  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
+  height: 96px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+}
+
+/* ── STAGES 6,7 · WORD-PROBLEM FIXED-ZONE LAYOUT ───────────────────────────────
+   The WordProblem column lives in a FIXED main rectangle (top-left, wide+tall)
+   that can never overflow the 1280×800 stage; the Cook + ribbon use the same
+   fixed tutor zone. The WordProblem keeps the answer Slate + Check together via
+   its own .wp-answer-row, so "Check beside the write area" holds inside the card. */
+.r1-fz-words .r1-fz-wp {
+  position: absolute; left: 0; top: 0;
+  width: 1040px; height: 544px;
+  box-sizing: border-box; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+}
+.r1-fz-words .r1-fz-tutor { width: 220px; height: 196px; }
+/* Tighten the embedded card + Slates so the WHOLE column (story + setup + answer
+   + Check) fits inside the fixed 544px zone WITHOUT clipping. We shrink the real
+   cell box sizes (not transform:scale, which keeps the original layout footprint
+   and was leaving the answer row to overflow the zone). Answer cells stay
+   comfortably large for a child's digit; the optional/setup cells are smaller. */
+.r1-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
+.r1-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
+.r1-fz-words .wp-card-head { margin-bottom: 8px; }
+.r1-fz-words .wp-story { font-size: 18px; }
+.r1-fz-words .wp-setup { gap: 4px; }
+.r1-fz-words .wp-answer { gap: 6px; }
+/* answer Slate — kept large for handwriting */
+.r1-fz-words .wp-answer .slate-fraction .slate-cell { width: 80px; height: 64px; }
+.r1-fz-words .wp-answer .slate-fraction .slate-bar { width: 80px; }
+.r1-fz-words .wp-answer .slate-fraction .slate-fixed { font-size: 38px; }
+.r1-fz-words .wp-answer .slate-fraction .slate-committed-digit { font-size: 40px; }
+.r1-fz-words .wp-answer .slate-fraction .slate-ph { font-size: 24px; }
+.r1-fz-words .wp-answer .slate-fraction { gap: 4px; }
+/* setup ExpressionSlate — smaller (scratch / gate), real box reduction */
+.r1-fz-words .expr-slate { gap: 12px; }
+.r1-fz-words .expr-slate .slate-cell { width: 58px; height: 52px; }
+.r1-fz-words .expr-slate .slate-bar { width: 58px; }
+.r1-fz-words .expr-slate .slate-fraction { gap: 3px; }
+.r1-fz-words .expr-slate .slate-fraction .slate-fixed { font-size: 28px; }
+.r1-fz-words .expr-slate .slate-fraction .slate-committed-digit { font-size: 30px; }
+.r1-fz-words .expr-slate .slate-fraction .slate-ph { font-size: 20px; }
+
+/* ── Stage 2/3 proof-zone contents ────────────────────────────────────────── */
 .r1-bind-stack {
   position: absolute;
-  left: 60px; top: 120px;
+  left: 40px; top: 96px;
 }
 .r1-bind-cap {
   margin-top: 12px;
-  max-width: 360px;
+  max-width: 420px;
   font-family: var(--serif);
   font-size: 15px;
   color: var(--ink-soft);
+  /* clamp so a different font can't grow the proof zone */
+  height: 22px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 .r1-bind-cap b { color: var(--red); }
 
@@ -80,7 +317,7 @@
 .r1-ghostblocks { opacity: 0.28; filter: grayscale(0.5); }
 .r1-fadecheck {
   position: absolute;
-  left: 60px; top: 78px;
+  left: 40px; top: 60px;
   display: inline-flex; align-items: center; gap: 8px;
   font-family: var(--serif);
   font-size: 13px;
@@ -97,7 +334,7 @@
 }
 .r1-leadeq {
   position: absolute;
-  left: 60px; top: 250px;
+  left: 40px; top: 232px;
   display: inline-flex; align-items: center; gap: 10px;
   font-family: var(--serif);
   font-size: 38px;
@@ -111,66 +348,45 @@
   padding: 0 6px;
 }
 
-/* ── Stage 4 numbers canvas ───────────────────────────────────────────────── */
-.r1-numbers-canvas {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.r1-ghost-rail {
-  position: absolute;
-  left: 50%; top: 32px;
-  transform: translateX(-50%);
-  opacity: 0.18;
-  filter: grayscale(0.7);
-  pointer-events: none;
-}
+/* ── Stage 5 (Numbers) bare equation ──────────────────────────────────────────
+   EQUATION ALIGNMENT: every term is a real <BigFrac> (.bignum), so 2/7, 3/7 and
+   the ?/? answer placeholder are the SAME size; align-items:center puts every
+   fraction bar on one shared midline and centres the +/= signs to it. (The old
+   .r1-bigeq-q wrapper made the answer bigger and floated it high — removed.) */
 .r1-bigeq {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin-top: 40px;
+  gap: 22px;
 }
+/* scale the shared BigFrac up uniformly so the bare equation reads big; because
+   every term is the same component, all bars stay on the same midline. */
+.r1-bigeq .bignum .n, .r1-bigeq .bignum .d { font-size: 56px; }
+.r1-bigeq .bignum .bar { width: 64px; height: 5px; margin: 6px 0; }
 .r1-bigeq-op {
   font-family: var(--serif);
-  font-size: 44px;
+  font-size: 48px;
   font-weight: 700;
   color: var(--red);
-}
-.r1-bigeq-q {
-  font-family: var(--serif);
-  font-size: 64px;
-  font-weight: 700;
-  color: var(--red);
-  min-width: 48px;
-  text-align: center;
 }
 .r1-numbers-cap {
-  margin-top: 26px;
+  margin-top: 22px;
   font-family: var(--serif);
   font-size: 15px;
   color: var(--ink-soft);
-  max-width: 420px;
+  max-width: 520px;
   text-align: center;
+  /* clamp to one line so a longer string can't grow the proof zone */
+  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 
-/* the answer readout in the HUD equation for write stages */
-.r1-eq-answer {
-  font-family: var(--serif);
-  font-weight: 700;
-  color: var(--red);
-  margin-left: 4px;
-}
-
-/* ── Stage 5 word problem ─────────────────────────────────────────────────── */
-.r1-words-play {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  padding: 18px 22px;
+/* ── Stage 6/7 word→math setup confirmation chip ──────────────────────────────
+   The required/optional ExpressionSlate sits in <WordProblem>'s setup region; on
+   Applied a chip replaces the "Check the sum" button once setupOk. */
+.r1-setup-ok {
+  font-family: var(--display);
+  font-size: 13px;
+  color: var(--red-deep);
+  align-self: center;
 }
 
 @media (prefers-reduced-motion: reduce) {

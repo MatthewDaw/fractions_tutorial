@@ -14,6 +14,8 @@ import BigFrac from "./components/BigFrac.jsx";
 import InkPad from "./components/InkPad.jsx";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
+import BlockSandbox from "./components/BlockSandbox.jsx";
+import ExpressionSlate from "./components/ExpressionSlate.jsx";
 import { useVoice } from "./voice.js";
 import { denomColor, denomTextColor, denomTone } from "./denominatorColors.js";
 import { lcd, exactSum, commonDenChoices, multipliersFor, verify, generateProblem, crossMultiply } from "./unlikeDenMath.js";
@@ -129,7 +131,10 @@ function Combined({ countA, countB, D, unit }) {
 // ---------------- main ----------------
 // The ladder order — after solving a level, "Next" climbs to the next rung
 // (one question per level). L6 has no successor (terminal).
-const NEXT_BEAT = { L0: "L2", L2: "L4", L4: "L5", L5: "L6", L6: "L7" };
+// Arc order (lesson-stage-arc-expansion): … Fade(L4) → Workbench(LW) → ghost(L5)
+// → Numbers(L6) → Applied(LA) → Words(L7). LW = block sandbox; LA = applied
+// sentence with a required setup gate.
+const NEXT_BEAT = { L0: "L2", L2: "L4", L4: "LW", LW: "L5", L5: "L6", L6: "LA", LA: "L7" };
 
 export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIntro }) {
   // Pedagogical beat. The ladder is one click each for the demo (topbar selector).
@@ -161,15 +166,17 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   const isL5 = beat === "L5";
   const isL6 = beat === "L6";
   const isL7 = beat === "L7"; // word problem: prose only, solved with the stylus
+  const isLW = beat === "LW"; // Workbench: the free block sandbox (own render branch)
+  const isLA = beat === "LA"; // Applied: worded question, numerals shown, setup gate
   // The picker (symbolic common-size choice) drives L2/L4. L5/L6/L7 are bare.
   const usesPicker = isL2 || isL4;
   // Strips faded to outlines whenever the blocks are no longer the lead actor.
   const stripsFaded = isL2 || isL4;
-  // No canvas strips at all on L6/L7; ghost (dim, non-interactive) backdrop on L5.
-  const noBars = isL6 || isL7;
+  // No canvas strips at all on L6/L7/LA; ghost (dim, non-interactive) backdrop on L5.
+  const noBars = isL6 || isL7 || isLA;
   const ghostBars = isL5;
-  // L5/L6/L7: the child writes the whole answer directly (no slice/join gating).
-  const bareEntry = isL5 || isL6 || isL7;
+  // L5/L6/L7/LA: the child writes the whole answer directly (no slice/join gating).
+  const bareEntry = isL5 || isL6 || isL7 || isLA;
 
   // ---- per-lesson framing (Scale One renames ONE; Cross-Multiply renames BOTH)
   const framing = lesson.framing || {};
@@ -213,6 +220,16 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   const [posB, _setPosB] = useState(HOME.B);
   const [dragBar, setDragBar] = useState(null);
   const [dragKnife, setDragKnife] = useState(null); // {n,x,y}
+
+  // ---- word→math translation surfaces (Applied gate + Words optional scratch) ----
+  // Applied (LA): the child TRANSCRIBES the two shown fractions here; once they
+  // match the problem (either order) the answer unlocks (setupOk). Words (L7): the
+  // same surface is OPTIONAL scratch — never gates, never graded.
+  const [setupA, setSetupA] = useState({ num: "", den: "" });
+  const [setupB, setSetupB] = useState({ num: "", den: "" });
+  const [setupOk, setSetupOk] = useState(false);
+  const [scratchA, setScratchA] = useState({ num: "", den: "" });
+  const [scratchB, setScratchB] = useState({ num: "", den: "" });
 
   // scaled numerators/denominators of each addend after slicing
   const numA = aNum * mA, denA = aDen * mA, numB = bNum * mB, denB = bDen * mB;
@@ -324,11 +341,16 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     mARef.current = 1; mBRef.current = 1; joinedRef.current = false; solvedRef.current = false; matchedRef.current = false;
     setMA(1); setMB(1); setJoined(false); setSolved(false); setStars(0); setTickA(0); setTickB(0);
     setNumStr(""); setDenStr(""); setStage("den"); setPosA(HOME.A); setPosB(HOME.B); setCook("idle");
+    // reset the word→math surfaces (Applied gate + Words scratch) on every beat change
+    setSetupA({ num: "", den: "" }); setSetupB({ num: "", den: "" }); setSetupOk(false);
+    setScratchA({ num: "", den: "" }); setScratchB({ num: "", den: "" });
     if (b === "L0") setStatus({ tone: "normal", text: "Two strips, different block sizes. Grab a knife and slice, povaryonok." });
     else if (b === "L2") setStatus({ tone: "normal", text: "Pick the common block size, watch each fraction scale, then join the strips." });
     else if (b === "L4") setStatus({ tone: "normal", text: "A new pair. Find a common size, then add — same move, new dress." });
+    else if (b === "LW") setStatus({ tone: "normal", text: "The Workbench. Pull blocks from the bin and build the answer out of same-size pieces, then count them up." });
     else if (b === "L5") setStatus({ tone: "normal", text: "Just the numbers. The bars are only a memory now — write the whole answer." });
     else if (b === "L6") setStatus({ tone: "normal", text: "Bare slate. Find the common denominator, scale, and add — write it all." });
+    else if (b === "LA") setStatus({ tone: "normal", text: "A question in words — the fractions are right there. Write them as a sum first, then give the answer." });
     else if (b === "L7") setStatus({ tone: "normal", text: "A recipe! Read it, work out the two fractions yourself, and write the total." });
     // Emit problem_present for the engine (at the boundary between problems).
     // selfCorrRef resets per problem.
@@ -662,8 +684,63 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   const denEnabled = !solved && stage === "den" && blocksReady;
   const numEnabled = !solved && stage === "num" && blocksReady;
 
+  // "Ready to check": the child has committed the answer the current stage needs,
+  // so the Check button lights up (a red glow, shared .check.ready). The blocks
+  // must be ready (matched, or a bare beat), and BOTH the top and bottom must be
+  // written. On the Applied (LA) gate, the sum must also be checked first.
+  const answerReady = !solved && blocksReady && numStr !== "" && denStr !== ""
+    && (!isLA || setupOk);
+
+  // ---- Workbench (LW): the block sandbox, configured from the live problem ----
+  // The bin offers the two addends' sizes plus their common size (the LCD), so the
+  // child can lay the originals, see they don't line up, then rebuild from one size.
+  const sandboxBin = Array.from(new Set([aDen, bDen, PLCD]));
+  const sandboxTarget = sum.num / sum.den;            // the value a correct row reaches
+  function onSandboxSolve({ num, den }) {
+    if (solvedRef.current) return;
+    setNumStr(String(num)); setDenStr(String(den));
+    const res = verify(problemRef.current, num, den);
+    finishSolved(res.ok ? res.stars : 3, num, den);
+  }
+
+  // ---- Applied (LA): the worded question (numerals shown) + the setup gate ------
+  const appliedSentence = lesson.applied
+    || `Babushka needs ${aNum}/${aDen} + ${bNum}/${bDen} cups — how many cups is that?`;
+  // The setup is correct when the two written fractions ARE the problem's two
+  // addends, in either order.
+  function checkSetup() {
+    const an = parseInt(setupA.num, 10), ad = parseInt(setupA.den, 10);
+    const bn = parseInt(setupB.num, 10), bd = parseInt(setupB.den, 10);
+    if (!(an > 0 && ad > 0 && bn > 0 && bd > 0)) {
+      setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
+      setStatus({ tone: "warn", text: "Write both fractions from the question — a top and a bottom for each." });
+      return;
+    }
+    const match = (x, y) => x.n === y.n && x.d === y.d;
+    const A = { n: an, d: ad }, B = { n: bn, d: bd };
+    const P = { n: aNum, d: aDen }, Q = { n: bNum, d: bDen };
+    const ok = (match(A, P) && match(B, Q)) || (match(A, Q) && match(B, P));
+    if (!ok) {
+      setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
+      setStatus({ tone: "warn", text: "Not quite — copy the two fractions exactly as the question gives them, then add." });
+      return;
+    }
+    setSetupOk(true); setCook("idle");
+    setStatus({ tone: "ok", text: "That's the sum. Now work it out and write the total." });
+  }
+  function onSetupChange(side, key, value) {
+    const v = onlyDigits(value);
+    if (side === "a") setSetupA((s) => ({ ...s, [key]: v }));
+    else setSetupB((s) => ({ ...s, [key]: v }));
+  }
+  function onScratchChange(side, key, value) {
+    const v = onlyDigits(value);
+    if (side === "a") setScratchA((s) => ({ ...s, [key]: v }));
+    else setScratchB((s) => ({ ...s, [key]: v }));
+  }
+
   return (
-    <div className="page">
+    <div className="page" data-vox-speaker="cook">
       <div className="foxing" />
 
       <div className="topbar">
@@ -684,8 +761,10 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
             ["L0", "Stage 1 · Manipulate — the blocks ARE the problem; drag & slice by touch", "1", false],
             ["L2", "Stage 2 · Bind — blocks + the written fraction; copy the numeral on the Slate", "2", true],
             ["L4", "Stage 3 · Fade — blocks dim to a check; the equation leads, write the changed line", "3", true],
+            ["LW", "Workbench — pull blocks from the bin and build the answer out of same-size pieces", "W", false],
             ["L5", "Stage 3 · Fade — blocks a faded ghost behind; write the whole answer", "3·", true],
             ["L6", "Stage 4 · Numbers-only — a bare equation; write the whole solution", "4", true],
+            ["LA", "Applied — a worded question with the fractions shown; write the sum, then the answer", "A", true],
             ["L7", "Stage 5 · Words — a plain-language word problem; read it and write the solution", "5", true],
           ].map(([b, name, label, writes]) => (
             <button
@@ -723,12 +802,97 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
           <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
           Read aloud
         </button>
-        <div className="goal-text">{isL7
-          ? "Read the recipe, work out the two fractions yourself, and write the total."
+        <div className="goal-text" data-vox-speaker="mom">{
+          isLW ? <>Build <b>{aNum}/{aDen} + {bNum}/{bDen}</b> on the Workbench — pick blocks, make them all the same size, and count them up.</>
+          : isLA ? <>A question in words, with the fractions shown. Write what it's asking as a <b>sum</b> first, then give the answer.</>
+          : isL7 ? "Read the recipe, work out the two fractions yourself, and write the total."
           : <>Babushka needs <b>{aNum}/{aDen}</b> of a dough strip and <b>{bNum}/{bDen}</b> of a strip — add them together.</>}</div>
       </div>
 
-      <div className="play">
+      {isLW ? (
+        /* WORKBENCH — the free block sandbox replaces the strips entirely. */
+        <>
+          <BlockSandbox
+            bin={sandboxBin}
+            targetValue={sandboxTarget}
+            targetLabel={eqLead}
+            rulerWholes={answerWholes}
+            solved={solved}
+            onSolve={onSandboxSolve}
+            onPlace={() => { selfCorrRef.current += 1; engineEmit({ type: "place_block", payload: { node_id: engineNodeId } }); }}
+            onRemove={() => { selfCorrRef.current += 1; engineEmit({ type: "remove_block", payload: { node_id: engineNodeId } }); }}
+          />
+          <div className="hud">
+            <div className="cook-zone">
+              <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+              <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+            </div>
+            <div className="marks">
+              {solved && <Rosette count={stars} />}
+              <button className={"check" + (solved ? " done" : "")} onClick={reset} disabled={!solved}>{solved ? checkLabel : "Build it ▸"}</button>
+            </div>
+          </div>
+        </>
+      ) : isLA ? (
+        /* APPLIED — a worded question (fractions shown) with the required setup gate:
+           transcribe the sum, then the answer unlocks. */
+        <>
+          <div className="play lu-applied-play">
+            <WordProblem
+              story={appliedSentence}
+              tag="Babushka's kitchen"
+              readAloud={() => say(appliedSentence)}
+              speaking={speaking}
+              answerLead="Now write the total"
+              setupLead="First, write the question as a sum"
+              setup={
+                <>
+                  <ExpressionSlate
+                    a={setupA} b={setupB}
+                    onChange={onSetupChange}
+                    onSubmit={checkSetup}
+                    denA={aDen} denB={bDen}
+                    disabled={setupOk || solved}
+                    autoFocus={!setupOk && setupA.num === "" ? "a-num" : undefined}
+                    className={badInput && !setupOk ? "is-shake" : ""}
+                  />
+                  {setupOk
+                    ? <span className="lu-setup-ok">✓ that's the sum — now solve it</span>
+                    : <button type="button" className="wp-check" onClick={checkSetup}>Check the sum</button>}
+                </>
+              }
+              slots={slateSlots}
+              values={{ num: numStr, den: denStr }}
+              onChange={onSlateChange}
+              layout="fraction"
+              den={slateDen}
+              disabled={!setupOk || solved}
+              autoFocusKey={setupOk ? slateAutoKey : undefined}
+              onCheck={checkAnswer}
+              checkLabel={checkLabel}
+              checkDisabled={!setupOk}
+            />
+          </div>
+          <div className="hud">
+            <div className="cook-zone">
+              <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+              <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+            </div>
+            {solved && <div className="marks"><Rosette count={stars} /></div>}
+          </div>
+        </>
+      ) : (
+      // DETERMINISTIC FIXED-ZONE STAGE (mirrors AppR1's .r1-s1): the strip/picker/
+      // numbers beats lay out as fixed, non-overlapping rectangles inside the
+      // 1280×800 stage — .lu-top (blocks/numbers, top), .lu-ans (equation + answer
+      // Slate + Check + Rosette, ONE bordered card bottom-left, Check right of the
+      // write area), .lu-tutor (Cook + ribbon, bottom-right). The block zone is
+      // pinned TOP, the card + tutor to the BOTTOM with a guaranteed gap; heights
+      // never depend on text content (clamped), so a longer string / a different
+      // font can never grow one zone over its neighbour.
+      <>
+      <div className="lu-stage">
+      <div className="play lu-top">
         <div className="diagram">
           <div className="canvas" id="r2canvas">
             {!noBars && (
@@ -844,6 +1008,17 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                   readAloud={() => say(wp.caption)}
                   speaking={speaking}
                   answerLead="Write the total"
+                  setupLead="Optional — write the question as a sum first"
+                  setup={
+                    <ExpressionSlate
+                      a={scratchA} b={scratchB}
+                      onChange={onScratchChange}
+                      denA={parseInt(scratchA.den, 10) || undefined}
+                      denB={parseInt(scratchB.den, 10) || undefined}
+                      disabled={solved}
+                      ariaLabel="optional: write the two fractions from the recipe"
+                    />
+                  }
                   slots={slateSlots}
                   values={{ num: numStr, den: denStr }}
                   onChange={onSlateChange}
@@ -934,21 +1109,32 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
         </div>
       </div>
 
-      {/* HUD */}
-      <div className="hud">
-        <div className="cook-zone">
-          <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-          <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
-        </div>
-
-        {/* L7 (Stage 5) carries its own Slate + Check inside <WordProblem>, so the
-            HUD shows only the Cook + ribbon there — no second answer surface. */}
-        {!isL7 && (
-        <div className="hud-eq">
-          <div className="qeq">
-            <span>{aNum}/{aDen}</span><span className="qop">+</span><span>{bNum}/{bDen}</span><span className="qop">=</span>
-            {useSlate ? (
-              <span className={"lu-slate-mount" + (badInput ? " bad" : "")}>
+      {/* ── EQUATION + ANSWER, ONE bordered card (fixed rect, bottom-left) ──────
+          The worked equation, the handwriting Slate (the "?/?" answer placeholder)
+          and the Check button read as ONE unit, with Check IMMEDIATELY right of the
+          write area. Every fraction term — the two addends AND the answer — is the
+          SAME stacked size and the row is align-items:center, so the fraction bars
+          of a/b, c/d and the answer all sit on one midline (= centered too).
+          On L7 (Words) the Slate + Check live inside the <WordProblem> card in the
+          top zone, so this card collapses to the Cook/ribbon-only tutor layout. */}
+      {!isL7 && (
+      <div className="lu-ans">
+        <div className="lu-eqrow">
+          <BigFrac num={aNum} den={aDen} />
+          <span className="lu-op">+</span>
+          <BigFrac num={bNum} den={bDen} />
+          <span className="lu-op">=</span>
+          <span className="lu-ans-slot">
+            {solved ? (
+              <BigFrac num={parseInt(numStr, 10)} den={parseInt(denStr, 10)} />
+            ) : handwriting && !useSlate ? (
+              <span className={"frinput ink" + (badInput ? " bad" : "")}>
+                <InkPad ref={numPad} value={numStr} onChange={(t) => setNumStr(onlyDigits(t))} disabled={!numEnabled} want={numEnabled && !numStr} ariaLabel="write the numerator" />
+                <span className="ln" />
+                <InkPad ref={denPad} value={denStr} onChange={(t) => setDenStr(onlyDigits(t))} disabled={!denEnabled} want={denEnabled && !denStr} ariaLabel="write the denominator" />
+              </span>
+            ) : (
+              <span className={"lu-slate" + (badInput ? " bad" : "")}>
                 <Slate
                   slots={slateSlots}
                   values={{ num: numStr, den: denStr }}
@@ -961,55 +1147,30 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                   ariaLabel="write the total fraction"
                 />
               </span>
-            ) : (
-              // STYLUS-ONLY fallback: never a keyboard <input>. When the lesson
-              // hasn't opted into per-cell InkPads, the answer is still WRITTEN —
-              // via the shared <Slate>, which routes through the same numStr/denStr
-              // + verify() path. (The old typed <input> branch raised the tablet
-              // keyboard and has been removed.)
-              handwriting ? (
-                <span className={"frinput ink" + (badInput ? " bad" : "")}>
-                  <InkPad ref={numPad} value={numStr} onChange={(t) => setNumStr(onlyDigits(t))} disabled={!numEnabled} want={numEnabled && !numStr} ariaLabel="write the numerator" />
-                  <span className="ln" />
-                  <InkPad ref={denPad} value={denStr} onChange={(t) => setDenStr(onlyDigits(t))} disabled={!denEnabled} want={denEnabled && !denStr} ariaLabel="write the denominator" />
-                </span>
-              ) : (
-                <span className={"lu-slate-mount" + (badInput ? " bad" : "")}>
-                  <Slate
-                    slots={slateSlots}
-                    values={{ num: numStr, den: denStr }}
-                    onChange={onSlateChange}
-                    onSubmit={checkAnswer}
-                    layout="fraction"
-                    den={slateDen}
-                    disabled={!blocksReady || solved}
-                    autoFocusKey={slateAutoKey}
-                    ariaLabel="write the total fraction"
-                  />
-                </span>
-              )
             )}
-          </div>
-          <div className="qcap">{
-            solved ? "full marks!" :
-            (!bareEntry && !matched) ? "slice the blocks to the same size to unlock the answer" :
-            stage === "den" ? "write the bottom number — how big is each block?" :
-            "write the top number — how many blocks in all?"
-          }</div>
+          </span>
         </div>
-        )}
-
-        {!isL7 && (
-        <div className="marks">
+        <div className="lu-ans-cap">{
+          solved ? "full marks!" :
+          (!bareEntry && !matched) ? "slice the blocks to the same size to unlock the answer" :
+          stage === "den" ? "write the bottom number — how big is each block?" :
+          "write the top number — how many blocks in all?"
+        }</div>
+        <div className="lu-ans-marks">
           {solved && <Rosette count={stars} />}
-          <button className={"check" + (solved ? " done" : "")} onClick={checkAnswer}>{checkLabel}</button>
+          <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={checkAnswer}>{checkLabel}</button>
         </div>
-        )}
-        {/* On L7 the Rosette still belongs in the HUD when solved (the Check lives
-            in the WordProblem card). */}
-        {isL7 && solved && (
-          <div className="marks"><Rosette count={stars} /></div>
-        )}
+      </div>
+      )}
+
+      {/* ── TUTOR ZONE — Cook + speech ribbon, fixed rect bottom-right ───────── */}
+      <div className="lu-tutor">
+        <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+        <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+        {/* On L7 (Words) the Check lives inside the WordProblem card; surface the
+            Rosette here when solved so the reward still reads in the tutor zone. */}
+        {isL7 && solved && <div className="lu-tutor-rosette"><Rosette count={stars} /></div>}
+      </div>
       </div>
 
       {/* floating knife while dragging */}
@@ -1020,6 +1181,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

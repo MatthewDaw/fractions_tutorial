@@ -6,7 +6,7 @@
 
 /* the canvas wants a touch more height than R1's 346 to seat the tall overflow
    stack, the whole-unit frame, and the ruler without crowding. */
-.r5-canvas { width: 720px; height: 392px; position: relative; margin: 6px auto 0; }
+.r5-canvas { width: 720px; height: 348px; position: relative; margin: 6px auto 0; }
 
 /* a single 1/den block in the overflow column / frame / tray. The fill + hatch
    are applied inline from denominatorColors so every block matches its size. */
@@ -75,6 +75,122 @@
   position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
   text-align: center; font-family: var(--display); font-size: 12px; letter-spacing: .04em;
   color: var(--ink-mute); pointer-events: none; opacity: .8;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DETERMINISTIC FIXED-ZONE LAYOUT for the sweep stages 1–5
+   (Manipulate / Bind / Fade / Numbers — the board + mixed-number-composer
+   stages). The R1-stage-1 exemplar applied to R5: every region is a fixed-size,
+   absolutely-positioned rectangle with clamped text and a GUARANTEED gap, so a
+   longer string or a different font (Safari vs Chromium) can NEVER reflow one
+   zone onto another. The composer is TALL (two slate columns), so the answer
+   card reserves the height for it and sits below a guaranteed gap — the board
+   corner can never clip it (the bug this layout fixes).
+     · .r5-z-board  — block board OR bare equation   (top-left,   fixed h)
+     · .r5-z-rail   — the hint panel                 (top-right,  fixed w/h)
+     · .r5-z-answer — equation + composer + Check      (bottom-left, fixed h)
+     · .r5-z-tutor  — Cook + speech ribbon             (bottom-right, fixed w/h)
+   ════════════════════════════════════════════════════════════════════════════ */
+.r5-stage { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+
+/* BOARD ZONE — holds the 720-wide canvas (or the bare equation), clipped so the
+   blocks/ruler can NEVER paint past the zone onto the answer card below. */
+.r5-z-board {
+  position: absolute; left: 0; top: 0;
+  width: 800px; height: 362px;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
+  background: radial-gradient(ellipse at 50% 26%, rgba(255,245,220,0.5), transparent 70%), var(--paper-1);
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 4px 8px;
+}
+/* the canvas is its own fixed 720×356 geometry, CENTERED in the zone. Its absolute
+   children use ORIGIN-based coords, so centering only shifts the whole board. */
+.r5-z-board .r5-canvas { margin: 0 auto; }
+
+.r5-z-rail {
+  position: absolute; right: 0; top: 0;
+  width: 396px; height: 362px;
+  box-sizing: border-box;
+  display: flex; flex-direction: column;
+}
+.r5-z-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
+
+/* EQUATION + COMPOSER + CHECK — ONE bordered unit, pinned to the BOTTOM, clearly
+   below the board. Fixed height (tall enough for the two-column composer); the gap
+   above it (board 362 + this card's bottom-anchored height inside the ~623px stage)
+   is guaranteed, so the board can never reach it. */
+.r5-z-answer {
+  position: absolute; left: 0; bottom: 0;
+  width: 800px; height: 236px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  column-gap: 18px; row-gap: 2px;
+  padding: 10px 22px 12px;
+}
+/* the equation prefix + composer — ONE row, all terms vertically centered on a
+   single midline (EQUATION ALIGNMENT rule). */
+.r5-ans-eqrow {
+  grid-column: 1; grid-row: 1;
+  display: inline-flex; align-items: center; gap: 16px;
+  align-self: center;
+}
+.r5-ans-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
+.r5-ans-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+/* the mixed-number composer (whole / "and" / leftover fraction) stays centered on
+   the equation midline so the "=", the whole box and the fraction bar all align. */
+.r5-z-answer .r5-write { align-items: center; gap: 14px; }
+/* the handwriting cells stay comfortably large for a child's digit. The leftover
+   fraction is a stacked slate; the whole-number is a single-cell row slate. */
+.r5-z-answer .r5-write .slate-fraction .slate-cell { width: 84px; height: 70px; }
+.r5-z-answer .r5-write .slate-fraction .slate-bar { width: 84px; }
+.r5-z-answer .r5-write .slate-row .slate-cell { width: 84px; height: 70px; }
+.r5-z-answer .r5-write .slate-fraction .slate-fixed,
+.r5-z-answer .r5-write .slate-row .slate-fixed { font-size: 40px; }
+.r5-z-answer .r5-write .slate-fraction .slate-committed-digit,
+.r5-z-answer .r5-write .slate-row .slate-committed-digit { font-size: 44px; }
+.r5-z-answer .r5-write .slate-fraction .slate-ph,
+.r5-z-answer .r5-write .slate-row .slate-ph { font-size: 26px; }
+/* the verifier guess chip floats so it can't change the row height */
+.r5-z-answer .r5-write .slate-fraction,
+.r5-z-answer .r5-write .slate-row { position: relative; }
+.r5-z-answer .r5-write .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }
+.r5-z-answer .r5-and { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); }
+/* the no-writing (Manipulate) read-only cue sits on the same midline */
+.r5-z-answer .r5-mixed { display: inline-flex; align-items: center; }
+
+.r5-ans-cap {
+  grid-column: 1; grid-row: 2; align-self: end;
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  /* clamp: a longer caption can never grow the card */
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 520px;
+}
+.r5-ans-marks {
+  grid-column: 2; grid-row: 1 / span 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+}
+.r5-ans-marks .check { min-width: 150px; height: 56px; }
+
+/* TUTOR ZONE — Cook + ribbon, fixed rect bottom-right; ribbon text is clamped so a
+   longer status string can never change the zone height. */
+.r5-z-tutor {
+  position: absolute; right: 0; bottom: 0;
+  width: 396px; height: 236px;
+  box-sizing: border-box;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.r5-z-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.r5-z-tutor .ribbon {
+  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
+  height: 110px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical;
 }
 
 /* the floating help/status badge already exists as .eqstate.eqfloat; nothing new. */
@@ -159,4 +275,28 @@
 .r5-touch-cue {
   font-family: var(--display); font-size: 30px; color: var(--ink);
   padding: 6px 16px; border: 2px dashed var(--paper-3); background: rgba(28,22,18,0.02);
+}
+
+/* ==========================================================================
+   ARC EXPANSION — Workbench, Applied, and the Words scratch (R5-owned).
+   Workbench reuses the shared <BlockSandbox> (sandbox.css) verbatim, so it needs
+   no rules here. Applied + Words mount the shared <WordProblem> (slate.css) and
+   only need the room-local wrappers + the word→math setup surface below.
+   ========================================================================== */
+
+/* APPLIED — the worded question + required setup gate. The <WordProblem> owns its
+   own card/answer chrome (slate.css); .r5-applied-play just lets it fill the play
+   area like the manipulative stages do. */
+.r5-applied-play { display: block; }
+
+/* WORDS — the shared <WordProblem> mount (story + optional scratch + answer). */
+.r5-wp-mount { display: block; width: 100%; }
+
+/* The word→math SETUP surface (Applied gate + Words scratch): a single improper
+   fraction written on a small Slate, with its Check button / confirmation beside
+   it. On Applied a wrong write shakes (.bad); on Words it never gates. */
+.r5-setup-row { display: inline-flex; align-items: center; gap: 14px; }
+.r5-setup-row.bad { animation: shakeX .42s ease-in-out; }
+.r5-setup-ok {
+  font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center;
 }

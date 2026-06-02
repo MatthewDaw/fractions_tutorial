@@ -20,6 +20,9 @@ import { INTRO_CUES as INTRO_CUES_R2, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R2 
 import { INTRO_CUES as INTRO_CUES_R3, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R3 } from "./introR3.js";
 import { INTRO_CUES as INTRO_CUES_R4, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R4 } from "./introR4.js";
 import { INTRO_CUES as INTRO_CUES_R5, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R5 } from "./introR5.js";
+import { INTRO_CUES as INTRO_CUES_M1, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M1 } from "./introM1.js";
+import { INTRO_CUES as INTRO_CUES_M2, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M2 } from "./introM2.js";
+import { INTRO_CUES as INTRO_CUES_M3, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M3 } from "./introM3.js";
 
 const VOICE_BASE = import.meta.env.BASE_URL + "voice/";
 
@@ -31,6 +34,9 @@ const INTROS = {
   r3: { cues: INTRO_CUES_R3, persistKey: STAGE_PERSIST_KEY_R3 },
   r4: { cues: INTRO_CUES_R4, persistKey: STAGE_PERSIST_KEY_R4 },
   r5: { cues: INTRO_CUES_R5, persistKey: STAGE_PERSIST_KEY_R5 },
+  m1: { cues: INTRO_CUES_M1, persistKey: STAGE_PERSIST_KEY_M1 },
+  m2: { cues: INTRO_CUES_M2, persistKey: STAGE_PERSIST_KEY_M2 },
+  m3: { cues: INTRO_CUES_M3, persistKey: STAGE_PERSIST_KEY_M3 },
 };
 
 export default function RoomIntro({ room, onContinue, onBack }) {
@@ -47,6 +53,7 @@ export default function RoomIntro({ room, onContinue, onBack }) {
   const [activeIdx, setActiveIdx] = useState(-1);
   const frameRef = useRef(null);     // the video iframe (same-origin → window.__anim)
   const pausedRef = useRef(false);
+  const seekReqRef = useRef(null);   // set to a cue index when a transcript line is clicked
 
   // One <audio> per cue, created once.
   const audiosRef = useRef(null);
@@ -76,8 +83,15 @@ export default function RoomIntro({ room, onContinue, onBack }) {
     const readT = () => { try { return parseFloat(localStorage.getItem(STAGE_PERSIST_KEY + ":t")) || 0; } catch (e) { return 0; } };
     const loop = () => {
       const t = readT();
-      if (t < lastT - 0.5) { nextIdx = 0; busy = false; prevEnd = 0; stopClip(); setActiveIdx(-1); } // looped/seeked back
-      lastT = t;
+      // A transcript line was clicked: jump the narration straight to that line so
+      // it plays from the clicked beat instead of replaying everything in between.
+      if (seekReqRef.current !== null) {
+        const { idx, t: tgt } = seekReqRef.current; seekReqRef.current = null;
+        stopClip(); nextIdx = idx; busy = false; prevEnd = 0; lastT = tgt; setActiveIdx(-1);
+      } else {
+        if (t < lastT - 0.5) { nextIdx = 0; busy = false; prevEnd = 0; stopClip(); setActiveIdx(-1); } // looped/seeked back
+        lastT = t;
+      }
 
       // A line waits for BOTH its animation beat (gate) and a real pause after the
       // previous line (prevEnd + pause), measured on the same playhead clock.
@@ -144,15 +158,22 @@ export default function RoomIntro({ room, onContinue, onBack }) {
   }
   function togglePlay() { setPlay(!playing); }
 
-  // Click a transcript line: preview that clip on its own throwaway Audio, so it
-  // can't stall or desync the gated sequence.
-  const previewRef = useRef(null);
-  function previewLine(i) {
-    try { if (previewRef.current) previewRef.current.pause(); } catch (e) {}
-    const a = new Audio(VOICE_BASE + cues[i].key + ".mp3");
-    previewRef.current = a;
-    a.play().catch(() => {});
+  // Jump the video to `timeSec` and have the gated narration resume at cue `cueIdx`.
+  // We seek the iframe's animation clock (window.__anim.seek), prime the shared
+  // playhead, and hand the loop a {idx,t} request so it fires the right line next.
+  function seekTo(timeSec, cueIdx) {
+    stopClip();
+    const w = frameRef.current && frameRef.current.contentWindow;
+    try { if (w && w.__anim) w.__anim.seek(timeSec); } catch (e) {}
+    try { localStorage.setItem(STAGE_PERSIST_KEY + ":t", String(timeSec)); } catch (e) {}
+    seekReqRef.current = { idx: cueIdx, t: timeSec };
+    setActiveIdx(timeSec >= cues[cueIdx].gate ? cueIdx : -1);
+    if (ended) setEnded(false);   // clicking from the end card resumes the intro
+    if (!playing) setPlay(true);  // resume so the jump actually plays
   }
+  // Click a transcript line → jump to its beat. Click the "start" marker → restart.
+  function seekToLine(i) { seekTo(cues[i].gate, i); }
+  function seekToStart() { seekTo(0, 0); }
 
   // Mute silences narration without disturbing the timing (volume, not pause).
   function toggleMute() {
@@ -171,7 +192,7 @@ export default function RoomIntro({ room, onContinue, onBack }) {
   );
 
   return (
-    <div className={"intro" + (hasNarration ? " has-transcript" : "")}>
+    <div className={"intro" + (hasNarration ? " has-transcript" : "")} data-novox>
       <div className="intro-main">
         <iframe
           key={replayKey}
@@ -217,12 +238,14 @@ export default function RoomIntro({ room, onContinue, onBack }) {
               title={muted ? "Unmute narration" : "Mute narration"}><Spk off={muted} /></button>
           </div>
           <ol className="tr-list">
+            <li className={"tr-line tr-start" + (activeIdx < 0 ? " active" : "")}
+              onClick={seekToStart} title="Start from the beginning">▸ Start of the video</li>
             {cues.map((c, i) => (
               <li key={c.key} className={"tr-line" + (i === activeIdx ? " active" : "")}
-                onClick={() => previewLine(i)} title="Replay this line">{c.text}</li>
+                onClick={() => seekToLine(i)} title="Jump to this line">{c.text}</li>
             ))}
           </ol>
-          <div className="tr-foot">Narrated by the Cook · click a line to replay</div>
+          <div className="tr-foot">Narrated by the Cook · click a line to jump there</div>
         </aside>
       )}
     </div>

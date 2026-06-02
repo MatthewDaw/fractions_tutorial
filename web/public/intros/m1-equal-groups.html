@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 1 — Equal Groups intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --food:#c9a36b; --food-edge:#9a7740; --ok:#2a9d8f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{ position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the board: a row of three plates (NEVER rotated — commutativity deferred) ── */
+  #board{ position:relative; width:680px; max-width:94vw;
+    display:flex; align-items:flex-end; justify-content:center; gap:46px; min-height:300px; }
+  .plate{
+    position:relative; width:150px; height:124px;
+    border:4px solid #b09a6e; border-radius:50% / 46%;
+    background:radial-gradient(ellipse at 50% 38%, #fffdf6 0%, #efe3c6 78%, #e3d2ab 100%);
+    display:flex; align-items:center; justify-content:center; padding:14px;
+    opacity:0; transform:translateY(12px) scale(.9);
+    transition:opacity .55s ease, transform .55s cubic-bezier(.34,1.56,.64,1), border-color .4s ease;
+  }
+  .plate.in{ opacity:1; transform:none; }
+  .plate.equal{ border-color:var(--ok); }
+  .plate .pieces{ display:grid; grid-template-columns:repeat(2,auto); gap:4px 7px; }
+  .pc{
+    width:30px; height:30px; border-radius:50% 50% 48% 48%;
+    background:var(--food); border:2px solid var(--food-edge);
+    opacity:0; transform:scale(.4);
+    transition:opacity .35s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .pc.on{ opacity:1; transform:none; }
+  .plate-lab{ position:absolute; bottom:-26px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; font-size:20px; color:var(--ink-soft); opacity:0; transition:opacity .4s ease; }
+  .plate.in .plate-lab{ opacity:.9; }
+
+  /* the repeated-addition strip, fades in under the plates */
+  #addstrip{
+    position:absolute; left:50%; bottom:54px; transform:translateX(-50%);
+    display:flex; align-items:center; gap:14px;
+    font-family:"Russo One",sans-serif; font-size:40px; color:var(--ink);
+    opacity:0; transition:opacity .6s ease, transform .6s ease;
+  }
+  #addstrip.on{ opacity:1; }
+  #addstrip .op{ color:var(--red); font-size:32px; }
+  #addstrip .res{ color:var(--red); }
+
+  /* the collapsed 3 × 4 = 12 line */
+  #times{
+    position:absolute; left:50%; bottom:54px; transform:translateX(-50%) translateY(10px);
+    font-family:"Russo One",sans-serif; font-size:48px; color:var(--ink);
+    opacity:0; transition:opacity .55s ease, transform .55s ease; z-index:7;
+  }
+  #times.on{ opacity:1; transform:translateX(-50%); }
+  #times .op{ color:var(--red); } #times .res{ color:var(--ok); }
+
+  #caption{
+    position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
+    width:min(760px,94vw); text-align:center; font-size:24px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .f{color:var(--food-edge);font-weight:700;} .r{color:var(--red);font-weight:700;} .g{color:var(--ok);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Equal Groups</div>
+
+    <div id="board">
+      <div class="plate" id="p0"><div class="pieces"></div><div class="plate-lab">4</div></div>
+      <div class="plate" id="p1"><div class="pieces"></div><div class="plate-lab">4</div></div>
+      <div class="plate" id="p2"><div class="pieces"></div><div class="plate-lab">4</div></div>
+
+      <div id="addstrip">
+        <span class="t">4</span><span class="op">+</span>
+        <span class="t">4</span><span class="op">+</span>
+        <span class="t">4</span><span class="op">=</span>
+        <span class="res">12</span>
+      </div>
+      <div id="times"><span>3</span> <span class="op">×</span> <span>4</span> <span class="op">=</span> <span class="res">12</span></div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">Babushka sets out <b>three plates</b>.</div>
+      <div class="cap" data-i="1"><span class="f">Four pelmeni</span> on the first plate.</div>
+      <div class="cap" data-i="2">The <b>same four</b> on the next plate — <span class="g">every plate gets the same</span>.</div>
+      <div class="cap" data-i="3">And the <b>same four</b> again. Three equal plates of four.</div>
+      <div class="cap" data-i="4"><span class="r">Four, plus four, plus four</span> — add the group again and again.</div>
+      <div class="cap" data-i="5">Three groups of four is <span class="g">three times four — twelve</span>. Count the groups, not the numbers.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "equalgroups.v1";
+  var DURATION = 22;            // seconds — matches introM1.js INTRO_DURATION
+  var SIZE = 4, GROUPS = 3;
+
+  function el(id){ return document.getElementById(id); }
+
+  // build SIZE empty pelmeni into each plate (hidden until .on is added)
+  function buildPlate(id){
+    var holder = el(id).querySelector(".pieces");
+    for (var i=0;i<SIZE;i++){
+      var d=document.createElement("div"); d.className="pc"; holder.appendChild(d);
+    }
+  }
+  buildPlate("p0"); buildPlate("p1"); buildPlate("p2");
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.18)";
+    setTimeout(function(){ node.style.transform=""; }, 260); }
+
+  // drop the plate in, then reveal its SIZE pelmeni one at a time
+  function fillPlate(id, baseDelay, markEqual){
+    var plate = el(id);
+    plate.classList.add("in");
+    var pcs = plate.querySelectorAll(".pc");
+    for (var i=0;i<pcs.length;i++){ (function(p,k){
+      setTimeout(function(){ p.classList.add("on"); }, baseDelay + k*180);
+    })(pcs[i], i); }
+    if (markEqual){ setTimeout(function(){ plate.classList.add("equal"); }, baseDelay + pcs.length*180); }
+  }
+
+  var beatsDone = [];
+
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — three empty plates appear (the row of groups)
+    [1.2, function(){
+      showCap(0);
+      el("p0").classList.add("in"); el("p1").classList.add("in"); el("p2").classList.add("in");
+    }],
+
+    // Beat 2 — four pelmeni on the FIRST plate
+    [4.0, function(){ showCap(1); fillPlate("p0", 200, false); }],
+
+    // Beat 3 — the SAME four on the next plate (the equal-group invariant — both go green)
+    [7.5, function(){
+      showCap(2);
+      fillPlate("p1", 200, true);
+      setTimeout(function(){ el("p0").classList.add("equal"); }, 200 + SIZE*180);
+    }],
+
+    // Beat 4 — and the same four AGAIN (third plate) — three equal plates of four
+    [11.0, function(){ showCap(3); fillPlate("p2", 200, true); }],
+
+    // Beat 5 — 4 + 4 + 4 fades in under the plates (binds repeated addition)
+    [14.0, function(){ showCap(4); el("addstrip").classList.add("on"); pulse(el("addstrip")); }],
+
+    // Beat 6 — collapse to 3 × 4 = 12 (NEVER rotate the plates)
+    [18.0, function(){
+      showCap(5);
+      el("addstrip").classList.remove("on");
+      el("times").classList.add("on");
+      pulse(el("times"));
+    }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; }
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "route": "r2",
+  "steps": [
+    {
+      "waitFor": ".intro-continue"
+    },
+    {
+      "clickText": "Skip"
+    },
+    {
+      "wait": 700
+    },
+    {
+      "clickText": "Continue to the lesson"
+    },
+    {
+      "waitFor": ".beat-btn"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "clickNth": {
+        "selector": ".beat-btn",
+        "n": 5
+      }
+    },
+    {
+      "wait": 900
+    }
+  ]
+}

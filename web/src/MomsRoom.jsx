@@ -388,8 +388,17 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
   const wallRoomId = wallNodeId ? (NODE_TO_ROOM[wallNodeId] ?? task?.roomId) : task?.roomId;
   const wallSkill = wallRoomId ? ROOM_SKILL[wallRoomId] : null;
 
+  // "Ready to check": the child has committed the handwritten answer this recipe
+  // needs (and hasn't solved it yet), so the Check button lights up to invite the
+  // tap. A mixed answer needs all three slots; a plain fraction needs both.
+  const answerReady = !done && !!task && !solved && (
+    isMixed
+      ? (wholeStr !== "" && numStr !== "" && denStr !== "")
+      : (numStr !== "" && denStr !== "")
+  );
+
   return (
-    <div className="page momsroom">
+    <div className="page momsroom" data-vox-speaker="mom">
       <div className="foxing" />
 
       <div className="topbar">
@@ -425,11 +434,26 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
           <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
           Read aloud
         </button>
-        <div className="goal-text">{q ? q.caption : "Every recipe, solved! You are the smartest cook in this whole kitchen."}</div>
+        <div className="goal-text" data-vox={q ? `mr_mom_goal_${q.id}` : "mr_mom_finale"} data-vox-speaker="mom">{q ? q.caption : "Every recipe, solved! You are the smartest cook in this whole kitchen."}</div>
       </div>
 
-      <div className="play">
-        <div className="diagram">
+      {/* ════════════════════════════════════════════════════════════════════
+          DETERMINISTIC FIXED-ZONE LAYOUT (mirrors AppR1 stage 1 / .r1-s1).
+          Every region is an absolutely-positioned, fixed-size rectangle inside
+          the 1280×800 stage, so a longer problem string / a different character
+          / a different font (Safari vs Chromium) can NEVER reflow one zone onto
+          another (the original bug: the prop area covered the answer fractions):
+            · .mr-s-stage  — prop + scratch space      (top-left, fixed, clipped)
+            · .mr-s-rail   — Today's Cook + The Skill   (top-right, fixed)
+            · .mr-s-answer — answer card: write area + Check as ONE unit,
+                             Check IMMEDIATELY right of the Slate (bottom-left)
+            · .mr-s-tutor  — speaking character + ribbon (bottom-right, clamped)
+          The stage zone is pinned TOP, the answer card + tutor pinned BOTTOM,
+          with a guaranteed gap between them. Heights never depend on text.
+          ════════════════════════════════════════════════════════════════════ */}
+      <div className="mr-s">
+        {/* ── PROP / STORY ZONE (fixed rect, top-left) ── */}
+        <div className="mr-s-stage">
           {q && (
             <div className={"eqstate eqfloat" + (solved && lookResult !== "notyet" ? " ok" : "") + (isLook ? " mr-peek" : "")}>
               <span className="g">{stageTag}</span>
@@ -450,13 +474,14 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
           )}
         </div>
 
-        <div className="rail">
+        {/* ── RAIL (fixed rect, top-right) ── */}
+        <div className="mr-s-rail">
           <div className="panel mr-asker">
             <h3>Today's Cook</h3>
-            <div className="mr-asker-art"><Portrait who={owner} mood={solved ? "happy" : "think"} width={132} /></div>
+            <div className="mr-asker-art"><Portrait who={owner} mood={solved ? "happy" : "think"} width={120} /></div>
             <div className="mr-asker-note"><b>{ownerLabel}</b> brought this one to Babushka's counter.</div>
           </div>
-          <div className="panel">
+          <div className="panel mr-skill-panel">
             <h3>The Skill</h3>
             {skill && (
               <div className="hint">
@@ -470,78 +495,80 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="hud">
-        <div className="cook-zone">
-          <div className="cook-stage"><Portrait who={bubble.who} mood={bubble.mood} width={118} /></div>
-          <div className={"ribbon" + (bubble.tone === "warn" ? " warn" : "") + (bubble.meow ? " mr-meow" : "")}>{bubble.text}</div>
-        </div>
-
-        <div className="hud-eq">
-          <div className="mr-final-label">Final answer</div>
-          <div className={"qeq" + (bad ? " mr-bad" : "")}>
-            {isMixed ? (
-              <>
-                <span className="frinput mr-whole">
-                  <Slate
-                    slots={[{ key: "whole", label: "wholes" }]}
-                    values={{ whole: wholeStr }}
-                    onChange={(k, v) => setWholeStr(v)}
-                    onSubmit={check}
-                    layout="row"
-                    den={denBar}
-                    disabled={solved}
-                    autoFocusKey={wholeStr === "" ? "whole" : undefined}
-                    ariaLabel="how many wholes"
-                  />
-                </span>
-                <span className="mr-and">and</span>
+        {/* ── ANSWER CARD — write area + Check as ONE unit (fixed rect, bottom-left) ── */}
+        <div className="mr-s-answer">
+          <div className="mr-s-write">
+            <div className="mr-final-label">Final answer</div>
+            <div className={"mr-s-slate" + (bad ? " mr-bad" : "") + (isMixed ? " is-mixed" : "")}>
+              {isMixed ? (
+                <>
+                  <span className="frinput mr-whole">
+                    <Slate
+                      slots={[{ key: "whole", label: "wholes" }]}
+                      values={{ whole: wholeStr }}
+                      onChange={(k, v) => setWholeStr(v)}
+                      onSubmit={check}
+                      layout="row"
+                      den={denBar}
+                      disabled={solved}
+                      autoFocusKey={wholeStr === "" ? "whole" : undefined}
+                      ariaLabel="how many wholes"
+                    />
+                  </span>
+                  <span className="mr-and">and</span>
+                  <span className="frinput">
+                    <Slate
+                      slots={[{ key: "num", label: "leftover" }, { key: "den", label: "size" }]}
+                      values={{ num: numStr, den: denStr }}
+                      onChange={(k, v) => (k === "num" ? setNumStr(v) : setDenStr(v))}
+                      onSubmit={check}
+                      layout="fraction"
+                      den={denBar}
+                      disabled={solved}
+                      autoFocusKey={wholeStr !== "" && numStr === "" ? "num" : undefined}
+                      ariaLabel="leftover fraction"
+                    />
+                  </span>
+                </>
+              ) : (
                 <span className="frinput">
                   <Slate
-                    slots={[{ key: "num", label: "leftover" }, { key: "den", label: "size" }]}
+                    slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
                     values={{ num: numStr, den: denStr }}
                     onChange={(k, v) => (k === "num" ? setNumStr(v) : setDenStr(v))}
                     onSubmit={check}
                     layout="fraction"
                     den={denBar}
                     disabled={solved}
-                    autoFocusKey={wholeStr !== "" && numStr === "" ? "num" : undefined}
-                    ariaLabel="leftover fraction"
+                    autoFocusKey={!numStr ? "num" : (!denStr ? "den" : undefined)}
+                    ariaLabel="your fraction answer"
                   />
                 </span>
-              </>
-            ) : (
-              <span className="frinput">
-                <Slate
-                  slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
-                  values={{ num: numStr, den: denStr }}
-                  onChange={(k, v) => (k === "num" ? setNumStr(v) : setDenStr(v))}
-                  onSubmit={check}
-                  layout="fraction"
-                  den={denBar}
-                  disabled={solved}
-                  autoFocusKey={!numStr ? "num" : (!denStr ? "den" : undefined)}
-                  ariaLabel="your fraction answer"
-                />
-              </span>
+              )}
+            </div>
+            <div className="mr-s-cap">{q ? (solved ? `that's ${targetLabel(q)}` : q.ask) : ""}</div>
+          </div>
+
+          <div className="mr-s-marks">
+            {solved && stars > 0 && <Rosette count={stars} />}
+            {wall && !solved && wallSkill && (
+              <button className="mr-wallbtn" onClick={goLearn} title={`Open Lesson ${wallSkill.no}`}>
+                ▸ Learn it: {wallSkill.label}
+              </button>
+            )}
+            {!done && (
+              <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={check}>
+                {solved ? (isLook ? "Continue ▸" : "Next recipe ▸") : "Check"}
+              </button>
             )}
           </div>
-          <div className="qcap">{q ? (solved ? `that's ${targetLabel(q)}` : q.ask) : ""}</div>
         </div>
 
-        <div className="marks">
-          {solved && stars > 0 && <Rosette count={stars} />}
-          {wall && !solved && wallSkill && (
-            <button className="mr-wallbtn" onClick={goLearn} title={`Open Lesson ${wallSkill.no}`}>
-              ▸ Learn it: {wallSkill.label}
-            </button>
-          )}
-          {!done && (
-            <button className={"check" + (solved ? " done" : "")} onClick={check}>
-              {solved ? (isLook ? "Continue ▸" : "Next recipe ▸") : "Check"}
-            </button>
-          )}
+        {/* ── TUTOR ZONE — speaking character + ribbon (fixed rect, bottom-right) ── */}
+        <div className="mr-s-tutor">
+          <div className="cook-stage"><Portrait who={bubble.who} mood={bubble.mood} width={118} /></div>
+          <div className={"ribbon" + (bubble.tone === "warn" ? " warn" : "") + (bubble.meow ? " mr-meow" : "")} data-vox-speaker={bubble.who}>{bubble.text}</div>
         </div>
       </div>
     </div>

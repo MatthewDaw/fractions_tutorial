@@ -28,15 +28,18 @@
 }
 .kitchen-medallion::after { content: ""; position: absolute; inset: 9px; border: 1px dashed var(--ink-soft); border-radius: 50%; opacity: 0.4; pointer-events: none; }
 .kitchen-medallion svg { margin-bottom: -6px; }
-.kitchen-name { font-family: var(--display); font-size: 17px; letter-spacing: 0.03em; margin-top: 11px; color: var(--ink); }
-.kitchen-sub { font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--ink-mute); margin: 4px auto 0; max-width: 240px; line-height: 1.32; }
+/* title + CTA floated ABOVE the medallion (out of flow) so the circle stays
+   centered on the hub where the recipe trails converge, and nothing sits on the
+   downward trail to the Simplify room. */
+.kitchen-label { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: 230px; text-align: center; }
+.kitchen-name { font-family: var(--display); font-size: 17px; letter-spacing: 0.03em; margin: 0 0 8px; color: var(--ink); }
 
 /* the kitchen medallion is now a button — reset button chrome, keep the layout
    from .kitchen-node, and add a hover lift + a "Cook with Babushka" call-to-action */
 .kitchen-open { -webkit-appearance: none; appearance: none; border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; padding: 0; }
 .kitchen-medallion { transition: transform 0.12s ease, box-shadow 0.12s ease; }
 .kitchen-open:hover .kitchen-medallion { transform: translateY(-2px); box-shadow: 6px 8px 0 rgba(28,22,18,0.22), inset 0 0 0 6px var(--paper-2); }
-.kitchen-cta { display: inline-block; margin-top: 9px; font-family: var(--display); font-size: 11px; letter-spacing: 0.05em;
+.kitchen-cta { display: inline-block; margin-top: 0; font-family: var(--display); font-size: 11px; letter-spacing: 0.05em;
   color: var(--paper-1); background: var(--red); border: 1.5px solid var(--red-deep); padding: 5px 12px; box-shadow: 2px 2px 0 rgba(110,28,22,0.3); }
 .kitchen-open:hover .kitchen-cta { box-shadow: 2px 2px 0 rgba(110,28,22,0.3), 0 0 14px rgba(163,42,34,0.45); }
 
@@ -106,6 +109,8 @@
   padding: 9px 16px 9px 13px; cursor: pointer; border-left: 3px solid transparent; transition: background 120ms, color 120ms; }
 .tr-line:hover { background: rgba(28,22,18,0.045); color: var(--ink); }
 .tr-line.active { color: var(--ink); background: rgba(163,42,34,0.12); border-left-color: var(--red); }
+.tr-start { font-family: var(--display); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-mute); border-bottom: 1px dashed var(--paper-3); }
 .tr-foot { padding: 10px 16px; border-top: 1px solid var(--paper-3); font-family: var(--serif); font-style: italic;
   font-size: 11px; color: var(--ink-mute); }
 
@@ -145,9 +150,18 @@
 .intro-again:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.28); }
 .intro-again:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 
-/* global background-music toggle — fixed in the viewport corner, outside the
-   scaled #stage, so it's available on every screen. */
-.music-toggle { position: fixed; top: 12px; right: 12px; z-index: 9000;
+/* global background-music control — fixed in the viewport corner, outside the
+   scaled #stage, so it's available on every screen. Volume slider + mute toggle. */
+/* The music control is the ONLY audio control, and it renders ONLY on the world
+   map / title screen (Shell gates it via showControl) — never on a lesson, where a
+   single per-lesson voice toggle lives in the top-right cluster. Since no lesson
+   control sits beside it on those screens, it sits in the top-right corner. */
+.music-control { position: fixed; top: 14px; right: 14px; z-index: 9000;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 8px; background: rgba(237,226,200,0.55);
+  border: 1px solid rgba(28,22,18,0.18); }
+
+.music-toggle {
   width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer; appearance: none; padding: 0; border: 1.5px solid var(--ink);
   background: rgba(237,226,200,0.92); color: var(--ink); box-shadow: 2px 2px 0 rgba(28,22,18,0.30); }
@@ -155,3 +169,20 @@
 .music-toggle.off { color: var(--ink-mute); background: rgba(237,226,200,0.65); }
 .music-toggle:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
 .music-toggle:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+/* Volume slider — vintage look: ink-bordered cream track, red thumb. A chunky
+   thumb and full-height hit area keep it draggable on a tablet. */
+.music-vol { appearance: none; -webkit-appearance: none; width: 104px; height: 40px;
+  background: transparent; cursor: pointer; margin: 0; }
+.music-vol:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.music-vol::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+  border: 1.5px solid var(--ink); background: rgba(237,226,200,0.92); box-shadow: 1px 1px 0 rgba(28,22,18,0.25); }
+.music-vol::-moz-range-track { height: 6px; border-radius: 3px;
+  border: 1.5px solid var(--ink); background: rgba(237,226,200,0.92); box-shadow: 1px 1px 0 rgba(28,22,18,0.25); }
+.music-vol::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -8px;
+  width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--red);
+  box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
+.music-vol::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%;
+  border: 1.5px solid var(--ink); background: var(--red); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
+.music-control.off .music-vol::-webkit-slider-thumb { background: var(--ink-mute); }
+.music-control.off .music-vol::-moz-range-thumb { background: var(--ink-mute); }

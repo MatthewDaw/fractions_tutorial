@@ -230,6 +230,100 @@ export const LINES = {
   mr_cat_halfpie_1: "Mrrrow!",
   mr_mom_halfpie_2: "One and one half pies — for the WHOLE family, kotik. That does not mean only you.",
   mr_cat_halfpie_3: "Mrr.",
+
+  // ===========================================================================
+  // MULTIPLICATION ROOMS (m1 Equal Groups, m2 Baking Trays, m3 Times Facts).
+  // Intro narration (m1i_/m2i_/m3i_) is the Cook; in-room goal/nudge lines are
+  // Babushka (mr_mom_*); Words-stage story read-alouds are the owner character
+  // (mr_kid_/mr_grandpa_). Products spelled out in words for the voice.
+  // ===========================================================================
+
+  // --- m1 "Equal Groups" intro (Cook). Worked example 3 × 4 = 12. ---
+  m1i_intro: "Babushka sets out three plates.",
+  m1i_first: "Four pelmeni on the first plate.",
+  m1i_same: "The same four on the next plate — every plate gets the same.",
+  m1i_third: "And the same four again. Three equal plates of four.",
+  m1i_add: "Four, plus four, plus four — add the group again and again.",
+  m1i_times: "Three groups of four is three times four — twelve. Count the groups, not the numbers.",
+
+  // --- m1 in-room (Babushka). Goal caption + every award; Applied nudge. ---
+  mr_mom_goal_1:
+    "Babushka has three plates, and she wants the same four pelmeni on every plate — add the group again and again, or multiply.",
+  mr_mom_nudge_1:
+    "Same plates either way, povaryonok — three plates of four. Set the plates first, then the pelmeni on each.",
+
+  // --- m2 "Baking Trays" intro (Cook). Worked example 4 × 6 = 24. ---
+  m2i_intro: "Loose buns all over — too messy to count.",
+  m2i_tidy: "Tidy them into a tray: four rows of six.",
+  m2i_count: "Count by rows — six, twelve, eighteen, twenty-four.",
+  m2i_spin: "Spin the tray: four rows of six, or six rows of four — still twenty-four.",
+  m2i_score: "Score it: four sixes is four fours and four twos — sixteen plus eight is twenty-four.",
+  m2i_close: "A tray is a rectangle, povaryonok — rows times columns.",
+
+  // --- m2 in-room (Babushka). Goal caption + every award; setup nudge. ---
+  mr_mom_goal_m2:
+    "Babushka's tray has four rows of six buns — a rectangle. Count it as rows times columns: four times six.",
+  mr_mom_nudge_m2:
+    "Rows times columns, povaryonok — set how many rows, then how many in each row. Either way around makes the same tray.",
+
+  // --- m2 Words-stage banter (owner character, after a correct answer).
+  // Only 4×6 (kid) and 5×8 (grandpa) are reachable as wired; the cat lines
+  // (3×4, 8×2) are MEOW SFX (see MEOW_SFX) with Babushka carrying the count. ---
+  mr_kid_4x6_1: "Four rows of six — that's twenty-four buns! I counted every single row!",
+  mr_grandpa_5x8_1: "Five rows of eight, lined up like soldiers — forty pelmeni, malysh. Not one out of place.",
+  mr_cat_3x4_1: "Mrow?",
+  mr_grandpa_6x7_1: "Six by seven, split into the easy pieces — forty-two squares of pryanik altogether.",
+  mr_kid_7x9_1: "Seven rows of nine — I split the big rack and got sixty-three cookies!",
+  mr_cat_8x2_1: "Mrrr.",
+
+  // --- m3 "Times Facts" intro (Cook). Worked example 7 × 8 = 56, products in words. ---
+  m3i_intro: "Seven empty jars, and a scoop that holds eight.",
+  m3i_scoop: "One handful into each jar — eight at a time.",
+  m3i_count: "Count by eights: eight, sixteen, twenty-four, thirty-two, forty, forty-eight, fifty-six.",
+  m3i_write: "Seven eights are fifty-six. Seven times eight is fifty-six.",
+  m3i_byheart: "Skip-counting gets you there — but a master cook knows it by heart.",
+  m3i_trick: "And if you forget, split it: seven fives and seven threes — thirty-five and twenty-one make fifty-six.",
+
+  // --- m3 in-room goal/award lines (Babushka). The goal caption uses mr_mom_goal;
+  // each stage's award reads a per-stage variant. Products spelled in words. ---
+  mr_mom_goal:
+    "Babushka has seven jars and scoops eight mushrooms into each — skip-count to the total, then learn the fact by heart: seven times eight.",
+  mr_mom_goal_jar:
+    "Yes! Seven eights skip-counted up to fifty-six. Seven times eight is fifty-six.",
+  mr_mom_goal_ribbon:
+    "Yes! The ribbon counts eight, sixteen, twenty-four, thirty-two, forty, forty-eight, fifty-six — seven times eight is fifty-six.",
+  mr_mom_goal_line:
+    "Yes! The line lands on fifty-six. Seven times eight is fifty-six.",
+  mr_mom_goal_workbench:
+    "Yes! Seven groups of eight — built and counted up. Seven times eight is fifty-six.",
+  mr_mom_goal_bare:
+    "Write the product, povaryonok — seven times eight.",
+  mr_mom_goal_timesone:
+    "Times one keeps the number just as it is.",
+  mr_mom_goal_timeszero:
+    "Times zero is always zero — no groups, nothing in the jar.",
+  mr_mom_goal_fluent:
+    "Times-zero is always zero, times-one keeps the number — you know them now.",
+  mr_mom_goal_applied:
+    "Yes! Seven times eight is fifty-six.",
+  mr_mom_goal_words:
+    "Yes! Seven bundles of eight — seven times eight is fifty-six.",
+
+  // --- m3 in-room nudges (Babushka). ---
+  mr_mom_nudge_write:
+    "Write the product on the slate, povaryonok — how many in all?",
+  mr_mom_nudge_addvsmult:
+    "That is adding the numbers — we want groups of. Skip-count the jar instead.",
+  mr_mom_nudge_skipcount:
+    "Not there yet — keep scooping eight at a time and count along the jar.",
+  mr_mom_nudge_fill:
+    "Fill in both numbers for me — how many groups, and how many in each.",
+  mr_mom_nudge_skipline:
+    "Hop along the line by eights, povaryonok — land each jump on the next mark.",
+
+  // --- m3 Words-stage story read-aloud (Grandpa). ---
+  mr_grandpa_bundles_1:
+    "Grandpa tied seven bundles of eight twigs each. Seven bundles of eight — fifty-six twigs, malysh, counted twice to be sure.",
 };
 
 // ── Cat meows (sound effects, not speech) ────────────────────────────────────
@@ -247,6 +341,9 @@ export const MEOW_SFX = {
   mr_cat_muffin_3: "a single short, innocent, questioning little house cat mew",
   mr_cat_halfpie_1: "a single grand, declarative, theatrical house cat meow",
   mr_cat_halfpie_3: "a single smug, dismissive, clipped house cat meow",
+  // m2 Baking Trays cat banter (unreachable as wired, kept for completeness):
+  mr_cat_3x4_1: "a single curious, questioning little house cat mew, rising at the end",
+  mr_cat_8x2_1: "a single low, guarding, possessive house cat meow",
 };
 
 // ── Speakers ────────────────────────────────────────────────────────────────
@@ -298,6 +395,7 @@ export const speakerOf = (key) => {
   if (LINE_SPEAKER[key]) return LINE_SPEAKER[key];
   if (key.startsWith("mr_kid_")) return "kid";
   if (key.startsWith("mr_gp_")) return "grandpa";
+  if (key.startsWith("mr_grandpa_")) return "grandpa"; // m2/m3 use the full owner name
   if (key.startsWith("mr_cat_")) return "cat";
   if (key.startsWith("mr_mom_")) return "mom";
   return DEFAULT_SPEAKER;

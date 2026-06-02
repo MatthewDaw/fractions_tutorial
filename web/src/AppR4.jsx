@@ -53,7 +53,8 @@ const STAGES = [
   { id: "bind",       n: 2, tag: "Bind",       blurb: "Fuse, then write the tidied fraction" },
   { id: "fade",       n: 3, tag: "Fade",       blurb: "Pick the shared factor, then write" },
   { id: "numbers",    n: 4, tag: "Numbers",    blurb: "Bare 8/12 — write lowest terms" },
-  { id: "words",      n: 5, tag: "Words",      blurb: "Read the recipe, write the simplest" },
+  { id: "applied",    n: 5, tag: "Applied",    blurb: "Write the fraction, then simplify it" },
+  { id: "words",      n: 6, tag: "Words",      blurb: "Read the recipe, write the simplest" },
 ];
 
 // ── the ÷K chips that ride inside the shared BigFrac ─────────────────────────
@@ -124,6 +125,14 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
   // Stage 3 (Fade): which shared factor the child picks, symbolically.
   const [pickedK, setPickedK] = useState(0);
 
+  // Applied (Stage 5): word→math gate. The child first WRITES the fraction the
+  // words describe (8/12) in the setup Slate; once that's checked (setupOk) the
+  // simplified answer unlocks. Words (Stage 6): an OPTIONAL, ungraded scratch
+  // Slate for 8/12 — it never gates the answer.
+  const [setupAns, setSetupAns] = useState({ n: "", d: "" });
+  const [setupOk, setSetupOk] = useState(false);
+  const [scratch, setScratch] = useState({ n: "", d: "" });
+
   const [status, setStatus] = useState(initialStatus("manipulate"));
 
   const { soundOn, speaking, say, stopVoice, toggleSound } = useVoice();
@@ -186,6 +195,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
       case "bind":       return { tone: "normal", text: "Fuse the blocks, and each time, copy the new tidied fraction onto the Slate." };
       case "fade":       return { tone: "normal", text: "The bar is fading. Pick the number that divides BOTH 8 and 12, then write the tidied line." };
       case "numbers":    return { tone: "normal", text: "Just the numbers now: 8/12. Write it in its lowest terms — fewest, biggest pieces." };
+      case "applied":    return { tone: "normal", text: "A question in words. First write the fraction it describes — 8/12 — then the simplest form unlocks." };
       case "words":      return { tone: "normal", text: "Read the recipe. The pieces come out messy — write the simplest fraction for the total." };
       default:           return { tone: "normal", text: "" };
     }
@@ -198,6 +208,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     setNum(START_NUM); setDen(START_DEN); setDivs([]); setFuseTick(0); setBounceK(0);
     setSolved(false); solvedRef.current = false; setStars(0); setCook("idle");
     setSlate({ n: "", d: "" }); setPickedK(0);
+    setSetupAns({ n: "", d: "" }); setSetupOk(false); setScratch({ n: "", d: "" });
     setStatus(initialStatus(s));
     // Emit problem_present for the new stage.
     selfCorrectionsRef.current = 0;
@@ -357,6 +368,42 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     }
   }
 
+  // ── Applied (Stage 5): the word→math SETUP gate ─────────────────────────────
+  // The child first writes the fraction the words describe (8/12). Only when that
+  // matches does the simplified answer unlock (setupOk). This gate is ungraded by
+  // the engine — it's a comprehension check; the engine reportAttempt fires on the
+  // simplified ANSWER, exactly like Numbers.
+  function checkSetup() {
+    const sn = parseInt(setupAns.n, 10), sd = parseInt(setupAns.d, 10);
+    if (!(sn > 0 && sd > 0)) {
+      setCook("think");
+      setStatus({ tone: "warn", text: "Write the fraction the words give — a top number and a bottom number." });
+      return;
+    }
+    if (!(sn === START_NUM && sd === START_DEN)) {
+      setCook("think");
+      setStatus({ tone: "warn", text: `Not quite — the words say ${START_NUM} of ${START_DEN} pieces are left. Write ${START_NUM} over ${START_DEN} first.` });
+      return;
+    }
+    setSetupOk(true); setCook("idle");
+    setStatus({ tone: "ok", text: `That's it — ${START_NUM}/${START_DEN} of the loaf is left. Now write it with the fewest, biggest pieces.` });
+  }
+  // Applied answer: same lowest-terms grading + engine path as Numbers.
+  function submitApplied(vals) {
+    if (!setupOk) {
+      setCook("think");
+      setStatus({ tone: "warn", text: `First write the fraction the words describe (${START_NUM}/${START_DEN}) and check it.` });
+      return;
+    }
+    const v = vals || slate;
+    const ok = gradeSlate({ requireLowest: true, n: v.n, d: v.d });
+    if (ok) {
+      const tn = parseInt(v.n, 10), td = parseInt(v.d, 10);
+      const dec = reportAttemptR4({ correct: true, answerValue: [tn, td], errorSignature: null, stars: 3 });
+      setTimeout(() => applyEngineDecisionR4(dec, true), 1500);
+    }
+  }
+
   // Reset the CURRENT stage (toolbar ⟲).
   function reset() { gotoStage(stageRef.current); }
 
@@ -376,8 +423,21 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
     : stage === "bind" ? den
     : LOW_DEN;
 
+  // "Ready to check": the child has committed the answer the current stage needs,
+  // so the Check button lights up (shared .check.ready glow). The writing stages
+  // (bind/fade/numbers/applied/words) need both Slate digits; fade also needs a
+  // shared factor picked; applied needs its setup gate cleared first. Manipulate
+  // has no writing — its readiness is "fewest pieces reached" (isFewest).
+  const slateFilled = slate.n !== "" && slate.d !== "";
+  const answerReady = !solved && (
+    stage === "manipulate" ? isFewest
+    : stage === "fade" ? (!!pickedK && slateFilled)
+    : stage === "applied" ? (setupOk && slateFilled)
+    : slateFilled
+  );
+
   return (
-    <div className="page">
+    <div className="page" data-vox-speaker="cook">
       <div className="foxing" />
 
       <div className="topbar">
@@ -432,158 +492,246 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
           <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
           Read aloud
         </button>
-        <div className="goal-text">{stageGoal(stage)}</div>
+        <div className="goal-text" data-vox="r4Goal" data-vox-speaker="mom">{stageGoal(stage)}</div>
       </div>
 
-      {/* ── WORDS stage (Stage 5): no blocks, no equation — a recipe + Slate ── */}
-      {stage === "words" ? (
-        <div className="play r4-play-words">
-          <WordProblem
-            tag="Babushka's Recipe"
-            story={WORDS_STORY}
-            readAloud={() => say(WORDS_STORY)}
-            speaking={speaking}
-            answerLead="Write the simplest fraction of the loaf that's left"
-            slots={[{ key: "n", label: "top" }, { key: "d", label: "bottom" }]}
-            values={slate}
-            onChange={(k, v) => setSlate((s) => ({ ...s, [k]: onlyDigits(v) }))}
-            layout="fraction"
-            den={LOW_DEN}
-            disabled={solved}
-            autoFocusKey="n"
-            onCheck={(vals) => submitWords(vals)}
-            checkLabel={solved ? "Tidied" : "Check"}
-            checkDisabled={solved}
-          />
-          <div className="r4-words-side">
-            <div className="cook-zone">
-              <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-              <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+      {(stage === "applied" || stage === "words") ? (
+        /* ════════════════════════════════════════════════════════════════════
+           WORDS / APPLIED — DETERMINISTIC FIXED-ZONE LAYOUT
+             · .r4-s-story  — recipe card + (Applied) the required setup gate
+             · .r4-s-answer — answer Slate + Check, ONE bordered card (bottom-left)
+             · .r4-s-tutor  — Cook + ribbon (bottom-right)
+           Every zone is a fixed rectangle with clamped text, so a longer string
+           or a different font can never reflow one zone onto another. ── */
+        <div className="r4-s r4-s-wordsmode">
+          {/* STORY ZONE (fixed rect, top) */}
+          <div className="r4-s-story">
+            <div className="wp-card r4-s-card">
+              <div className="wp-card-head">
+                <span className="wp-tag">{stage === "applied" ? "Babushka's Kitchen" : "Babushka's Recipe"}</span>
+                <button
+                  type="button"
+                  className={"wp-readaloud" + (speaking ? " speaking" : "")}
+                  onClick={() => say(stage === "applied" ? APPLIED_SAY : WORDS_SAY)}
+                  aria-label="Read the recipe aloud"
+                >
+                  <svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
+                  Read aloud
+                </button>
+              </div>
+              <p className="wp-story r4-s-story-text">{stage === "applied" ? APPLIED_STORY : WORDS_STORY}</p>
             </div>
-            {solved && (
-              <div className="r4-words-rosette"><Rosette count={stars} /></div>
-            )}
+
+            {/* the word→math surface: REQUIRED gate (Applied) / OPTIONAL scratch (Words) */}
+            <div className="r4-s-setup">
+              <span className="r4-s-setup-lead">
+                {stage === "applied" ? "First, write the fraction the words describe" : "Optional — sketch the fraction the words give"}
+              </span>
+              <div className="r4-s-setup-row">
+                <Slate
+                  slots={[{ key: "n", label: "top" }, { key: "d", label: "bottom" }]}
+                  values={stage === "applied" ? setupAns : scratch}
+                  onChange={(k, v) => (stage === "applied"
+                    ? setSetupAns((s) => ({ ...s, [k]: onlyDigits(v) }))
+                    : setScratch((s) => ({ ...s, [k]: onlyDigits(v) })))}
+                  onSubmit={stage === "applied" ? checkSetup : undefined}
+                  layout="fraction"
+                  den={START_DEN}
+                  disabled={(stage === "applied" && (setupOk || solved)) || (stage === "words" && solved)}
+                  autoFocusKey={stage === "applied" && !setupOk ? "n" : undefined}
+                  ariaLabel="write the fraction the words describe"
+                />
+                {stage === "applied" && (setupOk
+                  ? <span className="r4-setup-ok">✓ that's {START_NUM}/{START_DEN} — now simplify it</span>
+                  : <button type="button" className="wp-check" onClick={checkSetup}>Check the fraction</button>)}
+              </div>
+            </div>
+          </div>
+
+          {/* ANSWER ZONE — Slate + Check, ONE card (fixed rect, bottom-left) */}
+          <div className="r4-s-answer r4-s-answer-words">
+            <div className="r4-s-ansprompt">
+              {stage === "applied" ? "Now write it with the fewest, biggest pieces" : "Write the simplest fraction of the loaf left"}
+            </div>
+            <div className="r4-s-answrite">
+              <Slate
+                slots={[{ key: "n", label: "top" }, { key: "d", label: "bottom" }]}
+                values={slate}
+                onChange={(k, v) => setSlate((s) => ({ ...s, [k]: onlyDigits(v) }))}
+                onSubmit={stage === "applied" ? () => submitApplied(slate) : () => submitWords(slate)}
+                layout="fraction"
+                den={LOW_DEN}
+                disabled={(stage === "applied" && (!setupOk || solved)) || (stage === "words" && solved)}
+                autoFocusKey={(stage === "applied" ? setupOk && !solved : !solved) ? "n" : undefined}
+                ariaLabel="write the simplest fraction"
+              />
+              <div className="r4-s-marks">
+                {solved && <Rosette count={stars} />}
+                <button
+                  className={"check" + (solved ? " done" : answerReady ? " ready" : "")}
+                  onClick={() => (solved ? advanceStage() : stage === "applied" ? submitApplied(slate) : submitWords(slate))}
+                  disabled={stage === "applied" && !setupOk && !solved}
+                >{solved ? (stage === "words" ? "Tidied" : "Next →") : "Check"}</button>
+              </div>
+            </div>
+          </div>
+
+          {/* TUTOR ZONE (fixed rect, bottom-right) */}
+          <div className="r4-s-tutor">
+            <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+            <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
           </div>
         </div>
       ) : (
-        <>
-          <div className="play">
-            <div className="diagram">
-              <div className="canvas" id="r3canvas">
-                <div className={"eqstate eqfloat r4-tidy" + (isFewest ? " ok" : "")}>
-                  {isFewest ? "✓ fewest pieces" : "tidy it down"}
+        /* ════════════════════════════════════════════════════════════════════
+           MANIPULATE / BIND / FADE / NUMBERS — DETERMINISTIC FIXED-ZONE LAYOUT
+             · .r4-s-blocks — the bar/fuse canvas (or bare equation)  (top-left)
+             · .r4-s-rail   — the per-stage tool/hint + pieces meter   (top-right)
+             · .r4-s-answer — equation + answer Slate + Check, ONE card (bottom-left)
+             · .r4-s-tutor  — Cook + ribbon                            (bottom-right)
+           Heights never depend on text content (clamped), so a longer string or a
+           different font can never grow a zone into its neighbour. ── */
+        <div className="r4-s">
+          {/* ── BLOCK / EQUATION ZONE (fixed rect, top-left) ── */}
+          <div className="r4-s-blocks">
+            <div className="canvas r4-s-canvas" id="r3canvas">
+              {stage === "numbers" ? (
+                <div className="r4-bare-eq">
+                  <BigFrac num={START_NUM} den={START_DEN} />
+                  <span className="r4-bigeq-op">=</span>
+                  <span className="r4-bigeq-q">{solved ? <BigFrac num={LOW_NUM} den={LOW_DEN} /> : "?"}</span>
                 </div>
-
-                {/* the fixed height guide — the bar's right edge keeps meeting it */}
-                <div className="r4-guide" style={{ left: barRightX, top: BAR_Y - 26, height: (LINE_Y - BAR_Y) + 26 + 6 }}>
-                  <span className="r4-guide-cap">amount holds</span>
-                </div>
-
-                {/* ruler 0 → 1, a tick every 1/den */}
-                <div className="nline" style={{ top: LINE_Y, left: ORIGIN, right: "auto", width: UNIT }} />
-                {Array.from({ length: den + 1 }).map((_, k) => (
-                  <span key={k} className="ntick" style={{ left: ORIGIN + (k / den) * UNIT, top: LINE_Y, height: (k === 0 || k === den) ? 14 : 8 }} />
-                ))}
-                {RLAB.map(([k, lab]) => (
-                  <span key={k} className="nlab ng" style={{ left: ORIGIN + (k / den) * UNIT, top: LINE_Y + 12 }}>{lab}</span>
-                ))}
-
-                {/* the fraction label + the bar of `num` blocks. Stages 3/4 dim it. */}
-                <div className="r4-bar" style={{ left: ORIGIN, top: BAR_Y }}>
-                  <div className="btag">
-                    <BigFrac
-                      num={stage === "numbers" ? START_NUM : num}
-                      den={stage === "numbers" ? START_DEN : den}
-                    ><DivChips divs={divs} /></BigFrac>
+              ) : (
+                <>
+                  <div className={"eqstate eqfloat r4-tidy" + (isFewest ? " ok" : "")}>
+                    {isFewest ? "✓ fewest pieces" : "tidy it down"}
                   </div>
-                  <FuseBar
-                    num={stage === "numbers" ? START_NUM : num}
-                    den={stage === "numbers" ? START_DEN : den}
-                    unit={UNIT}
-                    animKey={fuseTick}
-                    dim={stage === "fade" || stage === "numbers"}
-                  />
-                  <div className="r4-valnote">same amount: {START_NUM}/{START_DEN} of a tray</div>
+
+                  {/* the fixed height guide — the bar's right edge keeps meeting it */}
+                  <div className="r4-guide" style={{ left: barRightX, top: BAR_Y - 26, height: (LINE_Y - BAR_Y) + 26 + 6 }}>
+                    <span className="r4-guide-cap">amount holds</span>
+                  </div>
+
+                  {/* ruler 0 → 1, a tick every 1/den */}
+                  <div className="nline" style={{ top: LINE_Y, left: ORIGIN, right: "auto", width: UNIT }} />
+                  {Array.from({ length: den + 1 }).map((_, k) => (
+                    <span key={k} className="ntick" style={{ left: ORIGIN + (k / den) * UNIT, top: LINE_Y, height: (k === 0 || k === den) ? 14 : 8 }} />
+                  ))}
+                  {RLAB.map(([k, lab]) => (
+                    <span key={k} className="nlab ng" style={{ left: ORIGIN + (k / den) * UNIT, top: LINE_Y + 12 }}>{lab}</span>
+                  ))}
+
+                  {/* the fraction label + the bar of `num` blocks. Stage 3 dims it. */}
+                  <div className="r4-bar" style={{ left: ORIGIN, top: BAR_Y }}>
+                    <div className="btag">
+                      <BigFrac num={num} den={den}><DivChips divs={divs} /></BigFrac>
+                    </div>
+                    <FuseBar num={num} den={den} unit={UNIT} animKey={fuseTick} dim={stage === "fade"} />
+                    <div className="r4-valnote">same amount: {START_NUM}/{START_DEN} of a tray</div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ── TOOL / HINT RAIL (fixed rect, top-right) ── */}
+          <div className="r4-s-rail">
+            {(stage === "manipulate" || stage === "bind") && (
+              <div className="panel">
+                <h3 className="pick-title">Fuse Tool</h3>
+                <div className="hint">Pick a group size. If the blocks split into that many evenly, they fuse into fewer, bigger pieces — divide the top <b>and</b> bottom by it.</div>
+                <div className="r4-fuse-tray">
+                  {FUSE_CHOICES.map((k) => {
+                    const even = num % k === 0 && den % k === 0;
+                    return (
+                      <button key={k} className={"r4-fuse-btn" + (bounceK === k ? " bounce" : "")}
+                        disabled={(stage === "manipulate" && solved) || !even} onClick={() => fuse(k)} title={`Fuse equal groups of ${k}`}>
+                        <span className="r4-fuse-k">{k}</span>
+                        <span className="r4-fuse-txt">
+                          <span className="r4-fuse-title">Fuse by {k}</span>
+                          <span className="r4-fuse-sub">{even ? `÷${k} top & bottom` : "won't come out even"}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="r4-meter">
+                  <div className="r4-meter-row">
+                    <span className="r4-meter-lab">on the bar</span>
+                    <span className={"r4-meter-val" + (isFewest ? " fewest" : "")}>{num}</span>
+                  </div>
+                  <div className="r4-dots">
+                    {Array.from({ length: START_NUM }).map((_, i) => (
+                      <span key={i} className={"r4-dot" + (i < num ? (isFewest ? " fewest" : "") : " gone")} />
+                    ))}
+                  </div>
+                  <div className="r4-meter-note">{isFewest ? "Nothing left to tidy — fewest, biggest pieces." : "Fuse to reach the fewest pieces."}</div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* ── the rail changes by stage ──────────────────────────────── */}
-            <div className="rail">
-              {(stage === "manipulate" || stage === "bind") && (
-                <div className="panel">
-                  <h3 className="pick-title">Fuse Tool</h3>
-                  <div className="hint">Pick a group size. If the blocks split into that many evenly, they fuse into fewer, bigger pieces — and you divide the top <b>and</b> bottom by it.</div>
-                  <div className="r4-fuse-tray">
-                    {FUSE_CHOICES.map((k) => {
-                      const even = num % k === 0 && den % k === 0;
-                      return (
-                        <button key={k} className={"r4-fuse-btn" + (bounceK === k ? " bounce" : "")}
-                          disabled={(stage === "manipulate" && solved) || !even} onClick={() => fuse(k)} title={`Fuse equal groups of ${k}`}>
-                          <span className="r4-fuse-k">{k}</span>
-                          <span className="r4-fuse-txt">
-                            <span className="r4-fuse-title">Fuse by {k}</span>
-                            <span className="r4-fuse-sub">{even ? `÷${k} top & bottom` : "won't come out even"}</span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="r4-card">
-                    <BigFrac num={num} den={den} />
-                    <div className="r4-card-note">fewer pieces<br /><b>same amount</b></div>
+            {stage === "fade" && (
+              <div className="panel">
+                <h3 className="pick-title">Shared Factor</h3>
+                <div className="hint">The bar is fading — choose with numbers now. Pick the number that divides <b>both</b> 8 and 12.</div>
+                <div className="r4-factor-tray">
+                  {FACTOR_CHOICES.map((k) => (
+                    <button key={k}
+                      className={"r4-factor-btn" + (pickedK === k ? " picked" : "") + (bounceK === k ? " bounce" : "")}
+                      disabled={solved} onClick={() => pickFactor(k)}
+                      aria-pressed={pickedK === k} title={`Divide top and bottom by ${k}`}>
+                      ÷{k}
+                    </button>
+                  ))}
+                </div>
+                <div className="r4-fade-eq">
+                  <span className="r4-fade-frac">{START_NUM}/{START_DEN}</span>
+                  <span className="r4-fade-op">=</span>
+                  <span className={"r4-fade-frac r4-fade-out" + (pickedK ? " on" : "")}>
+                    {pickedK ? `${fadeN}/${fadeD}` : "?/?"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {stage === "numbers" && (
+              <div className="panel">
+                <h3 className="pick-title">Lowest Terms</h3>
+                <div className="hint">No tools — just the numbers. Divide the top and bottom by their largest shared factor, then write the fewest-pieces fraction on the Slate.</div>
+                <div className="r4-card">
+                  <BigFrac num={START_NUM} den={START_DEN} />
+                  <div className="r4-card-note">write this in<br /><b>lowest terms</b></div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── EQUATION + ANSWER, ONE UNIT (fixed rect, bottom-left) ── */}
+          <div className="r4-s-answer">
+            {stage === "manipulate" ? (
+              /* Manipulate has no writing — show the live amount + Fuse/Next. */
+              <>
+                <div className="r4-s-eqrow">
+                  <span className="r4-s-frac"><BigFrac num={num} den={den} /></span>
+                  <span className="r4-s-eq">=</span>
+                  <span className="r4-s-amt">{START_NUM}/{START_DEN} of a tray</span>
+                  <div className="r4-s-marks">
+                    {solved && <Rosette count={stars} />}
+                    <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")}
+                      onClick={solved ? advanceStage : undefined} disabled={!solved}>
+                      {solved ? "Next →" : "Fuse to tidy"}
+                    </button>
                   </div>
                 </div>
-              )}
-
-              {stage === "fade" && (
-                <div className="panel">
-                  <h3 className="pick-title">Shared Factor</h3>
-                  <div className="hint">The bar is fading — choose with numbers now. Pick the number that divides <b>both</b> 8 and 12. Then write the tidied line.</div>
-                  <div className="r4-factor-tray">
-                    {FACTOR_CHOICES.map((k) => {
-                      const both = START_NUM % k === 0 && START_DEN % k === 0;
-                      return (
-                        <button key={k}
-                          className={"r4-factor-btn" + (pickedK === k ? " picked" : "") + (bounceK === k ? " bounce" : "")}
-                          disabled={solved} onClick={() => pickFactor(k)}
-                          aria-pressed={pickedK === k} title={`Divide top and bottom by ${k}`}>
-                          ÷{k}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="r4-fade-eq">
-                    <span className="r4-fade-frac">{START_NUM}/{START_DEN}</span>
-                    <span className="r4-fade-op">=</span>
-                    <span className={"r4-fade-frac r4-fade-out" + (pickedK ? " on" : "")}>
-                      {pickedK ? `${fadeN}/${fadeD}` : "?/?"}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {stage === "numbers" && (
-                <div className="panel">
-                  <h3 className="pick-title">Lowest Terms</h3>
-                  <div className="hint">No tools — just the numbers. Divide the top and bottom by their largest shared factor and write the fewest-pieces fraction on the Slate.</div>
-                  <div className="r4-card">
-                    <BigFrac num={START_NUM} den={START_DEN} />
-                    <div className="r4-card-note">write this in<br /><b>lowest terms</b></div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── the WRITING channel: a Slate, present from Stage 2 on ───── */}
-              {stage !== "manipulate" && (
-                <div className="panel r4-slate-panel">
-                  <h3>{stage === "bind" ? "Copy the tidied fraction" : stage === "fade" ? "Write the tidied line" : "Write the answer"}</h3>
-                  <div className="hint">{stage === "bind"
-                    ? "Write the fraction the bar now shows."
-                    : stage === "fade"
-                    ? (pickedK ? `You divided by ${pickedK}. Write ${fadeN} over ${fadeD}.` : "Pick a shared factor first.")
-                    : "Write 8/12 in its simplest form."}</div>
-                  <div className="r4-slate-wrap">
+                <div className="r4-s-cap">{solved ? "fewest pieces reached — next stage" : "fuse equal groups into fewer, bigger blocks"}</div>
+              </>
+            ) : (
+              /* Bind / Fade / Numbers: 8/12 = [Slate], all one midline, Check beside. */
+              <>
+                <div className="r4-s-eqrow">
+                  <span className="r4-s-frac"><BigFrac num={START_NUM} den={START_DEN} /></span>
+                  <span className="r4-s-eq">=</span>
+                  <span className="r4-s-slate">
                     <Slate
                       slots={[{ key: "n", label: "top" }, { key: "d", label: "bottom" }]}
                       values={slate}
@@ -592,76 +740,33 @@ export default function AppR4({ no, title, onBack, onRewatchIntro }) {
                       layout="fraction"
                       den={slateDen}
                       disabled={solved}
-                      autoFocusKey="n"
+                      autoFocusKey={solved ? undefined : "n"}
                       ariaLabel="write the tidied fraction"
                     />
+                  </span>
+                  <div className="r4-s-marks">
+                    {solved && <Rosette count={stars} />}
+                    <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")}
+                      onClick={stage === "bind" ? submitBind : stage === "fade" ? submitFade : submitNumbers}>
+                      {solved ? "Tidied" : "Check"}
+                    </button>
                   </div>
                 </div>
-              )}
-
-              <div className="panel">
-                <h3>Pieces Remaining</h3>
-                <div className="r4-meter">
-                  <div className="r4-meter-row">
-                    <span className="r4-meter-lab">on the bar</span>
-                    <span className={"r4-meter-val" + (isFewest ? " fewest" : "")}>{stage === "numbers" ? START_NUM : num}</span>
-                  </div>
-                  <div className="r4-dots">
-                    {Array.from({ length: START_NUM }).map((_, i) => (
-                      <span key={i} className={"r4-dot" + (i < (stage === "numbers" ? START_NUM : num) ? (isFewest ? " fewest" : "") : " gone")} />
-                    ))}
-                  </div>
-                  <div className="r4-meter-note">{isFewest ? "Nothing left to tidy — fewest, biggest pieces." : "Fuse to reach the fewest pieces."}</div>
-                </div>
-              </div>
-            </div>
+                <div className="r4-s-cap">{solved
+                  ? (stars === 3 ? `tidied all the way — ${START_NUM}/${START_DEN} = ${slate.n}/${slate.d}!` : "correct amount, but it can tidy further")
+                  : stage === "fade"
+                  ? (pickedK ? `you divided by ${pickedK} — write ${fadeN} over ${fadeD}` : "pick a shared factor, then write the tidied line")
+                  : "write the tidied fraction on the Slate, then Check"}</div>
+              </>
+            )}
           </div>
 
-          {/* ── HUD ───────────────────────────────────────────────────────── */}
-          <div className="hud">
-            <div className="cook-zone">
-              <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-              <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
-            </div>
-
-            <div className="hud-eq">
-              {stage === "manipulate" ? (
-                <>
-                  <div className="qeq">
-                    <span>{num}</span><span className="qop">/</span><span>{den}</span>
-                    <span className="qop">·</span>
-                    <span className="r4-hud-amt">{START_NUM}/{START_DEN} of a tray</span>
-                  </div>
-                  <div className="qcap">{solved ? "fewest pieces reached — touch a stage to continue" : "fuse equal groups into fewer, bigger blocks"}</div>
-                </>
-              ) : (
-                <>
-                  <div className="qeq">
-                    <span>{START_NUM}/{START_DEN}</span><span className="qop">=</span>
-                    <span className="r4-hud-write">{slate.n || "?"}/{slate.d || "?"}</span>
-                  </div>
-                  <div className="qcap">{solved
-                    ? (stars === 3 ? `tidied all the way — ${START_NUM}/${START_DEN} = ${slate.n}/${slate.d}!` : `correct amount, but it can tidy further`)
-                    : "write the tidied fraction on the Slate"}</div>
-                </>
-              )}
-            </div>
-
-            <div className="marks">
-              {solved && <Rosette count={stars} />}
-              {stage === "manipulate" ? (
-                <button className={"check" + (solved ? " done" : "")} onClick={solved ? advanceStage : undefined} disabled={!solved}>
-                  {solved ? "Next →" : "Fuse"}
-                </button>
-              ) : (
-                <button className={"check" + (solved ? " done" : "")}
-                  onClick={stage === "bind" ? submitBind : stage === "fade" ? submitFade : submitNumbers}>
-                  {solved ? "Tidied" : "Check"}
-                </button>
-              )}
-            </div>
+          {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
+          <div className="r4-s-tutor">
+            <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+            <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -678,6 +783,8 @@ function stageGoal(stage) {
       return (<>The blocks are fading. <b>Pick the number</b> that divides both 8 and 12, then <b>write</b> the tidied line yourself.</>);
     case "numbers":
       return (<>Just the numbers: <b>{START_NUM}/{START_DEN} = ?</b> Write it in lowest terms on the Slate — no blocks to lean on.</>);
+    case "applied":
+      return (<>A question in words. First <b>write the fraction</b> it describes ({START_NUM}/{START_DEN}); once that's checked, <b>write it with the fewest, biggest pieces</b>.</>);
     case "words":
       return (<>Read Babushka's recipe. The leftover comes out as a messy fraction — <b>write the simplest form</b> of the total.</>);
     default:
@@ -685,10 +792,21 @@ function stageGoal(stage) {
   }
 }
 
-// ── the Stage-5 word problem. The numbers come out as 8/12 of the loaf, which
+// ── the Applied (Stage 5) sentence. The fraction numerals are SHOWN; the child
+// transcribes 8/12 in the setup gate, then writes the lowest-terms form. ──
+const APPLIED_STORY = (
+  <><b>{START_NUM}/{START_DEN}</b> of the loaf is left — write it with the fewest, biggest pieces.</>
+);
+
+// ── the Stage-6 word problem. The numbers come out as 8/12 of the loaf, which
 // must be SIMPLIFIED to 2/3 — exactly the worked example, now told in words. ──
 const WORDS_STORY = (
   <>Babushka cut her sourdough loaf into <b>twelve</b> even slices for the week.
   By Friday the family had eaten four of them, so <b>eight</b> slices are left.
   What fraction of the whole loaf is left — written with the fewest, biggest pieces?</>
 );
+
+// Plain-string versions for Read-aloud: say() stringifies its argument, so a JSX
+// node would be spoken as "[object Object]". These carry the same words.
+const APPLIED_SAY = `${START_NUM}/${START_DEN} of the loaf is left — write it with the fewest, biggest pieces.`;
+const WORDS_SAY = "Babushka cut her sourdough loaf into twelve even slices for the week. By Friday the family had eaten four of them, so eight slices are left. What fraction of the whole loaf is left, written with the fewest, biggest pieces?";

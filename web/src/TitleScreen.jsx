@@ -89,7 +89,7 @@ export default function TitleScreen({ onStart }) {
   }, []);
 
   return (
-    <div className={"scene titlescreen" + (ready ? " ready" : "")}>
+    <div className={"scene titlescreen" + (ready ? " ready" : "")} data-vox-speaker="cook">
       <div className="paper-fill" style={{ position: "absolute", inset: 0 }} />
       <div className="foxing" />
       <div className="frame" />
@@ -102,7 +102,7 @@ export default function TitleScreen({ onStart }) {
       <div className="title-block">
         <div className="kicker rv d1"><span className="k-dot" />Moscow Puzzles · No.&nbsp;1</div>
         <h1 className="ru-title rv d2" style={{ fontSize: 82, marginTop: 16 }}>Babushka&rsquo;s</h1>
-        <h1 className="ru-title rv d3" style={{ fontSize: 120, color: "var(--red)", marginTop: -8 }}>Fractions</h1>
+        <h1 className="ru-title rv d3" style={{ fontSize: 120, color: "var(--red)", marginTop: -8 }} data-vox="titleWelcome">Fractions</h1>
         <div className="subtitle-row rv d4">
           <span className="cyr-sub">Бабушкины доли</span>
           <span className="latin-sub">Babushkiny Doli</span>

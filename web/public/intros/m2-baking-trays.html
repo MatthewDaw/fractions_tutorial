@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 2 — Baking Trays intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --bun:#caa46a; --bun-edge:#8a6a3a; --empty:#efe3c6; --tray:#7a5230;
+    --tintA:#d7b074; --tintB:#bfe0d6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* a roaming "loose" bun before it tidies into the tray */
+  .loose{
+    position:absolute; width:34px; height:34px; border-radius:50%;
+    background:radial-gradient(circle at 38% 32%, #e8c98a, #b8893f 70%);
+    border:2px solid var(--bun-edge);
+    transition:left .9s cubic-bezier(.22,1,.36,1), top .9s cubic-bezier(.22,1,.36,1), opacity .5s ease;
+    opacity:0;
+  }
+  .loose.in{ opacity:1; }
+  .loose.gone{ opacity:0; }
+
+  /* the tray frame + grid */
+  #trayWrap{
+    position:relative; opacity:0; transform:scale(.9); transition:opacity .6s ease, transform .6s cubic-bezier(.34,1.56,.64,1);
+  }
+  #trayWrap.on{ opacity:1; transform:none; }
+  #tray{
+    display:grid; gap:7px; padding:14px; background:var(--tray); border-radius:12px;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.35), 3px 3px 0 rgba(28,22,18,.18);
+    transition:transform .8s cubic-bezier(.22,1,.36,1);
+  }
+  #tray.spun{ transform:rotate(90deg); }
+  .cell{
+    width:46px; height:46px; border-radius:8px; border:2px solid var(--bun-edge);
+    background:var(--empty);
+    display:flex; align-items:center; justify-content:center;
+    transition:background .35s ease;
+  }
+  .cell .b{ width:28px; height:28px; border-radius:50%;
+    background:radial-gradient(circle at 38% 32%, #e8c98a, #b8893f 70%);
+    opacity:0; transform:scale(.5); transition:opacity .3s ease, transform .3s cubic-bezier(.34,1.56,.64,1); }
+  .cell.full .b{ opacity:1; transform:none; }
+  .cell.tintA{ background:var(--tintA); }
+  .cell.tintB{ background:var(--tintB); }
+
+  /* a knife/score line drawn over the tray */
+  #score{
+    position:absolute; top:8px; width:0; border-left:3px dashed var(--red);
+    opacity:0; transition:opacity .4s ease; z-index:8;
+  }
+  #score.on{ opacity:1; }
+
+  /* the running row tally (6,12,18,24) */
+  #tally{
+    position:absolute; right:-118px; top:50%; transform:translateY(-50%);
+    font-family:"Russo One",sans-serif; font-size:46px; color:var(--red);
+    opacity:0; transition:opacity .4s ease;
+  }
+  #tally.on{ opacity:1; }
+
+  /* the written equation, revealed late */
+  #eq{
+    position:absolute; left:50%; bottom:96px; transform:translateX(-50%);
+    display:flex; align-items:center; gap:14px;
+    font-family:"Russo One",sans-serif; font-size:40px; color:var(--ink);
+    opacity:0; transition:opacity .6s ease;
+  }
+  #eq.on{ opacity:1; }
+  #eq .op{ color:var(--red); }
+  #eq .ans{ color:var(--red); }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(760px,94vw); text-align:center; font-size:24px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Baking Trays</div>
+
+    <div id="board" style="position:relative; width:560px; height:360px; display:flex; align-items:center; justify-content:center;">
+      <div id="trayWrap">
+        <div id="tray"></div>
+        <div id="score"></div>
+        <div id="tally">0</div>
+      </div>
+    </div>
+
+    <div id="eq">
+      <span>4</span><span class="op">×</span><span>6</span><span class="op">=</span><span class="ans">24</span>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">Loose buns all over — <b>too messy to count</b>.</div>
+      <div class="cap" data-i="1">Tidy them into a tray: <b>four rows of six</b>.</div>
+      <div class="cap" data-i="2">Count by rows — six, twelve, eighteen, <r class="r">twenty-four</r>.</div>
+      <div class="cap" data-i="3">Spin the tray: four rows of six, or six rows of four — <b>still twenty-four</b>.</div>
+      <div class="cap" data-i="4">Score it: four sixes is four fours and four twos — <r class="r">16 + 8 = 24</r>.</div>
+      <div class="cap" data-i="5">A tray is a rectangle, povaryonok — <b>rows times columns</b>.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "arrays.v1";
+  var DURATION = 24;
+  var ROWS = 4, COLS = 6;
+
+  function el(id){ return document.getElementById(id); }
+
+  // Build the 4×6 tray grid (row-major). Cells start empty.
+  var tray = el("tray");
+  tray.style.gridTemplateColumns = "repeat(" + COLS + ", 46px)";
+  tray.style.gridTemplateRows = "repeat(" + ROWS + ", 46px)";
+  var cells = [];
+  for (var i=0;i<ROWS*COLS;i++){
+    var c = document.createElement("div"); c.className = "cell";
+    var b = document.createElement("div"); b.className = "b";
+    c.appendChild(b); tray.appendChild(c); cells.push(c);
+  }
+
+  // Build 24 "loose" buns scattered around the board (beat 1), then they fly into
+  // the tray (beat 2 fills the cells). We only animate a representative scatter.
+  var board = el("board");
+  var looses = [];
+  for (var k=0;k<ROWS*COLS;k++){
+    var d = document.createElement("div"); d.className = "loose";
+    board.appendChild(d); looses.push(d);
+  }
+  function scatter(){
+    for (var k=0;k<looses.length;k++){
+      var L = looses[k];
+      L.style.left = (40 + Math.random()*460) + "px";
+      L.style.top  = (20 + Math.random()*300) + "px";
+      L.classList.add("in");
+    }
+  }
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.3)";
+    setTimeout(function(){ node.style.transform=""; }, 260); }
+
+  var beatsDone = [];
+
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — loose buns scatter, "too messy to count"
+    [1.5, function(){ showCap(0); scatter(); }],
+
+    // Beat 2 — tidy: tray snaps in, buns vanish, cells fill row by row
+    [5.0, function(){
+      showCap(1);
+      el("trayWrap").classList.add("on");
+      for (var k=0;k<looses.length;k++) looses[k].classList.add("gone");
+      for (var i=0;i<cells.length;i++){ (function(c,k){
+        setTimeout(function(){ c.classList.add("full"); }, k*70);
+      })(cells[i], i); }
+    }],
+
+    // Beat 3 — count by rows; the tally jumps 6,12,18,24
+    [9.0, function(){
+      showCap(2);
+      var t = el("tally"); t.classList.add("on");
+      var vals = [6,12,18,24];
+      for (var m=0;m<vals.length;m++){ (function(v,k){
+        setTimeout(function(){ t.textContent = v; pulse(t); }, k*620);
+      })(vals[m], m); }
+    }],
+
+    // Beat 4 — spin the tray (commutativity); count unchanged
+    [14.0, function(){
+      showCap(3);
+      el("tray").classList.add("spun");
+      el("eq").classList.add("on");
+    }],
+
+    // Beat 5 — un-spin and SCORE into 4×4 + 4×2 (distributivity); tint the parts
+    [18.0, function(){
+      showCap(4);
+      el("tray").classList.remove("spun");
+      // tint columns 0..3 (4 cols) as part A, columns 4..5 (2 cols) as part B
+      for (var i=0;i<cells.length;i++){
+        var col = i % COLS;
+        cells[i].classList.remove("full");
+        cells[i].classList.add(col < 4 ? "tintA" : "tintB");
+      }
+      // draw the score line after column 4 (within the 560px board, tray ≈ centered)
+      var s = el("score");
+      // tray inner width: 6*46 + 5*7 = 311; padding 14; line after col4:
+      // 4*46 + 4*7 = 212, + padding 14 = 226 from tray's left edge.
+      s.style.height = (ROWS*46 + (ROWS-1)*7 + 28) + "px";
+      s.style.left = "50%";
+      s.style.marginLeft = (226 - (311+28)/2) + "px";
+      s.classList.add("on");
+    }],
+
+    // Beat 6 — close: a tray is a rectangle, rows times columns
+    [21.0, function(){ showCap(5); pulse(el("eq")); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; }
+  };
+})();
+</script>
+</body>
+</html>

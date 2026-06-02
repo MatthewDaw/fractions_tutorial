@@ -45,6 +45,12 @@ export default function WordProblem({
   readAloud,
   speaking,
   answerLead = "Write the total",
+  // optional SETUP region rendered above the answer — the word→math translation
+  // surface (an <ExpressionSlate>). On Applied it's a required gate; on the final
+  // Words stage it's an optional scratch. WordProblem just renders it; the room
+  // owns whether it gates the answer (via the answer's `disabled`) and grading.
+  setup,
+  setupLead = "Write the question in symbols",
   // Slate passthrough (the built-in answer surface)
   slots,
   values = {},
@@ -95,6 +101,13 @@ export default function WordProblem({
         <p className="wp-story">{story}</p>
       </div>
 
+      {setup != null && (
+        <div className="wp-setup">
+          {setupLead && <span className="wp-setup-lead">{setupLead}</span>}
+          <div className="wp-setup-row">{setup}</div>
+        </div>
+      )}
+
       <div className="wp-answer">
         <span className="wp-answer-lead">{answerLead}</span>
         <div className="wp-answer-row">
@@ -113,12 +126,17 @@ export default function WordProblem({
               ariaLabel="write the total"
             />
           )}
-          <button
-            type="button"
-            className="wp-check"
-            onClick={() => onCheck(values)}
-            disabled={checkDisabled}
-          >{checkLabel}</button>
+          {/* The built-in Check belongs to the built-in Slate. When a caller passes
+              its own `children` answer surface, it owns its own controls — rendering
+              this button too would leave a second, inert Check beside theirs. */}
+          {children == null && (
+            <button
+              type="button"
+              className="wp-check"
+              onClick={() => onCheck(values)}
+              disabled={checkDisabled}
+            >{checkLabel}</button>
+          )}
         </div>
       </div>
     </div>

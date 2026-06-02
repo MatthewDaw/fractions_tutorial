@@ -1,0 +1,239 @@
+/* m2.css — namespaced styles for AppM2 (Baking Trays / MULT_ARRAYS), 7-stage arc.
+   Shared lesson.css house classes (.page/.canvas/.panel/.ribbon/.check/.topbar/
+   .goal/.controls/.cook-stage …) are reused by reference only; everything room-
+   specific is .m2-* so it never collides. Layout mirrors r1.css's fixed 4-zone
+   1280×800 grid (proof zone top-left, hint rail top-right, answer card bottom-
+   left, tutor bottom-right). Color follows R-M3: neutral food tones for pieces,
+   ROLE_COLORS for guard/correct/incorrect only — no denominator palette. */
+
+/* ── stage selector strip ─────────────────────────────────────────────────── */
+.m2-stages {
+  display: flex;
+  gap: 8px;
+  margin: 4px 22px 2px;
+  flex-wrap: nowrap;
+  height: 50px;
+  box-sizing: border-box;
+}
+.m2-stage-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border: 1.5px solid var(--paper-3);
+  border-radius: 8px;
+  background: var(--paper-1);
+  color: var(--ink-mute);
+  cursor: pointer;
+  font-family: var(--serif);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.m2-stage-tab:hover { border-color: var(--ink-mute); color: var(--ink); }
+.m2-stage-tab.is-active {
+  border-color: var(--red);
+  background: #fff8ea;
+  color: var(--ink);
+  box-shadow: 0 1px 0 var(--red-deep);
+}
+.m2-stage-tab.is-done .m2-stage-n {
+  background: var(--ink-mute);
+  color: var(--paper-1);
+  border-color: var(--ink-mute);
+}
+.m2-stage-n {
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--paper-3);
+  background: var(--paper-2);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+}
+.m2-stage-tab.is-active .m2-stage-n {
+  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
+}
+.m2-stage-txt { display: flex; flex-direction: column; line-height: 1.1; }
+.m2-stage-name { font-size: 14px; font-weight: 600; }
+.m2-stage-sub { font-size: 11px; opacity: 0.8; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SHARED DETERMINISTIC FIXED-ZONE LAYOUT (.m2-fz*) — four fixed, non-overlapping
+   rectangles inside the 1280×800 stage. Identical contract to r1.css's .r1-fz*.
+   ════════════════════════════════════════════════════════════════════════════ */
+.m2-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+
+.m2-fz-stage {
+  position: absolute; left: 0; top: 0;
+  width: 800px; height: 348px;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 6px 12px;
+}
+.m2-fz-canvas { position: relative; width: 776px; height: 336px; margin: 0 auto; }
+.m2-fz-canvas-center {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+}
+
+.m2-fz-rail {
+  position: absolute; right: 0; top: 0;
+  width: 396px; height: 348px;
+  box-sizing: border-box;
+  display: flex; flex-direction: column;
+}
+.m2-fz-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
+
+/* EQUATION + ANSWER + CHECK — ONE bordered unit, pinned bottom-left. */
+.m2-fz-answer {
+  position: absolute; left: 0; bottom: 0;
+  width: 800px; height: 196px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 18px; row-gap: 2px;
+  padding: 12px 22px;
+}
+.m2-fz-eqrow {
+  grid-column: 1; grid-row: 1 / span 2;
+  display: inline-flex; align-items: center; gap: 16px;
+}
+.m2-fz-expr { font-family: var(--display); font-size: 46px; color: var(--ink); }
+.m2-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+.m2-fz-slate { display: inline-flex; position: relative; }
+/* single whole-number slot — kept large for a child's handwriting */
+.m2-fz-slate .slate-row .slate-cell { width: 96px; height: 78px; }
+.m2-fz-slate .slate-row .slate-committed-digit { font-size: 46px; }
+.m2-fz-slate .slate-row .slate-ph { font-size: 28px; }
+/* float the verifier guess chip so it never changes row height */
+.m2-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
+
+.m2-fz-cap {
+  grid-column: 1; grid-row: 2; align-self: end;
+  font-family: var(--serif); font-style: italic; font-size: 13px;
+  color: var(--ink-mute);
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 420px;
+}
+.m2-fz-marks {
+  grid-column: 2; grid-row: 1 / span 2;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.m2-fz-marks .check { min-width: 150px; height: 56px; }
+
+.m2-fz-tutor {
+  position: absolute; right: 0; bottom: 0;
+  width: 396px; height: 196px;
+  box-sizing: border-box;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.m2-fz-tutor.m2-fz-tutor-narrow { width: 220px; }
+.m2-fz-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.m2-fz-tutor .ribbon {
+  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
+  height: 96px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+}
+
+/* ── shared in-zone captions / readouts ──────────────────────────────────── */
+.m2-cap {
+  font-family: var(--serif); font-size: 14px; color: var(--ink-soft);
+  max-width: 560px; text-align: center;
+  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.m2-count-readout {
+  margin-top: 12px; font-family: var(--serif); font-size: 15px; color: var(--ink);
+}
+.m2-count-readout b { color: var(--red-deep); font-family: var(--display); font-size: 20px; }
+
+/* ── the baking tray manipulative ────────────────────────────────────────── */
+.m2-tray { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.m2-tray-cell:hover:not(:disabled) { transform: translateY(-1px); }
+.m2-tray-spin, .m2-score-btn {
+  font-family: var(--serif); font-size: 15px; font-weight: 600;
+  color: var(--paper-1); background: var(--red);
+  border: 2px solid var(--red-deep); border-radius: 8px;
+  padding: 8px 16px; cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(28,22,18,0.18);
+}
+.m2-tray-spin:hover, .m2-score-btn:hover { background: var(--red-deep); }
+
+/* ── Stage 3 distributivity answer card ──────────────────────────────────── */
+.m2-fz-answer-distrib {
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto;
+  align-items: center;
+}
+.m2-distrib-row {
+  grid-column: 1; grid-row: 1;
+  display: inline-flex; align-items: center; gap: 12px; flex-wrap: nowrap;
+}
+.m2-distrib-part { display: inline-flex; align-items: center; gap: 6px; }
+.m2-distrib-lab { font-family: var(--display); font-size: 22px; color: var(--ink); white-space: nowrap; }
+.m2-distrib-plus, .m2-distrib-eq { font-family: var(--display); font-size: 22px; color: var(--red); white-space: nowrap; }
+.m2-distrib-row .slate-row .slate-cell { width: 58px; height: 56px; }
+.m2-distrib-row .slate-row .slate-committed-digit { font-size: 30px; }
+.m2-distrib-row .slate-row .slate-ph { font-size: 20px; }
+.m2-distrib-row .slate-guess { position: absolute; }
+
+/* ── Stage 4 workbench build controls ────────────────────────────────────── */
+.m2-build-empty { font-family: var(--serif); font-size: 18px; color: var(--ink-mute); font-style: italic; }
+.m2-build-controls { display: flex; align-items: flex-end; gap: 14px; margin-top: 14px; }
+.m2-build-x { font-family: var(--display); font-size: 26px; color: var(--red); padding-bottom: 6px; }
+.m2-build-dim { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.m2-build-dim-lab { font-family: var(--serif); font-size: 12px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: .08em; }
+.m2-build-btns { display: inline-flex; align-items: center; gap: 8px; }
+.m2-build-btns button {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 1.5px solid var(--ink-mute); background: var(--paper-1);
+  font-size: 20px; font-weight: 700; color: var(--ink); cursor: pointer;
+}
+.m2-build-btns button:hover { border-color: var(--red); background: #fff8ea; }
+.m2-build-dim-val { min-width: 28px; text-align: center; font-family: var(--display); font-size: 24px; color: var(--ink); }
+
+/* ── Stage 5 bare equation ───────────────────────────────────────────────── */
+.m2-bigeq { display: flex; align-items: center; gap: 22px; }
+.m2-bigeq-f, .m2-bigeq-q { font-family: var(--display); font-size: 64px; color: var(--ink); }
+.m2-bigeq-q { color: var(--red-deep); }
+.m2-bigeq-op { font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red); }
+
+/* ── Stages 6,7 word-problem fixed zone ──────────────────────────────────── */
+.m2-fz-words .m2-fz-wp {
+  position: absolute; left: 0; top: 0;
+  width: 1040px; height: 544px;
+  box-sizing: border-box; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+}
+.m2-fz-words .m2-fz-tutor { width: 220px; height: 196px; }
+.m2-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
+.m2-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
+.m2-fz-words .wp-card-head { margin-bottom: 8px; }
+.m2-fz-words .wp-story { font-size: 18px; }
+.m2-fz-words .wp-setup { gap: 4px; }
+.m2-fz-words .wp-answer { gap: 6px; }
+.m2-fz-words .wp-answer .slate-row .slate-cell { width: 80px; height: 64px; }
+.m2-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 40px; }
+.m2-fz-words .wp-answer .slate-row .slate-ph { font-size: 24px; }
+
+/* setup gate row (rows × columns) */
+.m2-setup-row { display: inline-flex; align-items: center; gap: 10px; }
+.m2-setup-x { font-family: var(--display); font-size: 24px; color: var(--red); }
+.m2-setup-row .slate-row .slate-cell { width: 56px; height: 52px; }
+.m2-setup-row .slate-row .slate-committed-digit { font-size: 28px; }
+.m2-setup-row .slate-row .slate-ph { font-size: 18px; }
+.m2-setup-ok {
+  font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m2-stage-tab, .m2-tray-cell { transition: none; }
+}

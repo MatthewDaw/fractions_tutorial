@@ -1,0 +1,11 @@
+{
+  "route": "mom",
+  "steps": [
+    {
+      "waitFor": "#stage"
+    },
+    {
+      "wait": 1200
+    }
+  ]
+}

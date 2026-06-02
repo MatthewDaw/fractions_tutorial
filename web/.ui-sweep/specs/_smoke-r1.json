@@ -1,0 +1,8 @@
+{ "route": "r1", "steps": [
+  { "waitFor": ".intro-continue" },
+  { "click": ".intro-continue" },
+  { "wait": 500 },
+  { "click": ".intro-continue" },
+  { "waitFor": ".r1-stage-tab" },
+  { "wait": 500 }
+] }

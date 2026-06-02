@@ -1,0 +1,11 @@
+{
+  "route": "r1",
+  "steps": [
+    {
+      "waitFor": ".intro-frame"
+    },
+    {
+      "wait": 1500
+    }
+  ]
+}

@@ -17,7 +17,8 @@
 //   props:
 //     slots:   [{ key, label?, locked?, fixed?, digit? }]
 //                - key    : stable id for the slot (required)
-//                - label  : small caption under the slot (e.g. "top", "bottom")
+//                - label  : accessibility label for the slot (e.g. "top",
+//                           "bottom"); used for aria only, not shown on screen
 //                - locked/fixed : non-editable slot showing a fixed digit (a
 //                                 locked denominator). `digit` (or values[key])
 //                                 supplies what to show.
@@ -167,7 +168,6 @@ function SlateSlot({
         <div className="slate-cell" aria-label={label ? `${label}: ${value}` : `${value}`}>
           <span className="slate-fixed">{value}</span>
         </div>
-        {label && <span className="slate-slot-lab">{label}</span>}
       </div>
     );
   }
@@ -223,8 +223,6 @@ function SlateSlot({
           <button type="button" className="slate-guess-no" onClick={retrace} title="No — let me write it again">↺</button>
         </div>
       )}
-
-      {label && <span className="slate-slot-lab">{label}</span>}
     </div>
   );
 }

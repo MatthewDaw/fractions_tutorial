@@ -31,6 +31,7 @@ export const DENOMINATOR_COLORS = {
   8:  { hue: "#d1495b", pattern: "v_stripe",    name: "eighths"  },
   9:  { hue: "#2a9d8f", pattern: "ring",        name: "ninths"   },
   10: { hue: "#7b2cbf", pattern: "dense_dots",  name: "tenths"   },
+  12: { hue: "#386641", pattern: "grid",        name: "twelfths" },
 };
 
 // Semantic (non-denominator) roles — also colorblind-safe + glyph-backed.

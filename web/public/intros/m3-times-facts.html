@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 3 — Times Facts intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --food:#caa35a; --food-edge:#8a6a2e; --jar:#6b5a3c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{ position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the row of jars ── */
+  #jars{ position:relative; display:flex; align-items:flex-end; justify-content:center; gap:14px; min-height:200px; }
+  .jar{ position:relative; width:56px; height:96px;
+    border:2.5px solid var(--jar); border-radius:6px 6px 10px 10px;
+    background:linear-gradient(180deg, rgba(255,255,255,.4), rgba(220,210,185,.25));
+    overflow:hidden;
+    opacity:0; transform:translateY(12px) scale(.9);
+    transition:opacity .4s ease, transform .4s cubic-bezier(.34,1.56,.64,1); }
+  .jar.in{ opacity:1; transform:none; }
+  .jar .fill{ position:absolute; left:0; bottom:0; width:100%; height:0%;
+    background:var(--food); border-top:2px solid var(--food-edge);
+    transition:height .5s cubic-bezier(.34,1.2,.64,1); }
+  .jar.full .fill{ height:82%; }
+
+  /* big running tally */
+  #tally{ position:absolute; top:40px; left:50%; transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:60px; color:var(--ink);
+    opacity:0; transition:opacity .4s ease; text-shadow:0 1px 0 rgba(255,250,235,.9); }
+  #tally.on{ opacity:1; }
+  #tally .cap{ display:block; font-family:"Old Standard TT",serif; font-size:14px; color:var(--ink-soft); text-align:center; }
+
+  /* the equation, revealed late */
+  #eq{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(16px);
+    display:flex; align-items:center; gap:16px; font-family:"Russo One",sans-serif; z-index:7;
+    opacity:0; transition:opacity .6s ease, transform .6s ease; }
+  #eq.on{ opacity:1; transform:translate(-50%,-50%); }
+  #eq .t{ font-size:56px; color:var(--ink); } #eq .op{ font-size:40px; color:var(--red); }
+  #eq .ans{ font-size:56px; color:var(--red); }
+  #jars:has(~ #eq.on) .jar{ opacity:.18; }
+
+  /* derived-fact split chip */
+  #trick{ position:absolute; left:50%; bottom:96px; transform:translateX(-50%);
+    font-family:"Old Standard TT",serif; font-size:20px; color:var(--ink-soft);
+    opacity:0; transition:opacity .5s ease; }
+  #trick.on{ opacity:1; }
+  #trick b{ color:var(--red); }
+
+  #caption{ position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(820px,94vw); text-align:center; font-size:24px; color:var(--ink); min-height:60px; }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .f{color:var(--food-edge);font-weight:700;} .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Times Facts</div>
+
+    <div id="tally"><span id="tallyn">0</span><span class="cap">in all</span></div>
+    <div id="jars"></div>
+
+    <div id="eq">
+      <span class="t">7</span><span class="op">×</span><span class="t">8</span><span class="op">=</span><span class="ans">56</span>
+    </div>
+
+    <div id="trick">split it: <b>7×5</b> + <b>7×3</b> = 35 + 21 = <b>56</b></div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">Seven empty <span class="f">jars</span>, and a scoop that holds <span class="f">eight</span>.</div>
+      <div class="cap" data-i="1">One handful into each jar — <b>eight at a time</b>.</div>
+      <div class="cap" data-i="2">Count by eights… 8, 16, 24, 32, 40, 48, <span class="r">56</span>.</div>
+      <div class="cap" data-i="3">Seven eights are <span class="r">fifty-six</span>. <b>7 × 8 = 56.</b></div>
+      <div class="cap" data-i="4">Skip-counting gets you there — a master cook <b>knows</b> it by heart.</div>
+      <div class="cap" data-i="5">Forgot one? <b>Split it</b>: 7×5 and 7×3 make 56.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "timesfacts.v1";
+  var DURATION = 24;
+  var GROUPS = 7, SIZE = 8, PRODUCT = 56;
+  var SEQ = [8,16,24,32,40,48,56];
+
+  function el(id){ return document.getElementById(id); }
+
+  // build the seven jars
+  var jarsWrap = el("jars");
+  var jars = [];
+  for (var i=0;i<GROUPS;i++){
+    var j=document.createElement("div"); j.className="jar";
+    var f=document.createElement("div"); f.className="fill";
+    j.appendChild(f); jarsWrap.appendChild(j); jars.push(j);
+  }
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.18)";
+    setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
+
+  var beatsDone = [];
+
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — seven empty jars pop in one by one
+    [1.5, function(){
+      showCap(0);
+      for (var i=0;i<jars.length;i++){ (function(jr,k){
+        setTimeout(function(){ jr.classList.add("in"); }, k*180);
+      })(jars[i], i); }
+    }],
+
+    // Beat 2 — first scoop into jar 1; tally shows 8
+    [4.5, function(){
+      showCap(1);
+      el("tally").classList.add("on");
+      jars[0].classList.add("full");
+      el("tallyn").textContent = SEQ[0];
+      pulse(el("tally"));
+    }],
+
+    // Beat 3 — fill the rest; tally jumps 16,24,…,56
+    [8.0, function(){
+      showCap(2);
+      for (var i=1;i<jars.length;i++){ (function(jr,k){
+        setTimeout(function(){
+          jr.classList.add("full");
+          el("tallyn").textContent = SEQ[k];
+          pulse(el("tally"));
+        }, (k)*620);
+      })(jars[i], i); }
+    }],
+
+    // Beat 4 — write 7 × 8 = 56
+    [13.0, function(){
+      showCap(3);
+      el("tally").classList.remove("on");
+      el("eq").classList.add("on");
+      pulse(el("eq"));
+    }],
+
+    // Beat 5 — know it by heart (pulse the answer)
+    [16.5, function(){
+      showCap(4);
+      pulse(document.querySelector("#eq .ans"));
+    }],
+
+    // Beat 6 — the derived-fact split trick (leans on the m2 tray-split)
+    [19.5, function(){
+      showCap(5);
+      el("trick").classList.add("on");
+    }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[];
+      // reset visuals so a backward seek re-runs the beats cleanly
+      el("kicker").classList.remove("on");
+      el("tally").classList.remove("on"); el("tallyn").textContent="0";
+      el("eq").classList.remove("on"); el("trick").classList.remove("on");
+      jars.forEach(function(j){ j.classList.remove("in","full"); });
+      showCap(-1);
+    }
+  };
+})();
+</script>
+</body>
+</html>

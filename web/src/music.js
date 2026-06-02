@@ -16,10 +16,14 @@
 
 export const MUSIC_BASE = import.meta.env.BASE_URL + "music/";
 
+// All tracks are MP3: Ogg Vorbis is not universally decoded by browsers (notably
+// silent in some Chrome/tablet setups and unsupported on iOS Safari), whereas MP3
+// plays everywhere. fetch-music.mjs downloads the Commons .ogg sources and
+// transcodes them to these .mp3 slugs.
 export const MUSIC = {
-  map:     ["borodin-steppes.ogg"],
+  map:     ["borodin-steppes.mp3"],
   kitchen: ["waltz-flowers.mp3"],
-  rooms:   ["old-castle.ogg", "borodin-steppes.ogg", "bydlo.ogg", "sym4-andantino.ogg"],
+  rooms:   ["old-castle.mp3", "borodin-steppes.mp3", "bydlo.mp3", "sym4-andantino.mp3"],
 };
 
 // Map a Shell route to a music scene. Intros are self-narrated "videos" — no

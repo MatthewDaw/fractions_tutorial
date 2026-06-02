@@ -1,6 +1,11 @@
 # Local tool state (gstack) — contains session tokens, do not commit
 .gstack/
 
+# Secrets — API keys, never commit
+.env
+.env.*
+!.env.example
+
 # IDE
 .idea/
 

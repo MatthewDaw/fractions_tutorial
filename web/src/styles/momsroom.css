@@ -12,8 +12,115 @@
 .mr-pip.on { background: var(--red); border-color: var(--red-deep); opacity: 1; box-shadow: 0 0 0 2px rgba(163,42,34,0.18); }
 
 /* the story prop sits centred over its built-in ruler */
-.mr-stage { flex: 1 1 auto; display: grid; place-items: center; min-height: 360px; padding: 6px 0 2px; }
-.mr-stage > svg { width: 100%; max-width: 560px; height: auto; }
+.mr-stage { flex: 1 1 auto; display: grid; place-items: center; min-height: 0; padding: 6px 0 2px; }
+.mr-stage > svg { width: 100%; max-width: 520px; height: auto; max-height: 280px; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DETERMINISTIC FIXED-ZONE LAYOUT — Babushka's Kitchen (mirrors .r1-s1).
+   Four absolutely-positioned, fixed-size rectangles. The prop/story zone is
+   pinned TOP; the answer card + tutor are pinned BOTTOM with a guaranteed gap
+   between them. No zone's size depends on text content (everything is clamped),
+   so a longer caption / a different character / a different font can never grow
+   a zone into its neighbour (the bug where the prop area covered the answer).
+   ════════════════════════════════════════════════════════════════════════════ */
+.mr-s { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+
+/* PROP / STORY zone — top-left, fixed; clipped so the prop + scratch ink can
+   NEVER paint past the zone onto the answer card below. */
+.mr-s-stage {
+  position: absolute; left: 0; top: 0;
+  width: 800px; height: 360px;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
+  background: radial-gradient(ellipse at 50% 24%, rgba(255,245,220,0.5), transparent 70%), var(--paper-1);
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 8px 18px 6px;
+  display: flex; flex-direction: column;
+}
+/* the prop area fills the zone (its own ruler / motion live inside the SVG) */
+.mr-s-stage .mr-stage { flex: 1 1 auto; min-height: 0; }
+
+/* RAIL — top-right, fixed; two stacked panels (asker + skill). */
+.mr-s-rail {
+  position: absolute; right: 0; top: 0;
+  width: 396px; height: 360px;
+  box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mr-s-rail .panel { box-sizing: border-box; overflow: hidden; }
+.mr-s-rail .mr-asker { flex: 0 0 auto; }
+.mr-s-rail .mr-asker-art { height: 132px; }
+.mr-s-rail .mr-skill-panel { flex: 1 1 auto; min-height: 0; }
+/* clamp the skill blurb so a longer label/blurb can't grow the rail */
+.mr-s-rail .mr-skill-panel .hint {
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ANSWER CARD — write area + Check as ONE bordered unit, pinned to the bottom of
+   the play region, clearly BELOW the prop zone (guaranteed gap). The Slate sits
+   on the left; the Check button is IMMEDIATELY to its right. Fixed height; text
+   is clamped, so a longer caption can never grow the card. */
+.mr-s-answer {
+  position: absolute; left: 0; bottom: 0;
+  width: 800px; height: 204px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  /* the write area + Check read as ONE tight group, left-aligned, so the Check
+     button sits IMMEDIATELY to the right of where the child writes (not spread to
+     the far edge). */
+  display: flex; align-items: center; gap: 28px;
+  padding: 10px 28px;
+}
+.mr-s-write {
+  flex: 0 0 auto; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.mr-s-slate { display: inline-flex; align-items: center; gap: 16px; }
+.mr-s-slate.mr-bad .slate-cell { border-color: var(--red); animation: shakeX .42s ease-in-out; }
+.mr-s-slate .frinput { display: inline-flex; flex-direction: column; align-items: center; }
+/* handwriting cells stay comfortably large for a child's digit (match .r1-s1-slate) */
+.mr-s-slate .slate-fraction .slate-cell { width: 96px; height: 78px; }
+.mr-s-slate .slate-fraction .slate-bar { width: 96px; }
+.mr-s-slate .slate-fraction .slate-fixed { font-size: 42px; }
+.mr-s-slate .slate-fraction .slate-committed-digit { font-size: 46px; }
+.mr-s-slate .slate-fraction .slate-ph { font-size: 28px; }
+/* the row (whole) cell of a mixed answer */
+.mr-s-slate.is-mixed .slate-row .slate-cell { width: 84px; height: 84px; }
+.mr-s-slate .mr-and { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-mute); }
+/* the recognizer guess chip floats so it can't change the row's height */
+.mr-s-slate .slate-fraction { position: relative; }
+.mr-s-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; z-index: 6; }
+
+.mr-s-cap {
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  /* clamp: a longer ask string can never grow the card */
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 460px;
+}
+.mr-s-marks {
+  flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.mr-s-marks .check { min-width: 168px; height: 60px; }
+.mr-s-marks .mr-wallbtn { height: 56px; }
+
+/* TUTOR zone — speaking character + ribbon, fixed rect bottom-right; ribbon text
+   is clamped so a longer status string can never change the zone height. */
+.mr-s-tutor {
+  position: absolute; right: 0; bottom: 0;
+  width: 396px; height: 204px;
+  box-sizing: border-box;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.mr-s-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.mr-s-tutor .ribbon {
+  margin-left: 0; margin-bottom: 16px; max-width: 196px; flex: 1 1 auto;
+  /* clamp to 5 lines so font/length never reflows the zone */
+  height: 100px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+}
 
 /* rail — who's asking */
 .mr-asker { display: flex; flex-direction: column; align-items: center; text-align: center; }

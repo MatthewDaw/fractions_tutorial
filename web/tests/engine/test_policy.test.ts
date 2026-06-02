@@ -106,9 +106,12 @@ function emptyBehavior(observations: Observation[] = []): RecentBehavior {
   };
 }
 
-/** All nodes' mastery: all weak. */
+/** All nodes' mastery: all weak. Includes the multiplication strand (plan 006). */
 function allWeakMastery(): Record<string, MasteryEstimate> {
   return {
+    MULT_EQUAL_GROUPS: weakEst(0.2),
+    MULT_ARRAYS: weakEst(0.2),
+    MULT_FACTS: weakEst(0.2),
     ADD_SAME_DEN: weakEst(0.3),
     ADD_UNLIKE_NESTED: weakEst(0.2),
     ADD_UNLIKE_COPRIME: weakEst(0.2),
@@ -117,9 +120,26 @@ function allWeakMastery(): Record<string, MasteryEstimate> {
   };
 }
 
-/** All nodes' mastery: all mastered. */
+/**
+ * Mastery where the whole multiplication strand is mastered but the fraction
+ * strand is weak — i.e. the upstream foundations are done, so RouteToRoom /
+ * upstream walks resolve to the first unmastered FRACTION node.
+ */
+function multMasteredFractionsWeak(): Record<string, MasteryEstimate> {
+  return {
+    ...allWeakMastery(),
+    MULT_EQUAL_GROUPS: masteredEst(),
+    MULT_ARRAYS: masteredEst(),
+    MULT_FACTS: masteredEst(),
+  };
+}
+
+/** All nodes' mastery: all mastered. Includes the multiplication strand. */
 function allMasteredMastery(): Record<string, MasteryEstimate> {
   return {
+    MULT_EQUAL_GROUPS: masteredEst(),
+    MULT_ARRAYS: masteredEst(),
+    MULT_FACTS: masteredEst(),
     ADD_SAME_DEN: masteredEst(),
     ADD_UNLIKE_NESTED: masteredEst(),
     ADD_UNLIKE_COPRIME: masteredEst(),
@@ -458,7 +478,9 @@ describe('nextDecision — EscalateToHuman stuck', () => {
     const flatHistory = new Array(PARAMS.escalation.nStuck).fill(0.15);
 
     const state = baseState({
-      currentNodeId: 'ADD_SAME_DEN',
+      // The stuck trigger requires being at the MOST-UPSTREAM node, which is now
+      // the front of the DAG (MULT_EQUAL_GROUPS) after the plan-006 strand insert.
+      currentNodeId: 'MULT_EQUAL_GROUPS',
       currentScaffold: 0,              // at floor
       heavyHintAtFloorCount: PARAMS.escalation.nStuck, // H3/H4 for nStuck attempts
       pKnownHistory: flatHistory,       // flat P_known
@@ -476,6 +498,7 @@ describe('nextDecision — EscalateToHuman stuck', () => {
   it('EscalateToHuman (stuck) has a populated handoff_packet', () => {
     const flatHistory = new Array(PARAMS.escalation.nStuck).fill(0.15);
     const state = baseState({
+      currentNodeId: 'MULT_EQUAL_GROUPS', // most-upstream node (stuck-trigger requirement)
       currentScaffold: 0,
       heavyHintAtFloorCount: PARAMS.escalation.nStuck,
       pKnownHistory: flatHistory,
@@ -714,18 +737,30 @@ describe('legalMoves', () => {
 // ---------------------------------------------------------------------------
 
 describe('nextDecision — RouteToRoom', () => {
-  it('in kitchen with all weak mastery → RouteToRoom to most-upstream (ADD_SAME_DEN)', () => {
-    const state = baseState({ inKitchen: true, currentNodeId: 'ADD_SAME_DEN' });
+  it('in kitchen with all weak mastery → RouteToRoom to most-upstream (MULT_EQUAL_GROUPS)', () => {
+    // After plan 006, the multiplication strand sits at the front of the DAG, so
+    // the most-upstream unmastered node for a fresh learner is MULT_EQUAL_GROUPS.
+    const state = baseState({ inKitchen: true, currentNodeId: 'MULT_EQUAL_GROUPS' });
     const decision = nextDecision(state, allWeakMastery(), emptyBehavior(), NOW);
+    expect(decision.kind).toBe('RouteToRoom');
+    if (decision.kind === 'RouteToRoom') {
+      expect(decision.node).toBe('MULT_EQUAL_GROUPS');
+    }
+  });
+
+  it('in kitchen with the multiplication strand mastered → routes to ADD_SAME_DEN', () => {
+    // Mult foundations done → the first unmastered node is the first fraction node.
+    const state = baseState({ inKitchen: true });
+    const decision = nextDecision(state, multMasteredFractionsWeak(), emptyBehavior(), NOW);
     expect(decision.kind).toBe('RouteToRoom');
     if (decision.kind === 'RouteToRoom') {
       expect(decision.node).toBe('ADD_SAME_DEN');
     }
   });
 
-  it('in kitchen with ADD_SAME_DEN mastered → routes to ADD_UNLIKE_NESTED', () => {
+  it('in kitchen with mult strand + ADD_SAME_DEN mastered → routes to ADD_UNLIKE_NESTED', () => {
     const mastery = {
-      ...allWeakMastery(),
+      ...multMasteredFractionsWeak(),
       ADD_SAME_DEN: masteredEst(),
     };
     const state = baseState({ inKitchen: true });

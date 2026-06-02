@@ -12,6 +12,9 @@ import {
   prereqsOf,
   allNodes,
   mostUpstreamUnmastered,
+  MULT_EQUAL_GROUPS,
+  MULT_ARRAYS,
+  MULT_FACTS,
   ADD_SAME_DEN,
   ADD_UNLIKE_NESTED,
   ADD_UNLIKE_COPRIME,
@@ -25,13 +28,28 @@ import {
 // rooms.js exports ROOMS as a plain array of objects; we inline the ids here
 // so the test runs in jsdom without the import-chain touching JSX/React.
 // ---------------------------------------------------------------------------
-const KNOWN_ROOM_IDS = new Set(['r1', 'r2', 'r3', 'r4', 'r5']);
+const KNOWN_ROOM_IDS = new Set(['m1', 'm2', 'm3', 'r1', 'r2', 'r3', 'r4', 'r5']);
 
 // ---------------------------------------------------------------------------
 // 1. Prerequisite structure
 // ---------------------------------------------------------------------------
 
 describe('prerequisite edges', () => {
+  // --- Multiplication foundations strand (plan 006) ---
+  it('MULT_EQUAL_GROUPS is a DAG root (no prerequisites)', () => {
+    expect(MULT_EQUAL_GROUPS.prereqs).toHaveLength(0);
+  });
+
+  it('MULT_ARRAYS has MULT_EQUAL_GROUPS as its sole prerequisite', () => {
+    expect(MULT_ARRAYS.prereqs).toContain('MULT_EQUAL_GROUPS');
+    expect(MULT_ARRAYS.prereqs).toHaveLength(1);
+  });
+
+  it('MULT_FACTS has MULT_ARRAYS as its sole prerequisite', () => {
+    expect(MULT_FACTS.prereqs).toContain('MULT_ARRAYS');
+    expect(MULT_FACTS.prereqs).toHaveLength(1);
+  });
+
   it('ADD_SAME_DEN has no prerequisites (root node)', () => {
     expect(ADD_SAME_DEN.prereqs).toHaveLength(0);
   });
@@ -45,12 +63,15 @@ describe('prerequisite edges', () => {
     expect(ADD_UNLIKE_COPRIME.prereqs).toContain('ADD_UNLIKE_NESTED');
   });
 
-  it('ADD_UNLIKE_COPRIME has exactly one prerequisite (ADD_UNLIKE_NESTED)', () => {
-    expect(ADD_UNLIKE_COPRIME.prereqs).toHaveLength(1);
+  it('ADD_UNLIKE_COPRIME has two prerequisites with the fraction prereq LAST (R-B2)', () => {
+    // MULT_FACTS is PREPENDED so credit.ts:97 (prereqs[length-1]) keeps docking
+    // the fraction prereq (ADD_UNLIKE_NESTED) on a straight-across error.
+    expect(ADD_UNLIKE_COPRIME.prereqs).toEqual(['MULT_FACTS', 'ADD_UNLIKE_NESTED']);
   });
 
-  it('SIMPLIFY.prereqs includes ADD_UNLIKE_COPRIME', () => {
+  it('SIMPLIFY.prereqs includes ADD_UNLIKE_COPRIME with the fraction prereq LAST (R-B2)', () => {
     expect(SIMPLIFY.prereqs).toContain('ADD_UNLIKE_COPRIME');
+    expect(SIMPLIFY.prereqs).toEqual(['MULT_FACTS', 'ADD_UNLIKE_COPRIME']);
   });
 
   it('IMPROPER_TO_MIXED.prereqs includes ADD_UNLIKE_COPRIME', () => {
@@ -74,6 +95,18 @@ describe('roomId validity', () => {
     }
   });
 
+  it('MULT_EQUAL_GROUPS maps to m1', () => {
+    expect(MULT_EQUAL_GROUPS.roomId).toBe('m1');
+  });
+
+  it('MULT_ARRAYS maps to m2', () => {
+    expect(MULT_ARRAYS.roomId).toBe('m2');
+  });
+
+  it('MULT_FACTS maps to m3', () => {
+    expect(MULT_FACTS.roomId).toBe('m3');
+  });
+
   it('ADD_SAME_DEN maps to r1', () => {
     expect(ADD_SAME_DEN.roomId).toBe('r1');
   });
@@ -94,8 +127,8 @@ describe('roomId validity', () => {
     expect(IMPROPER_TO_MIXED.roomId).toBe('r5');
   });
 
-  it('there are exactly five nodes', () => {
-    expect(allNodes()).toHaveLength(5);
+  it('there are exactly eight nodes (3 multiplication + 5 fraction)', () => {
+    expect(allNodes()).toHaveLength(8);
   });
 });
 
@@ -118,9 +151,12 @@ describe('getNode', () => {
 describe('prereqsOf', () => {
   it('returns resolved SkillNode objects (not just ids)', () => {
     const prereqs = prereqsOf('ADD_UNLIKE_COPRIME');
-    expect(prereqs).toHaveLength(1);
-    expect(prereqs[0].id).toBe('ADD_UNLIKE_NESTED');
-    expect(prereqs[0].roomId).toBe('r3');
+    // R-B2: MULT_FACTS prepended, fraction prereq (ADD_UNLIKE_NESTED) stays LAST.
+    expect(prereqs).toHaveLength(2);
+    expect(prereqs[0].id).toBe('MULT_FACTS');
+    expect(prereqs[0].roomId).toBe('m3');
+    expect(prereqs[1].id).toBe('ADD_UNLIKE_NESTED');
+    expect(prereqs[1].roomId).toBe('r3');
   });
 
   it('returns empty array for the root node', () => {
@@ -133,18 +169,18 @@ describe('prereqsOf', () => {
 // ---------------------------------------------------------------------------
 
 describe('mostUpstreamUnmastered', () => {
-  it('returns ADD_SAME_DEN when all nodes are unmastered', () => {
+  it('returns MULT_EQUAL_GROUPS when all nodes are unmastered (front of the DAG)', () => {
     const ids = allNodes().map((n) => n.id);
     const result = mostUpstreamUnmastered(ids, () => false);
-    expect(result?.id).toBe('ADD_SAME_DEN');
+    expect(result?.id).toBe('MULT_EQUAL_GROUPS');
   });
 
   it('skips mastered nodes and returns the next deepest unmastered', () => {
     const ids = allNodes().map((n) => n.id);
-    // Pretend ADD_SAME_DEN is mastered.
-    const mastered = new Set(['ADD_SAME_DEN']);
+    // Pretend the whole multiplication strand is mastered → next is ADD_SAME_DEN.
+    const mastered = new Set(['MULT_EQUAL_GROUPS', 'MULT_ARRAYS', 'MULT_FACTS']);
     const result = mostUpstreamUnmastered(ids, (id) => mastered.has(id));
-    expect(result?.id).toBe('ADD_UNLIKE_NESTED');
+    expect(result?.id).toBe('ADD_SAME_DEN');
   });
 
   it('returns null when all nodes in the set are mastered', () => {
@@ -175,7 +211,11 @@ describe('mostUpstreamUnmastered', () => {
 
   it('returns the deepest unmastered when called with all node ids and multiple mastered', () => {
     const ids = allNodes().map((n) => n.id);
-    const mastered = new Set(['ADD_SAME_DEN', 'ADD_UNLIKE_NESTED']);
+    // Mult strand + the first two fraction nodes mastered → next is ADD_UNLIKE_COPRIME.
+    const mastered = new Set([
+      'MULT_EQUAL_GROUPS', 'MULT_ARRAYS', 'MULT_FACTS',
+      'ADD_SAME_DEN', 'ADD_UNLIKE_NESTED',
+    ]);
     const result = mostUpstreamUnmastered(ids, (id) => mastered.has(id));
     expect(result?.id).toBe('ADD_UNLIKE_COPRIME');
   });

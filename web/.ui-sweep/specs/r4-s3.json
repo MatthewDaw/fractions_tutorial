@@ -1,0 +1,29 @@
+{
+  "route": "r4",
+  "steps": [
+    {
+      "waitFor": ".intro-continue"
+    },
+    {
+      "click": ".intro-continue"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": ".intro-continue"
+    },
+    {
+      "waitFor": ".r4-stagechip"
+    },
+    {
+      "clickNth": {
+        "selector": ".r4-stagechip",
+        "n": 2
+      }
+    },
+    {
+      "wait": 800
+    }
+  ]
+}

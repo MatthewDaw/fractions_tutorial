@@ -1,0 +1,265 @@
+/* m1.css — namespaced styles for AppM1's 7-stage Equal-Groups arc. Shared
+   lesson.css house classes (.page/.canvas/.hud/.ribbon/.check/.panel/.goal …) are
+   reused by reference only; everything here is .m1-* so it never collides.
+   The 1280×800 stage is laid out as fixed, non-overlapping rectangles (the same
+   contract AppR1 uses), so the same assets land in the same place on every device. */
+
+/* ── stage selector strip (reachability) ──────────────────────────────────── */
+.m1-stages {
+  display: flex; gap: 8px; margin: 4px 22px 2px;
+  flex-wrap: nowrap; height: 50px; box-sizing: border-box;
+}
+.m1-stage-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border: 1.5px solid var(--paper-3); border-radius: 8px;
+  background: var(--paper-1); color: var(--ink-mute);
+  cursor: pointer; font-family: var(--serif); text-align: left;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.m1-stage-tab:hover { border-color: var(--ink-mute); color: var(--ink); }
+.m1-stage-tab.is-active {
+  border-color: var(--red); background: #fff8ea; color: var(--ink);
+  box-shadow: 0 1px 0 var(--red-deep);
+}
+.m1-stage-tab.is-done .m1-stage-n {
+  background: var(--ink-mute); color: var(--paper-1); border-color: var(--ink-mute);
+}
+.m1-stage-n {
+  flex: 0 0 auto; width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1.5px solid var(--paper-3);
+  background: var(--paper-2); font-weight: 700; font-size: 15px; color: var(--ink);
+}
+.m1-stage-tab.is-active .m1-stage-n {
+  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
+}
+.m1-stage-txt { display: flex; flex-direction: column; line-height: 1.1; }
+.m1-stage-name { font-size: 14px; font-weight: 600; }
+.m1-stage-sub { font-size: 11px; opacity: 0.8; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SHARED FIXED-ZONE LAYOUT (.m1-fz*) — four fixed rectangles inside the stage:
+     · .m1-fz-stage   — board / proof zone        (top-left,   800×348)
+     · .m1-fz-rail    — "count the groups" hint    (top-right,  396×348)
+     · .m1-fz-answer  — equation + count/Slate + Check  (bottom-left,  800×196)
+     · .m1-fz-tutor   — Cook + speech ribbon       (bottom-right, 396×196)
+   ════════════════════════════════════════════════════════════════════════════ */
+.m1-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+
+.m1-fz-stage {
+  position: absolute; left: 0; top: 0;
+  width: 800px; height: 348px;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
+  overflow: hidden; box-sizing: border-box; padding: 6px 12px;
+}
+.m1-canvas {
+  position: relative; width: 776px; height: 336px; margin: 0 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: 14px; padding-top: 10px;
+}
+.m1-canvas-center { justify-content: center; gap: 6px; }
+
+.m1-fz-rail {
+  position: absolute; right: 0; top: 0;
+  width: 396px; height: 348px; box-sizing: border-box;
+  display: flex; flex-direction: column;
+}
+.m1-fz-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
+
+.m1-fz-answer {
+  position: absolute; left: 0; bottom: 0;
+  width: 800px; height: 196px; box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto;
+  align-items: center; column-gap: 18px; row-gap: 2px; padding: 12px 22px;
+}
+.m1-fz-eqrow {
+  grid-column: 1; grid-row: 1 / span 2;
+  display: inline-flex; align-items: center; gap: 16px;
+}
+.m1-fz-frac { font-family: var(--display); font-size: 40px; color: var(--ink); }
+.m1-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+.m1-fz-slate { display: inline-flex; position: relative; }
+/* keep the handwriting cell comfortably large for a child's digit */
+.m1-fz-slate .slate-row .slate-cell { width: 92px; height: 78px; }
+.m1-fz-slate .slate-row .slate-committed-digit { font-size: 46px; }
+.m1-fz-slate .slate-row .slate-ph { font-size: 28px; }
+.m1-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
+
+.m1-fz-cap {
+  grid-column: 1; grid-row: 2; align-self: end;
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 360px;
+}
+.m1-fz-marks {
+  grid-column: 2; grid-row: 1 / span 2;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.m1-fz-marks .check { min-width: 150px; height: 56px; }
+
+.m1-fz-tutor {
+  position: absolute; right: 0; bottom: 0;
+  width: 396px; height: 196px; box-sizing: border-box;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.m1-fz-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.m1-fz-tutor .ribbon {
+  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
+  height: 96px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+}
+
+/* the count box (Stage 1) — a plain numeric box, not a Slate */
+.m1-countbox { display: inline-flex; }
+.m1-count-input {
+  width: 110px; height: 74px;
+  font-family: var(--display); font-size: 46px; text-align: center;
+  color: var(--ink); background: var(--paper-1);
+  border: 2.5px solid var(--ink); border-radius: 8px;
+}
+.m1-count-input:disabled { opacity: 0.5; background: var(--paper-2); }
+.m1-count-input:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(163,42,34,0.18); }
+
+/* ── the "count the groups" hint card in the rail ─────────────────────────── */
+.m1-lockcard {
+  display: flex; align-items: center; gap: 12px; margin-top: 14px;
+  padding: 10px 14px; border: 1.5px dashed var(--red-soft); border-radius: 8px;
+  background: rgba(163,42,34,0.05);
+}
+.m1-lockcard-x { font-family: var(--display); font-size: 40px; color: var(--red); line-height: 1; }
+.m1-lockcard-note { font-family: var(--serif); font-size: 14px; color: var(--ink-soft); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   THE PLATE / BOWL MANIPULATIVE (PlateGroup.jsx)
+   Fixed neutral food tone for pieces; ROLE_COLORS for guard/correct/incorrect.
+   ════════════════════════════════════════════════════════════════════════════ */
+.m1-plates {
+  display: flex; align-items: flex-end; justify-content: center; gap: 22px;
+  flex-wrap: nowrap;
+}
+.m1-plates.mg-ghost { opacity: 0.3; filter: grayscale(0.5); }
+.mg-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mg-vessel {
+  width: 116px; height: 96px;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid var(--ink-mute); cursor: pointer;
+  background: radial-gradient(ellipse at 50% 38%, #fffdf6 0%, #efe3c6 78%, #e3d2ab 100%);
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.1s;
+  position: relative; padding: 8px;
+}
+.mg-plate .mg-vessel { border-radius: 50% / 46%; }
+.mg-bowl .mg-vessel { border-radius: 10px 10px 46% 46%; height: 88px; }
+.mg-vessel:disabled { cursor: default; }
+.mg-vessel:not(:disabled):hover { transform: translateY(-1px); }
+.mg-vessel.is-equal-ok { background: radial-gradient(ellipse at 50% 38%, #f1fbf8 0%, #d8efe9 80%); }
+.mg-vessel.is-incorrect { background: radial-gradient(ellipse at 50% 38%, #fdf0f2 0%, #f6dbe0 80%); }
+.mg-vessel-pieces {
+  display: grid; grid-template-columns: repeat(2, auto); gap: 3px 5px;
+  align-items: center; justify-items: center;
+}
+.mg-piece-slot { display: inline-flex; }
+.mg-pelmeni { display: block; }
+.mg-tick {
+  position: absolute; top: -8px; right: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #2a9d8f; color: #fff; font-size: 14px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.mg-count { font-family: var(--display); font-size: 22px; font-weight: 700; }
+
+.m1-board-head { font-family: var(--serif); font-size: 16px; color: var(--ink-soft); }
+.m1-board-head b { color: var(--red); }
+.m1-bowl-hint { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 4px; }
+.m1-bowl { font-family: var(--serif); font-size: 15px; color: var(--ink); }
+.m1-bowl-note { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
+
+/* ── Stage 2 repeated-addition strip ──────────────────────────────────────── */
+.m1-addstrip {
+  display: inline-flex; align-items: center; gap: 10px; margin-top: 6px;
+  font-family: var(--display); font-size: 34px; color: var(--ink);
+}
+.m1-addstrip-term {
+  min-width: 44px; text-align: center;
+  border-bottom: 3px solid var(--red-soft); padding: 0 4px;
+}
+.m1-addstrip-op { color: var(--red); font-size: 28px; }
+.m1-addstrip-blank { color: var(--red); border-bottom: 3px dashed var(--red-soft); padding: 0 8px; }
+
+/* ── Stage 3 fade + collapse ──────────────────────────────────────────────── */
+.m1-faded .m1-fadecheck {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--serif); font-size: 13px; color: var(--ink-mute); font-style: italic;
+}
+.m1-fadecheck-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #2f6b3a; color: var(--paper-1); font-style: normal; font-weight: 700; font-size: 14px;
+}
+.m1-collapse-row { display: inline-flex; align-items: center; gap: 16px; margin-top: 10px; }
+.m1-addstrip-lead { font-family: var(--display); font-size: 34px; color: var(--ink); }
+.m1-collapse-btn {
+  font-family: var(--serif); font-size: 15px; cursor: pointer;
+  padding: 8px 14px; border: 1.5px solid var(--red); border-radius: 8px;
+  background: #fff8ea; color: var(--red-deep);
+}
+.m1-collapse-btn:hover { background: #fff0d6; }
+.m1-collapse-btn:disabled { opacity: 0.5; cursor: default; }
+.m1-times-lead { font-family: var(--display); font-size: 40px; color: var(--ink); }
+.m1-times-eq { color: var(--ink-mute); }
+.m1-times-blank { color: var(--red); border-bottom: 3px dashed var(--red-soft); padding: 0 8px; }
+
+/* ── Stage 5 bare equation ────────────────────────────────────────────────── */
+.m1-bigeq { display: flex; align-items: center; gap: 18px; }
+.m1-bigeq-term { font-family: var(--display); font-size: 60px; color: var(--ink); }
+.m1-bigeq-op { font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red); }
+.m1-bigeq-q { font-family: var(--display); font-size: 60px; color: var(--red); }
+.m1-numbers-cap {
+  margin-top: 18px; font-family: var(--serif); font-size: 15px; color: var(--ink-soft);
+  max-width: 540px; text-align: center;
+  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+
+/* ── Stages 6,7 word-problem fixed-zone layout ────────────────────────────── */
+.m1-fz-words .m1-fz-wp {
+  position: absolute; left: 0; top: 0;
+  width: 1040px; height: 544px;
+  box-sizing: border-box; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+}
+.m1-fz-words .m1-fz-tutor { width: 220px; height: 196px; }
+.m1-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
+.m1-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
+.m1-fz-words .wp-card-head { margin-bottom: 8px; }
+.m1-fz-words .wp-story { font-size: 18px; }
+.m1-fz-words .wp-setup { gap: 4px; }
+.m1-fz-words .wp-answer { gap: 6px; }
+/* answer Slate — large for handwriting */
+.m1-fz-words .wp-answer .slate-row .slate-cell { width: 78px; height: 64px; }
+.m1-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 40px; }
+.m1-fz-words .wp-answer .slate-row .slate-ph { font-size: 24px; }
+
+/* the count × size setup row (Applied gate / Words scratch) */
+.m1-setup-row { display: inline-flex; align-items: center; gap: 12px; }
+.m1-setup-row .slate-row .slate-cell { width: 56px; height: 52px; }
+.m1-setup-row .slate-row .slate-committed-digit { font-size: 30px; }
+.m1-setup-row .slate-row .slate-ph { font-size: 20px; }
+.m1-setup-times { font-family: var(--display); font-size: 30px; color: var(--red); }
+.m1-setup-ok { font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center; }
+.m1-setup-row.is-shake { animation: m1-shake 0.42s; }
+@keyframes m1-shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m1-stage-tab, .mg-vessel { transition: none; }
+  .m1-setup-row.is-shake { animation: none; }
+}

@@ -1,0 +1,11 @@
+{
+  "route": "world",
+  "steps": [
+    {
+      "waitFor": "#stage"
+    },
+    {
+      "wait": 900
+    }
+  ]
+}

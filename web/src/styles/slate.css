@@ -17,10 +17,6 @@
 .slate-bar { width: 132px; height: 4px; background: var(--ink); border-radius: 2px; }
 
 .slate-slot { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
-.slate-slot-lab {
-  font-family: var(--serif); font-style: italic; font-size: 13px;
-  color: var(--ink-mute); letter-spacing: 0.01em;
-}
 
 /* the writable cell — white "draw here" paper with a heavy ink border */
 .slate-cell {
@@ -31,6 +27,20 @@
   box-shadow: inset 0 0 0 1px rgba(28,22,18,0.06), 2px 3px 0 rgba(28,22,18,0.12);
 }
 .slate-cell.committed { background: #fff8ea; border-color: var(--red); }
+
+/* HEIGHT/WIDTH CAP for the STACKED fraction layout (Issue 1). In .slate-fraction
+   the two cells stack vertically (top cell + bar + bottom cell + guess chips), so
+   the full 124px cells make the Slate ~253-308px tall — too tall for the fixed
+   800px stage's HUD/rail band, pushing into or off the diagram. Cap each stacked
+   cell to ~90px tall (≈ the 94px InkPad cap) and trim width to ~114px so it fits
+   the band. The side-by-side "row" layout stays at full size (cells don't stack),
+   so this scope leaves whole-number row cells comfortable. */
+.slate-fraction .slate-cell { width: 114px; height: 90px; }
+.slate-fraction .slate-bar { width: 114px; }
+/* shrink the painted digits to match the shorter fraction cell so nothing crops */
+.slate-fraction .slate-fixed { font-size: 48px; }
+.slate-fraction .slate-committed-digit { font-size: 52px; }
+.slate-fraction .slate-ph { font-size: 30px; }
 
 /* locked / fixed slot — hatched, padlock-feel, unenterable (e.g. a fixed bottom) */
 .slate-slot.is-locked .slate-cell {
@@ -179,6 +189,35 @@
 .wp-check:hover { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 rgba(28,22,18,0.30); }
 .wp-check:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 rgba(28,22,18,0.28); }
 .wp-check:disabled { opacity: 0.4; cursor: default; box-shadow: none; transform: none; }
+
+/* ============================================================ */
+/* ExpressionSlate — two fraction Slates joined by an operator   */
+/* ([_/_] + [_/_]); the WORD→MATH translation surface.           */
+/* ============================================================ */
+.expr-slate { display: inline-flex; align-items: center; gap: 16px; }
+.expr-slate.is-disabled { opacity: 0.55; }
+.expr-op {
+  font-family: var(--display); font-size: 38px; color: var(--ink-mute);
+  align-self: center; padding-bottom: 6px;
+}
+/* the two fractions sit a touch smaller than a sole answer Slate, so the whole
+   expression fits comfortably beside the story card. */
+.expr-slate .slate-cell { width: 96px; height: 92px; }
+.expr-slate .slate-bar { width: 96px; }
+
+/* ============================================================ */
+/* WordProblem — optional setup region (the scratch expression)  */
+/* ============================================================ */
+.wp-setup {
+  display: flex; flex-direction: column; gap: 6px;
+  margin: 4px 0 14px; padding: 12px 14px;
+  border: 1.5px dashed var(--paper-3); background: rgba(255,248,234,0.5);
+}
+.wp-setup-lead {
+  font-family: var(--display); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+.wp-setup-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
 /* ============================================================ */
 @media (prefers-reduced-motion: reduce) {

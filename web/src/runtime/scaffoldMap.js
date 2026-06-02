@@ -8,11 +8,11 @@
 //   L3 — numbers-lead / near-independent (bare equation, hint-free capable)
 //   L4 — fully independent (word problem, no cues)
 //
-// LESSONS COVERED:
-//   LessonUnlikeDen  (lessonId "r2" and "r3")  — beats L0, L2, L4, L5, L6, L7
-//   AppR1            (lessonId "r1")            — stages 1..5
-//   AppR4            (lessonId "r4")            — stages manipulate/bind/fade/numbers/words (1..5)
-//   AppR5            (lessonId "r5")            — stages 1-manipulate/2-bind/3-fade/4-numbers/5-words
+// LESSONS COVERED (arc = …Fade, Workbench, Numbers, Applied, Words):
+//   LessonUnlikeDen  (lessonId "r2" and "r3")  — beats L0, L2, L4, LW, L5, L6, LA, L7
+//   AppR1            (lessonId "r1")            — stages 1..7 (4=Workbench, 6=Applied)
+//   AppR4            (lessonId "r4")            — manipulate/bind/fade/numbers/applied/words (no Workbench)
+//   AppR5            (lessonId "r5")            — 1-manipulate/2-bind/3-fade/workbench/4-numbers/applied/5-words
 //
 // The mapping is conservative: we assign the LOWEST design level that accurately
 // describes the child's scaffold context for independence / transfer purposes.
@@ -45,8 +45,10 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
       case 'L0': return 0; // blocks are the problem, knife drag
       case 'L2': return 1; // blocks faded to outlines, picker picks
       case 'L4': return 2; // numbers lead, blocks check only
+      case 'LW': return 1; // Workbench — block sandbox (manipulative support)
       case 'L5': return 3; // bare equation with ghost backdrop
       case 'L6': return 3; // bare slate — numbers only (=L3)
+      case 'LA': return 3; // Applied — worded, numerals shown (numbers handed in)
       case 'L7': return 4; // word problem — fully independent
       default:   return 0;
     }
@@ -60,14 +62,36 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
   //   4 / "4-numbers"    → L3: bare equation, write whole fraction
   //   5 / "5-words"      → L4: word problem, no blocks, no equation
   if (id === 'r1') {
-    // Normalize: accept numeric stages "1"–"5" or stage-key strings
+    // Normalize: accept numeric stages "1"–"7" or stage-key strings.
+    // 7-stage arc: 1 Manipulate, 2 Bind, 3 Fade, 4 Workbench, 5 Numbers,
+    // 6 Applied, 7 Words.
     const n = parseStageN(beat);
     switch (n) {
       case 1: return 0;
       case 2: return 1;
       case 3: return 2;
-      case 4: return 3;
-      case 5: return 4;
+      case 4: return 1; // Workbench — block sandbox (manipulative support)
+      case 5: return 3; // Numbers — bare equation
+      case 6: return 3; // Applied — worded, numerals shown (numbers handed in)
+      case 7: return 4; // Words — fully independent
+      default: return 0;
+    }
+  }
+
+  // ---- AppM1/M2/M3 (multiplication foundations) ----------------------------
+  // r1-style numeric-prefixed keys "1-manipulate" … "7-words". 7-stage arc:
+  // 1 Manipulate, 2 Bind, 3 Fade, 4 Workbench, 5 Numbers, 6 Applied, 7 Words.
+  // scaffold_ladder arc = 0,1,2,1,3,3,4 (Workbench=L1, Applied=L3).
+  if (id === 'm1' || id === 'm2' || id === 'm3') {
+    const n = parseStageN(beat);
+    switch (n) {
+      case 1: return 0;
+      case 2: return 1;
+      case 3: return 2;
+      case 4: return 1; // Workbench — manipulative-backed build (support)
+      case 5: return 3; // Numbers — bare expression
+      case 6: return 3; // Applied — worded, numerals shown (setup gate)
+      case 7: return 4; // Words — fully independent
       default: return 0;
     }
   }
@@ -75,14 +99,16 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
   // ---- AppR4 (r4 — SIMPLIFY) -----------------------------------------------
   // Stage ids: "manipulate" | "bind" | "fade" | "numbers" | "words" (or 1–5)
   if (id === 'r4') {
+    // 6-stage arc: manipulate, bind, fade, numbers, applied, words.
     const n = parseStageN(beat);
     if (n !== null) {
       switch (n) {
         case 1: return 0;
         case 2: return 1;
         case 3: return 2;
-        case 4: return 3;
-        case 5: return 4;
+        case 4: return 3; // numbers
+        case 5: return 3; // applied — worded, fraction shown
+        case 6: return 4; // words
         default: return 0;
       }
     }
@@ -92,6 +118,7 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
       case 'bind':       return 1;
       case 'fade':       return 2;
       case 'numbers':    return 3;
+      case 'applied':    return 3; // worded, the fraction is shown (numbers handed in)
       case 'words':      return 4;
       default:           return 0;
     }
@@ -101,6 +128,10 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
   // Stage ids: "1-manipulate" | "2-bind" | "3-fade" | "4-numbers" | "5-words"
   // or numeric 1–5.
   if (id === 'r5') {
+    // 7-stage arc: 1-manipulate, 2-bind, 3-fade, workbench, 4-numbers, applied,
+    // 5-words. Workbench/applied are string keys (no leading digit).
+    if (beat === 'workbench') return 1; // block sandbox (manipulative support)
+    if (beat === 'applied')   return 3; // worded, improper fraction shown
     const n = parseStageN(beat);
     switch (n) {
       case 1: return 0;
@@ -160,7 +191,16 @@ export function toBeatForLevel(lessonId, designLevel) {
   }
 
   if (id === 'r1') {
-    return String(level + 1); // 0→"1", 1→"2", ..., 4→"5"
+    // L0..L4 → Manipulate(1)/Bind(2)/Fade(3)/Numbers(5)/Words(7) in the 7-stage arc
+    const map = ['1', '2', '3', '5', '7'];
+    return map[level] ?? '1';
+  }
+
+  if (id === 'm1' || id === 'm2' || id === 'm3') {
+    // L0..L4 → Manipulate/Bind/Fade/Numbers/Words; Workbench(L1) and Applied(L3)
+    // are reachable only by sequential play or the header selector (R-M2).
+    const map = ['1-manipulate', '2-bind', '3-fade', '5-numbers', '7-words'];
+    return map[level] ?? '1-manipulate';
   }
 
   if (id === 'r4') {

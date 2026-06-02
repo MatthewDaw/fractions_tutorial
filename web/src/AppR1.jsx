@@ -2,7 +2,7 @@
 // fractions. The worked example is 2/7 + 3/7 = 5/7 — add the tops, keep the
 // bottom (the denominator is LOCKED).
 //
-// THE FULL 5-STAGE INTERACTION ARC. Two channels fade in opposite directions:
+// THE FULL 7-STAGE INTERACTION ARC. Two channels fade in opposite directions:
 // the BLOCK/touch channel shrinks to nothing while the STYLUS/writing (Slate)
 // channel grows from "copy one numeral" to "write the whole solution".
 //
@@ -12,10 +12,15 @@
 //        stack IS this number); the child WRITES 5/7 on the stylus Slate.
 //   3 · Fade       — the blocks dim to a faint check; the EQUATION leads; the
 //        child chooses symbolically and writes the changed line on the Slate.
-//   4 · Numbers    — a BARE equation 2/7 + 3/7 = ?; the child writes the whole
-//        fraction on the Slate. Blocks are gone (a faded ghost remains).
-//   5 · Words      — a plain-language WORD PROBLEM (no blocks, no equation
-//        given); the child reads it, pulls out the numbers, writes the total.
+//   4 · Workbench  — the shared <BlockSandbox>: a bin of fraction blocks (sevenths
+//        + distractor sizes) the child CHOOSES from, stacks, and counts to 5/7.
+//   5 · Numbers    — a BARE equation 2/7 + 3/7 = ?; the child writes the whole
+//        fraction on the Slate. Blocks are gone.
+//   6 · Applied    — a short applied sentence (numerals shown) with a REQUIRED
+//        setup gate: write the sum 2/7 + 3/7 first, then the answer unlocks.
+//   7 · Words      — a plain-language WORD PROBLEM (no blocks, no equation given);
+//        an OPTIONAL ungraded scratch lets the child write the sum; the child
+//        reads it, pulls out the numbers, writes the total.
 //
 // Reachability: a STAGE SELECTOR strip jumps to any stage in one click, and a
 // correct answer auto-advances to the next stage.
@@ -32,6 +37,8 @@ import BigFrac from "./components/BigFrac.jsx";
 import Lock from "./components/Lock.jsx";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
+import BlockSandbox from "./components/BlockSandbox.jsx";
+import ExpressionSlate from "./components/ExpressionSlate.jsx";
 import { useVoice } from "./voice.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import { useLessonEngine } from "./runtime/useLessonEngine.js";
@@ -39,21 +46,29 @@ import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
 import "./styles/r1.css";
 
 // Geometry for the manipulate canvas (matches the original room).
-const ORIGIN = 60, UNIT = 320, CW = 720, CH = 346, BAR_H = 72, LINE_Y = 322;
-const HOME = { A: { x: ORIGIN, y: 250 }, B: { x: ORIGIN, y: 86 } };
+// LINE_Y/HOME.A sit high enough that the ruler labels (drawn at LINE_Y+12) stay
+// inside the fixed, clipped block zone (.r1-s1-canvas is 336px tall) instead of
+// being cut off below it. The lower stack rests its bottom edge on the ruler.
+const ORIGIN = 60, UNIT = 320, CW = 500, CH = 336, BAR_H = 72, LINE_Y = 304;
+const HOME = { A: { x: ORIGIN, y: 232 }, B: { x: ORIGIN, y: 86 } };
 
 // The single worked example threaded through every stage: 2/7 + 3/7 = 5/7.
 const A_N = 2, B_N = 3, DEN = 7, ANSWER = A_N + B_N; // 5
 const answerWholes = Math.min(2, Math.max(1, Math.ceil(ANSWER / DEN))); // 1
 const RULER_TICKS = answerWholes * DEN;
 
-// The five stages, in order. `key` matches the orchestrator's stage ids.
+// The seven stages, in order. `key` matches the orchestrator's stage ids.
+// Arc (lesson-stage-arc-expansion): Manipulate, Bind, Fade, Workbench, Numbers,
+// Applied, Words. Workbench (4) = the shared <BlockSandbox>; Applied (6) = an
+// applied sentence with a REQUIRED word→math setup gate (<ExpressionSlate>).
 const STAGES = [
   { n: 1, key: "1-manipulate", tab: "Manipulate", sub: "drag & count blocks" },
   { n: 2, key: "2-bind",       tab: "Bind",       sub: "blocks + write 5/7" },
   { n: 3, key: "3-fade",       tab: "Fade",       sub: "blocks dim, write" },
-  { n: 4, key: "4-numbers",    tab: "Numbers",    sub: "bare 2/7 + 3/7 = ?" },
-  { n: 5, key: "5-words",      tab: "Words",      sub: "story problem" },
+  { n: 4, key: "4-workbench",  tab: "Workbench",  sub: "build it from the bin" },
+  { n: 5, key: "5-numbers",    tab: "Numbers",    sub: "bare 2/7 + 3/7 = ?" },
+  { n: 6, key: "6-applied",    tab: "Applied",    sub: "write the sum, then total" },
+  { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
 ];
 
 // ---- the merged stack (all a+b pieces, one locked denominator) --------------
@@ -111,9 +126,19 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
   const [posB, _setPosB] = useState(HOME.B);
   const [dragBar, setDragBar] = useState(null);
 
-  // --- Slate (stylus) values, shared by stages 2–5 ---
+  // --- Slate (stylus) values, shared by the write stages (2,3,5,6,7) ---
   // num/den slots; the denominator is the locked padlock idea.
   const [slate, setSlate] = useState({ num: "", den: "" });
+
+  // --- word→math surfaces (Applied gate + Words optional scratch) ---
+  // Applied (6): the child TRANSCRIBES the two shown fractions here; once they
+  // match 2/7 and 3/7 (either order) the answer Slate unlocks (setupOk). Words
+  // (7): the same ExpressionSlate is OPTIONAL scratch — never gates, never graded.
+  const [setupA, setSetupA] = useState({ num: "", den: "" });
+  const [setupB, setSetupB] = useState({ num: "", den: "" });
+  const [setupOk, setSetupOk] = useState(false);
+  const [scratchA, setScratchA] = useState({ num: "", den: "" });
+  const [scratchB, setScratchB] = useState({ num: "", den: "" });
 
   // --- shared outcome state ---
   const [solved, setSolved] = useState(false);
@@ -159,6 +184,9 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     setSolved(false); solvedRef.current = false;
     setStars(0); setMergeTick(0); setBadInput(false);
     setSlate({ num: "", den: "" });
+    // reset the word→math surfaces (Applied gate + Words scratch) on every entry
+    setSetupA({ num: "", den: "" }); setSetupB({ num: "", den: "" }); setSetupOk(false);
+    setScratchA({ num: "", den: "" }); setScratchB({ num: "", den: "" });
     setPosA(HOME.A); setPosB(HOME.B);
     setCook("idle");
     intro(n);
@@ -175,7 +203,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
   }
 
   function nextStage() {
-    const n = Math.min(5, stageRef.current + 1);
+    const n = Math.min(7, stageRef.current + 1);
     if (n === stageRef.current) {
       // already at the last stage — celebrate completion in place
       setStatus({ tone: "ok", text: "That's the whole arc — from dragging blocks to reading a story and writing the answer. Brilliant!" });
@@ -362,6 +390,53 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
     award(`Yes! ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}. Add the tops, keep the bottom — full marks, povaryonok!`, "r1FullMarks", [ANSWER, DEN], null);
   }
 
+  const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 2);
+
+  // ---- Stage 4 · WORKBENCH — the shared <BlockSandbox> reports a clean row ----
+  // The sandbox only fires onSolve for a SAME-SIZE row that reaches the target, so
+  // {num,den} is always a gradable fraction. We set the answer to it, then run the
+  // room's award/solve + engine-report path. (Distractor sizes in the bin mean a
+  // wrong-size row simply never reaches the flag as one size.)
+  function onSandboxSolve({ num, den }) {
+    if (solvedRef.current) return;
+    setSlate({ num: String(num), den: String(den) });
+    award(`Yes! ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN} — built from same-size pieces and counted up. Brilliant!`, "r1FullMarks", [num, den], null);
+  }
+
+  // ---- Stage 6 · APPLIED — the required word→math setup gate -----------------
+  // Correct when the two written fractions ARE 2/7 and 3/7, in either order; then
+  // the answer Slate (write 5/7) unlocks. Reuses the same Slate grader downstream.
+  function checkSetup() {
+    const an = parseInt(setupA.num, 10), ad = parseInt(setupA.den, 10);
+    const bn = parseInt(setupB.num, 10), bd = parseInt(setupB.den, 10);
+    if (!(an > 0 && ad > 0 && bn > 0 && bd > 0)) {
+      flashBad();
+      setStatus({ tone: "warn", text: "Write both fractions from the question — a top and a bottom for each." });
+      return;
+    }
+    const match = (x, y) => x.n === y.n && x.d === y.d;
+    const A = { n: an, d: ad }, B = { n: bn, d: bd };
+    const P = { n: A_N, d: DEN }, Q = { n: B_N, d: DEN };
+    const ok = (match(A, P) && match(B, Q)) || (match(A, Q) && match(B, P));
+    if (!ok) {
+      flashBad();
+      setStatus({ tone: "warn", text: `Not quite — copy the two fractions exactly as the question gives them: ${A_N}/${DEN} and ${B_N}/${DEN}.` });
+      return;
+    }
+    setSetupOk(true); setCook("idle");
+    setStatus({ tone: "ok", text: "That's the sum. Now add the tops, keep the bottom, and write the total." });
+  }
+  function onSetupChange(side, key, value) {
+    const v = onlyDigits(value);
+    if (side === "a") setSetupA((s) => ({ ...s, [key]: v }));
+    else setSetupB((s) => ({ ...s, [key]: v }));
+  }
+  function onScratchChange(side, key, value) {
+    const v = onlyDigits(value);
+    if (side === "a") setScratchA((s) => ({ ...s, [key]: v }));
+    else setScratchB((s) => ({ ...s, [key]: v }));
+  }
+
   // ---- header reset: back to Stage 1, fresh board ----
   function reset() { goStage(1); }
 
@@ -431,26 +506,18 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
         <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
         Read aloud
       </button>
-      <div className="goal-text">Babushka needs <b>{A_N}/{DEN}</b> of a tray and <b>{B_N}/{DEN}</b> of a tray — the pieces are the same size, so add the tops and keep the bottom.</div>
+      <div className="goal-text" data-vox="r1Goal" data-vox-speaker="mom">Babushka needs <b>{A_N}/{DEN}</b> of a tray and <b>{B_N}/{DEN}</b> of a tray — the pieces are the same size, so add the tops and keep the bottom.</div>
     </div>
   );
 
-  const CookHud = (extraCaption) => (
-    <div className="hud">
-      <div className="cook-zone">
-        <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-        <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
-      </div>
-      {extraCaption}
-    </div>
-  );
-
-  // The marks block (Rosette + Check/Next button), shared.
-  const Marks = (label, onClick) => (
-    <div className="marks">
-      {solved && <Rosette count={stars} />}
-      <button className={"check" + (solved ? " done" : "")} onClick={onClick}>{label}</button>
-    </div>
+  // "Ready to check": the child has committed the answer the current stage needs,
+  // so the Check button lights up (a red glow) to say "you can check now". Stage 1
+  // also needs the stacks merged; stage 3 writes only the numerator (den locked).
+  const answerReady = !solved && (
+    stage === 1 ? (merged && slate.num !== "")
+    : stage === 3 ? (slate.num !== "")
+    : stage === 6 ? (setupOk && slate.num !== "" && slate.den !== "")
+    : (slate.num !== "" && slate.den !== "")
   );
 
   // ---- Per-stage body -------------------------------------------------------
@@ -458,227 +525,371 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
 
   if (stage === 1) {
     // STAGE 1 · MANIPULATE — the blocks ARE the problem. No writing.
+    //
+    // DETERMINISTIC LAYOUT: every region is a fixed rectangle inside the
+    // 1280×800 stage (see .r1-s1* in r1.css). The block zone, the equation+
+    // answer card, the tutor zone and the hint rail are absolutely positioned
+    // with fixed geometry, so a longer string or a different font (Safari vs.
+    // headless Chromium) can NEVER reflow one zone into another. A guaranteed
+    // gap sits between the block zone (top) and the equation+answer card below.
     body = (
-      <>
-        <div className="play">
-          <div className="diagram">
-            <div className="canvas" id="r1canvas">
-              <div className="eqstate eqfloat locked"><span className="g"><Lock size={16} color="var(--ink)" /></span>bottom stays /{DEN}</div>
-              <div className="nline" style={{ top: LINE_Y, left: ORIGIN, right: "auto", width: answerWholes * UNIT }} />
-              {Array.from({ length: RULER_TICKS + 1 }).map((_, k) => (
-                <span key={k} className="ntick" style={{ left: ORIGIN + (k / DEN) * UNIT, top: LINE_Y, height: k % DEN === 0 ? 14 : 8 }} />
-              ))}
-              {RLAB.map(([k, lab, isWhole]) => (
-                <span key={k} className={"nlab" + (isWhole ? " ng" : "")} style={{ left: ORIGIN + (k / DEN) * UNIT, top: LINE_Y + 12 }}>{lab}</span>
-              ))}
+      <div className="r1-s1">
+        {/* ── BLOCK-MANIPULATION ZONE (fixed rect, top-left) ── */}
+        <div className="r1-s1-blocks">
+          <div className="canvas r1-s1-canvas" id="r1canvas">
+            <div className="eqstate eqfloat locked"><span className="g"><Lock size={16} color="var(--ink)" /></span>bottom stays /{DEN}</div>
+            <div className="nline" style={{ top: LINE_Y, left: ORIGIN, right: "auto", width: answerWholes * UNIT }} />
+            {Array.from({ length: RULER_TICKS + 1 }).map((_, k) => (
+              <span key={k} className="ntick" style={{ left: ORIGIN + (k / DEN) * UNIT, top: LINE_Y, height: k % DEN === 0 ? 14 : 8 }} />
+            ))}
+            {RLAB.map(([k, lab, isWhole]) => (
+              <span key={k} className={"nlab" + (isWhole ? " ng" : "")} style={{ left: ORIGIN + (k / DEN) * UNIT, top: LINE_Y + 12 }}>{lab}</span>
+            ))}
 
-              {merged ? (
-                <div className="nbar" style={{ left: HOME.A.x, top: HOME.A.y }}>
-                  <div className="btag">
-                    <BigFrac num={(reveal || solved) ? ANSWER : "?"} den={DEN} locked />
-                    {!solved && <button className="mini" title="split them back apart" onClick={unmerge}>↺</button>}
-                  </div>
-                  <Combined a={A_N} b={B_N} den={DEN} reveal={reveal} />
+            {merged ? (
+              <div className="nbar" style={{ left: HOME.A.x, top: 140 }}>
+                <div className="btag">
+                  <BigFrac num={(reveal || solved) ? ANSWER : "?"} den={DEN} locked />
+                  {!solved && <button className="mini" title="split them back apart" onClick={unmerge}>↺</button>}
                 </div>
-              ) : (
-                <React.Fragment>
-                  <div className={"nbar" + (dragBar === "A" ? " dragging" : "")}
-                    style={{ left: posA.x, top: posA.y, width: stackW(A_N) }} onPointerDown={(e) => grabBar("A", e)}>
-                    <div className="btag"><BigFrac num={A_N} den={DEN} locked /></div>
-                    <Stack n={A_N} den={DEN} unit={UNIT} bodyRef={bodyA} />
-                    <div className="grip"><i /><i /><i /></div>
-                  </div>
-                  <div className={"nbar" + (dragBar === "B" ? " dragging" : "")}
-                    style={{ left: posB.x, top: posB.y, width: stackW(B_N) }} onPointerDown={(e) => grabBar("B", e)}>
-                    <div className="btag"><BigFrac num={B_N} den={DEN} locked /></div>
-                    <Stack n={B_N} den={DEN} unit={UNIT} bodyRef={bodyB} />
-                    <div className="grip"><i /><i /><i /></div>
-                  </div>
-                </React.Fragment>
-              )}
-
-              {!merged && (
-                <button className="joinbtn" style={{ left: ORIGIN + stackW(A_N) + 40, top: HOME.A.y + 22 }} onClick={doMerge}>▸ Count them up</button>
-              )}
-            </div>
-          </div>
-
-          <div className="rail">
-            <div className="panel">
-              <h3>Keep the Bottom</h3>
-              <div className="hint">Both stacks are cut into {DEN}ths — the pieces are the same size, so you just count how many. The bottom number is locked.</div>
-              <div className="lockcard">
-                <BigFrac num={<span style={{ color: "var(--red)" }}>+</span>} den={DEN} locked />
-                <div className="lockcard-note">add the tops<br />keep the {DEN}</div>
+                <Combined a={A_N} b={B_N} den={DEN} reveal={reveal} />
               </div>
+            ) : (
+              <React.Fragment>
+                <div className={"nbar" + (dragBar === "A" ? " dragging" : "")}
+                  style={{ left: posA.x, top: posA.y, width: stackW(A_N) }} onPointerDown={(e) => grabBar("A", e)}>
+                  <div className="btag"><BigFrac num={A_N} den={DEN} locked /></div>
+                  <Stack n={A_N} den={DEN} unit={UNIT} bodyRef={bodyA} />
+                  <div className="grip"><i /><i /><i /></div>
+                </div>
+                <div className={"nbar" + (dragBar === "B" ? " dragging" : "")}
+                  style={{ left: posB.x, top: posB.y, width: stackW(B_N) }} onPointerDown={(e) => grabBar("B", e)}>
+                  <div className="btag"><BigFrac num={B_N} den={DEN} locked /></div>
+                  <Stack n={B_N} den={DEN} unit={UNIT} bodyRef={bodyB} />
+                  <div className="grip"><i /><i /><i /></div>
+                </div>
+              </React.Fragment>
+            )}
+
+            {!merged && (
+              <button className="joinbtn" style={{ left: ORIGIN + stackW(A_N) + 40, top: HOME.A.y + 22 }} onClick={doMerge}>▸ Count them up</button>
+            )}
+          </div>
+        </div>
+
+        {/* ── HINT RAIL (fixed rect, top-right) ── */}
+        <div className="r1-s1-rail">
+          <div className="panel">
+            <h3>Keep the Bottom</h3>
+            <div className="hint">Both stacks are cut into {DEN}ths — the pieces are the same size, so you just count how many. The bottom number is locked.</div>
+            <div className="lockcard">
+              <BigFrac num={<span style={{ color: "var(--red)" }}>+</span>} den={DEN} locked />
+              <div className="lockcard-note">add the tops<br />keep the {DEN}</div>
             </div>
           </div>
         </div>
 
-        {CookHud(
-          <div className="hud-eq">
-            <div className="qeq">
-              <span>{A_N}/{DEN}</span><span className="qop">+</span><span>{B_N}/{DEN}</span><span className="qop">=</span>
-              <span className="r1-stage1-slate">
-                <Slate
-                  slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom", locked: true, digit: DEN }]}
-                  values={slate}
-                  onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
-                  onSubmit={checkStage1}
-                  layout="fraction"
-                  den={DEN}
-                  disabled={!merged || solved}
-                  autoFocusKey="num"
-                  ariaLabel="write the top number"
-                />
-              </span>
-            </div>
-            <div className="qcap">{solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : merged ? "count the pieces and write the top number" : "count the pieces to unlock the answer"}</div>
+        {/* ── EQUATION + ANSWER, ONE UNIT (fixed rect, below the blocks) ── */}
+        <div className="r1-s1-answer">
+          <div className="r1-s1-eqrow">
+            <span className="r1-s1-frac">{A_N}/{DEN}</span>
+            <span className="r1-s1-op">+</span>
+            <span className="r1-s1-frac">{B_N}/{DEN}</span>
+            <span className="r1-s1-op">=</span>
+            <span className="r1-s1-slate">
+              <Slate
+                slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom", locked: true, digit: DEN }]}
+                values={slate}
+                onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+                onSubmit={checkStage1}
+                layout="fraction"
+                den={DEN}
+                disabled={!merged || solved}
+                autoFocusKey="num"
+                ariaLabel="write the top number"
+              />
+            </span>
           </div>
-        )}
-        {Marks(solved ? "Next stage ▸" : "Check", checkStage1)}
-      </>
+          <div className="r1-s1-cap">{solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : merged ? "count the pieces — write the top number" : "count the pieces to unlock the answer"}</div>
+          <div className="r1-s1-marks">
+            {solved && <Rosette count={stars} />}
+            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={checkStage1}>{solved ? "Next stage ▸" : "Check"}</button>
+          </div>
+        </div>
+
+        {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
+        <div className="r1-s1-tutor">
+          <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+          <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+        </div>
+      </div>
     );
   } else if (stage === 2 || stage === 3) {
     // STAGE 2 · BIND   — merged stack PLUS the written fraction; write 5/7.
     // STAGE 3 · FADE   — blocks dim to a faint check; the equation leads; the
     //                    child writes only the changed line (the numerator).
+    // STAGE 2/3 · DETERMINISTIC FIXED-ZONE LAYOUT — mirrors Stage 1's four fixed
+    // rectangles (.r1-fz* in r1.css). Block-proof zone (top-left), hint rail
+    // (top-right), the equation+Slate+Check as ONE bordered card pinned to the
+    // bottom (Check immediately right of the Slate), and the tutor (bottom-right).
     const numeratorOnly = stage === 3;
     const slateSlots = numeratorOnly
       ? [{ key: "num", label: "top" }, { key: "den", label: "bottom", locked: true, digit: DEN }]
       : [{ key: "num", label: "top" }, { key: "den", label: "bottom" }];
 
     body = (
-      <>
-        <div className="play r1-write-play">
-          <div className="diagram">
-            <div className={"canvas r1-bind-canvas" + (stage === 3 ? " r1-faded" : "")} id="r1canvas">
-              <div className={"eqstate eqfloat locked"}>
-                <span className="g"><Lock size={16} color="var(--ink)" /></span>bottom stays /{DEN}
-              </div>
-
-              {stage === 3 && (
-                <div className="r1-fadecheck" aria-hidden="true">
-                  <span className="r1-fadecheck-mark">✓</span> blocks checked — let the numbers lead
-                </div>
-              )}
-
-              {/* the merged stack — solid in Bind, ghosted in Fade */}
-              <div className="r1-bind-stack">
-                <div className="btag"><BigFrac num={ANSWER} den={DEN} locked /></div>
-                <Combined a={A_N} b={B_N} den={DEN} reveal dim={stage === 3} />
-                <div className="r1-bind-cap">
-                  {stage === 2
-                    ? <>this one stack <b>is</b> the number {ANSWER}/{DEN} — copy it onto the Slate</>
-                    : <>the blocks just confirm it — the equation leads now</>}
-                </div>
-              </div>
-
-              {/* the equation leads in Fade */}
-              {stage === 3 && (
-                <div className="r1-leadeq">
-                  <span>{A_N}/{DEN}</span><span className="qop">+</span><span>{B_N}/{DEN}</span><span className="qop">=</span>
-                  <span className="r1-leadeq-blank">?/{DEN}</span>
-                </div>
-              )}
+      <div className="r1-fz">
+        {/* ── BLOCK / PROOF ZONE (fixed rect, top-left) ── */}
+        <div className="r1-fz-stage">
+          <div className={"canvas r1-fz-canvas" + (stage === 3 ? " r1-faded" : "")} id="r1canvas">
+            <div className="eqstate eqfloat locked">
+              <span className="g"><Lock size={16} color="var(--ink)" /></span>bottom stays /{DEN}
             </div>
-          </div>
 
-          <div className="rail">
-            <div className="panel">
-              <h3>{stage === 2 ? "Write the Number" : "Write the Changed Line"}</h3>
-              <div className="hint">
+            {stage === 3 && (
+              <div className="r1-fadecheck" aria-hidden="true">
+                <span className="r1-fadecheck-mark">✓</span> blocks checked — let the numbers lead
+              </div>
+            )}
+
+            {/* the merged stack — solid in Bind, ghosted in Fade */}
+            <div className="r1-bind-stack">
+              <div className="btag"><BigFrac num={ANSWER} den={DEN} locked /></div>
+              <Combined a={A_N} b={B_N} den={DEN} reveal dim={stage === 3} />
+              <div className="r1-bind-cap">
                 {stage === 2
-                  ? <>The whole joined stack <b>is</b> {ANSWER}/{DEN}. Trace that numeral on the Slate — top, then bottom. The bottom is still {DEN}.</>
-                  : <>The bottom is locked to {DEN}, so you only write the <b>top</b>. Add the tops: {A_N} + {B_N}.</>}
+                  ? <>this one stack <b>is</b> the number {ANSWER}/{DEN}</>
+                  : <>the blocks just confirm it — the equation leads now</>}
               </div>
-              <div className="r1-slate-wrap">
-                <Slate
-                  slots={slateSlots}
-                  values={slate}
-                  onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
-                  onSubmit={() => checkSlateStage(numeratorOnly)}
-                  layout="fraction"
-                  den={DEN}
-                  disabled={solved}
-                  autoFocusKey="num"
-                  ariaLabel={"write " + (numeratorOnly ? "the top number" : "the answer fraction")}
-                />
+            </div>
+
+            {/* the equation leads in Fade */}
+            {stage === 3 && (
+              <div className="r1-leadeq">
+                <span>{A_N}/{DEN}</span><span className="qop">+</span><span>{B_N}/{DEN}</span><span className="qop">=</span>
+                <span className="r1-leadeq-blank">?/{DEN}</span>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── HINT RAIL (fixed rect, top-right) ── */}
+        <div className="r1-fz-rail">
+          <div className="panel">
+            <h3>{stage === 2 ? "Write the Number" : "Write the Changed Line"}</h3>
+            <div className="hint">
+              {stage === 2
+                ? <>The whole joined stack <b>is</b> {ANSWER}/{DEN}. Trace that numeral on the Slate — top, then bottom. The bottom is still {DEN}.</>
+                : <>The bottom is locked to {DEN}, so you only write the <b>top</b>. Add the tops: {A_N} + {B_N}.</>}
+            </div>
+            <div className="lockcard">
+              <BigFrac num={<span style={{ color: "var(--red)" }}>+</span>} den={DEN} locked />
+              <div className="lockcard-note">add the tops<br />keep the {DEN}</div>
             </div>
           </div>
         </div>
 
-        {CookHud(
-          <div className="hud-eq">
-            <div className="qeq">
-              <span>{A_N}/{DEN}</span><span className="qop">+</span><span>{B_N}/{DEN}</span><span className="qop">=</span>
-              <span className="r1-eq-answer">{solved ? `${ANSWER}/${DEN}` : (numeratorOnly ? `?/${DEN}` : "?/?")}</span>
-            </div>
-            <div className="qcap">{solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : "write your answer on the Slate, then Check"}</div>
+        {/* ── EQUATION + ANSWER + CHECK, ONE UNIT (fixed rect, bottom-left) ── */}
+        <div className="r1-fz-answer">
+          <div className="r1-fz-eqrow">
+            <span className="r1-fz-frac">{A_N}/{DEN}</span>
+            <span className="r1-fz-op">+</span>
+            <span className="r1-fz-frac">{B_N}/{DEN}</span>
+            <span className="r1-fz-op">=</span>
+            <span className="r1-fz-slate">
+              <Slate
+                slots={slateSlots}
+                values={slate}
+                onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+                onSubmit={() => checkSlateStage(numeratorOnly)}
+                layout="fraction"
+                den={DEN}
+                disabled={solved}
+                autoFocusKey="num"
+                ariaLabel={"write " + (numeratorOnly ? "the top number" : "the answer fraction")}
+              />
+            </span>
           </div>
-        )}
-        {Marks(solved ? "Next stage ▸" : "Check", () => checkSlateStage(numeratorOnly))}
-      </>
+          <div className="r1-fz-cap">{solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : "write your answer on the Slate, then Check"}</div>
+          <div className="r1-fz-marks">
+            {solved && <Rosette count={stars} />}
+            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={() => checkSlateStage(numeratorOnly)}>{solved ? "Next stage ▸" : "Check"}</button>
+          </div>
+        </div>
+
+        {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
+        <div className="r1-fz-tutor">
+          <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+          <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+        </div>
+      </div>
     );
   } else if (stage === 4) {
-    // STAGE 4 · NUMBERS — a BARE equation; write the whole fraction. Blocks gone
-    // (a faded ghost behind the equation).
+    // STAGE 4 · WORKBENCH — the shared <BlockSandbox>. The bin offers sevenths PLUS
+    // two distractor sizes (halves, thirds) so the child must CHOOSE the right
+    // pieces, stack them on the ruler, and count to 5/7. The sandbox renders its
+    // OWN .play (diagram + rail); we mount a sibling .hud with the Cook + ribbon +
+    // a "Next ▸" button that stays disabled until the row solves.
     body = (
       <>
-        <div className="play r1-write-play">
-          <div className="diagram">
-            <div className="canvas r1-numbers-canvas" id="r1canvas">
-              <div className="r1-ghost-rail" aria-hidden="true">
-                <Combined a={A_N} b={B_N} den={DEN} reveal dim />
-              </div>
-              <div className="r1-bigeq">
-                <BigFrac num={A_N} den={DEN} />
-                <span className="r1-bigeq-op">+</span>
-                <BigFrac num={B_N} den={DEN} />
-                <span className="r1-bigeq-op">=</span>
-                <span className="r1-bigeq-q">{solved ? <BigFrac num={ANSWER} den={DEN} /> : "?"}</span>
-              </div>
-              <div className="r1-numbers-cap">No blocks now — add the tops, keep the bottom, and write the whole answer.</div>
-            </div>
+        <BlockSandbox
+          bin={[7, 2, 3]}
+          targetValue={ANSWER / DEN}
+          targetLabel={`${A_N}/${DEN} + ${B_N}/${DEN}`}
+          rulerWholes={answerWholes}
+          solved={solved}
+          onSolve={onSandboxSolve}
+          onPlace={() => { selfCorrectionsRef.current += 1; emit({ type: "place_block", payload: { node_id: "ADD_SAME_DEN" } }); }}
+          onRemove={() => { selfCorrectionsRef.current += 1; emit({ type: "remove_block", payload: { node_id: "ADD_SAME_DEN" } }); }}
+          title="Workbench"
+          hint={`Pull blocks from the bin and stack them on the line. Build ${A_N}/${DEN} + ${B_N}/${DEN} out of same-size pieces, then count them up.`}
+        />
+        <div className="hud">
+          <div className="cook-zone">
+            <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+            <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
           </div>
+          <div className="marks">
+            {solved && <Rosette count={stars} />}
+            <button className={"check" + (solved ? " done" : "")} onClick={() => { if (solved) nextStage(); }} disabled={!solved}>{solved ? "Next stage ▸" : "Build it ▸"}</button>
+          </div>
+        </div>
+      </>
+    );
+  } else if (stage === 5) {
+    // STAGE 5 · NUMBERS — a BARE equation; write the whole fraction. No blocks at
+    // all here — the numbers lead alone.
+    // STAGE 5 · NUMBERS — DETERMINISTIC FIXED-ZONE LAYOUT. No blocks: the bare
+    // equation 2/7 + 3/7 = ?/? fills the proof zone (all terms — including the
+    // ?/? answer placeholder — are equal-size BigFracs centred on ONE midline),
+    // the hint rail sits top-right, and the equation+Slate+Check card is pinned
+    // to the bottom with the Check immediately right of the Slate.
+    body = (
+      <div className="r1-fz">
+        {/* ── EQUATION ZONE (fixed rect, top-left) ── */}
+        <div className="r1-fz-stage">
+          <div className="canvas r1-fz-canvas r1-fz-canvas-center" id="r1canvas">
+            <div className="r1-bigeq">
+              <BigFrac num={A_N} den={DEN} />
+              <span className="r1-bigeq-op">+</span>
+              <BigFrac num={B_N} den={DEN} />
+              <span className="r1-bigeq-op">=</span>
+              {solved ? <BigFrac num={ANSWER} den={DEN} /> : <BigFrac num="?" den="?" />}
+            </div>
+            <div className="r1-numbers-cap">No blocks now — add the tops, keep the bottom, and write the whole answer.</div>
+          </div>
+        </div>
 
-          <div className="rail">
-            <div className="panel">
-              <h3>Write the Whole Answer</h3>
-              <div className="hint">Add the tops ({A_N} + {B_N}) and keep the bottom {DEN}. Write both numbers on the Slate.</div>
-              <div className="r1-slate-wrap">
-                <Slate
-                  slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
-                  values={slate}
-                  onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
-                  onSubmit={() => checkSlateStage(false)}
-                  layout="fraction"
-                  den={DEN}
-                  disabled={solved}
-                  autoFocusKey="num"
-                  ariaLabel="write the answer fraction"
-                />
-              </div>
+        {/* ── HINT RAIL (fixed rect, top-right) ── */}
+        <div className="r1-fz-rail">
+          <div className="panel">
+            <h3>Write the Whole Answer</h3>
+            <div className="hint">Add the tops ({A_N} + {B_N}) and keep the bottom {DEN}. Write both numbers on the Slate.</div>
+            <div className="lockcard">
+              <BigFrac num={<span style={{ color: "var(--red)" }}>+</span>} den={DEN} locked />
+              <div className="lockcard-note">add the tops<br />keep the {DEN}</div>
             </div>
           </div>
         </div>
 
-        {CookHud(
-          <div className="hud-eq">
-            <div className="qeq">
-              <span>{A_N}/{DEN}</span><span className="qop">+</span><span>{B_N}/{DEN}</span><span className="qop">=</span>
-              <span className="r1-eq-answer">{solved ? `${ANSWER}/${DEN}` : "?/?"}</span>
-            </div>
-            <div className="qcap">{solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : "write the whole fraction on the Slate, then Check"}</div>
+        {/* ── EQUATION + ANSWER + CHECK, ONE UNIT (fixed rect, bottom-left) ── */}
+        <div className="r1-fz-answer">
+          <div className="r1-fz-eqrow">
+            <span className="r1-fz-frac">{A_N}/{DEN}</span>
+            <span className="r1-fz-op">+</span>
+            <span className="r1-fz-frac">{B_N}/{DEN}</span>
+            <span className="r1-fz-op">=</span>
+            <span className="r1-fz-slate">
+              <Slate
+                slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
+                values={slate}
+                onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+                onSubmit={() => checkSlateStage(false)}
+                layout="fraction"
+                den={DEN}
+                disabled={solved}
+                autoFocusKey="num"
+                ariaLabel="write the answer fraction"
+              />
+            </span>
           </div>
-        )}
-        {Marks(solved ? "Next stage ▸" : "Check", () => checkSlateStage(false))}
-      </>
+          <div className="r1-fz-cap">{solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : "write the whole fraction on the Slate, then Check"}</div>
+          <div className="r1-fz-marks">
+            {solved && <Rosette count={stars} />}
+            <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={() => checkSlateStage(false)}>{solved ? "Next stage ▸" : "Check"}</button>
+          </div>
+        </div>
+
+        {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
+        <div className="r1-fz-tutor">
+          <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+          <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+        </div>
+      </div>
+    );
+  } else if (stage === 6) {
+    // STAGE 6 · APPLIED — a short applied SENTENCE with the fraction numerals shown.
+    // The shared <WordProblem> renders a REQUIRED `setup` gate: the child first
+    // transcribes the question as a sum (2/7 + 3/7) on an <ExpressionSlate>; once
+    // checkSetup() passes (setupOk) the answer Slate (write 5/7) unlocks.
+    const story = (
+      <>Babushka needs <b>{A_N}/{DEN}</b> + <b>{B_N}/{DEN}</b> of a tray — how much in all?</>
+    );
+    // STAGE 6 · DETERMINISTIC FIXED-ZONE LAYOUT — the WordProblem (story card on
+    // top, then the setup gate, then the answer Slate + Check together) lives in a
+    // FIXED main rectangle that can never overflow the stage, and the Cook + ribbon
+    // sit in the fixed tutor zone (bottom-right). Slate + Check stay one unit via
+    // WordProblem's own .wp-answer-row.
+    body = (
+      <div className="r1-fz r1-fz-words">
+        <div className="r1-fz-wp">
+          <WordProblem
+            story={story}
+            tag="Babushka's kitchen"
+            readAloud={() => say(`Babushka needs ${A_N}/${DEN} plus ${B_N}/${DEN} of a tray. How much in all?`)}
+            speaking={speaking}
+            answerLead="Now write the total"
+            setupLead="First, write the question as a sum"
+            setup={
+              <>
+                <ExpressionSlate
+                  a={setupA} b={setupB}
+                  onChange={onSetupChange}
+                  onSubmit={checkSetup}
+                  denA={DEN} denB={DEN}
+                  disabled={setupOk || solved}
+                  autoFocus={!setupOk && setupA.num === "" ? "a-num" : undefined}
+                  className={badInput && !setupOk ? "is-shake" : ""}
+                />
+                {setupOk
+                  ? <span className="r1-setup-ok">✓ that's the sum — now solve it</span>
+                  : <button type="button" className="wp-check" onClick={checkSetup}>Check the sum</button>}
+              </>
+            }
+            slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
+            values={slate}
+            onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+            layout="fraction"
+            den={DEN}
+            disabled={!setupOk || solved}
+            autoFocusKey={setupOk ? "num" : undefined}
+            onCheck={() => checkSlateStage(false)}
+            checkLabel={solved ? "Next stage ▸" : "Check"}
+            checkDisabled={!setupOk}
+          />
+        </div>
+
+        {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
+        <div className="r1-fz-tutor">
+          <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+          <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+        </div>
+      </div>
     );
   } else {
-    // STAGE 5 · WORDS — a plain-language story; read it, pull the numbers, write
-    // the total. No blocks, no given equation.
+    // STAGE 7 · WORDS — a plain-language story; read it, pull the numbers, write
+    // the total. No blocks, no given equation. The <ExpressionSlate> setup here is
+    // OPTIONAL, ungraded scratch — it NEVER gates the answer (answer stays enabled).
     const story = (
       <>
         Babushka used <b>two sevenths</b> of the oats for the porridge, then poured in{" "}
@@ -686,31 +897,52 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage 
         How much of the oats did she use in all?
       </>
     );
+    // STAGE 7 · DETERMINISTIC FIXED-ZONE LAYOUT — same shape as Stage 6: the
+    // WordProblem (story + optional scratch + answer Slate beside Check) in a fixed
+    // main rectangle, the Cook + ribbon in the fixed tutor zone.
     body = (
-      <div className="play r1-words-play">
-        <WordProblem
-          story={story}
-          tag="Babushka's Recipe"
-          readAloud={() => say("Babushka used two sevenths of the oats, then poured in three sevenths more. The pieces are the same size. How much of the oats did she use in all?")}
-          speaking={speaking}
-          answerLead="Write how much in all"
-          slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
-          values={slate}
-          onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
-          layout="fraction"
-          den={DEN}
-          disabled={solved}
-          autoFocusKey="num"
-          onCheck={() => checkSlateStage(false)}
-          checkLabel={solved ? "Finish ▸" : "Check"}
-        />
-        {CookHud(null)}
+      <div className="r1-fz r1-fz-words">
+        <div className="r1-fz-wp">
+          <WordProblem
+            story={story}
+            tag="Babushka's Recipe"
+            readAloud={() => say("Babushka used two sevenths of the oats, then poured in three sevenths more. The pieces are the same size. How much of the oats did she use in all?")}
+            speaking={speaking}
+            answerLead="Write how much in all"
+            setupLead="Optional — write the question as a sum first"
+            setup={
+              <ExpressionSlate
+                a={scratchA} b={scratchB}
+                onChange={onScratchChange}
+                denA={parseInt(scratchA.den, 10) || undefined}
+                denB={parseInt(scratchB.den, 10) || undefined}
+                disabled={solved}
+                ariaLabel="optional: write the two fractions from the recipe"
+              />
+            }
+            slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
+            values={slate}
+            onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+            layout="fraction"
+            den={DEN}
+            disabled={solved}
+            autoFocusKey="num"
+            onCheck={() => checkSlateStage(false)}
+            checkLabel={solved ? "Finish ▸" : "Check"}
+          />
+        </div>
+
+        {/* ── TUTOR ZONE (fixed rect, bottom-right) ── */}
+        <div className="r1-fz-tutor">
+          <div className="cook-stage"><Cook expr={cook} width={118} /></div>
+          <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="page">
+    <div className="page" data-vox-speaker="cook">
       <div className="foxing" />
       {TopBar}
       {Goal}
@@ -726,8 +958,10 @@ function STAGE_INTRO(n) {
     case 1: return "Two stacks of the same-size pieces. Drag them together to count them up.";
     case 2: return `All one stack now — this whole stack IS the number ${ANSWER}/${DEN}. Write it on the Slate.`;
     case 3: return "The blocks just confirm it now — let the equation lead. Write the top number on the Slate.";
-    case 4: return `Just the numbers: ${A_N}/${DEN} + ${B_N}/${DEN} = ? Write the whole answer on the Slate.`;
-    case 5: return "A story this time — read it, find the two fractions, and write how much in all.";
+    case 4: return "The Workbench — pull blocks from the bin, build the answer out of same-size pieces, then count them up.";
+    case 5: return `Just the numbers: ${A_N}/${DEN} + ${B_N}/${DEN} = ? Write the whole answer on the Slate.`;
+    case 6: return `A question in words, with the fractions shown. Write it as a sum first (${A_N}/${DEN} + ${B_N}/${DEN}), then give the answer.`;
+    case 7: return "A story this time — read it, find the two fractions, and write how much in all.";
     default: return "";
   }
 }

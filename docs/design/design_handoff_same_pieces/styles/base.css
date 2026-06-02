@@ -1,0 +1,91 @@
+/* Shared tokens — Moscow Puzzles */
+:root {
+  /* Two-color palette: warm ink + muted soviet red on cream paper */
+  --paper-1: #ede2c8;       /* light page */
+  --paper-2: #e3d4b1;       /* page shadow / accent */
+  --paper-3: #c9b78d;       /* edge */
+  --ink:     #1c1612;       /* warm black, the printing ink */
+  --ink-soft:#3a2e24;       /* secondary rule */
+  --ink-mute:#6b5a47;       /* annotations / labels */
+  --red:     #a32a22;       /* muted Soviet red */
+  --red-deep:#6e1c16;       /* shadowed red */
+  --red-soft:#c46a5f;       /* tint */
+  --shade:   rgba(28, 22, 18, 0.10);
+
+  --serif:    "Old Standard TT", "EB Garamond", "Cormorant Garamond", Georgia, serif;
+  --display:  "Russo One", "Stardos Stencil", Impact, sans-serif;
+  --stencil:  "Stardos Stencil", Impact, sans-serif;
+  --type:     "Special Elite", "Courier Prime", "Courier New", monospace;
+  --mono:     "JetBrains Mono", "Courier Prime", monospace;
+}
+
+/* Paper texture — subtle layered noise + warm tone */
+.paper {
+  background-color: var(--paper-1);
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(110,28,22,0.04), transparent 60%),
+    radial-gradient(ellipse at 80% 70%, rgba(28,22,18,0.06), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(28,22,18,0.012) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(28,22,18,0.012) 0 1px, transparent 1px 3px);
+}
+.paper-fiber {
+  background-color: var(--paper-1);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.11   0 0 0 0 0.085  0 0 0 0 0.07  0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse at 30% 30%, rgba(163,42,34,0.05), transparent 60%);
+  background-blend-mode: multiply, normal;
+}
+
+/* Foxing — old paper stains */
+.foxing {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 12% 80%, rgba(110,80,40,0.18) 0, transparent 4%),
+    radial-gradient(circle at 88% 14%, rgba(110,80,40,0.16) 0, transparent 3%),
+    radial-gradient(circle at 64% 92%, rgba(110,80,40,0.12) 0, transparent 2.5%),
+    radial-gradient(circle at 8% 18%, rgba(140,90,40,0.14) 0, transparent 3.5%);
+  mix-blend-mode: multiply;
+}
+
+/* Cyrillic-flavored display: emulate by faking with bold geometric latin */
+.cyr-flavor {
+  font-family: var(--display);
+  letter-spacing: 0.04em;
+  font-feature-settings: "case" on, "ss01" on;
+}
+
+/* "Pencil" mark — bezier-perfect rough underline */
+.under-rule {
+  background-image: linear-gradient(var(--ink), var(--ink));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1.5px;
+  padding-bottom: 2px;
+}
+
+/* Stamp box */
+.stamp {
+  display: inline-block;
+  padding: 0.3em 0.6em;
+  border: 2px solid var(--red-deep);
+  color: var(--red-deep);
+  font-family: var(--stencil);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+  background: rgba(237,226,200,0.4);
+}
+
+.no-select { user-select: none; }
+.crisp { image-rendering: crisp-edges; }
+
+/* DC overrides — match paper aesthetic */
+.dc-canvas { background-color: #d9c9a5 !important; }
+
+/* Form/rank labels */
+.coord {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-soft);
+}

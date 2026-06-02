@@ -1,0 +1,26 @@
+{
+  "route": "r5",
+  "steps": [
+    { "waitFor": ".intro-continue" },
+    { "click": ".intro-continue" },
+    { "wait": 500 },
+    { "click": ".intro-continue" },
+    { "waitFor": ".beat-btn" },
+    { "clickNth": { "selector": ".beat-btn", "n": 0 } },
+    { "wait": 400 },
+    { "drag": { "from": ".r5-overflow .r5-block", "to": "#r5-frame" } },
+    { "wait": 300 },
+    { "drag": { "from": ".r5-overflow .r5-block", "to": "#r5-frame" } },
+    { "wait": 300 },
+    { "drag": { "from": ".r5-overflow .r5-block", "to": "#r5-frame" } },
+    { "wait": 300 },
+    { "drag": { "from": ".r5-overflow .r5-block", "to": "#r5-frame" } },
+    { "wait": 300 },
+    { "drag": { "from": ".r5-overflow .r5-block", "to": "#r5-frame" } },
+    { "wait": 300 },
+    { "drag": { "from": ".r5-overflow .r5-block", "to": "#r5-frame" } },
+    { "wait": 300 },
+    { "drag": { "from": ".r5-overflow .r5-block", "to": "#r5-frame" } },
+    { "wait": 800 }
+  ]
+}

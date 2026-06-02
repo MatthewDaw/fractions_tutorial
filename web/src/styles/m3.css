@@ -1,0 +1,284 @@
+/* m3.css — namespaced styles for AppM3's 7-stage Times-Facts arc. Shared
+   lesson.css house classes (.page/.canvas/.hud/.ribbon/.check/.panel/.goal/
+   .topbar …) are reused by reference only; everything here is .m3-* so it never
+   collides. Whole-number food objects: a FIXED neutral kitchen tone for pieces;
+   guard/correct/incorrect via the ROLE_COLORS hues (#2a9d8f / #d1495b), never
+   denomTone. Layout mirrors r1.css's deterministic fixed-zone contract. */
+
+/* ── stage selector strip (reachability: jump to any stage) ───────────────── */
+.m3-stages {
+  display: flex;
+  gap: 8px;
+  margin: 4px 22px 2px;
+  flex-wrap: nowrap;
+  height: 50px;
+  box-sizing: border-box;
+}
+.m3-stage-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border: 1.5px solid var(--paper-3);
+  border-radius: 8px;
+  background: var(--paper-1);
+  color: var(--ink-mute);
+  cursor: pointer;
+  font-family: var(--serif);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.m3-stage-tab:hover { border-color: var(--ink-mute); color: var(--ink); }
+.m3-stage-tab.is-active {
+  border-color: var(--red);
+  background: #fff8ea;
+  color: var(--ink);
+  box-shadow: 0 1px 0 var(--red-deep);
+}
+.m3-stage-tab.is-done .m3-stage-n {
+  background: var(--ink-mute);
+  color: var(--paper-1);
+  border-color: var(--ink-mute);
+}
+.m3-stage-n {
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--paper-3);
+  background: var(--paper-2);
+  font-weight: 700; font-size: 15px; color: var(--ink);
+}
+.m3-stage-tab.is-active .m3-stage-n {
+  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
+}
+.m3-stage-txt { display: flex; flex-direction: column; line-height: 1.1; }
+.m3-stage-name { font-size: 14px; font-weight: 600; }
+.m3-stage-sub { font-size: 11px; opacity: 0.8; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SHARED DETERMINISTIC FIXED-ZONE LAYOUT (.m3-fz*) — the 1280×800 4-zone grid:
+     · .m3-fz-stage   — manipulative / proof zone   top-left  (800×348)
+     · .m3-fz-rail    — hint rail                    top-right (396×348)
+     · .m3-fz-answer  — equation + Slate + Check     bottom-left (800×196)
+     · .m3-fz-tutor   — Cook + speech ribbon         bottom-right (396×196)
+   Every zone is a fixed rectangle with clamped text, so a longer string / a
+   different font can never reflow one zone onto another (mirrors r1.css).
+   ════════════════════════════════════════════════════════════════════════════ */
+.m3-fz { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+
+.m3-fz-stage {
+  position: absolute; left: 0; top: 0;
+  width: 800px; height: 348px;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1);
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 6px 12px;
+}
+.m3-fz-canvas { position: relative; width: 776px; height: 336px; margin: 0 auto; }
+.m3-fz-canvas-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+
+.m3-fz-rail {
+  position: absolute; right: 0; top: 0;
+  width: 396px; height: 348px;
+  box-sizing: border-box;
+  display: flex; flex-direction: column;
+}
+.m3-fz-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
+
+.m3-fz-answer {
+  position: absolute; left: 0; bottom: 0;
+  width: 800px; height: 196px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 18px; row-gap: 2px;
+  padding: 12px 22px;
+}
+.m3-fz-eqrow { grid-column: 1; grid-row: 1 / span 2; display: inline-flex; align-items: center; gap: 16px; }
+.m3-fz-fact { font-family: var(--display); font-size: 46px; color: var(--ink); }
+.m3-fz-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+.m3-fz-slate { display: inline-flex; position: relative; }
+/* a single large whole-number cell for a child's digit */
+.m3-fz-slate .slate-row .slate-cell { width: 110px; height: 80px; }
+.m3-fz-slate .slate-row .slate-committed-digit { font-size: 48px; }
+.m3-fz-slate .slate-row .slate-ph { font-size: 30px; }
+.m3-fz-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
+
+.m3-fz-cap {
+  grid-column: 1; grid-row: 2; align-self: end;
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 360px;
+}
+.m3-fz-marks { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.m3-fz-marks .check { min-width: 150px; height: 56px; }
+
+.m3-fz-tutor {
+  position: absolute; right: 0; bottom: 0;
+  width: 396px; height: 196px;
+  box-sizing: border-box;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.m3-fz-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.m3-fz-tutor .ribbon {
+  margin-left: 0; margin-bottom: 14px; max-width: 168px; flex: 1 1 auto;
+  height: 96px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+}
+
+/* ── hint-rail fact card (the small "what we're building" badge) ──────────── */
+.m3-factcard {
+  margin-top: 14px;
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 10px 14px;
+  border: 1.5px dashed var(--red-soft);
+  border-radius: 8px; background: #fff8ea;
+}
+.m3-factcard-eq { font-family: var(--display); font-size: 28px; color: var(--ink); }
+.m3-factcard-note { font-family: var(--serif); font-size: 12px; color: var(--ink-mute); line-height: 1.2; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SKIPJAR — jar + side scale + scoop (stages 1/2/3)
+   ════════════════════════════════════════════════════════════════════════════ */
+.m3-jarwrap {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 30px;
+}
+.m3-jarwrap.is-ghost { opacity: 0.32; filter: grayscale(0.5); }
+
+.m3-jar { position: relative; width: 150px; }
+.m3-jar-neck { width: 86px; height: 18px; margin: 0 auto; border: 2.5px solid #6b5a3c; border-bottom: none; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.35); }
+.m3-jar-body {
+  position: relative; width: 150px; height: 210px;
+  border: 3px solid #6b5a3c; border-radius: 10px 10px 16px 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4), rgba(220,210,185,0.25));
+  overflow: hidden;
+}
+.m3-jar-fill {
+  position: absolute; left: 0; bottom: 0; width: 100%;
+  border-top: 2px solid;
+  transition: height 0.45s cubic-bezier(0.34,1.2,0.64,1);
+}
+.m3-jar-tally { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.m3-jar-tally-n { font-family: var(--display); font-size: 54px; color: var(--ink); text-shadow: 0 1px 0 rgba(255,250,235,0.9); }
+.m3-jar-tally-cap { font-family: var(--serif); font-size: 12px; color: var(--ink-soft); }
+
+.m3-scale {
+  width: 92px; max-height: 300px; overflow: hidden;
+  display: flex; flex-direction: column-reverse; gap: 4px;
+}
+.m3-scale-empty { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
+.m3-scale-step { display: flex; align-items: baseline; gap: 6px; padding: 2px 6px; border-left: 3px solid var(--red-soft); }
+.m3-scale-step-add { font-family: var(--serif); font-size: 12px; color: var(--ink-mute); }
+.m3-scale-step-tot { font-family: var(--display); font-size: 22px; color: var(--ink); }
+
+.m3-scoopzone { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.m3-scoop {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 16px; border: 2px solid var(--ink); border-radius: 10px;
+  background: var(--paper-1); cursor: pointer; font-family: var(--serif);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.m3-scoop:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 3px 0 var(--red-deep); }
+.m3-scoop:disabled { opacity: 0.45; cursor: default; }
+.m3-scoop-bowl { width: 48px; height: 28px; border: 2px solid; border-radius: 0 0 24px 24px; }
+.m3-scoop-lab { font-size: 14px; font-weight: 600; color: var(--ink); }
+.m3-scoop-count { font-family: var(--serif); font-size: 13px; color: var(--ink-mute); }
+
+/* ── Stage 2 (bind): jar + printed skip-count ribbon ──────────────────────── */
+.m3-bind { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 26px; }
+.m3-ribbon { display: flex; flex-wrap: wrap; max-width: 340px; gap: 8px; align-items: center; }
+.m3-ribbon-term {
+  font-family: var(--display); font-size: 24px; color: var(--ink);
+  padding: 4px 10px; border-radius: 6px; background: #fff8ea; border: 1.5px solid var(--paper-3);
+}
+.m3-ribbon-term.is-blank { color: var(--red); border: 1.5px dashed var(--red); background: transparent; }
+
+/* ── Stage 3 (fade): ghost jar + SkipLine ─────────────────────────────────── */
+.m3-fade { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.m3-fade-jar { position: relative; width: 100%; height: 150px; transform: scale(0.55); transform-origin: center; }
+
+.m3-skipline { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+.m3-skipline.is-ghost { opacity: 0.4; }
+.m3-skipline-track { position: relative; display: flex; align-items: flex-start; justify-content: center; gap: 0; padding-top: 10px; }
+.m3-skipline-rail { position: absolute; left: 8px; right: 8px; top: 16px; height: 3px; background: var(--ink-mute); }
+.m3-skipline-stop { display: flex; flex-direction: column; align-items: center; width: 64px; }
+.m3-skipline-tick { width: 3px; height: 12px; background: var(--ink-mute); }
+.m3-skipline-term {
+  margin-top: 6px; font-family: var(--display); font-size: 22px; color: var(--ink);
+  min-width: 38px; text-align: center; padding: 2px 4px; border-radius: 6px;
+}
+.m3-skipline-term.is-blank { color: var(--red); border: 1.5px dashed var(--red); background: #fff8ea; }
+.m3-skipline-term.is-active { box-shadow: 0 0 0 2px var(--red-soft); }
+.m3-skipline-term.is-correct { color: var(--paper-1); background: #2a9d8f; border-color: #2a9d8f; }
+.m3-skipline-term.is-wrong { color: var(--paper-1); background: #d1495b; border-color: #d1495b; }
+
+.m3-skipline-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.m3-skipline-chips-lead { font-family: var(--serif); font-size: 13px; color: var(--ink-mute); }
+.m3-skipline-chip {
+  font-family: var(--display); font-size: 20px; color: var(--ink);
+  padding: 6px 14px; border: 2px solid var(--ink); border-radius: 8px;
+  background: var(--paper-1); cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+}
+.m3-skipline-chip:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 3px 0 var(--red-deep); }
+
+/* ── Stage 5 (numbers): the bare fact equation ────────────────────────────── */
+.m3-bigeq { display: flex; align-items: center; gap: 22px; }
+.m3-bigeq-term { font-family: var(--display); font-size: 64px; color: var(--ink); }
+.m3-bigeq-op { font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red); }
+.m3-bigeq-q { font-family: var(--display); font-size: 64px; color: var(--red); min-width: 70px; text-align: center; border-bottom: 4px dashed var(--red-soft); }
+.m3-numbers-cap {
+  font-family: var(--serif); font-size: 15px; color: var(--ink-soft); max-width: 540px; text-align: center;
+  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.m3-prompt-dots { display: flex; gap: 8px; }
+.m3-prompt-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink-mute); background: transparent; }
+.m3-prompt-dot.is-active { border-color: var(--red); background: var(--red-soft); }
+.m3-prompt-dot.is-done { border-color: #2a9d8f; background: #2a9d8f; }
+
+/* ── Stages 6/7 · word-problem fixed-zone layout (mirrors r1) ──────────────── */
+.m3-fz-words .m3-fz-wp {
+  position: absolute; left: 0; top: 0;
+  width: 1040px; height: 544px;
+  box-sizing: border-box; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+}
+.m3-fz-words .m3-fz-tutor { width: 220px; height: 196px; }
+.m3-fz-words .wp { gap: 10px; width: 100%; align-items: center; }
+.m3-fz-words .wp-card { padding: 12px 24px 10px; max-width: 760px; }
+.m3-fz-words .wp-card-head { margin-bottom: 8px; }
+.m3-fz-words .wp-story { font-size: 18px; }
+.m3-fz-words .wp-setup { gap: 4px; }
+.m3-fz-words .wp-answer { gap: 6px; }
+.m3-fz-words .wp-answer .slate-row .slate-cell { width: 92px; height: 68px; }
+.m3-fz-words .wp-answer .slate-row .slate-committed-digit { font-size: 42px; }
+.m3-fz-words .wp-answer .slate-row .slate-ph { font-size: 26px; }
+
+/* the Applied setup gate (groups × size) — two single-slot Slates with an × */
+.m3-setup-row { display: inline-flex; align-items: center; gap: 14px; }
+.m3-setup-row .slate-row .slate-cell { width: 58px; height: 54px; }
+.m3-setup-row .slate-row .slate-committed-digit { font-size: 30px; }
+.m3-setup-row .slate-row .slate-ph { font-size: 20px; }
+.m3-setup-op { font-family: var(--display); font-size: 30px; color: var(--ink-mute); }
+.m3-setup-row.is-shake { animation: m3-shake 0.42s; }
+.m3-setup-ok { font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center; }
+
+@keyframes m3-shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m3-stage-tab, .m3-jar-fill, .m3-scoop, .m3-skipline-chip { transition: none; }
+  .m3-setup-row.is-shake { animation: none; }
+}

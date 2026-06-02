@@ -51,9 +51,8 @@ export default function WorldMap({ onOpen, masteryMap = null }) {
       <div className="foxing" />
 
       <div className="world-head">
-        <div className="tag">Babushka's Kitchen · Lesson Map</div>
+        <div className="tag">Lesson Map</div>
         <h1>Babushka's Fractions</h1>
-        <div className="sub">Every recipe leads to a lesson. Pick a room to begin.</div>
       </div>
 
       {/* connecting trails (under the nodes) */}
@@ -79,10 +78,11 @@ export default function WorldMap({ onOpen, masteryMap = null }) {
         onClick={() => onOpen("mom")}
         title="Cook with Babushka — story problems"
       >
+        <div className="kitchen-label">
+          <div className="kitchen-name">{KITCHEN.title}</div>
+          <div className="kitchen-cta">▸ Cook with Babushka</div>
+        </div>
         <div className="kitchen-medallion"><Mom expr="idle" width={94} /></div>
-        <div className="kitchen-name">{KITCHEN.title}</div>
-        <div className="kitchen-sub">{KITCHEN.sub}</div>
-        <div className="kitchen-cta">▸ Cook with Babushka</div>
       </button>
 
       {/* lesson nodes */}
@@ -137,7 +137,7 @@ export default function WorldMap({ onOpen, masteryMap = null }) {
         );
       })}
 
-      <div className="world-foot">Five lessons, in order — start at the kitchen, or pick any room.</div>
+      <div className="world-foot">Eight lessons, in order — start at the kitchen, or pick any room.</div>
     </div>
   );
 }

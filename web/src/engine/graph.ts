@@ -9,11 +9,78 @@ import type { SkillNode } from './types.js';
 // ---------------------------------------------------------------------------
 
 // Room ids verified against web/src/rooms.js:
+//   m1 — Equal Groups (whole-number multiplication: a groups of b)
+//   m2 — Baking Trays / Arrays (rows × columns; commutativity / distributivity)
+//   m3 — Times Facts (skip-count → fluent single-digit recall)
 //   r1 — Same Denominators
 //   r3 — Scale One (Add Unlike, one already fits)
 //   r2 — Cross-Multiply (Add Unlike, neither fits)
 //   r4 — Simplify
 //   r5 — Mixed Numbers (Improper→Mixed)
+
+// ---------------------------------------------------------------------------
+// Multiplication-foundations strand (plan 006) — CANONICAL NODE IDS.
+//
+// The canonical ids are EXACTLY: MULT_EQUAL_GROUPS, MULT_ARRAYS, MULT_FACTS.
+// (The arrays node is `MULT_ARRAYS` — NOT `MULT_ARRAY_AREA` / `MULT_ARRAYS_AREA`.)
+// getNode() throws on an unknown id and prereqsOf maps every prereq through
+// getNode, so any id mismatch crashes the DAG at init. Use these ids only.
+//
+// PREREQ-ORDERING CONSTRAINT (load-bearing — see credit.ts:97):
+//   credit.ts resolveImplicatedPrereq() handles `add_across_unlike` by docking
+//   `bindingNode.prereqs[prereqs.length - 1]` — the LAST prereq. MULT_FACTS is
+//   therefore PREPENDED (never appended) to ADD_UNLIKE_COPRIME.prereqs and
+//   SIMPLIFY.prereqs so the original FRACTION prereq stays LAST and credit.ts
+//   keeps docking the fraction prereq (not multiplication fluency) on a
+//   straight-across fraction error. credit.ts needs NO edit because of this.
+// ---------------------------------------------------------------------------
+
+// Inserted at INDEX 0 of ALL_NODES (front of the DAG). prereqs [] — DAG root.
+const MULT_EQUAL_GROUPS: SkillNode = {
+  id: 'MULT_EQUAL_GROUPS',
+  roomId: 'm1',
+  prereqs: [],
+  scaffold_ladder: [
+    ['equal_groups_visual'],   // L0
+    ['equal_groups_guided'],   // L1
+    ['equal_groups_partial'],  // L2
+    ['equal_groups_bare'],     // L3
+    ['equal_groups_transfer'], // L4
+  ],
+  transfer_forms: ['equal_groups_bare', 'equal_groups_transfer'], // length 2 → TransferProbe legal
+  // bkt_params omitted → global PARAMS.bkt (meaning-level node; fluency tuning lives in MULT_FACTS)
+};
+
+// Inserted at INDEX 1 of ALL_NODES (after MULT_EQUAL_GROUPS, before MULT_FACTS).
+const MULT_ARRAYS: SkillNode = {
+  id: 'MULT_ARRAYS',
+  roomId: 'm2',
+  prereqs: ['MULT_EQUAL_GROUPS'],
+  scaffold_ladder: [
+    ['arrays_visual'],   // L0
+    ['arrays_guided'],   // L1
+    ['arrays_partial'],  // L2
+    ['arrays_bare'],     // L3
+    ['arrays_transfer'], // L4
+  ],
+  transfer_forms: ['arrays_bare', 'arrays_transfer'],
+};
+
+// Inserted at INDEX 2 of ALL_NODES (after MULT_ARRAYS, before ADD_SAME_DEN).
+// The fluency layer: becomes a prereq of ADD_UNLIKE_COPRIME (r2) and SIMPLIFY (r4).
+const MULT_FACTS: SkillNode = {
+  id: 'MULT_FACTS',
+  roomId: 'm3',
+  prereqs: ['MULT_ARRAYS'],
+  scaffold_ladder: [
+    ['facts_visual'],   // L0
+    ['facts_guided'],   // L1
+    ['facts_partial'],  // L2
+    ['facts_bare'],     // L3
+    ['facts_transfer'], // L4
+  ],
+  transfer_forms: ['facts_bare', 'facts_transfer'],
+};
 
 const ADD_SAME_DEN: SkillNode = {
   id: 'ADD_SAME_DEN',
@@ -46,7 +113,9 @@ const ADD_UNLIKE_NESTED: SkillNode = {
 const ADD_UNLIKE_COPRIME: SkillNode = {
   id: 'ADD_UNLIKE_COPRIME',
   roomId: 'r2',
-  prereqs: ['ADD_UNLIKE_NESTED'],
+  // R-B2: MULT_FACTS PREPENDED — fraction prereq (ADD_UNLIKE_NESTED) stays LAST
+  // so credit.ts:97 (prereqs[length-1]) keeps docking the fraction prereq.
+  prereqs: ['MULT_FACTS', 'ADD_UNLIKE_NESTED'],
   scaffold_ladder: [
     ['coprime_visual'],
     ['coprime_guided'],
@@ -60,7 +129,9 @@ const ADD_UNLIKE_COPRIME: SkillNode = {
 const SIMPLIFY: SkillNode = {
   id: 'SIMPLIFY',
   roomId: 'r4',
-  prereqs: ['ADD_UNLIKE_COPRIME'],
+  // R-B2: MULT_FACTS PREPENDED — fraction prereq (ADD_UNLIKE_COPRIME) stays LAST
+  // so credit.ts:97 (prereqs[length-1]) keeps docking the fraction prereq.
+  prereqs: ['MULT_FACTS', 'ADD_UNLIKE_COPRIME'],
   scaffold_ladder: [
     ['simplify_visual'],
     ['simplify_guided'],
@@ -91,6 +162,12 @@ const IMPROPER_TO_MIXED: SkillNode = {
 
 /** All nodes, in topological (teaching) order. */
 const ALL_NODES: readonly SkillNode[] = [
+  // Multiplication foundations (plan 006) — inserted at the FRONT (indices 0–2),
+  // strictly upstream of the fraction strand. Order is load-bearing for
+  // mostUpstreamUnmastered / escalation / suggestedNextRoom (all walk front-to-back).
+  MULT_EQUAL_GROUPS,
+  MULT_ARRAYS,
+  MULT_FACTS,
   ADD_SAME_DEN,
   ADD_UNLIKE_NESTED,
   ADD_UNLIKE_COPRIME,
@@ -148,4 +225,13 @@ export function mostUpstreamUnmastered(
 }
 
 // Export node constants for use by other engine modules.
-export { ADD_SAME_DEN, ADD_UNLIKE_NESTED, ADD_UNLIKE_COPRIME, SIMPLIFY, IMPROPER_TO_MIXED };
+export {
+  MULT_EQUAL_GROUPS,
+  MULT_ARRAYS,
+  MULT_FACTS,
+  ADD_SAME_DEN,
+  ADD_UNLIKE_NESTED,
+  ADD_UNLIKE_COPRIME,
+  SIMPLIFY,
+  IMPROPER_TO_MIXED,
+};

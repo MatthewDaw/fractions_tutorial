@@ -118,8 +118,10 @@ describe('scaffoldMap — toScaffoldLevel', () => {
     expect(level).toBe(0);
   });
 
-  it('maps AppR1 stage 4 (numbers) to design level >= 3', () => {
-    const level = toScaffoldLevel('r1', '4');
+  it('maps AppR1 stage 5 (numbers) to design level >= 3', () => {
+    // r1 is a 7-stage arc: 1 Manipulate, 2 Bind, 3 Fade, 4 Workbench, 5 Numbers,
+    // 6 Applied, 7 Words. Numbers is stage 5 (stage 4 = Workbench = L1).
+    const level = toScaffoldLevel('r1', '5');
     expect(level).toBeGreaterThanOrEqual(3);
   });
 
@@ -128,8 +130,9 @@ describe('scaffoldMap — toScaffoldLevel', () => {
     expect(level).toBe(0);
   });
 
-  it('maps AppR1 stage 5 (words) to 4', () => {
-    const level = toScaffoldLevel('r1', '5');
+  it('maps AppR1 stage 7 (words) to 4', () => {
+    // Words is the final stage (7) in the 7-stage r1 arc.
+    const level = toScaffoldLevel('r1', '7');
     expect(level).toBe(4);
   });
 
