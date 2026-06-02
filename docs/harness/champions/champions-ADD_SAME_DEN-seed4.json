@@ -1,0 +1,20 @@
+[
+  {
+    "id": "champion-0:cli-champ-0",
+    "source": "search",
+    "skillId": "ADD_SAME_DEN",
+    "latent": {
+      "truePknownDefault": 0.2920359708967041,
+      "learnRate": 0,
+      "pSlip": 0.10665166539734063,
+      "pGuess": 0.23960581005473972,
+      "misconceptionStrength": 0.5722514057501497,
+      "hintAppetite": 0.10367265584930474
+    },
+    "seed": 4,
+    "flip": true,
+    "flipKind": "falseMastery",
+    "distance": 0.18506328671616598,
+    "tauLatent": 0.8
+  }
+]

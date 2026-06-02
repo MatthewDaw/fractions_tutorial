@@ -141,6 +141,37 @@ function plantWrong(skillId, problem, latent, rng) {
   return inverseAnswer(skillId, m, problem);
 }
 
+/**
+ * Fluency-spoof law (NON-BKT): correctness is DECOUPLED from the latent skill — the
+ * child is reliably correct out of memorized/lucky surface fluency, yet NEVER learns,
+ * so true competence stays pinned BELOW mastery. Answers are in-band (≥800ms so the
+ * runner counts them as clean corrects) and hint-free, so the engine climbs the
+ * scaffold and opens the gate on a child who has NOT mastered — a false-mastery
+ * adversary. The sealed judge MUST carry at least one such defect: a held-out family
+ * the engine handles perfectly (fm≡0) can never certify a false-mastery fix, because
+ * an already-zero rate cannot be improved. This is the held-out fm signal (review A3:
+ * non-BKT form preserved — correctness is not a BKT posterior).
+ */
+function fluencySpoofEmit() {
+  return function emit(problem, ctx, env) {
+    const { latent } = env;
+    const rng = ctx.rng;
+    // 90% correct regardless of latent (no learning update → latent stays < τ).
+    const correct = chance(rng, 0.9) ? true : chance(rng, latent.pGuess);
+    const answer = correct
+      ? correctAnswerValue(problem)
+      : plantWrong(ctx.skillId, problem, latent, rng);
+    return {
+      answer,
+      latencyMs: Math.round(1500 + rng() * 1500), // in-band (≥800ms), hint-free
+      hintRung: 0,
+      selfCorrections: 0,
+      modality: latent.modality || 'tap',
+      signals: [],
+    };
+  };
+}
+
 function clamp01(x) {
   return x < 0 ? 0 : x > 1 ? 1 : x;
 }
@@ -213,6 +244,31 @@ export function heldOutFamily() {
       meta: {
         approximates: 'an attention-bimodal child (two latent modes, NOT a single BKT posterior)',
         mightMiss: 'gradual within-session drift between the two modes',
+      },
+    }));
+  }
+
+  // fluency-spoofer member — reliably correct yet shallow (latent PINNED < τ), so the
+  // engine false-masters it. This is the held-out family's false-mastery signal: the
+  // sealed judge needs a real defect to certify any fm fix (a defect-free held-out set
+  // can't measure improvement). NON-BKT (correctness decoupled from a BKT posterior)
+  // and latent-disjoint from train (drawn learnRate/pSlip exceed the train maxima).
+  {
+    const rng = personaRng('heldout-lineage:fluency', 9000, 2);
+    const latent = drawLatent(rng, HELDOUT_RANGES, {
+      misconception: 'add_across_unlike',
+      // override the drawn truePknownDefault to GUARANTEE it sits below τ=0.8 (still
+      // within the held-out [0.62,0.9] range, so disjoint from train [0.25,0.6]).
+      truePknownDefault: 0.7,
+    });
+    out.push(makePersona({
+      id: 'fam-held-fluency-spoofer',
+      klass: 'heldout:fluency-spoofer-nonbkt',
+      latent,
+      emit: fluencySpoofEmit(),
+      meta: {
+        approximates: 'a fluent-but-shallow child (reliably correct, never truly masters)',
+        mightMiss: 'a child whose surface fluency genuinely reflects mastery (we pin latent < τ)',
       },
     }));
   }

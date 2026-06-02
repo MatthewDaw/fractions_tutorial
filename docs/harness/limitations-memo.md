@@ -1,0 +1,58 @@
+# Limitations memo
+
+Every line below is grounded in a tape field or flagged "(not observable)".
+
+- Affect (focus, frustration, motivation) is NOT measured. Attention/energy is approximated only through latency drift, idle signals, oscillation, and error climb.
+  - _grounding_: tape: steps[].observation.latency / self_corrections (no affect field exists)
+- The engine's "disengaged" escalation trigger is UNREACHABLE on this path: the runner mirrors the live empty recentBehavior channel (disengagedCount never increments), so off-task escalation is modeled via the STUCK trigger only.
+  - _grounding_: tape: steps[].decision.kind (no EscalateToHuman on off-task tapes)
+- Results characterize the ENGINE PATH. The live scripted-stage runtime advances on a single correct and underuses this engine, so a certified engine-path win is not yet a certified child-experience win (002 scripted→engine rewiring is out of scope).
+  - _grounding_: (not observable) scripted-stage path is a React hook, characterized read-only (not driven here)
+- Persona realism was NOT externally checked: the blind LLM discriminator requires the /api proxy + a real-error corpus, absent in this run. Realism is asserted, not earned.
+  - _grounding_: (not observable) quarantine/llmDiscriminator (opt-in; never feeds the loop)
+- Long-horizon retention across sessions is NOT modeled: the retention_probe path is dead, so forgetting is only visible within a session as oscillatory competence.
+  - _grounding_: tape: steps[].latent (within-session only; no cross-session interval)
+- "Agreement with the human audit" is agreement between two artifacts of the SAME reasoning. The sealed held-out family controls for seed/surface overfit, NOT for a systematic error shared by the author, the held-out personas, and 002's fix.
+  - _grounding_: (not observable) personas/families.js (held-out is non-BKT + disjoint, but same designer)
+- Persona "anxious-low-energy" might miss: recovery after reassurance (no affect-repair channel).
+  - _grounding_: tape: persona_latents of tapes with persona_id="anxious-low-energy"
+- Persona "bimodal" might miss: difficulty that is not captured by level alone.
+  - _grounding_: tape: persona_latents of tapes with persona_id="bimodal"
+- Persona "confident-guesser" might miss: guesser who also reads hints (we keep appetite low).
+  - _grounding_: tape: persona_latents of tapes with persona_id="confident-guesser"
+- Persona "denominator-transfer-spoofer" might miss: whether surface_form (the real fix) defeats the spoof — the AUDIT.
+  - _grounding_: tape: persona_latents of tapes with persona_id="denominator-transfer-spoofer"
+- Persona "fam-held-bimodal" might miss: gradual within-session drift between the two modes.
+  - _grounding_: tape: persona_latents of tapes with persona_id="fam-held-bimodal"
+- Persona "fam-held-fluency-spoofer" might miss: a child whose surface fluency genuinely reflects mastery (we pin latent < τ).
+  - _grounding_: tape: persona_latents of tapes with persona_id="fam-held-fluency-spoofer"
+- Persona "fam-held-osc" might miss: true retention-interval forgetting (period is synthetic, not time-based).
+  - _grounding_: tape: persona_latents of tapes with persona_id="fam-held-osc"
+- Persona "fam-train-a" might miss: sudden affect swings; non-monotone forgetting.
+  - _grounding_: tape: persona_latents of tapes with persona_id="fam-train-a"
+- Persona "fam-train-b" might miss: sudden affect swings; non-monotone forgetting.
+  - _grounding_: tape: persona_latents of tapes with persona_id="fam-train-b"
+- Persona "fam-train-c" might miss: sudden affect swings; non-monotone forgetting.
+  - _grounding_: tape: persona_latents of tapes with persona_id="fam-train-c"
+- Persona "fast-mastery" might miss: plateau/ceiling effects on the hardest transfer forms.
+  - _grounding_: tape: persona_latents of tapes with persona_id="fast-mastery"
+- Persona "fast-shallow-guesser" might miss: whether too_fast_correct + a transfer probe catches it — the AUDIT.
+  - _grounding_: tape: persona_latents of tapes with persona_id="fast-shallow-guesser"
+- Persona "low-reading" might miss: reading growth over time (modality is fixed).
+  - _grounding_: tape: persona_latents of tapes with persona_id="low-reading"
+- Persona "memorizer" might miss: partial transfer (we make the off-form near-deterministic fail).
+  - _grounding_: tape: persona_latents of tapes with persona_id="memorizer"
+- Persona "misconception-stable" might miss: misconception that decays once confronted.
+  - _grounding_: tape: persona_latents of tapes with persona_id="misconception-stable"
+- Persona "off-task" might miss: partial engagement (we model full refusal).
+  - _grounding_: tape: persona_latents of tapes with persona_id="off-task"
+- Persona "oscillator" might miss: time-based (not attempt-based) forgetting.
+  - _grounding_: tape: persona_latents of tapes with persona_id="oscillator"
+- Persona "over-hinter" might miss: hint-then-internalize (our appetite stays high).
+  - _grounding_: tape: persona_latents of tapes with persona_id="over-hinter"
+- Persona "same-answer-memorizer" might miss: whether problem_id (the real fix) defeats the spoof — that is the AUDIT.
+  - _grounding_: tape: persona_latents of tapes with persona_id="same-answer-memorizer"
+- Persona "short-attention" might miss: second-wind recovery after a break.
+  - _grounding_: tape: persona_latents of tapes with persona_id="short-attention"
+- Persona "slow-but-steady" might miss: giving up before mastery (we keep grinding).
+  - _grounding_: tape: persona_latents of tapes with persona_id="slow-but-steady"
