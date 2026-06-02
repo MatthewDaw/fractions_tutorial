@@ -32,7 +32,7 @@ function statusMeta(status) {
   switch (status) {
     case 'mastered':      return { cls: 'mastered',     label: 'Mastered' };
     case 'in-progress':   return { cls: 'in-progress',  label: 'In progress' };
-    case 'needs-review':  return { cls: 'needs-review', label: 'Review' };
+    case 'needs-review':  return { cls: 'needs-review', label: 'Cook again' };
     case 'not-started':
     default:              return { cls: 'not-started',  label: null };
   }

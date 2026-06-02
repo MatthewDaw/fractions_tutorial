@@ -21,6 +21,8 @@ import { segment } from './observation.js';
 import { assignCredit } from './credit.js';
 import { coldStart, bktUpdate } from './bkt.js';
 import { buildMasteryEstimate } from './mastery.js';
+import { isMastered } from './gate.js';
+import { applyProbeResult } from './decay.js';
 import { allNodes } from './graph.js';
 import { PARAMS } from './params.js';
 import type { SkillNode } from './types.js';
@@ -133,6 +135,10 @@ export function measurementReduce(
   // problem_present event.
 
   const nodeIdSequence = extractNodeIdSequence(log);
+  const judgedTs = extractJudgedTimestamps(log);
+  // Timestamp at which each node FIRST became mastered (persists across a later
+  // demoting probe). Derived from logged judged timestamps — replay-stable.
+  const masteredAt = new Map<string, number>();
   // nodeIdSequence[i] = the node_id for the i-th Observation (same index).
   // If no node_id is found, default to the first node (ADD_SAME_DEN) as a
   // conservative fallback — the credit will be weakly mis-assigned but the
@@ -181,6 +187,16 @@ export function measurementReduce(
         nodeAcc.observations.push(obs);
       }
     }
+
+    // Record when the binding node FIRST crosses the mastery gate (once). Used to
+    // schedule retention probes and to mark a later-lapsed node as needs-review.
+    if (!masteredAt.has(nodeId)) {
+      const bindingAcc = acc.get(nodeId);
+      if (bindingAcc) {
+        const checkEst = buildMasteryEstimate(bindingAcc.observations, bindingAcc.P_known);
+        if (isMastered(checkEst)) masteredAt.set(nodeId, judgedTs[i] ?? now);
+      }
+    }
   }
 
   // ---- [4] Assemble MasteryEstimate for each node ----
@@ -190,7 +206,8 @@ export function measurementReduce(
     mastery[node.id] = buildMasteryEstimate(
       nodeAcc.observations,
       nodeAcc.P_known,
-      nodeAcc.lastRetentionProbe
+      nodeAcc.lastRetentionProbe,
+      masteredAt.get(node.id) ?? null
     );
   }
 
@@ -202,7 +219,7 @@ export function measurementReduce(
   // Probe timestamps are stored in the log via 'retention_probe' events.
   // We scan for those and update the lastRetentionProbe in the accumulators.
   // The final mastery estimates are rebuilt with those timestamps.
-  applyRetentionProbeTimestamps(log, acc, mastery);
+  applyRetentionProbes(log, acc, mastery);
 
   return { mastery };
 }
@@ -242,12 +259,32 @@ function extractNodeIdSequence(log: readonly Event[]): string[] {
 }
 
 /**
- * Scan the log for 'retention_probe' events and update last_retention_probe
- * in the final mastery estimates.
- *
- * A retention_probe event has payload: { node_id: string, t: number }.
+ * The judged-event timestamp for each attempt (problem_present → judged span), in
+ * observation order. Aligned by index with extractNodeIdSequence so the fold can
+ * stamp the moment a node became mastered.
  */
-function applyRetentionProbeTimestamps(
+function extractJudgedTimestamps(log: readonly Event[]): number[] {
+  const ts: number[] = [];
+  let inAttempt = false;
+  for (const ev of log) {
+    if ('confidence' in ev) continue; // Signal
+    if (ev.type === 'problem_present') inAttempt = true;
+    else if (ev.type === 'judged' && inAttempt) { ts.push(ev.t); inAttempt = false; }
+  }
+  return ts;
+}
+
+/**
+ * Fold 'retention_probe' events into the final mastery estimates, applying each
+ * probe's RESULT (not just its timestamp): a pass stamps last_retention_probe; a
+ * fail additionally clears transfer_passed and drops P_known below the gate,
+ * re-opening the node (decay.applyProbeResult).
+ *
+ * Payload: { node_id: string, probe_t?: number, correct?: boolean }.
+ * Back-compat: an event with no explicit `correct` is treated as a pass, so older
+ * timestamp-only probe events never demote.
+ */
+function applyRetentionProbes(
   log: readonly Event[],
   acc: Map<string, NodeAccumulator>,
   mastery: Record<string, MasteryEstimate>
@@ -260,14 +297,12 @@ function applyRetentionProbeTimestamps(
     if (!nodeId) continue;
 
     const probeT = typeof ev.payload['probe_t'] === 'number' ? ev.payload['probe_t'] : ev.t;
+    const correct = typeof ev.payload['correct'] === 'boolean' ? ev.payload['correct'] : true;
     const nodeAcc = acc.get(nodeId);
-    if (nodeAcc) {
+    const est = mastery[nodeId];
+    if (nodeAcc && est) {
       nodeAcc.lastRetentionProbe = probeT;
-      // Rebuild the estimate with the updated probe timestamp.
-      const est = mastery[nodeId];
-      if (est) {
-        mastery[nodeId] = { ...est, last_retention_probe: probeT };
-      }
+      mastery[nodeId] = applyProbeResult(est, { correct, now: probeT });
     }
   }
 }

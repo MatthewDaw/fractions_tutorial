@@ -34,7 +34,8 @@ import {
 export function buildMasteryEstimate(
   observations: readonly Observation[],
   P_known: number,
-  lastRetentionProbe: number | null = null
+  lastRetentionProbe: number | null = null,
+  masteredAt: number | null = null
 ): MasteryEstimate {
   // Compute each dimension independently — AFFECT FIREWALL: we never touch
   // affect_window or any Signal-derived field. Each dimension reads only
@@ -71,6 +72,7 @@ export function buildMasteryEstimate(
     transfer_passed,
     hint_dependence,
     last_retention_probe: lastRetentionProbe,
+    mastered_at: masteredAt,
   };
 }
 

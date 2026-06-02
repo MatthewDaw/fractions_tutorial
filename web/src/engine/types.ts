@@ -130,6 +130,13 @@ export interface MasteryEstimate {
    * has fired. Injected by the caller — never read from wall-clock inside the engine.
    */
   last_retention_probe: number | null;
+  /**
+   * Timestamp (ms epoch) at which this node FIRST satisfied the mastery gate, or
+   * null if never mastered. Persists across a later demoting retention probe, so a
+   * lapsed node still reads as "was mastered" (needs-review). Derived in the reduce
+   * from logged judged timestamps — never wall-clock.
+   */
+  mastered_at: number | null;
 }
 
 // ---------------------------------------------------------------------------

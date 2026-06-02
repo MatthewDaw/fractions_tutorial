@@ -70,7 +70,9 @@
 .wtag.suggested { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
 .wtag.mastered { background: rgba(60,120,60,0.16); color: #2f5d2f; border-color: #2f5d2f; }
 .wtag.in-progress { background: rgba(163,42,34,0.10); color: var(--red); border-color: var(--red); }
-.wtag.needs-review { background: rgba(163,42,34,0.10); color: var(--red-deep); border-color: var(--red-deep); }
+/* U7: warm-toned "Cook again" — a demoted (lapsed) skill reads as an invitation
+   back to the kitchen, not a red failure stamp. */
+.wtag.needs-review { background: rgba(196,140,46,0.16); color: #8a5a16; border-color: #b8862f; }
 .wcard--suggested { box-shadow: 4px 4px 0 rgba(28,22,18,0.22), 0 0 0 2px var(--red) inset; }
 
 /* shelf nodes — the map's top level (one per strand). Centre-anchored like the

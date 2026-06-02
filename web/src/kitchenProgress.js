@@ -119,11 +119,11 @@ export function masteryStatusFor(nodeId, masteryMap) {
   // Gate-derived mastery.
   if (isMastered(est)) return 'mastered';
 
-  // Needs-review: was mastered (high prior) but transfer_passed was cleared by
-  // decay and P_known has dropped below the gate threshold.  We detect this
-  // heuristically: the node has some evidence (P_known elevated by prior) AND
-  // a last_retention_probe is set AND it is no longer mastered.
-  if (est.last_retention_probe !== null && est.P_known >= 0.50) {
+  // Needs-review is RESULT-AWARE: a node that was once mastered (mastered_at set)
+  // but is no longer mastered has lapsed — a failed retention probe demoted it.
+  // A *passed* probe leaves the node mastered (handled above), so this never
+  // false-flags the way the old "a probe fired" heuristic did.
+  if (est.mastered_at != null) {
     return 'needs-review';
   }
 
