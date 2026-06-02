@@ -30,7 +30,7 @@ import { PARAMS } from './params.js';
  */
 export function isMastered(
   est: MasteryEstimate,
-  fluencyHardMode = false
+  fluencyHardMode = PARAMS.fluencyHardMode
 ): boolean {
   // Condition 1 — BKT accuracy
   if (est.P_known < PARAMS.gateThreshold) return false;
@@ -61,7 +61,7 @@ export function isMastered(
  */
 export function gateConditions(
   est: MasteryEstimate,
-  fluencyHardMode = false
+  fluencyHardMode = PARAMS.fluencyHardMode
 ): {
   accuracyOk: boolean;
   independenceOk: boolean;

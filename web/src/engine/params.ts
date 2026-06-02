@@ -55,6 +55,13 @@ export interface EngineParams {
    * flagged too_fast_correct → forces a transfer probe (false-positive guard, KTD3).
    */
   latencyFloorMs: number;
+  /**
+   * When true, fluency (speed) becomes a HARD gate conjunct. Default false
+   * (soft/advisory) until age-band latency targets are calibrated (KTD2, reversible).
+   */
+  fluencyHardMode: boolean;
+  /** Latency ceiling (ms) used by fluencyOk when fluencyHardMode is on. Lenient default. */
+  fluencyLatencyTargetMs: number;
   /** Escalation trigger thresholds. */
   escalation: EscalationParams;
 }
@@ -76,6 +83,8 @@ export const PARAMS: EngineParams = {
   fluencyMinN: 5,
   creditDiscount: 0.3,
   latencyFloorMs: 1200,
+  fluencyHardMode: false,
+  fluencyLatencyTargetMs: 15_000,
   escalation: {
     nStuck: 6,
     nDiseng: 5,

@@ -34,7 +34,10 @@ import {
 } from '../engine/index.js';
 import { measurementReduce } from '../engine/measurementReduce.js';
 import { nextDecision } from '../engine/policy.js';
+import { PARAMS } from '../engine/params.js';
 import { toScaffoldLevel } from './scaffoldMap.js';
+import { publishDecision } from './engineStore.js';
+import { checkTooFastCorrect, makeTier2Window } from './tier2.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -140,6 +143,10 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
   // Track problem-present timestamp for latency calculation.
   const presentTimestampRef = useRef(null);
 
+  // Tier-2 window: one per attempt; reset on each problem_present. Keeps nudges
+  // idempotent (each fires at most once per attempt).
+  const tier2WindowRef = useRef(makeTier2Window());
+
   // ---- emit ----------------------------------------------------------------
   /**
    * Stamp t (browser clock — allowed in the React layer) + actor:"human" onto
@@ -159,6 +166,30 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
     // Special handling: track problem_present timestamp for latency.
     if (stamped.type === 'problem_present') {
       presentTimestampRef.current = stamped.t;
+      // New attempt → fresh Tier-2 nudge window (pause/oscillation/too-fast all
+      // re-arm so each can fire once for this problem).
+      tier2WindowRef.current = makeTier2Window();
+      // Keep the policy's scaffold in sync with the lesson's actual stage. The
+      // lesson can change scaffold by means the engine didn't decide — a manual
+      // stage-tab click, or its own advance-on-correct — and problem_present
+      // carries that stage's design level. Without this the policy stays stuck at
+      // the entry level (L0), so RaiseScaffold never becomes legal and rationales
+      // misreport the level. (Measurement reads scaffold from present already; this
+      // aligns the *policy* state too.)
+      const lvl = stamped.payload?.scaffold_level;
+      if (typeof lvl === 'number') {
+        // NOTE on consecutiveErrors: it is intentionally NOT reset here on a
+        // scaffold change. In these lessons the stages ARE the scaffold ladder,
+        // and the engine's cross-stage signals (a clean-correct streak that fades
+        // support, an error run that raises it) are meant to span stages. Resetting
+        // the per-segment counters on every stage hop would defeat both. The
+        // counters reset only on a correct answer (errors) / an error or
+        // out-of-band correct (clean streak), in _updatePolicyState. So a
+        // RaiseScaffold rationale reflects the running consecutive-error count
+        // across the session — truthful, not a double-count (verified: one wrong
+        // submit increments exactly once).
+        policyStateRef.current.currentScaffold = lvl;
+      }
     }
 
     logRef.current = appendEvent(logRef.current, stamped);
@@ -207,6 +238,7 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
       hintMaxRung = 0,
       selfCorrections = 0,
       surfaceForm = 'default',
+      problemId = null,
       nodeIdOverride = null,
     } = meta || {};
 
@@ -230,6 +262,7 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
         hint_max_rung: hintMaxRung,
         self_corrections: selfCorrections,
         surface_form: surfaceForm,
+        problem_id: problemId,
         recognizer_confidence: recognizerConfidence,
       },
       modality: answerModality,
@@ -253,6 +286,7 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
         modality: answerModality,
         recognizer_confidence: recognizerConfidence,
         surface_form: surfaceForm,
+        problem_id: problemId,
         too_fast_correct: _isTooFastCorrect(correct, latency),
         affect_window: [],
       },
@@ -284,6 +318,21 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
       currentScaffold,
     });
 
+    // ---- Tier-2: too-fast-correct → queue a TransferProbe (false-positive guard).
+    // A correct answer below the plausible-compute floor is the brief's
+    // "guessing / pattern-matching / UI did the reasoning" risk. tier2 flags it;
+    // we set pendingTransferProbe so nextDecision (step 5) responds with a probe
+    // instead of fading support on what may be a fluke. Runs AFTER
+    // _updatePolicyState (which clears the flag on any correct) so it wins.
+    const tooFast = _isTooFastCorrect(correct, latency);
+    const tooFastNudge = checkTooFastCorrect(
+      { too_fast_correct: tooFast },
+      tier2WindowRef.current
+    );
+    if (tooFastNudge) {
+      policyStateRef.current.pendingTransferProbe = true;
+    }
+
     // Update pKnownHistory with the actual reduced P_known value for this node.
     const nodeEst = reduceResult.mastery[effectiveNodeId];
     if (nodeEst) {
@@ -312,6 +361,11 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
 
     // Apply the decision to React state.
     setDecision(dec);
+
+    // Publish to the global store so the always-mounted RationaleBanner shows
+    // the "why", and the MasteryInspector sees the live map + decision log +
+    // counter-metrics — without threading props through every lesson (KTD8, R18).
+    publishDecision(dec, reduceResult.mastery, now);
 
     // Update scaffoldLevel if the decision changes it.
     if (dec.kind === 'FadeScaffold') {
@@ -363,7 +417,7 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
  */
 function _updatePolicyState(policyState, { correct, hintMaxRung, latency, currentScaffold }) {
   const hintFree = hintMaxRung === 0;
-  const inBandLatency = latency >= 800 && latency <= 30000;
+  const inBandLatency = latency >= PARAMS.latencyFloorMs && latency <= 30000;
 
   if (correct) {
     policyState.consecutiveErrors = 0;
@@ -397,9 +451,11 @@ function _updatePolicyState(policyState, { correct, hintMaxRung, latency, curren
 
 /**
  * Flag a correct answer that came in suspiciously fast (below plausible-compute
- * latency floor of 800ms). This is a false-positive guard that triggers a
- * transfer probe at the next boundary.
+ * latency floor PARAMS.latencyFloorMs). This is a false-positive guard that triggers a
+ * transfer probe at the next boundary. Unified onto PARAMS.latencyFloorMs (U1) so
+ * too-fast detection, transfer in-band, and clean-correct in-band share one constant —
+ * no [800,1200) dead zone where a correct counts toward neither.
  */
 function _isTooFastCorrect(correct, latency) {
-  return correct && latency < 800;
+  return correct && latency < PARAMS.latencyFloorMs;
 }

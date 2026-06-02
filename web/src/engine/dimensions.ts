@@ -48,10 +48,8 @@ function linearSlope(values: number[]): number {
 // A config switch in fluencyOk() can flip it to hard once calibrated.
 // ---------------------------------------------------------------------------
 
-/** Nominal per-level latency ceilings (ms). Uncalibrated; used for soft advisory only. */
-const AGE_BAND_MS = 15_000; // 15 s — generous uncalibrated ceiling
 /** Latency slope threshold (ms per attempt): slope ≤ ε means not deteriorating. */
-const SLOPE_EPS = 500;
+const SLOPE_EPS = 500; // future tunable; not yet a PARAMS field
 
 /**
  * Compute fluency statistics over the last N correct observations.
@@ -86,7 +84,7 @@ export function computeFluency(observations: readonly Observation[]): FluencySta
  */
 export function fluencyOk(
   stats: FluencyStats,
-  hardMode = false
+  hardMode = PARAMS.fluencyHardMode
 ): boolean {
   if (!hardMode) {
     // Soft/advisory — always passes pre-calibration.
@@ -96,7 +94,7 @@ export function fluencyOk(
     // Not enough data — do not block (insufficient evidence).
     return true;
   }
-  return stats.median_latency <= AGE_BAND_MS && stats.slope <= SLOPE_EPS;
+  return stats.median_latency <= PARAMS.fluencyLatencyTargetMs && stats.slope <= SLOPE_EPS;
 }
 
 // ---------------------------------------------------------------------------

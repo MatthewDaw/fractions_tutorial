@@ -80,6 +80,14 @@ export interface Observation {
    */
   too_fast_correct: boolean;
   /**
+   * Stable problem identifier for this attempt (emitted by the generator/runtime
+   * seam). Used by isIndependent for true structural distinctness instead of the
+   * answer_value proxy. Optional so pre-seam observations still typecheck.
+   */
+  problem_id?: string;
+  /** Structural surface-form key for this attempt (transfer distinctness). Optional. */
+  surface_form?: string;
+  /**
    * Affect window stub — always an empty array now; will carry MediaPipe face landmark
    * signals when the on-device camera is integrated.
    */

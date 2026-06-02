@@ -265,10 +265,15 @@ export function segment(log: readonly Event[]): Observation[] {
     const correct = judgedAction.payload['correct'] === true;
     const rawAnswerNum = judgedAction.payload['answer_num'];
     const rawAnswerDen = judgedAction.payload['answer_den'];
+    const rawAnswerValue = judgedAction.payload['answer_value'];
     const answer_value: [number, number] | null =
       typeof rawAnswerNum === 'number' && typeof rawAnswerDen === 'number'
         ? [rawAnswerNum, rawAnswerDen]
-        : null;
+        : Array.isArray(rawAnswerValue) &&
+          typeof rawAnswerValue[0] === 'number' &&
+          typeof rawAnswerValue[1] === 'number'
+          ? [rawAnswerValue[0], rawAnswerValue[1]]
+          : null;
 
     // --- error_signature ---
     let error_signature: ErrorSignature = null;
@@ -302,6 +307,16 @@ export function segment(log: readonly Event[]): Observation[] {
     // --- too_fast_correct ---
     const too_fast_correct = correct && latency < PARAMS.latencyFloorMs;
 
+    // --- problem_id + surface_form (emission seam; judged payload first, then present) ---
+    const jPid = judgedAction.payload['problem_id'];
+    const pPid = presentAction.payload['problem_id'];
+    const problem_id: string | undefined =
+      typeof jPid === 'string' ? jPid : typeof pPid === 'string' ? pPid : undefined;
+    const jSf = judgedAction.payload['surface_form'];
+    const pSf = presentAction.payload['surface_form'];
+    const surface_form: string | undefined =
+      typeof jSf === 'string' ? jSf : typeof pSf === 'string' ? pSf : undefined;
+
     // --- affect_window: typed stub, always empty (seam for the camera) ---
     const affect_window: readonly never[] = [];
 
@@ -316,6 +331,8 @@ export function segment(log: readonly Event[]): Observation[] {
       modality,
       recognizer_confidence,
       too_fast_correct,
+      problem_id,
+      surface_form,
       affect_window,
     });
   }
