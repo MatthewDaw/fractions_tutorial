@@ -34,6 +34,7 @@ import {
 } from '../engine/index.js';
 import { measurementReduce } from '../engine/measurementReduce.js';
 import { nextDecision } from '../engine/policy.js';
+import { isMastered } from '../engine/gate.js';
 import { PARAMS } from '../engine/params.js';
 import { toScaffoldLevel } from './scaffoldMap.js';
 import { publishDecision } from './engineStore.js';
@@ -146,6 +147,12 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
   // Tier-2 window: one per attempt; reset on each problem_present. Keeps nudges
   // idempotent (each fires at most once per attempt).
   const tier2WindowRef = useRef(makeTier2Window());
+
+  // U2: synchronous certification result for the current node, computed at the
+  // last submit boundary. A ref (not React state) so applyEngineDecision — which
+  // runs synchronously right after judgeAndAdvance inside award() — reads the
+  // FRESH value, not the stale masteryCache.
+  const certifiedRef = useRef(false);
 
   // ---- emit ----------------------------------------------------------------
   /**
@@ -341,6 +348,12 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
       policyStateRef.current.pKnownHistory = [...trimmed, nodeEst.P_known];
     }
 
+    // U2: certification = the full mastery gate on the freshly-reduced estimate.
+    // Reuses the SAME fold already computed for nextDecision (no extra reduce, no
+    // extra nextDecision call — the R16 boundary-once rule is untouched).
+    // isMastered defaults fluencyHardMode from PARAMS (U1).
+    certifiedRef.current = !!(nodeEst && isMastered(nodeEst));
+
     // Build recent behavior buffer.
     // (We keep the last 10 observations for the current node.)
     // The reduce result segmented from the full log contains all observations,
@@ -402,6 +415,9 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
     decision,
     rationale: decision?.rationale ?? '',
     masteryFor,
+    // U2: synchronous getter for the latest certification result (ref-backed so
+    // it reflects the value computed at the last submit boundary).
+    isCertified: useCallback(() => certifiedRef.current, []),
   };
 }
 

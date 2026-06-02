@@ -33,6 +33,20 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useLessonEngine } from "./useLessonEngine.js";
 import { toScaffoldLevel } from "./scaffoldMap.js";
 import { useVoice } from "../voice.js";
+import { makeTier2Window, checkLongPause, checkOscillation } from "./tier2.js";
+import { publishNudge } from "./engineStore.js";
+import { generateFor, hasGenerator } from "../generators/index.js";
+import { otherSurfaceForm } from "./practiceFlow.js";
+
+// Friendly learner-facing copy for each Tier-2 nudge type. Nudges are gentle and
+// never restructure the workspace (state-model §6/§7) — they only prompt.
+const NUDGE_TEXT = {
+  HINT_OFFER: "Take a look at the picture — drag a piece to try it out.",
+  TAKE_YOUR_TIME: "No rush — take your time and look closely.",
+};
+
+/** How often the idle watcher checks for a long pause (ms). */
+const TIER2_TICK_MS = 1500;
 
 const normStatus = (s) => (typeof s === "string" ? { tone: "normal", text: s } : s);
 
@@ -55,9 +69,35 @@ export function useLessonScaffold({
   // Partial adopters (LessonUnlikeDen) keep their own beat navigation, which
   // emits problem_present itself — set false so the hook does not double-fire it.
   emitMountPresent = true,
+  // ---- Generated-practice mode (opt-in; backward compatible) ----------------
+  // generatedStages: which stages serve AUTO-GENERATED variations instead of a
+  //   fixed example — `true` (all), an array of stage keys, or a predicate.
+  //   On a generated stage the hook supplies `prob` (a GeneratedProblem) and the
+  //   engine PACES it: a clean correct re-rolls a NEW variation at this level
+  //   (more practice), FadeScaffold advances, RaiseScaffold steps back, a
+  //   TransferProbe re-rolls with the OTHER surface form, and mastery ends it.
+  // generatorSkill: the generator skill id (defaults to the engine node id).
+  // surfaceFormForStage(key): optional — pin a stage's surface form.
+  generatedStages = false,
+  generatorSkill,
+  surfaceFormForStage,
+  // A generated practice stage SPANS scaffold levels 0..4 within the one stage:
+  // it starts here and the engine fades/raises the level in place (post-teaching,
+  // so the default start is mid-ladder, not L0).
+  generatedStartLevel = 2,
 }) {
   const resolvedNodeId = typeof nodeId === "function" ? nodeId(lesson) : nodeId;
   const resolvedLessonId = typeof lessonId === "function" ? lessonId(lesson) : lessonId;
+
+  // Which stages are generated, and for which skill.
+  const genSkill = generatorSkill || resolvedNodeId;
+  const isGenStage = useCallback((key) => {
+    if (!genSkill || !hasGenerator(genSkill)) return false;
+    if (generatedStages === true) return true;
+    if (Array.isArray(generatedStages)) return generatedStages.includes(key);
+    if (typeof generatedStages === "function") return !!generatedStages(key);
+    return false;
+  }, [genSkill, generatedStages]);
 
   // advance / back: explicit callbacks win; otherwise derive from stagesOrder.
   const advanceFn = advance || ((cur) => {
@@ -71,11 +111,28 @@ export function useLessonScaffold({
     return i > 0 ? stagesOrder[i - 1] : cur;
   });
 
-  const { emit, judgeAndAdvance } = useLessonEngine({
+  const { emit: emitRaw, judgeAndAdvance, isCertified } = useLessonEngine({
     nodeId: resolvedNodeId,
     lessonConfig: { lessonId: resolvedLessonId, initialBeat: scaffoldKeyFor(initialStage) },
   });
   const { speaking, say, stopVoice } = useVoice();
+
+  // ---- Tier-2 within-attempt nudges (idle pause + oscillation) --------------
+  // The engine consults the policy only at boundaries; these gentle nudges are
+  // the Tier-2 layer that helps DURING an attempt (state-model §6). We own them
+  // here in the shared controller so every lesson gets them once.
+  const tier2WinRef = useRef(makeTier2Window());
+  const lastInteractionTRef = useRef(Date.now());
+
+  // emit is wrapped so any logged interaction (place/remove/present) also bumps
+  // the idle clock — a learner who is dragging pieces is not "stuck".
+  const emit = useCallback((eventFields) => {
+    lastInteractionTRef.current = Date.now();
+    if (eventFields?.type === "problem_present") {
+      tier2WinRef.current = makeTier2Window();
+    }
+    return emitRaw(eventFields);
+  }, [emitRaw]);
 
   // ---- outcome state (identical shape in every lesson) ----------------------
   const [stage, setStage] = useState(initialStage);
@@ -99,33 +156,101 @@ export function useLessonScaffold({
   useEffect(() => { solvedRef.current = solved; }, [solved]);
   useEffect(() => { stageRef.current = stage; }, [stage]);
 
+  // ---- generated-practice state ---------------------------------------------
+  // `prob` is the current auto-generated problem (null on fixed-example stages).
+  // probRef mirrors it for synchronous reads inside reportAttempt; genIndexRef is
+  // the monotonic variation counter; genFormOverrideRef pins the next surface form
+  // for a TransferProbe.
+  const [prob, setProb] = useState(null);
+  const probRef = useRef(null);
+  const genIndexRef = useRef(0);
+  const genFormOverrideRef = useRef(null);
+  // The LIVE scaffold level of the generated practice stage (engine-driven; spans
+  // 0..4 within the one stage). genLevel mirrors it for display.
+  const genLevelRef = useRef(generatedStartLevel);
+  const [genLevel, setGenLevel] = useState(generatedStartLevel);
+  useEffect(() => { probRef.current = prob; }, [prob]);
+
+  // Generate (and install) a fresh problem for a generated stage at the stage's
+  // CURRENT live level (genLevelRef — not the stage's fixed scaffoldMap level, so
+  // a FadeScaffold actually sticks and the problems get harder). Returns the
+  // GeneratedProblem (or null for a fixed stage).
+  const makeProbFor = useCallback((key) => {
+    if (!isGenStage(key)) { setProb(null); probRef.current = null; return null; }
+    const level = genLevelRef.current;
+    const form = genFormOverrideRef.current
+      ?? (surfaceFormForStage ? surfaceFormForStage(key) : undefined);
+    genFormOverrideRef.current = null;
+    const p = generateFor(genSkill, { level, index: genIndexRef.current, surfaceForm: form });
+    genIndexRef.current += 1;
+    setProb(p); probRef.current = p;
+    return p;
+  }, [isGenStage, genSkill, surfaceFormForStage]);
+
   // Latest callbacks in a ref so the memoized helpers never go stale without
   // forcing every consumer to re-memoize.
   const cb = useRef({});
-  cb.current = { advanceFn, backFn, scaffoldKeyFor, introFor, resetStage, surfaceFormFor, onEnd };
+  cb.current = { advanceFn, backFn, scaffoldKeyFor, introFor, resetStage, surfaceFormFor, onEnd, isGenStage, makeProbFor, isCertified };
 
   // ---- mount: emit the first problem_present (guarded); unmount: stop voice --
   useEffect(() => {
     if (emitMountPresent && !presentEmittedRef.current) {
       presentEmittedRef.current = true;
+      // On a generated initial stage, mint the first variation before presenting.
+      cb.current.makeProbFor(initialStage);
       emit({
         type: "problem_present",
         payload: {
           node_id: resolvedNodeId,
-          scaffold_level: toScaffoldLevel(resolvedLessonId, scaffoldKeyFor(initialStage)),
+          scaffold_level: cb.current.isGenStage(initialStage)
+            ? genLevelRef.current
+            : toScaffoldLevel(resolvedLessonId, scaffoldKeyFor(initialStage)),
         },
       });
     }
     return () => stopVoice();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ---- Tier-2 idle/oscillation watcher --------------------------------------
+  // While a stage is unsolved, tick gently and fire AT MOST ONE nudge of each
+  // kind per attempt (the window enforces idempotence). Oscillation (lots of
+  // place/remove wiggling) → "take your time"; a long idle pause → a soft prompt
+  // to engage with the picture. Both preserve the learner's work (nudge-only).
+  useEffect(() => {
+    if (solved) return undefined;
+    const id = setInterval(() => {
+      const now = Date.now();
+      const recent = { observations: [{ self_corrections: selfCorrectionsRef.current }] };
+      const osc = checkOscillation(recent, tier2WinRef.current);
+      if (osc) {
+        publishNudge({ type: osc.type, text: NUDGE_TEXT[osc.type] }, now);
+        return;
+      }
+      const pause = checkLongPause(lastInteractionTRef.current, now, tier2WinRef.current);
+      if (pause) {
+        publishNudge({ type: pause.type, text: NUDGE_TEXT[pause.type] }, now);
+      }
+    }, TIER2_TICK_MS);
+    return () => clearInterval(id);
+  }, [stage, solved]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ---- enter a stage cleanly (selector click OR auto-advance) ---------------
   const goStage = useCallback((key) => {
     stopVoice();
+    const prevStage = stageRef.current;
+    const onGen = cb.current.isGenStage(key);
+    // Entering a generated stage FRESH (from a different stage) resets its live
+    // level to the start; a re-roll (goStage(currentStage)) keeps the faded level.
+    if (onGen && prevStage !== key) {
+      genLevelRef.current = generatedStartLevel;
+      setGenLevel(generatedStartLevel);
+    }
     setStage(key); stageRef.current = key;
     setSolved(false); solvedRef.current = false;
     setStars(0); setBadInput(false); setCook("idle");
     cb.current.resetStage?.(key);
+    // Generated stage → mint a fresh variation at the live level + surface form.
+    cb.current.makeProbFor(key);
     if (cb.current.introFor) setStatus(normStatus(cb.current.introFor(key)));
     selfCorrectionsRef.current = 0;
     presentEmittedRef.current = true;
@@ -133,10 +258,12 @@ export function useLessonScaffold({
       type: "problem_present",
       payload: {
         node_id: resolvedNodeId,
-        scaffold_level: toScaffoldLevel(resolvedLessonId, cb.current.scaffoldKeyFor(key)),
+        scaffold_level: onGen
+          ? genLevelRef.current
+          : toScaffoldLevel(resolvedLessonId, cb.current.scaffoldKeyFor(key)),
       },
     });
-  }, [emit, resolvedNodeId, resolvedLessonId, stopVoice]);
+  }, [emit, resolvedNodeId, resolvedLessonId, stopVoice, generatedStartLevel]);
 
   // ---- linear advance (no-op at the end) ------------------------------------
   const nextStage = useCallback(() => {
@@ -156,9 +283,13 @@ export function useLessonScaffold({
     modality = "tap",
     recognizerConfidence = null,
   }) => {
-    const surfaceForm = cb.current.surfaceFormFor
-      ? cb.current.surfaceFormFor(stageRef.current)
-      : "stage-" + stageRef.current;
+    // On a generated stage the surface form IS the generated problem's form (so
+    // the engine's transfer dimension tracks the real structural variants).
+    const surfaceForm = (cb.current.isGenStage(stageRef.current) && probRef.current)
+      ? probRef.current.surfaceForm
+      : cb.current.surfaceFormFor
+        ? cb.current.surfaceFormFor(stageRef.current)
+        : "stage-" + stageRef.current;
     const dec = judgeAndAdvance(
       { value: answerValue, modality, recognizerConfidence },
       {
@@ -174,18 +305,61 @@ export function useLessonScaffold({
     return dec;
   }, [judgeAndAdvance]);
 
-  // ---- FadeScaffold -> advance; RaiseScaffold -> back; else advance-on-correct
+  // ---- apply the engine Decision ---------------------------------------------
+  // GENERATED stage: the estimator paces practice in place. A clean correct
+  // re-rolls a NEW variation at THIS level (more practice, not auto-advance);
+  // FadeScaffold advances a stage; RaiseScaffold steps back; a TransferProbe
+  // re-rolls with the OTHER surface form; mastery (Return/Route) ends the lesson.
+  // FIXED stage: the original behavior (advance on correct / fade / raise).
   const applyEngineDecision = useCallback((dec, isCorrect) => {
     if (!dec) return;
+    const cur = stageRef.current;
+
+    if (cb.current.isGenStage(cur)) {
+      // The generated practice stage SPANS levels 0..4 in place: fade/raise move
+      // the live level and re-roll a fresh variation; a clean correct re-rolls at
+      // the same level (more practice); transfer flips the surface form; mastery
+      // ends the stage. goStage(cur) re-rolls without resetting the live level.
+      //
+      // U2: certified-completion terminator. The generated stage is otherwise
+      // endless for a direct-entry lesson (ReturnToKitchen/RouteToRoom are illegal
+      // with no stumping recipe), so without this it re-rolls forever. Checked
+      // FIRST because at full mastery the engine may still return FadeScaffold on a
+      // clean streak — certification must win over the re-roll. U3 layers
+      // ReturnToKitchen on top: when a stumping recipe is set the engine returns
+      // ReturnToKitchen and the existing branch below fires onEnd(dec) instead.
+      if (cb.current.isCertified?.()) {
+        cb.current.onEnd?.({ kind: "LessonComplete", certified: true });
+        return;
+      }
+      if (dec.kind === "FadeScaffold") {
+        genLevelRef.current = Math.min(4, genLevelRef.current + 1);
+        setGenLevel(genLevelRef.current);
+        goStage(cur);
+      } else if (dec.kind === "RaiseScaffold") {
+        genLevelRef.current = Math.max(0, genLevelRef.current - 1);
+        setGenLevel(genLevelRef.current);
+        goStage(cur);
+      } else if (dec.kind === "TransferProbe") {
+        genFormOverrideRef.current = otherSurfaceForm(genSkill, probRef.current?.surfaceForm);
+        goStage(cur);
+      } else if (dec.kind === "ReturnToKitchen" || dec.kind === "RouteToRoom") {
+        cb.current.onEnd?.(dec);
+      } else if (isCorrect) {
+        goStage(cur); // re-roll: another variation at this level
+      }
+      return;
+    }
+
     if (dec.kind === "FadeScaffold") {
       nextStage();
     } else if (dec.kind === "RaiseScaffold") {
-      const prev = cb.current.backFn(stageRef.current);
-      if (prev != null && prev !== stageRef.current) goStage(prev);
+      const prev = cb.current.backFn(cur);
+      if (prev != null && prev !== cur) goStage(prev);
     } else if (isCorrect) {
       nextStage();
     }
-  }, [nextStage, goStage]);
+  }, [nextStage, goStage, genSkill]);
 
   // ---- award + advance on a correct answer ----------------------------------
   // Positional (line, voice, answerValue, opts) so existing callsites are unchanged.
@@ -221,6 +395,8 @@ export function useLessonScaffold({
   return {
     // stage
     stage, setStage, goStage, nextStage,
+    // generated practice (null on fixed-example stages); genLevel = live 0..4
+    prob, genLevel,
     // engine
     emit, judgeAndAdvance, reportAttempt, applyEngineDecision, award, flashBad,
     // outcome state

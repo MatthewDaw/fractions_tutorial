@@ -563,3 +563,46 @@ describe('useLessonEngine — rationale', () => {
     expect(result.current.rationale).toBe('Continue practicing at this level.');
   });
 });
+
+// ---------------------------------------------------------------------------
+// U2 — certified-completion getter (isCertified). gate.js is the REAL engine
+// gate here (not mocked); isMastered runs against the mocked mastery map.
+// ---------------------------------------------------------------------------
+
+describe('U2 — isCertified() reflects the live mastery gate', () => {
+  beforeEach(() => { resetSpies(); });
+
+  it('is false before any submit', () => {
+    const { result } = renderHook(() => useLessonEngine({ nodeId: 'ADD_SAME_DEN' }));
+    expect(result.current.isCertified()).toBe(false);
+  });
+
+  it('stays false when the live estimate is not mastered (default mock)', () => {
+    const { result } = renderHook(() => useLessonEngine({ nodeId: 'ADD_SAME_DEN' }));
+    act(() => { result.current.judgeAndAdvance({ value: [5, 7] }, { correct: true }); });
+    expect(result.current.isCertified()).toBe(false);
+  });
+
+  it('flips true synchronously when all four conjuncts hold, with no extra nextDecision call', () => {
+    measurementReduce.mockReturnValueOnce({
+      mastery: {
+        ADD_SAME_DEN: {
+          P_known: 0.99,
+          fluency_stats: { median_latency: 1500, slope: 0, n: 8 },
+          max_scaffold_passed: 4,
+          transfer_passed: true,
+          hint_dependence: 0,
+          last_retention_probe: null,
+        },
+      },
+    });
+    const { result } = renderHook(() => useLessonEngine({ nodeId: 'ADD_SAME_DEN' }));
+    let certifiedAtReturn;
+    act(() => {
+      result.current.judgeAndAdvance({ value: [5, 7] }, { correct: true });
+      certifiedAtReturn = result.current.isCertified();
+    });
+    expect(certifiedAtReturn).toBe(true);
+    expect(nextDecision).toHaveBeenCalledTimes(1);
+  });
+});
