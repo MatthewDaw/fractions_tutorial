@@ -253,10 +253,16 @@ export function nextDecision(
     legal.has('RaiseScaffold') &&
     state.consecutiveErrors >= PARAMS.raiseErrorsM
   ) {
+    // U9: when the frustration-scaffold flag is on, the felt wall stays but the
+    // response is warm and signals a reachable foothold (a step is one tap away),
+    // per the under-12 productive-failure evidence. Default off → the neutral
+    // rationale, identical to prior behavior (reversible).
     const dec: DecisionRaiseScaffold = {
       kind: 'RaiseScaffold',
       preserveWork: true,
-      rationale: `After ${state.consecutiveErrors} errors, adding more support to help you through.`,
+      rationale: PARAMS.frustrationScaffold
+        ? "Let's take a smaller step together — here's a hint to get you started."
+        : `After ${state.consecutiveErrors} errors, adding more support to help you through.`,
     };
     return dec;
   }

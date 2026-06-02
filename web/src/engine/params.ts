@@ -62,6 +62,13 @@ export interface EngineParams {
   fluencyHardMode: boolean;
   /** Latency ceiling (ms) used by fluencyOk when fluencyHardMode is on. Lenient default. */
   fluencyLatencyTargetMs: number;
+  /**
+   * U9: when true, a frustration RaiseScaffold (≥ raiseErrorsM errors) responds with
+   * a WARM, reachable-foothold rationale instead of the neutral one — the felt wall
+   * stays, but a step is always one tap away (productive-failure-under-12 evidence).
+   * Default false until trigger sensitivity is observed on a tablet (reversible).
+   */
+  frustrationScaffold: boolean;
   /** Escalation trigger thresholds. */
   escalation: EscalationParams;
 }
@@ -85,6 +92,7 @@ export const PARAMS: EngineParams = {
   latencyFloorMs: 1200,
   fluencyHardMode: false,
   fluencyLatencyTargetMs: 15_000,
+  frustrationScaffold: false,
   escalation: {
     nStuck: 6,
     nDiseng: 5,
