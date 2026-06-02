@@ -13,7 +13,7 @@
     --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
     --thirds:#e07b00;   /* 3 = orange */
     --sixths:#caa300;   /* 6 = gold   */
-    --neutral:#8c7a5e;  /* twelfths — neutral until simplified */
+    --neutral:#386641;  /* twelfths = forest green (denomColor 12) */
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;}
@@ -62,20 +62,43 @@
   .r4-groupbar{ position:relative; transition:opacity .6s ease; }
   .r4-groupbar.is-ghost{ opacity:.14; }
 
+  /* the track outline matches the lesson .plank-body: a 2px ink frame */
   .r4-gb-track{ display:flex; gap:0; height:58px; align-items:stretch; position:relative;
-    border:2px solid rgba(20,14,10,.55); border-radius:3px; overflow:hidden; }
+    border:2px solid var(--ink); border-radius:3px; overflow:hidden;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.14), inset 0 -4px 8px rgba(20,12,6,.16); }
   .r4-gb-cell{
     height:100%; position:relative;
     border-right:1px solid var(--cut, rgba(20,14,10,.45));
     display:flex; align-items:center; justify-content:center;
+    font-family:"Russo One",sans-serif; font-size:13px;
+    text-shadow:0 1px 0 rgba(255,250,235,.25);
     transition:background .6s ease, border-color .6s ease, color .6s ease;
   }
   .r4-gb-cell:last-child{ border-right:none; }
-  .r4-gb-cell.is-filled{ background:var(--neutral); }
-  .r4-gb-cell.is-empty{ background:transparent;
+  /* the 1/den label inside every cell — sits over the hatch */
+  .r4-gb-cell .clab{ position:relative; z-index:2; }
+  /* per-denominator hatch overlay (denomHatch) on the FILLED cells */
+  .r4-gb-cell.is-filled::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:1; }
+
+  /* twelfths (12) — forest green, GRID hatch 0/90 (paper tone), paper divider+label */
+  .r4-gb-cell.is-filled{ background:var(--neutral); color:#ede2c8; border-right-color:rgba(237,226,200,.55); }
+  .r4-gb-cell.is-filled::after{
+    background-image:
+      repeating-linear-gradient(0deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(90deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px); }
+  .r4-gb-cell.is-empty{ background:transparent; color:rgba(20,14,10,.45);
     background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.07) 0 6px, transparent 6px 12px); }
-  #board.toSix .r4-gb-cell.is-filled{ background:var(--sixths); }
-  #board.toThirds .r4-gb-cell.is-filled{ background:var(--thirds); }
+
+  /* sixths (6) — gold, CROSS-HATCH 45/-45 (ink tone), ink divider+label */
+  #board.toSix .r4-gb-cell.is-filled{ background:var(--sixths); color:#1c1612; border-right-color:rgba(20,14,10,.55); }
+  #board.toSix .r4-gb-cell.is-filled::after{
+    background-image:
+      repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(-45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
+  /* thirds (3) — orange, DIAGONAL hatch 45deg (ink tone), ink divider+label */
+  #board.toThirds .r4-gb-cell.is-filled{ background:var(--thirds); color:#1c1612; border-right-color:rgba(20,14,10,.55); }
+  #board.toThirds .r4-gb-cell.is-filled::after{
+    background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
 
   /* internal cut line (drawn as the cell's right border above; kept for spec parity) */
   .r4-gb-cut{ position:absolute; top:0; bottom:0; width:1px; background:rgba(20,14,10,.45); }
@@ -274,10 +297,17 @@
   function renderGroup(num, den){
     var track = el("gbTrack"); track.innerHTML = "";
     var w = SPAN / den;
+    // match the lesson's label size ramp (denser partitions get a smaller label)
+    var labSize = w < 40 ? 11 : w < 58 ? 13 : 15;
     for (var i=0;i<den;i++){
       var c = document.createElement("div");
       c.className = "r4-gb-cell " + (i < num ? "is-filled" : "is-empty");
       c.style.width = w + "px";
+      // every cell reads its UNIT (1/den), exactly like the lesson GroupBar
+      var lab = document.createElement("span");
+      lab.className = "clab"; lab.style.fontSize = labSize + "px";
+      lab.textContent = "1/" + den;
+      c.appendChild(lab);
       track.appendChild(c);
     }
     track.style.width = SPAN + "px";

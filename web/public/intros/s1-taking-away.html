@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson — Taking Away intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --eighths:#d1495b;   /* 8 = red (denomColor(8)) */
+    --eighths-tone:rgba(20,14,10,.34);   /* denomTone(8) */
+    --eighths-cut:rgba(20,14,10,.55);    /* denomTone(8,.55) — divider */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the working board: a row of eighth-pieces "on the line", a tray below ── */
+  #board{ position:relative; width:560px; max-width:92vw;
+    display:flex; flex-direction:column; align-items:center; gap:18px; }
+
+  .linelabel{ font-family:"Old Standard TT",serif; font-style:italic; font-size:14px;
+    color:var(--ink-soft); align-self:flex-start; opacity:0; transition:opacity .5s ease; }
+  #board.takeaway .linelabel{ opacity:1; }
+
+  /* the stack of eighths. `broken` spaces the pieces apart (decompose). */
+  #row{ display:flex; align-items:stretch; gap:0; height:84px; transition:gap .35s ease; }
+  #row.broken{ gap:8px; }
+  .pc{
+    position:relative; width:56px; height:84px;
+    background:var(--eighths);
+    border-right:1.5px solid var(--eighths-cut);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .55s cubic-bezier(.5,.05,.2,1), opacity .55s ease, box-shadow .35s ease;
+  }
+  .pc:last-child{ border-right:none; }
+  #row.broken .pc{ border-right:none; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+  /* the v_stripe hatch (vertical lines) — denomHatch(8) */
+  .pc .hatch{ position:absolute; inset:0; opacity:.5; pointer-events:none; border-radius:inherit;
+    background-image:repeating-linear-gradient(90deg, var(--eighths-tone) 0 1px, transparent 1px 6px); }
+  .pc .lab{ position:relative; font-family:"Russo One",sans-serif; font-size:13px; font-weight:700; color:var(--ink); }
+  /* a piece dragged off → fly down into the tray, leave a dashed ghost slot */
+  .pc.taken{ transform:translateY(150px); opacity:0; }
+  .pc.slot{ background:transparent !important; border:2px dashed var(--ink-soft); border-radius:6px; opacity:.45; box-shadow:none !important; }
+  .pc.slot .hatch,.pc.slot .lab{ display:none; }
+
+  /* the live decompose equation under the stack */
+  #eqline{ font-family:"Old Standard TT",serif; font-size:18px; color:var(--ink-soft);
+    min-height:24px; text-align:center; }
+  #eqline .plus{ color:var(--red); font-weight:700; }
+
+  /* the "used by Babushka" tray where pulled-off pieces land */
+  #tray{ width:100%; max-width:520px; min-height:92px;
+    border:2px dashed var(--ink-soft); border-radius:12px; padding:8px 12px;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    background:rgba(0,0,0,.02); transition:background .25s ease, border-color .25s ease, opacity .4s ease;
+    opacity:0; }
+  #board.takeaway #tray{ opacity:1; }
+  #tray.has{ border-color:var(--red); background:rgba(163,42,34,.06); }
+  #traylab{ font-family:"Old Standard TT",serif; font-style:italic; font-size:13px; color:var(--ink-soft); }
+  #trayrow{ display:flex; gap:0; min-height:54px; }
+  #trayrow .upc{ width:56px; height:54px; background:var(--eighths); border-right:1.5px solid var(--eighths-cut);
+    display:flex; align-items:center; justify-content:center; opacity:.9; }
+  #trayrow .upc:first-child{ border-top-left-radius:6px; border-bottom-left-radius:6px; }
+  #trayrow .upc:last-child{ border-right:none; border-top-right-radius:6px; border-bottom-right-radius:6px; }
+  #trayrow .upc .lab{ font-family:"Russo One",sans-serif; font-size:12px; font-weight:700; color:var(--ink); }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(680px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .e{color:var(--eighths);font-weight:700;} .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Taking Away</div>
+
+    <div id="board">
+      <div class="linelabel">on the line — what's left</div>
+      <div id="row"></div>
+      <div id="eqline"></div>
+      <div id="tray">
+        <div id="traylab">used by Babushka</div>
+        <div id="trayrow"></div>
+      </div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">Babushka has <span class="e">five eighths</span> of a loaf — one stack.</div>
+      <div class="cap" data-i="1">Break the stack into five single <span class="e">eighths</span>.</div>
+      <div class="cap" data-i="2">Take <span class="r">two pieces</span> away into the tray…</div>
+      <div class="cap" data-i="3">Count what's left: <span class="e">three eighths</span>.</div>
+      <div class="cap" data-i="4"><b>5/8 − 2/8 = 3/8</b> — keep the bottom the same.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "takingaway.v1";
+  var DURATION = 21;            // seconds
+  var START_N = 5, TAKE_N = 2, DEN = 8;
+
+  function el(id){ return document.getElementById(id); }
+
+  // build the five-eighths stack
+  function buildRow(){
+    var row = el("row"); row.innerHTML="";
+    for (var i=0;i<START_N;i++){
+      var d=document.createElement("div"); d.className="pc"; d.id="pc"+i;
+      var h=document.createElement("div"); h.className="hatch"; d.appendChild(h);
+      var s=document.createElement("span"); s.className="lab"; s.textContent="1/"+DEN; d.appendChild(s);
+      row.appendChild(d);
+    }
+  }
+  buildRow();
+
+  function setEq(text){ el("eqline").innerHTML = text; }
+  function decompEq(){
+    var parts=[]; for (var i=0;i<START_N;i++) parts.push("1/"+DEN);
+    setEq(START_N+"/"+DEN+" = " + parts.join('<span class="plus"> + </span>'));
+  }
+
+  function addToTray(n){
+    var tr=el("trayrow"); tr.innerHTML="";
+    for (var i=0;i<n;i++){
+      var d=document.createElement("div"); d.className="upc";
+      var s=document.createElement("span"); s.className="lab"; s.textContent="1/"+DEN; d.appendChild(s);
+      tr.appendChild(d);
+    }
+    el("tray").classList.toggle("has", n>0);
+  }
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  var board = el("board");
+
+  var beatsDone = [];
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — 5/8 as one solid stack
+    [1.4, function(){ showCap(0); setEq("one stack of five eighths"); }],
+
+    // Beat 2 — break it into five single 1/8 pieces (decompose)
+    [5.0, function(){ showCap(1); el("row").classList.add("broken"); decompEq(); }],
+
+    // Beat 3 — drag 2 pieces off into the "used" tray (last two fly down)
+    [9.5, function(){
+      showCap(2); board.classList.add("takeaway");
+      // take the last two pieces (indices 4,3), staggered
+      el("pc4").classList.add("taken"); addToTray(1);
+      setTimeout(function(){ el("pc4").classList.add("slot"); el("pc4").classList.remove("taken"); }, 600);
+      setTimeout(function(){ el("pc3").classList.add("taken"); addToTray(2); }, 700);
+      setTimeout(function(){ el("pc3").classList.add("slot"); el("pc3").classList.remove("taken"); }, 1300);
+    }],
+
+    // Beat 4 — count the three that remain on the line
+    [14.0, function(){ showCap(3); setEq("three eighths left on the line"); }],
+
+    // Beat 5 — the equation: 5/8 − 2/8 = 3/8, keep the bottom
+    [17.0, function(){ showCap(4); setEq('<b>5/8 − 2/8 = 3/8</b>'); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // playhead + pause-aware clock
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[];
+      // rebuild to the clean start so a seek-back replays cleanly
+      el("row").classList.remove("broken"); board.classList.remove("takeaway");
+      buildRow(); addToTray(0); el("tray").classList.remove("has");
+      setEq(""); showCap(-1);
+    }
+  };
+})();
+</script>
+</body>
+</html>

@@ -53,13 +53,18 @@
      centered equation reads clearly over them (matches the sibling intros) */
   #board:has(#addstrip.on) .plate,
   #board:has(#times.on) .plate{ opacity:.16; }
-  .plate .pieces{ display:grid; grid-template-columns:repeat(2,auto); gap:4px 7px; }
+  /* pelmeni laid in a tidy 2-col grid, exactly like the lesson PlateGroup */
+  .plate .pieces{ display:grid; grid-template-columns:repeat(2,auto); gap:3px 5px;
+    align-items:center; justify-items:center; }
+  /* each pelmeni is the SAME pinched-dough SVG glyph the lesson uses (PlateGroup
+     .mg-pelmeni): golden #c9a36b dough, darker #9a7740 crimp edge + crease line —
+     not a flat circle. */
   .pc{
-    width:30px; height:30px; border-radius:50% 50% 48% 48%;
-    background:var(--food); border:2px solid var(--food-edge);
+    display:inline-flex; line-height:0;
     opacity:0; transform:scale(.4);
     transition:opacity .35s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
   }
+  .pc svg{ display:block; }
   .pc.on{ opacity:1; transform:none; }
   .plate-lab{ position:absolute; bottom:-26px; left:0; right:0; text-align:center;
     font-family:"Russo One",sans-serif; font-size:20px; color:var(--ink-soft); opacity:0; transition:opacity .4s ease; }
@@ -139,10 +144,17 @@
   function el(id){ return document.getElementById(id); }
 
   // build SIZE empty pelmeni into each plate (hidden until .on is added)
+  // the lesson's pelmeni glyph (PlateGroup.Pelmeni) as inline SVG markup
+  var PELMENI_SVG =
+    '<svg width="28" height="28" viewBox="0 0 26 26" aria-hidden="true">' +
+      '<path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" ' +
+        'fill="#c9a36b" stroke="#9a7740" stroke-width="1.6"/>' +
+      '<path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7"/>' +
+    '</svg>';
   function buildPlate(id){
     var holder = el(id).querySelector(".pieces");
     for (var i=0;i<SIZE;i++){
-      var d=document.createElement("div"); d.className="pc"; holder.appendChild(d);
+      var d=document.createElement("div"); d.className="pc"; d.innerHTML=PELMENI_SVG; holder.appendChild(d);
     }
   }
   buildPlate("p0"); buildPlate("p1"); buildPlate("p2");

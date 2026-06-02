@@ -1,0 +1,36 @@
+/* gen-practice.css — the shared auto-generated practice stage (GenPracticeBoard).
+   Lives inside the lesson body; matches the Soviet/old-paper palette (tokens.css). */
+.gen-practice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 26px 24px;
+  min-height: 360px;
+}
+.gen-practice.bad { animation: gen-shake 0.42s; }
+@keyframes gen-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-7px); }
+  75% { transform: translateX(7px); }
+}
+.gen-practice__q {
+  font-family: var(--serif, Georgia, serif);
+  color: var(--ink, #1c1612);
+}
+.gen-practice__prompt {
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.gen-practice__answer { min-height: 96px; display: flex; align-items: center; }
+.gen-practice .ribbon {
+  max-width: 620px;
+  text-align: center;
+  font-family: var(--serif, Georgia, serif);
+  font-size: 17px;
+  color: var(--ink-soft, #3a2e24);
+}
+.gen-practice .ribbon--ok { color: #2c5a2c; }
+.gen-practice .ribbon--warn { color: var(--red-deep, #6e1c16); }

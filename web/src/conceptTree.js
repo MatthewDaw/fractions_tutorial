@@ -1,13 +1,16 @@
 // conceptTree.js — builds the Concept Mastery Map hierarchy by composing the
-// engine skill graph (engine/graph.ts) with the Common Core standards table
-// (ccssStandards.js) and the room metadata (rooms.js).
+// engine skill graph (engine/graph.ts) with the room metadata (rooms.js) and the
+// Common Core alignment tags (ccssStandards.js, used only as a small reference
+// label — NEVER as an organizing level).
 //
 // THE MENTAL MODEL (largest → smallest):
-//   CCSS Grade (3/4/5)
-//     → Domain/Cluster   (e.g. 4.NF.B)
-//       → Standard       (e.g. 4.NF.B.3a)
-//         → Skill Node   (graph.ts, e.g. ADD_SAME_DEN)
-//           → Atomic card (each scaffold_ladder form + each transfer_form)
+//   High-level concept   (e.g. "Adding & Subtracting")
+//     → Skill node        (graph.ts, e.g. ADD_SAME_DEN)
+//       → Atomic card     (each scaffold_ladder form + each transfer_form)
+//
+// There is NO grade level anywhere in this model. The app is pace-agnostic — a
+// learner moves through whatever concept they like, in whatever order. Concepts
+// are ordered by how they build on each other (the prereq graph), not by grade.
 //
 // Atomic cards are the ONLY place mastery is *measured*; every level above shows
 // a ROLLED-UP average of the atomic cards beneath it.
@@ -29,40 +32,49 @@ import { loadLog } from "./engine/index.js";
 import { measurementReduce } from "./engine/measurementReduce.js";
 
 // ---------------------------------------------------------------------------
-// CCSS code parsing  (e.g. "4.NF.B.3a")
+// THE CONCEPTS — the high-level math ideas that drive the top navigation.
+// Each lists the skill-node ids it owns, in teaching order. Grade-free by design;
+// ordered so each concept builds on the ones before it. Any node not named here
+// falls into a "More" bucket so nothing is ever silently dropped.
 // ---------------------------------------------------------------------------
-//   grade   = "4"
-//   domain  = "NF"            (the letters after the grade)
-//   cluster = "4.NF.B"        (grade.domain.clusterLetter)
-//   standard= "4.NF.B.3a"     (the full code)
-//
-// Some codes have no cluster letter (e.g. "3.OA.A.1" → cluster "3.OA.A").
-// We handle the common CCSS shapes: GRADE.DOMAIN.CLUSTER.NUMBER[letter].
-
-export function parseCode(code) {
-  const parts = String(code).split(".");
-  const grade = parts[0] || "?";
-  const domain = parts[1] || "?";
-  // The cluster letter is the 3rd segment when it is a single uppercase letter.
-  const maybeClusterLetter = parts[2];
-  const hasClusterLetter = /^[A-Z]$/.test(maybeClusterLetter || "");
-  const clusterLetter = hasClusterLetter ? maybeClusterLetter : null;
-  const cluster = clusterLetter ? `${grade}.${domain}.${clusterLetter}` : `${grade}.${domain}`;
-  return { code, grade, domain, clusterLetter, cluster };
-}
-
-// Friendly domain names for the CCSS domains that appear in this app.
-const DOMAIN_NAMES = {
-  OA: "Operations & Algebraic Thinking",
-  NF: "Number & Operations — Fractions",
-  NBT: "Number & Operations in Base Ten",
-  MD: "Measurement & Data",
-  G: "Geometry",
-};
-
-function domainName(domain) {
-  return DOMAIN_NAMES[domain] || domain;
-}
+export const CONCEPTS = [
+  {
+    id: "multiplication",
+    title: "Multiplication",
+    blurb: "Equal groups, arrays, and times facts — the groundwork the fraction work leans on.",
+    nodes: ["MULT_EQUAL_GROUPS", "MULT_ARRAYS", "MULT_FACTS"],
+  },
+  {
+    id: "fraction-as-number",
+    title: "Fractions as Numbers",
+    blurb: "A fraction is a single number — one point on the line, found by counting equal parts from 0.",
+    nodes: ["FRACTION_ON_LINE"],
+  },
+  {
+    id: "add-subtract",
+    title: "Adding & Subtracting",
+    blurb: "Join and take apart fractions — first with the same bottom, then by renaming to a common one.",
+    nodes: ["ADD_SAME_DEN", "SUB_SAME_DEN", "ADD_UNLIKE_NESTED", "ADD_UNLIKE_COPRIME"],
+  },
+  {
+    id: "compare-estimate",
+    title: "Comparing & Estimating",
+    blurb: "Which fraction is bigger, and is an answer reasonable? Reason against 0, ½, and 1.",
+    nodes: ["COMPARE_BENCHMARK"],
+  },
+  {
+    id: "equivalence",
+    title: "Equivalence & Simplifying",
+    blurb: "The same amount wears many names — find equivalents, and the simplest name.",
+    nodes: ["SIMPLIFY"],
+  },
+  {
+    id: "mixed-numbers",
+    title: "Mixed Numbers",
+    blurb: "An improper fraction is a whole number and a leftover part.",
+    nodes: ["IMPROPER_TO_MIXED"],
+  },
+];
 
 // ---------------------------------------------------------------------------
 // MASTERY SEAM
@@ -201,140 +213,77 @@ export function levelName(level) {
   return LEVEL_NAMES[level] || `L${level}`;
 }
 
+// Turn one engine skill node into a display node entry (with its atomic cards).
+function makeNodeEntry(skillNode) {
+  const std = NODE_STANDARDS[skillNode.id];
+  const codes = (std && std.codes) || [];
+  const room = roomForNode(skillNode.id);
+  return {
+    kind: "node",
+    id: skillNode.id,
+    roomId: skillNode.roomId,
+    title: room ? room.title : skillNode.id,
+    no: room ? room.no : null,
+    concept: room ? room.concept : "",
+    example: room ? room.example : null,
+    verb: room ? room.verb : null,
+    prereqs: [...(skillNode.prereqs || [])],
+    codes: [...codes], // CCSS alignment tags only — never used to group or gate.
+    cards: buildNodeCards(skillNode),
+  };
+}
+
 /**
- * buildConceptTree() — composes the full Grade→Domain/Cluster→Standard→Node→Card
- * hierarchy. Pure given the current engine log + static data; re-call to refresh.
+ * buildConceptTree() — composes the Concept → Skill node → Atomic card hierarchy.
+ * Pure given the current engine log + static data; re-call to refresh.
  *
- * Returns: { grades: [...], live: boolean }
- *   grade   = { kind:'grade',   id, title, mastery, children:[cluster] }
- *   cluster = { kind:'cluster', id, code, domain, title, mastery, children:[standard] }
- *   standard= { kind:'standard',id, code, mastery, children:[node] }
- *   node    = { kind:'node',    id, roomId, title, concept, prereqs, mastery, cards:[card] }
- *   card    = { kind:'card',    id, formId, level, isTransfer, mastery }
+ * Returns: { concepts: [...], live: boolean, titleById }
+ *   concept = { kind:'concept', id, title, blurb, mastery, children:[node] }
+ *   node    = { kind:'node', id, roomId, title, concept, prereqs, codes, mastery, cards:[card] }
+ *   card    = { kind:'card', id, formId, level, isTransfer, mastery }
  */
 export function buildConceptTree() {
   // Refresh the live seam cache.
   _liveNodeMastery = loadLiveNodeMastery();
   _isLive = _liveNodeMastery != null;
 
-  // Index: grade -> cluster -> standard -> [nodeEntry]
-  // We place each node under its FIRST CCSS code (its primary standard). The
-  // node lists all of its codes for display.
-  const grades = new Map(); // gradeId -> gradeObj
+  const nodeById = {};
+  for (const sn of allNodes()) nodeById[sn.id] = sn;
 
-  function ensureGrade(gradeId) {
-    if (!grades.has(gradeId)) {
-      grades.set(gradeId, {
-        kind: "grade",
-        id: gradeId,
-        title: `Grade ${gradeId}`,
-        clusters: new Map(),
-        children: [],
-      });
-    }
-    return grades.get(gradeId);
-  }
-  function ensureCluster(gradeObj, parsed) {
-    if (!gradeObj.clusters.has(parsed.cluster)) {
-      const obj = {
-        kind: "cluster",
-        id: parsed.cluster,
-        code: parsed.cluster,
-        domain: parsed.domain,
-        title: domainName(parsed.domain),
-        clusterLetter: parsed.clusterLetter,
-        standards: new Map(),
-        children: [],
-      };
-      gradeObj.clusters.set(parsed.cluster, obj);
-    }
-    return gradeObj.clusters.get(parsed.cluster);
-  }
-  function ensureStandard(clusterObj, parsed) {
-    if (!clusterObj.standards.has(parsed.code)) {
-      const obj = {
-        kind: "standard",
-        id: parsed.code,
-        code: parsed.code,
-        children: [],
-      };
-      clusterObj.standards.set(parsed.code, obj);
-    }
-    return clusterObj.standards.get(parsed.code);
-  }
-
-  for (const skillNode of allNodes()) {
-    const std = NODE_STANDARDS[skillNode.id];
-    const codes = (std && std.codes) || [];
-    // Primary code = the one whose grade matches the node's CCSS grade band,
-    // else the first listed. This keeps each node under the right grade.
-    const grade = (std && std.grade) || (codes[0] ? parseCode(codes[0]).grade : "?");
-    const primaryCode =
-      codes.find((c) => parseCode(c).grade === grade) || codes[0] || `${grade}.?`;
-    const parsed = parseCode(primaryCode);
-
-    const room = roomForNode(skillNode.id);
-    const nodeEntry = {
-      kind: "node",
-      id: skillNode.id,
-      roomId: skillNode.roomId,
-      title: room ? room.title : skillNode.id,
-      no: room ? room.no : null,
-      concept: room ? room.concept : "",
-      example: room ? room.example : null,
-      verb: room ? room.verb : null,
-      prereqs: [...(skillNode.prereqs || [])],
-      codes: [...codes],
-      grade,
-      cards: buildNodeCards(skillNode),
-    };
-
-    const gradeObj = ensureGrade(grade);
-    const clusterObj = ensureCluster(gradeObj, parsed);
-    const standardObj = ensureStandard(clusterObj, parsed);
-    standardObj.children.push(nodeEntry);
-  }
-
-  // Flatten the Maps into ordered children arrays, sorted by code/grade, and
-  // roll mastery up from the atomic cards.
-  const gradeList = [...grades.values()].sort((a, b) => a.id.localeCompare(b.id));
-  for (const g of gradeList) {
-    g.children = [...g.clusters.values()].sort((a, b) => a.code.localeCompare(b.code));
-    delete g.clusters;
-    for (const c of g.children) {
-      c.children = [...c.standards.values()].sort((a, b) => a.code.localeCompare(b.code));
-      delete c.standards;
-      for (const s of c.children) {
-        // Sort nodes within a standard by teaching order (room `no`).
-        s.children.sort((a, b) => (a.no || 99) - (b.no || 99));
-        s.children.forEach(rollup);
-        rollup(s);
-      }
-      rollup(c);
-    }
-    rollup(g);
-  }
-
-  // Build a node-id -> title map for prereq edge labels.
   const titleById = {};
-  for (const g of gradeList)
-    for (const c of g.children)
-      for (const s of c.children)
-        for (const n of s.children) titleById[n.id] = n.title;
+  const used = new Set();
 
-  return { grades: gradeList, live: _isLive, titleById };
-}
+  const concepts = CONCEPTS.map((c) => {
+    const children = c.nodes
+      .map((id) => nodeById[id])
+      .filter(Boolean)
+      .map((sn) => {
+        used.add(sn.id);
+        const entry = makeNodeEntry(sn);
+        titleById[entry.id] = entry.title;
+        return entry;
+      });
+    const obj = { kind: "concept", id: c.id, title: c.title, blurb: c.blurb, children };
+    children.forEach(rollup);
+    rollup(obj);
+    return obj;
+  }).filter((c) => c.children.length > 0);
 
-// Convenience: the ordered prereq spine (teaching order) for the dependency view.
-export function prereqSpine() {
-  return allNodes().map((n) => {
-    const room = roomForNode(n.id);
-    return {
-      id: n.id,
-      title: room ? room.title : n.id,
-      roomId: n.roomId,
-      no: room ? room.no : null,
-      prereqs: [...(n.prereqs || [])],
-    };
-  });
+  // Any skill node not claimed by a concept lands in a "More" bucket so the map
+  // can never silently hide a node the engine knows about.
+  const leftovers = allNodes()
+    .filter((sn) => !used.has(sn.id))
+    .map((sn) => {
+      const entry = makeNodeEntry(sn);
+      titleById[entry.id] = entry.title;
+      return entry;
+    });
+  if (leftovers.length) {
+    const obj = { kind: "concept", id: "more", title: "More", blurb: "", children: leftovers };
+    leftovers.forEach(rollup);
+    rollup(obj);
+    concepts.push(obj);
+  }
+
+  return { concepts, live: _isLive, titleById };
 }

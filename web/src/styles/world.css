@@ -64,6 +64,50 @@
 .wcard .wex-label { font-family: var(--display); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute); }
 .wcard .wex-frac { font-family: var(--serif); font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
 
+/* mastery / suggestion tag variants (shared by lesson cards and shelves). These
+   were referenced but unstyled before — they fell back to the plain bordered
+   tag; giving them colour makes status legible at a glance. */
+.wtag.suggested { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+.wtag.mastered { background: rgba(60,120,60,0.16); color: #2f5d2f; border-color: #2f5d2f; }
+.wtag.in-progress { background: rgba(163,42,34,0.10); color: var(--red); border-color: var(--red); }
+.wtag.needs-review { background: rgba(163,42,34,0.10); color: var(--red-deep); border-color: var(--red-deep); }
+.wcard--suggested { box-shadow: 4px 4px 0 rgba(28,22,18,0.22), 0 0 0 2px var(--red) inset; }
+
+/* shelf nodes — the map's top level (one per strand). Centre-anchored like the
+   lesson cards, a touch wider, with a strand summary + progress count. */
+.shelf {
+  all: unset; position: absolute; transform: translate(-50%, -50%); width: 296px; box-sizing: border-box;
+  cursor: pointer; border: 2px solid var(--ink); background: var(--paper-1); padding: 15px 18px 14px; z-index: 3;
+  box-shadow: 5px 5px 0 rgba(28,22,18,0.24); transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.shelf:hover { transform: translate(-50%, -50%) translate(-2px, -2px); box-shadow: 7px 7px 0 rgba(28,22,18,0.28); }
+.shelf:active { transform: translate(-50%, -50%) translate(1px, 1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.24); }
+.shelf:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.shelf--suggested { box-shadow: 5px 5px 0 rgba(28,22,18,0.24), 0 0 0 2px var(--red) inset; }
+.shelf-head { display: flex; align-items: center; gap: 8px; }
+.shelf-range { font-family: var(--display); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); border: 1.5px solid var(--red); padding: 3px 9px; background: rgba(163,42,34,0.06); }
+.shelf-head .wtag { font-family: var(--display); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--ink); }
+.shelf-title { font-family: var(--display); font-size: 21px; margin: 11px 0 5px; color: var(--ink); }
+.shelf-blurb { font-family: var(--serif); font-size: 13px; line-height: 1.4; color: var(--ink-mute); margin: 0; }
+.shelf-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 13px; padding-top: 10px; border-top: 1px dashed var(--paper-3); }
+.shelf-count { font-family: var(--display); font-size: 10.5px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-mute); }
+.shelf-open { font-family: var(--display); font-size: 11px; letter-spacing: 0.05em; color: var(--paper-1); background: var(--red); border: 1.5px solid var(--red-deep); padding: 5px 11px; box-shadow: 2px 2px 0 rgba(110,28,22,0.3); }
+.shelf:hover .shelf-open { box-shadow: 2px 2px 0 rgba(110,28,22,0.3), 0 0 12px rgba(163,42,34,0.4); }
+
+/* back-to-shelves button (submenu view) — sits top-left, matching the FAB look */
+.world-back {
+  all: unset; position: absolute; top: 22px; left: 22px; z-index: 6; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px; box-sizing: border-box;
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink); background: rgba(237,226,200,0.92); border: 1.5px solid var(--ink);
+  padding: 9px 14px; box-shadow: 2px 2px 0 rgba(28,22,18,0.30);
+  transition: transform .12s ease, box-shadow .12s ease, color .12s ease, background .12s ease;
+}
+.world-back:hover { background: rgba(163,42,34,0.12); color: var(--red); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.30); }
+.world-back:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
+.world-back:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.world-back span { font-size: 15px; line-height: 1; }
+
 .world-foot { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--ink-mute); z-index: 5; }
 
 /* empty (unbuilt) room */
@@ -154,18 +198,25 @@
    #stage, so it sits in the same spot on every screen it appears on. It replaces
    the old inline music control: volume + mute (now also input mode) live on the
    Settings screen it opens. Shell renders it only on the title/world screens. */
-.settings-fab {
+/* Both top-corner FABs live in one fixed flex bar so they share a baseline and a
+   consistent gap — no hand-tuned `right:` offsets that drift when label widths
+   change. Concepts sits left of Settings (DOM order). */
+.fab-bar {
   position: fixed; top: 14px; right: 14px; z-index: 9000;
+  display: flex; align-items: stretch; gap: 10px;
+}
+.settings-fab {
   display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
   appearance: none; padding: 8px 13px; border: 1.5px solid var(--ink);
   font-family: var(--display); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--ink); background: rgba(237,226,200,0.92); box-shadow: 2px 2px 0 rgba(28,22,18,0.30);
   transition: transform .12s ease, box-shadow .12s ease, color .12s ease, background .12s ease;
 }
-.settings-fab svg { display: block; }
+/* fixed-size icon slot so a 20px img and an 18px svg occupy identical space and
+   centre identically — the buttons line up regardless of icon dimensions. */
+.settings-fab-icon { display: inline-grid; place-items: center; width: 20px; height: 20px; }
+.settings-fab-icon svg, .settings-fab-icon img { display: block; }
 .settings-fab:hover { background: rgba(163,42,34,0.12); color: var(--red); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.30); }
 .settings-fab:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
 .settings-fab:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
 .settings-fab-label { line-height: 1; }
-/* Concepts FAB sits just to the left of the Settings FAB (same fixed bar). */
-.settings-fab.concepts-fab { right: 132px; }

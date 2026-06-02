@@ -43,6 +43,7 @@ import FitStage from "./components/FitStage.jsx";
 import SkipJar from "./components/SkipJar.jsx";
 import SkipLine from "./components/SkipLine.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
 import "./styles/m3.css";
@@ -69,6 +70,10 @@ const STAGES = [
   // and goStage route by `key`. scaffoldMap returns L3 for "showwork".
   { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
   { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
+  // Auto-generated, estimator-paced practice: the engine mints fresh MULT_FACTS
+  // variations, re-rolls on a correct answer, fades to harder problems on a clean
+  // streak, and probes transfer. Purely additive — no teaching stage is touched.
+  { n: "practice", key: "practice", tab: "Practice", sub: "Fresh problems — paced to your mastery", badge: "★" },
 ];
 
 // Numbers-stage micro fluency prompts: the bare fact, then explicit ×1 and ×0.
@@ -130,22 +135,22 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     1: "facts_visual", 2: "facts_guided", 3: "facts_partial", 4: "facts_guided",
     5: "facts_bare", 6: "facts_bare", 7: "facts_transfer",
   };
-  const {
-    stage, goStage, nextStage,
-    emit, reportAttempt, award, flashBad,
-    solved, solvedRef, stars, badInput, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef,
-  } = useLessonScaffold({
+  const sc = useLessonScaffold({
     nodeId: NODE_ID,
     lessonId: "m3",
     initialStage: startN,
-    // Linear advance, threading the string-keyed "showwork" step between 6 and 7.
-    advance: (cur) => (cur === 6 ? "showwork" : cur === "showwork" ? 7 : Math.min(7, (typeof cur === "number" ? cur : 7) + 1)),
+    // Linear advance, threading the string-keyed "showwork" step between 6 and 7,
+    // and the final string-keyed "practice" stage after Words (7).
+    advance: (cur) => (cur === 6 ? "showwork" : cur === "showwork" ? 7 : cur === 7 ? "practice" : cur === "practice" ? "practice" : Math.min(7, (typeof cur === "number" ? cur : 7) + 1)),
     // RaiseScaffold target — one numeric stage back (showwork is ungraded so it
     // never reports an attempt; guard the arithmetic anyway).
     back: (cur) => Math.max(1, (typeof cur === "number" ? cur : 6) - 1),
     scaffoldKeyFor: SCAFFOLD_KEY,
     surfaceFormFor: (key) => SURFACE_FORM[key] ?? ("stage-" + key),
+    // The final "practice" stage serves auto-generated MULT_FACTS variations,
+    // paced by the engine (re-roll on correct, fade on a clean streak, transfer probe).
+    generatedStages: ["practice"],
+    generatorSkill: "MULT_FACTS",
     introFor: (n) => ({ tone: "normal", text: STAGE_INTRO(n) }),
     resetStage: () => {
       setScoops(0); setLineFills({}); setPromptIdx(0); setSlate({ product: "" });
@@ -154,6 +159,12 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     },
     onEnd: () => setStatus({ tone: "ok", text: "That's the whole arc — from scooping the jar to knowing the fact by heart. Brilliant, povaryonok!" }),
   });
+  const {
+    stage, goStage, nextStage,
+    emit, reportAttempt, award, flashBad,
+    solved, solvedRef, stars, badInput, cook, setCook, status, setStatus,
+    say, speaking, selfCorrectionsRef,
+  } = sc;
 
   // Selector clicks pass a STAGES `key` string; normalize to the stage VALUE
   // (a number, or "showwork") the render branches compare against.
@@ -433,7 +444,10 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
     />
   );
 
-  if (stage === 1) {
+  if (stage === "practice") {
+    // PRACTICE — auto-generated MULT_FACTS variations, paced by the mastery engine.
+    body = <GenPracticeBoard skill="MULT_FACTS" scaffold={sc} />;
+  } else if (stage === 1) {
     // STAGE 1 · MANIPULATE — the SkipJar IS the problem. No writing but the count box.
     body = (
       <LessonBoard
@@ -757,11 +771,11 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
       onRewatchIntro={onRewatchIntro}
       onReset={reset}
       tabs={{
-        stages: STAGES.map((s) => ({ key: s.key, badge: s.n, title: s.tab, sub: s.sub })),
+        stages: STAGES.map((s) => ({ key: s.key, badge: s.badge ?? s.n, title: s.tab, sub: s.sub })),
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}
-      band={stage !== 7 ? QBand : null}
+      band={stage !== 7 && stage !== "practice" ? QBand : null}
       goal={Goal}
     >
       {body}

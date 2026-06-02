@@ -53,20 +53,38 @@
   .rB .flab{ color:var(--halves); }   /* 1/2 blue   */
   .rA.toSix .flab,.rB.toSix .flab{ color:var(--sixths); }
 
-  /* a bar = a sequence of equal pieces; total width encodes the amount */
-  .bar-track{ display:flex; gap:0; height:48px; }
+  /* a bar = a sequence of equal pieces; total width encodes the amount.
+     Each piece matches the lesson Plank: the denominator hue + that denom's hatch
+     overlay + a 2px ink outline (with inset highlight/shadow like .plank-body) and
+     a divider between pieces in the denominator's own tone (denomTone). */
+  .bar-track{ display:flex; gap:0; height:52px; }
   .pc{
-    height:100%; border:2px solid rgba(20,14,10,.5); border-right-width:1px;
+    position:relative; overflow:hidden;
+    height:100%; border:2px solid var(--ink); border-right-width:1px;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.18), inset 0 -4px 8px rgba(20,12,6,.18);
     display:flex; align-items:center; justify-content:center;
-    font-family:"Russo One",sans-serif; font-size:13px; color:rgba(255,250,235,.92);
+    font-family:"Russo One",sans-serif; font-size:14px; color:#ede2c8;
+    text-shadow:0 1px 0 rgba(255,250,235,.25);
     transition:background .6s ease, opacity .45s ease;
   }
   .pc:last-child{ border-right-width:2px; }
-  .pc .plab{ opacity:0; transition:opacity .4s ease; }
-  .rA .pc{ background:var(--thirds); }
-  .rB .pc{ background:var(--halves); }
-  .rA.toSix .pc,.rB.toSix .pc{ background:var(--sixths); }
+  /* the per-denominator hatch overlay (denomHatch) sits over the hue fill */
+  .pc::before{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0; }
+  .pc .plab{ position:relative; z-index:1; opacity:0; transition:opacity .4s ease; }
   .show-plab .pc .plab{ opacity:1; }
+
+  /* thirds (3) — orange, diagonal 45deg hatch (ink tone), ink label */
+  .rA .pc{ background:var(--thirds); color:#1c1612; }
+  .rA .pc::before{ background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
+  /* halves (2) — blue, horizontal-stripe hatch (paper tone), paper label */
+  .rB .pc{ background:var(--halves); color:#ede2c8; }
+  .rB .pc::before{ background-image:repeating-linear-gradient(0deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px); }
+  /* sixths (6) — gold, cross-hatch 45/-45 (ink tone), ink label */
+  .rA.toSix .pc,.rB.toSix .pc{ background:var(--sixths); color:#1c1612; }
+  .rA.toSix .pc::before,.rB.toSix .pc::before{
+    background-image:
+      repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(-45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
 
   /* mismatch flag on beat 2 */
   #mismatch{
@@ -86,8 +104,13 @@
     opacity:0; transition:opacity .6s ease, transform .6s ease;
   }
   #result.on{ opacity:1; transform:translate(-50%,-50%); }
-  #joined{ display:flex; gap:0; height:48px; }
-  #joined .pc{ background:var(--sixths); }
+  #joined{ display:flex; gap:0; height:52px; }
+  /* the joined result is five sixths — gold + cross-hatch + ink label */
+  #joined .pc{ background:var(--sixths); color:#1c1612; }
+  #joined .pc::before{
+    background-image:
+      repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(-45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
   #eq{ display:flex; align-items:center; gap:14px; font-family:"Russo One",sans-serif; }
   #eq .f{ display:flex; flex-direction:column; align-items:center; line-height:1; }
   #eq .f .n,#eq .f .d{ font-size:40px; } #eq .f .bar{ width:42px; height:4px; background:var(--ink); border-radius:2px; margin:5px 0; }

@@ -64,12 +64,24 @@
   #stackWrap{ position:relative; width:200px; height:392px; flex:0 0 auto; }
   #stack{ position:absolute; left:0; right:0; bottom:0;
     display:flex; flex-direction:column-reverse; align-items:stretch; }
-  .seg{ position:relative; height:42px; border:2px solid rgba(20,14,10,.45); border-bottom-width:1px;
+  /* one 1/7 segment — matches the lesson R5 Block: indigo (denomColor 7) fill, the
+     sevenths CHEVRON hatch (denomHatch 7, paper tone), a 1.5px ink outline + inset
+     highlight/shadow like .r5-block, and a 1/7 label in paper (denomTextColor 7). */
+  .seg{ position:relative; overflow:hidden; height:42px;
+    border:1.5px solid var(--ink); border-bottom-width:1px;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.18), inset 0 -3px 6px rgba(20,12,6,.18);
     background:var(--sevenths); display:flex; align-items:center; justify-content:center;
-    font-family:"Russo One",sans-serif; font-size:14px; color:rgba(255,250,235,.95);
+    font-family:"Russo One",sans-serif; font-size:12px; color:#ede2c8;
+    text-shadow:0 1px 0 rgba(255,250,235,.25);
     opacity:0; transform:translateY(10px) scale(.96);
     transition:opacity .35s ease, transform .35s ease, background .5s ease, border-color .5s ease; }
-  .seg:first-child{ border-bottom-width:2px; }
+  /* the chevron hatch overlay (denomHatch(7), paper tone @ .34) */
+  .seg::before{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(-45deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px); }
+  .seg > *{ position:relative; z-index:1; }
+  .seg:first-child{ border-bottom-width:1.5px; }
   .seg.in{ opacity:1; transform:none; }
   /* the seven that group into one whole get a green-ink wash + brace */
   .seg.grouped{ background:var(--whole); }
@@ -212,8 +224,9 @@
       var d=document.createElement("div"); d.className="seg";
       d.dataset.i=i;
       // the seventh through ninth are the ones above the 1-line (i>=7 are leftover-region;
-      // i 0..6 are the seven that make a whole). label every piece "⅐"-ish.
-      d.textContent="⅐";
+      // i 0..6 are the seven that make a whole). label every piece 1/7 like the lesson.
+      var lab=document.createElement("span"); lab.className="slab"; lab.textContent="1/7";
+      d.appendChild(lab);
       s.appendChild(d);
     }
   })();

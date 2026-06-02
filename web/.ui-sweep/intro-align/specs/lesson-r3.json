@@ -1,0 +1,1 @@
+{"route":"r3","steps":[{"waitFor":".intro-continue"},{"click":".intro-continue"},{"wait":600},{"click":".intro-continue"},{"wait":600},{"click":".intro-continue"},{"wait":500},{"waitFor":".stage-tab"},{"wait":400},{"clickNth":{"selector":".stage-tab","n":0}},{"wait":1000}]}

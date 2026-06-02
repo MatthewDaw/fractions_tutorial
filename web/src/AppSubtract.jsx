@@ -35,6 +35,7 @@ import BlankSlate from "./components/BlankSlate.jsx";
 import QuestionBand from "./components/QuestionBand.jsx";
 import FitStage from "./components/FitStage.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import "./styles/s1.css";
@@ -57,6 +58,10 @@ const STAGES = [
   { n: 2, key: "2-takeaway",  tab: "Take Away", sub: "drag 2 pieces off" },
   { n: 3, key: "3-numbers",   tab: "Numbers",   sub: "bare 7/8 − 3/8 = ?" },
   { n: 4, key: "4-words",     tab: "Words",     sub: "story problem" },
+  // Auto-generated, estimator-paced practice: the engine mints fresh SUB_SAME_DEN
+  // variations, re-rolls on a correct answer, fades to harder problems on a clean
+  // streak, and probes transfer. Purely additive — no teaching stage is touched.
+  { n: "practice", key: "practice", tab: "Practice", sub: "Fresh problems — paced to your mastery", badge: "★" },
 ];
 
 const PIECE_W = UNIT / DEN;
@@ -118,17 +123,16 @@ export default function AppSubtract({ no, title, onBack, onRewatchIntro, initial
 
   const SCAFFOLD_KEY = (key) => String(key);
 
-  const {
-    stage, goStage, nextStage,
-    emit, reportAttempt, award, flashBad,
-    solved, solvedRef, stars, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef,
-  } = useLessonScaffold({
+  const sc = useLessonScaffold({
     nodeId: NODE,
     lessonId: "s1",
     initialStage: startN,
     stagesOrder: STAGES.map((s) => s.n),
     scaffoldKeyFor: SCAFFOLD_KEY,
+    // The final "practice" stage serves auto-generated SUB_SAME_DEN variations,
+    // paced by the engine (re-roll on correct, fade on a clean streak, transfer probe).
+    generatedStages: ["practice"],
+    generatorSkill: "SUB_SAME_DEN",
     introFor: (n) => ({ tone: "normal", text: STAGE_INTRO(n) }),
     resetStage: () => {
       setBroken(false); brokenRef.current = false;
@@ -138,6 +142,12 @@ export default function AppSubtract({ no, title, onBack, onRewatchIntro, initial
     },
     onEnd: () => setStatus({ tone: "ok", text: "That's the whole arc — break it apart, take pieces away, and keep the bottom the same. Brilliant, povaryonok!" }),
   });
+  const {
+    stage, goStage, nextStage,
+    emit, reportAttempt, award, flashBad,
+    solved, solvedRef, stars, cook, setCook, status, setStatus,
+    say, speaking, selfCorrectionsRef,
+  } = sc;
 
   const toStageVal = (key) => {
     const d = STAGES.find((s) => s.n === key || s.key === key);
@@ -345,7 +355,10 @@ export default function AppSubtract({ no, title, onBack, onRewatchIntro, initial
   // ---- Per-stage body -------------------------------------------------------
   let body = null;
 
-  if (stage === 1) {
+  if (stage === "practice") {
+    // PRACTICE — auto-generated SUB_SAME_DEN variations, paced by the mastery engine.
+    body = <GenPracticeBoard skill="SUB_SAME_DEN" scaffold={sc} />;
+  } else if (stage === 1) {
     // STAGE 1 · DECOMPOSE — 5/8 as one solid stack; break it into 5 unit pieces.
     body = (
       <LessonBoard
@@ -598,7 +611,7 @@ export default function AppSubtract({ no, title, onBack, onRewatchIntro, initial
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}
-      band={stage !== 4 ? questionBand : null}
+      band={stage !== 4 && stage !== "practice" ? questionBand : null}
       goal={Goal}
     >
       {body}

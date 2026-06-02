@@ -23,7 +23,7 @@
 // NOTE: Do NOT run the full test suite. This file is checked by the orchestrator.
 
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 // ---------------------------------------------------------------------------
@@ -549,53 +549,73 @@ vi.mock('../../src/kitchenProgress.js', () => ({
   resetProgress: (...args) => kitchenProgressMock.resetProgress(...args),
 }));
 
-describe('WorldMap — mastery status rendering', () => {
+describe('WorldMap — two-level shelf/submenu rendering', () => {
   beforeEach(() => {
     kitchenProgressMock.masteryStatusFor.mockReturnValue('not-started');
     kitchenProgressMock.suggestedNextRoom.mockReturnValue(null);
   });
 
-  it('renders all 10 room cards (pre-engine state: null masteryMap)', async () => {
-    // 10 = 2 multiplication-foundation rooms (arrays cut) + 8 fraction rooms.
+  // The map is now two-level: the top level shows three strand SHELVES; the ten
+  // lesson cards live inside the per-shelf submenus. Tests open a shelf (click)
+  // to reach the lesson cards.
+
+  it('top level shows three strand shelves and no loose lesson cards', async () => {
     const { default: WorldMap } = await import('../../src/WorldMap.jsx');
     const { unmount } = render(
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: null })
     );
-    expect(document.querySelectorAll('.wcard').length).toBe(10);
+    expect(document.querySelectorAll('.shelf').length).toBe(3);
+    expect(document.querySelectorAll('.wcard').length).toBe(0);
     unmount();
   });
 
-  it('shows "Mastered" badge when status is "mastered"', async () => {
-    kitchenProgressMock.masteryStatusFor.mockImplementation((nodeId) =>
-      nodeId === 'ADD_SAME_DEN' ? 'mastered' : 'not-started'
+  it('opening every shelf reveals 10 lesson cards in total', async () => {
+    // 10 = 2 multiplication-foundation rooms (arrays cut) + 8 fraction rooms,
+    // grouped 2 + 4 + 4 across the three shelves.
+    const { default: WorldMap } = await import('../../src/WorldMap.jsx');
+    const { unmount } = render(
+      React.createElement(WorldMap, { onOpen: () => {}, masteryMap: null })
     );
-    kitchenProgressMock.suggestedNextRoom.mockReturnValue('r3');
+    let total = 0;
+    for (let i = 0; i < 3; i++) {
+      fireEvent.click(document.querySelectorAll('.shelf')[i]);
+      total += document.querySelectorAll('.wcard').length;
+      fireEvent.click(document.querySelector('.world-back')); // back to shelves
+    }
+    expect(total).toBe(10);
+    unmount();
+  });
+
+  it('shows "Mastered" badge on a lesson card inside a shelf', async () => {
+    kitchenProgressMock.masteryStatusFor.mockReturnValue('mastered');
+    kitchenProgressMock.suggestedNextRoom.mockReturnValue(null);
 
     const { default: WorldMap } = await import('../../src/WorldMap.jsx');
     const { unmount } = render(
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: {} })
     );
+    fireEvent.click(document.querySelectorAll('.shelf')[0]);
     expect(screen.queryAllByText('Mastered').length).toBeGreaterThan(0);
     unmount();
   });
 
-  it('shows "Next" badge on the suggested room', async () => {
-    kitchenProgressMock.masteryStatusFor.mockImplementation((nodeId) =>
-      nodeId === 'ADD_SAME_DEN' ? 'mastered' : 'not-started'
-    );
-    kitchenProgressMock.suggestedNextRoom.mockReturnValue('r3'); // r3 is next
+  it('flags the suggested room: its shelf carries a "Next" badge, its card is data-suggested', async () => {
+    kitchenProgressMock.masteryStatusFor.mockReturnValue('not-started');
+    kitchenProgressMock.suggestedNextRoom.mockReturnValue('r3'); // r3 lives in the 3rd shelf
 
     const { default: WorldMap } = await import('../../src/WorldMap.jsx');
     const { unmount } = render(
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: {} })
     );
+    // Top level: the shelf containing the suggested room is badged "Next".
     expect(screen.queryByText('Next')).not.toBeNull();
-    const suggested = document.querySelector('[data-suggested]');
-    expect(suggested).not.toBeNull();
+    // Open that shelf and confirm the suggested card is marked.
+    fireEvent.click(document.querySelector('.shelf--suggested'));
+    expect(document.querySelector('[data-suggested]')).not.toBeNull();
     unmount();
   });
 
-  it('shows "In progress" badge when status is "in-progress"', async () => {
+  it('shows "In progress" badge on a lesson card inside a shelf', async () => {
     kitchenProgressMock.masteryStatusFor.mockReturnValue('in-progress');
     kitchenProgressMock.suggestedNextRoom.mockReturnValue('r1');
 
@@ -603,11 +623,12 @@ describe('WorldMap — mastery status rendering', () => {
     const { unmount } = render(
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: {} })
     );
+    fireEvent.click(document.querySelectorAll('.shelf')[0]);
     expect(screen.queryAllByText('In progress').length).toBeGreaterThan(0);
     unmount();
   });
 
-  it('shows "Review" badge when status is "needs-review"', async () => {
+  it('shows "Review" badge on a lesson card inside a shelf', async () => {
     kitchenProgressMock.masteryStatusFor.mockReturnValue('needs-review');
     kitchenProgressMock.suggestedNextRoom.mockReturnValue(null);
 
@@ -615,6 +636,7 @@ describe('WorldMap — mastery status rendering', () => {
     const { unmount } = render(
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: {} })
     );
+    fireEvent.click(document.querySelectorAll('.shelf')[0]);
     expect(screen.queryAllByText('Review').length).toBeGreaterThan(0);
     unmount();
   });

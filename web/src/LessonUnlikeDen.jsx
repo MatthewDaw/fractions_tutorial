@@ -19,6 +19,7 @@ import QuestionBand from "./components/QuestionBand.jsx";
 import ExpressionSlate from "./components/ExpressionSlate.jsx";
 import BlankSlate from "./components/BlankSlate.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { denomColor, denomTextColor, denomTone } from "./denominatorColors.js";
 import { lcd, exactSum, commonDenChoices, multipliersFor, verify, generateProblem, crossMultiply } from "./unlikeDenMath.js";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
@@ -146,7 +147,7 @@ function Combined({ countA, countB, D, unit }) {
 // (LA) and Words (L7). The child must put ink down before advancing; it is
 // ungraded (no answer, never judged by the engine). String-keyed so it slots in
 // without renumbering anything; scaffoldMap maps "showwork" → L3.
-const NEXT_BEAT = { L0: "L2", L2: "L4", L4: "LW", LW: "L5", L5: "L6", L6: "LA", LA: "SW", SW: "L7" };
+const NEXT_BEAT = { L0: "L2", L2: "L4", L4: "LW", LW: "L5", L5: "L6", L6: "LA", LA: "SW", SW: "L7", L7: "practice" };
 
 export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIntro }) {
   // Pedagogical beat. The ladder is one click each for the demo (topbar selector).
@@ -172,13 +173,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   // judgeAndAdvance), the outcome state, selfCorrectionsRef/solvedRef, flashBad,
   // and voice. emitMountPresent:false — clearForBeat emits problem_present itself,
   // so the hook must not double-fire it on mount.
-  const {
-    emit: engineEmit, judgeAndAdvance, flashBad,
-    solved, setSolved, stars, setStars, badInput, setBadInput,
-    cook, setCook, status, setStatus,
-    say, speaking, stopVoice,
-    selfCorrectionsRef: selfCorrRef, solvedRef,
-  } = useLessonScaffold({
+  const sc = useLessonScaffold({
     nodeId: () => engineNodeId,
     lessonId: () => engineLessonId,
     lesson,
@@ -186,7 +181,20 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     resetStage: () => {},               // LU owns per-beat reset via clearForBeat
     emitMountPresent: false,            // clearForBeat emits problem_present itself
     initialStatus: { tone: "normal", text: "Two strips, different block sizes. Grab a knife and slice, povaryonok." },
+    // The final "practice" beat serves auto-generated unlike-denominator variations
+    // (skill auto-derives from the node id), paced by the engine. LU drives it by
+    // calling goStage("practice") on entry (see setBeatLevel), so the scaffold's
+    // generated machinery mints `prob` and re-rolls/fades through GenPracticeBoard.
+    generatedStages: ["practice"],
   });
+  const {
+    emit: engineEmit, judgeAndAdvance, flashBad,
+    solved, setSolved, stars, setStars, badInput, setBadInput,
+    cook, setCook, status, setStatus,
+    say, speaking, stopVoice,
+    selfCorrectionsRef: selfCorrRef, solvedRef,
+    goStage, prob,
+  } = sc;
 
   // Last engine Decision (returned synchronously by judgeAndAdvance; stored in a ref
   // so reset() can read it without a React state lag).
@@ -199,6 +207,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   const isLW = beat === "LW"; // Workbench: the free block sandbox (own render branch)
   const isLA = beat === "LA"; // Applied: worded question, numerals shown, setup gate
   const isSW = beat === "SW"; // Show your work: a mandatory blank-slate step (own branch)
+  const isPractice = beat === "practice"; // auto-generated, engine-paced practice (own branch)
   // The picker (symbolic common-size choice) drives L2/L4. L5/L6/L7 are bare.
   const usesPicker = isL2 || isL4;
   // Strips faded to outlines whenever the blocks are no longer the lead actor.
@@ -354,6 +363,10 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     // Free navigation: clicking any beat box jumps there anytime, resetting the
     // board to a fresh start for that level (clearForBeat clears mid-solve state).
     _setBeat(b);
+    // The generated practice beat is driven by the shared controller: goStage
+    // mints the first variation and tracks the engine-paced level. (clearForBeat
+    // is for LU's own anchor/bank beats and would emit a duplicate present.)
+    if (b === "practice") { goStage("practice"); return; }
     clearForBeat(b);
   }
 
@@ -639,7 +652,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     if (wasSolved && NEXT_BEAT[beat]) {
       const nb = NEXT_BEAT[beat];
       _setBeat(nb);
-      clearForBeat(nb);   // resets the board + sets the next rung's greeting
+      if (nb === "practice") goStage("practice"); // controller-driven generated beat
+      else clearForBeat(nb);   // resets the board + sets the next rung's greeting
       return;
     }
     if (beat === "L4") {
@@ -782,6 +796,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     { key: "LA", badge: "A",  title: "Applied",    sub: "a worded question with the fractions shown; write the sum", writes: true },
     { key: "SW", badge: "✎",  title: "Show Work",  sub: "write out how you'd solve it on a blank slate",           writes: false },
     { key: "L7", badge: "5",  title: "Words",      sub: "a plain-language word problem; read it and solve",        writes: true  },
+    { key: "practice", badge: "★", title: "Practice", sub: "fresh problems — paced to your mastery",               writes: true  },
   ];
   const tabs = {
     stages: BEATS.map((s) => ({
@@ -793,8 +808,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     label: "interaction-arc stage",
   };
 
-  // ---- the shared full-width QuestionBand (every stage EXCEPT Words/L7) -------
-  const Band = !isL7 ? (
+  // ---- the shared full-width QuestionBand (every stage EXCEPT Words/L7/Practice)
+  const Band = !isL7 && !isPractice ? (
     <QuestionBand
       lead="solve"
       expr={<>{aNum}/{aDen} <span className="qb-op">+</span> {bNum}/{bDen}</>}
@@ -834,7 +849,10 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       band={Band}
       goal={Goal}
     >
-      {isLW ? (
+      {isPractice ? (
+        /* PRACTICE — auto-generated unlike-denominator variations, engine-paced. */
+        <GenPracticeBoard skill={engineNodeId} scaffold={sc} />
+      ) : isLW ? (
         /* WORKBENCH — the free block sandbox replaces the strips entirely. */
         <>
           <BlockSandbox

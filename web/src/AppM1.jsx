@@ -39,6 +39,7 @@ import QuestionBand from "./components/QuestionBand.jsx";
 import PlateGroup, { BowlGroup } from "./components/PlateGroup.jsx";
 import BlankSlate from "./components/BlankSlate.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import "./styles/m1.css";
 
@@ -61,6 +62,11 @@ const STAGES = [
   // and goStage route by `key`. scaffoldMap returns L3 for "showwork".
   { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
   { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
+  // Auto-generated, estimator-paced practice: the engine mints fresh
+  // MULT_EQUAL_GROUPS variations, re-rolls on a correct answer, fades to harder
+  // problems on a clean streak, and probes transfer. Purely additive — no
+  // teaching stage is touched. The "★" badge marks it as the open-ended coda.
+  { n: "★", key: "practice",   tab: "Practice",   sub: "Fresh problems — paced to your mastery" },
 ];
 
 const NODE = "MULT_EQUAL_GROUPS";
@@ -87,8 +93,8 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   const startN = (() => {
     const b = initialBeat;
     const f = STAGES.find((s) => s.key === b || s.n === b || String(s.n) === String(b));
-    // Normalize the inserted step to its canonical string value "showwork".
-    return f ? (f.key === "showwork" ? "showwork" : f.n) : 1;
+    // Normalize the string-keyed steps (showwork, practice) to their canonical key.
+    return f ? (f.key === "showwork" || f.key === "practice" ? f.key : f.n) : 1;
   })();
   // --- Stage 1 (manipulate) state — N plates, each holding 0..SIZE pelmeni ---
   const [plates, setPlates] = useState(() => Array(GROUPS).fill(0));
@@ -121,21 +127,21 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   // model (advance/back/scaffold key), its intro copy, and its per-stage reset.
   // Map a stage value (number | "showwork") to its scaffold key string.
   const SCAFFOLD_KEY = (key) => STAGES.find((s) => s.n === key || s.key === key)?.key ?? "1-manipulate";
-  const {
-    stage, goStage, nextStage,
-    emit, reportAttempt, award, flashBad,
-    solved, solvedRef, stars, badInput, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef,
-  } = useLessonScaffold({
+  const sc = useLessonScaffold({
     nodeId: NODE,
     lessonId: "m1",
     initialStage: startN,
-    // Linear advance, threading the string-keyed "showwork" step between 6 and 7.
-    advance: (cur) => (cur === 6 ? "showwork" : cur === "showwork" ? 7 : Math.min(7, (typeof cur === "number" ? cur : 7) + 1)),
+    // Linear advance, threading the string-keyed "showwork" step between 6 and 7,
+    // then the generated "practice" coda after Words (7).
+    advance: (cur) => (cur === 6 ? "showwork" : cur === "showwork" ? 7 : cur === 7 ? "practice" : cur === "practice" ? "practice" : Math.min(7, (typeof cur === "number" ? cur : 7) + 1)),
     // RaiseScaffold target — one numeric stage back (showwork is ungraded so it
     // never reports an attempt; guard the arithmetic anyway).
     back: (cur) => Math.max(1, (typeof cur === "number" ? cur : 6) - 1),
     scaffoldKeyFor: SCAFFOLD_KEY,
+    // The final "practice" stage serves auto-generated MULT_EQUAL_GROUPS variations,
+    // paced by the engine (re-roll on correct, fade on a clean streak, transfer probe).
+    generatedStages: ["practice"],
+    generatorSkill: "MULT_EQUAL_GROUPS",
     introFor: (n) => ({ tone: "normal", text: STAGE_INTRO(n) }),
     resetStage: () => {
       setPlates(Array(GROUPS).fill(0)); setPlateFlag(false); setTally("");
@@ -144,12 +150,20 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
     },
     onEnd: () => setStatus({ tone: "ok", text: "That's the whole arc — from filling plates to reading a story and writing the answer. Brilliant, povaryonok!" }),
   });
+  const {
+    stage, goStage, nextStage,
+    emit, reportAttempt, award, flashBad,
+    solved, solvedRef, stars, badInput, cook, setCook, status, setStatus,
+    say, speaking, selfCorrectionsRef,
+  } = sc;
 
   // Selector clicks pass a STAGES `key` string; normalize to the stage VALUE
   // (a number, or "showwork") the render branches compare against.
   const toStageVal = (key) => {
     const d = STAGES.find((s) => s.n === key || s.key === key);
-    return d ? (d.key === "showwork" ? "showwork" : d.n) : key;
+    // The string-keyed steps (showwork, practice) compare by their key in the
+    // render branches; numeric stages compare by their numeric `n`.
+    return d ? (d.key === "showwork" || d.key === "practice" ? d.key : d.n) : key;
   };
 
   const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 3);
@@ -355,8 +369,9 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   // prose and extracts the math (count × size) themselves — surfacing the bare
   // 3 × 4 = ? band would give the answer away. So the band renders on every other
   // stage (including Applied, which intentionally shows numerals, and Show-Work)
-  // but is suppressed on stage 7. `showBand` gates the mount below.
-  const showBand = stage !== 7;
+  // but is suppressed on stage 7. `showBand` gates the mount below. The generated
+  // "practice" coda also omits the band — each minted problem carries its own prompt.
+  const showBand = stage !== 7 && stage !== "practice";
   const Band = (() => {
     const q = questionFor(stage);
     const answer = q.op === "+"
@@ -443,7 +458,12 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   // ---- Per-stage body -------------------------------------------------------
   let body = null;
 
-  if (stage === 1) {
+  if (stage === "practice") {
+    // PRACTICE — auto-generated MULT_EQUAL_GROUPS variations, paced by the mastery
+    // engine (re-roll on correct, fade on a clean streak, transfer probe). The
+    // board renders a single number input (integer product) and grades itself.
+    body = <GenPracticeBoard skill="MULT_EQUAL_GROUPS" scaffold={sc} />;
+  } else if (stage === 1) {
     // STAGE 1 · MANIPULATE — the plates ARE the problem. Tap pelmeni; fill a count box.
     body = (
       <LessonBoard

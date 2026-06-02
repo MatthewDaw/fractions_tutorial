@@ -229,8 +229,9 @@ describe('Playability smoke — WorldMap', () => {
     render(<WorldMap onOpen={noop} />);
     // The world-head always contains the h1 title.
     expect(screen.getByRole('heading', { name: /Babushka'?s Fractions/i })).toBeTruthy();
-    // The map footer is a stable landmark element.
-    expect(screen.getByText(/five lessons/i)).toBeTruthy();
+    // The map footer is a stable landmark element (copy/room-count may change,
+    // so match the stable "… lessons, in order …" phrasing rather than a count).
+    expect(screen.getByText(/lessons, in order/i)).toBeTruthy();
   });
 });
 

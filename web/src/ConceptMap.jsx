@@ -1,27 +1,25 @@
 // ConceptMap.jsx — the "Concepts" screen (route "concepts").
 //
-// The VISUAL CONNECTION to the content-measurement / mastery engine. Renders the
-// whole curriculum as a deck of nested cards with a crystal-clear hierarchy:
+// The VISUAL CONNECTION to the content-measurement / mastery engine. The TOP is a
+// navigation bar across the high-level math CONCEPTS; selecting one opens its
+// detailed breakdown of every subconcept (skill node → atomic cards) in the panel
+// below. There is NO grade level anywhere — the app is pace-agnostic; anyone moves
+// through whatever concept they like, in whatever order.
 //
-//   CCSS Grade → Domain/Cluster → Standard → Skill Node → Atomic card
+//   Concept (top nav) → Skill node → Atomic card
 //
 // Mastery is measured at the smallest atomic detail (each scaffold-ladder form +
 // transfer form) and ROLLS UP: every level above shows the average of the atomic
-// cards beneath it, drawn as a mastery ring.
+// cards beneath it.
 //
 // Data + the mastery seam live in conceptTree.js (getMastery / buildConceptTree).
 // This file is pure presentation — match the Soviet/old-paper palette (tokens.css).
 import { useMemo, useState } from "react";
-import {
-  buildConceptTree,
-  prereqSpine,
-  levelName,
-  isLiveMastery,
-} from "./conceptTree.js";
+import { buildConceptTree, levelName, isLiveMastery } from "./conceptTree.js";
 import "./styles/conceptmap.css";
 
 // ---------------------------------------------------------------------------
-// Mastery ring (rolled-up indicator used at grade/cluster/standard/node level)
+// Mastery ring (rolled-up indicator used at concept + node level)
 // ---------------------------------------------------------------------------
 function Ring({ value, size = 46 }) {
   const r = (size - 8) / 2;
@@ -90,10 +88,10 @@ function AtomicCards({ cards }) {
 }
 
 // ---------------------------------------------------------------------------
-// Skill node row (collapsible → reveals atomic cards + prereqs)
+// Skill node (a subconcept) — collapsible → reveals atomic cards + prereqs
 // ---------------------------------------------------------------------------
 function NodeRow({ node, titleById }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   return (
     <div className={"cm-node " + masteryClass(node.mastery)}>
       <button className="cm-node-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
@@ -101,7 +99,7 @@ function NodeRow({ node, titleById }) {
         <Ring value={node.mastery} size={42} />
         <span className="cm-node-titles">
           <span className="cm-node-title">
-            {node.no ? <em className="cm-no">№{node.no}</em> : null} {node.title}
+            {node.title}
             <span className="cm-node-id">{node.id}</span>
           </span>
           <span className="cm-node-concept">{node.concept}</span>
@@ -114,114 +112,26 @@ function NodeRow({ node, titleById }) {
 
       {open && (
         <div className="cm-node-body">
-          {node.prereqs.length > 0 && (
-            <div className="cm-prereqs">
-              <span className="cm-prereqs-label">Builds on</span>
-              {node.prereqs.map((p) => (
-                <span key={p} className="cm-prereq-pill">
-                  {titleById[p] || p}
-                </span>
-              ))}
-            </div>
-          )}
+          <div className="cm-node-subhead">
+            {node.prereqs.length > 0 && (
+              <div className="cm-prereqs">
+                <span className="cm-prereqs-label">Builds on</span>
+                {node.prereqs.map((p) => (
+                  <span key={p} className="cm-prereq-pill">
+                    {titleById[p] || p}
+                  </span>
+                ))}
+              </div>
+            )}
+            {node.codes && node.codes.length > 0 && (
+              <span className="cm-node-ccss" title="Common Core alignment">
+                aligned to {node.codes.join(" · ")}
+              </span>
+            )}
+          </div>
           <AtomicCards cards={node.cards} />
         </div>
       )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Standard / cluster / grade — nested collapsible sections
-// ---------------------------------------------------------------------------
-function StandardSection({ standard, titleById }) {
-  const [open, setOpen] = useState(true);
-  return (
-    <div className="cm-standard">
-      <button className="cm-standard-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className={"cm-caret" + (open ? " open" : "")}>▸</span>
-        <span className="cm-code">{standard.code}</span>
-        <span className="cm-standard-sub">Standard</span>
-        <Ring value={standard.mastery} size={38} />
-      </button>
-      {open && (
-        <div className="cm-standard-body">
-          {standard.children.map((node) => (
-            <NodeRow key={node.id} node={node} titleById={titleById} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ClusterSection({ cluster, titleById }) {
-  const [open, setOpen] = useState(true);
-  return (
-    <div className="cm-cluster">
-      <button className="cm-cluster-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className={"cm-caret" + (open ? " open" : "")}>▸</span>
-        <span className="cm-cluster-titles">
-          <span className="cm-cluster-code">{cluster.code}</span>
-          <span className="cm-cluster-name">{cluster.title}</span>
-        </span>
-        <Ring value={cluster.mastery} size={44} />
-      </button>
-      {open && (
-        <div className="cm-cluster-body">
-          {cluster.children.map((standard) => (
-            <StandardSection key={standard.id} standard={standard} titleById={titleById} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function GradeSection({ grade, titleById }) {
-  const [open, setOpen] = useState(true);
-  return (
-    <section className="cm-grade">
-      <button className="cm-grade-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className={"cm-caret big" + (open ? " open" : "")}>▸</span>
-        <span className="cm-grade-no">{grade.id}</span>
-        <span className="cm-grade-titles">
-          <span className="cm-grade-title">{grade.title}</span>
-          <span className="cm-grade-sub">Common Core</span>
-        </span>
-        <Ring value={grade.mastery} size={56} />
-      </button>
-      {open && (
-        <div className="cm-grade-body">
-          {grade.children.map((cluster) => (
-            <ClusterSection key={cluster.id} cluster={cluster} titleById={titleById} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Prerequisite spine (the dependency view)
-// ---------------------------------------------------------------------------
-function PrereqSpine() {
-  const spine = useMemo(() => prereqSpine(), []);
-  return (
-    <div className="cm-spine">
-      <div className="cm-spine-label">Prerequisite spine — each skill builds on the ones before it</div>
-      <div className="cm-spine-track">
-        {spine.map((n, i) => (
-          <div key={n.id} className="cm-spine-item">
-            {i > 0 && <span className="cm-spine-arrow" aria-hidden="true">→</span>}
-            <div className="cm-spine-node" title={n.prereqs.length ? "Builds on: " + n.prereqs.join(", ") : "Root skill"}>
-              <span className="cm-spine-no">№{n.no}</span>
-              <span className="cm-spine-title">{n.title}</span>
-              <span className="cm-spine-id">{n.id}</span>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -245,6 +155,8 @@ function Corner() {
 export default function ConceptMap({ onBack }) {
   const tree = useMemo(() => buildConceptTree(), []);
   const live = isLiveMastery();
+  const [activeId, setActiveId] = useState(tree.concepts[0] ? tree.concepts[0].id : null);
+  const concept = tree.concepts.find((c) => c.id === activeId) || tree.concepts[0];
 
   return (
     <div className="scene cm-scene" data-vox-speaker="cook">
@@ -263,8 +175,8 @@ export default function ConceptMap({ onBack }) {
             <div className="cm-kicker"><span className="cm-k-dot" />Babushka&rsquo;s Fractions</div>
             <h1 className="cm-h-title">Concept Mastery Map</h1>
             <div className="cm-h-sub">
-              Common Core → cluster → standard → skill → atomic card. Mastery is measured at the
-              smallest card and rolls up.
+              Pick a concept up top to open its subconcepts. Mastery is measured at the smallest
+              card and rolls up — explore in any order, at your own pace.
             </div>
           </div>
           <div className="cm-head-r">
@@ -285,14 +197,44 @@ export default function ConceptMap({ onBack }) {
           <span className="cm-legend-item"><i className="sw empty" />Not started</span>
         </div>
 
-        <PrereqSpine />
-
-        {/* scrolling hierarchy */}
-        <div className="cm-scroll">
-          {tree.grades.map((grade) => (
-            <GradeSection key={grade.id} grade={grade} titleById={tree.titleById} />
+        {/* TOP NAV — the high-level concepts */}
+        <nav className="cm-nav" role="tablist" aria-label="Math concepts">
+          {tree.concepts.map((c) => (
+            <button
+              key={c.id}
+              role="tab"
+              aria-selected={concept && c.id === concept.id}
+              className={"cm-nav-tab " + masteryClass(c.mastery) + (concept && c.id === concept.id ? " is-active" : "")}
+              onClick={() => setActiveId(c.id)}
+            >
+              <Ring value={c.mastery} size={34} />
+              <span className="cm-nav-tx">
+                <span className="cm-nav-title">{c.title}</span>
+                <span className="cm-nav-count">
+                  {c.children.length} skill{c.children.length === 1 ? "" : "s"}
+                </span>
+              </span>
+            </button>
           ))}
-        </div>
+        </nav>
+
+        {/* MAIN — the selected concept's subconcept breakdown */}
+        {concept && (
+          <div className="cm-detail">
+            <div className="cm-detail-head">
+              <Ring value={concept.mastery} size={50} />
+              <div className="cm-detail-tx">
+                <h2 className="cm-detail-title">{concept.title}</h2>
+                {concept.blurb ? <p className="cm-detail-blurb">{concept.blurb}</p> : null}
+              </div>
+            </div>
+            <div className="cm-scroll">
+              {concept.children.map((node) => (
+                <NodeRow key={node.id} node={node} titleById={tree.titleById} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

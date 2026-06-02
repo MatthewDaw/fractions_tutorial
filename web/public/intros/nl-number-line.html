@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson — On the Number Line intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --fourths:#0a9396;   /* 4 = teal (denomColor(4)) */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the number-line board: a 0→1 ruler with ticks, a fill bar, a red bead ── */
+  #board{ position:relative; width:620px; max-width:92vw; height:200px; }
+
+  /* the line itself (the .nline equivalent) */
+  #nline{
+    position:absolute; left:30px; right:30px; top:96px; height:4px;
+    background:var(--ink); border-radius:2px;
+  }
+  /* translucent fill 0→point (the .nl-fill equivalent, teal-tinted) */
+  #fill{
+    position:absolute; left:30px; top:91px; height:14px; width:0;
+    background:rgba(10,147,150,.22); border-radius:7px; z-index:2;
+    transition:width .9s cubic-bezier(.5,.05,.2,1);
+  }
+
+  /* ticks: tall majors at the wholes, shorter partition ticks at quarters */
+  .tick{ position:absolute; background:var(--ink); transform:translateX(-50%); transition:opacity .5s ease, height .5s ease; }
+  .tick.major{ top:84px; height:28px; width:3px; }
+  .tick.part{ top:90px; height:16px; width:2px; opacity:0; }
+  #board.cut .tick.part{ opacity:.78; }
+
+  /* tick labels (the .nlab equivalent): wholes bold, partition ¼/2/4/¾ lighter */
+  .lab{ position:absolute; top:120px; transform:translateX(-50%); white-space:nowrap;
+    font-family:"Russo One",sans-serif; font-size:15px; color:var(--ink); }
+  .lab.part{ font-size:13px; color:var(--ink-soft); opacity:0; transition:opacity .5s ease; }
+  #board.cut .lab.part{ opacity:.85; }
+  .lab.tgt{ color:var(--fourths); opacity:0; transition:opacity .5s ease; }
+  #board.named .lab.tgt{ opacity:1; }
+
+  /* the round red bead — the draggable point (~26px, white border) */
+  #bead{
+    position:absolute; top:98px; width:26px; height:26px; margin-left:-13px; margin-top:-13px;
+    border-radius:50%; background:var(--red); border:3px solid #fff;
+    box-shadow:0 3px 8px rgba(0,0,0,.34); z-index:6;
+    transition:left 1.0s cubic-bezier(.5,.05,.2,1), transform .3s ease, box-shadow .3s ease;
+  }
+  #bead.lift{ transform:scale(1.16); box-shadow:0 6px 16px rgba(0,0,0,.42); }
+
+  /* the fraction the bead names, floating above it (revealed late) */
+  #beadtag{
+    position:absolute; top:50px; transform:translateX(-50%) scale(.6);
+    display:flex; flex-direction:column; align-items:center; line-height:1;
+    font-family:"Russo One",sans-serif; color:var(--fourths);
+    opacity:0; transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.56,.64,1), left 1.0s cubic-bezier(.5,.05,.2,1);
+    z-index:7;
+  }
+  #beadtag.on{ opacity:1; transform:translateX(-50%) scale(1); }
+  #beadtag .n,#beadtag .d{ font-size:26px; }
+  #beadtag .fbar{ width:24px; height:4px; background:var(--fourths); border-radius:2px; margin:4px 0; }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(680px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .f{color:var(--fourths);font-weight:700;} .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">On the Number Line</div>
+
+    <div id="board">
+      <div id="nline"></div>
+      <div id="fill"></div>
+
+      <!-- majors at 0 and 1 -->
+      <span class="tick major" style="left:30px;"></span>
+      <span class="tick major" style="right:30px; left:auto;"></span>
+      <span class="lab" style="left:30px;">0</span>
+      <span class="lab" style="right:30px; left:auto;">1</span>
+
+      <!-- partition ticks + labels at ¼ 2/4 ¾ (filled in by JS for exact px) -->
+      <span class="tick part" id="t1"></span>
+      <span class="tick part" id="t2"></span>
+      <span class="tick part" id="t3"></span>
+      <span class="lab part" id="l1">¼</span>
+      <span class="lab part" id="l2">2/4</span>
+      <span class="lab part tgt" id="l3">¾</span>
+
+      <span id="bead"></span>
+      <span id="beadtag"><span class="n">3</span><span class="fbar"></span><span class="d">4</span></span>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">A fraction is a <b>number</b> — one point on the line.</div>
+      <div class="cap" data-i="1">Cut the line from <b>0</b> to <b>1</b> into <span class="f">four equal parts</span>.</div>
+      <div class="cap" data-i="2">Slide the <span class="r">red point</span> three parts along…</div>
+      <div class="cap" data-i="3">The fill grows to show <span class="f">three fourths</span> of the way.</div>
+      <div class="cap" data-i="4">That point <b>is</b> the number <span class="f">three fourths</span>.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "numberline.v1";
+  var DURATION = 20;            // seconds
+
+  function el(id){ return document.getElementById(id); }
+
+  // geometry: the line spans from 30px to (width-30px). Place ticks/labels/bead at
+  // value v in [0,1] → leftPx. Read on load so it tracks the board's real width.
+  var board = el("board");
+  function leftAt(v){
+    var w = board.getBoundingClientRect().width;
+    var x0 = 30, x1 = w - 30;
+    return x0 + v * (x1 - x0);
+  }
+  function px(n){ return n + "px"; }
+
+  // lay out the quarter ticks/labels + park the bead at 0
+  function layout(){
+    [["t1",.25],["t2",.5],["t3",.75]].forEach(function(p){ el(p[0]).style.left = px(leftAt(p[1])); });
+    [["l1",.25],["l2",.5],["l3",.75]].forEach(function(p){ el(p[0]).style.left = px(leftAt(p[1])); });
+    el("bead").style.left = px(leftAt(0));
+    el("beadtag").style.left = px(leftAt(0));
+  }
+  layout();
+  window.addEventListener("resize", layout);
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  function moveBead(v){
+    el("bead").style.left = px(leftAt(v));
+    el("beadtag").style.left = px(leftAt(v));
+    el("fill").style.width = px(Math.max(0, leftAt(v) - leftAt(0)));
+  }
+
+  var beatsDone = [];
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — a fraction is a number, one point on the line
+    [1.4, function(){ showCap(0); }],
+
+    // Beat 2 — cut 0→1 into four equal parts (partition ticks + ¼/2/4/¾ appear)
+    [5.0, function(){ showCap(1); board.classList.add("cut"); }],
+
+    // Beat 3 — slide the bead three parts along (to 3/4); it lifts as it glides
+    [9.0, function(){
+      showCap(2);
+      el("bead").classList.add("lift");
+      moveBead(0.75);
+      setTimeout(function(){ el("bead").classList.remove("lift"); }, 1100);
+    }],
+
+    // Beat 4 — the fill bar shows three fourths of the way (fill already grew with the bead)
+    [13.0, function(){ showCap(3); }],
+
+    // Beat 5 — that point IS the number 3/4 (reveal the fraction tag + name the tick)
+    [16.0, function(){ showCap(4); board.classList.add("named"); el("beadtag").classList.add("on"); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes)
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[];
+      // reset visuals so a seek-back replays cleanly
+      board.classList.remove("cut","named"); el("beadtag").classList.remove("on");
+      el("bead").classList.remove("lift"); moveBead(0); showCap(-1);
+    }
+  };
+})();
+</script>
+</body>
+</html>

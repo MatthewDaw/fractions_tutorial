@@ -22,6 +22,9 @@ import { INTRO_CUES as INTRO_CUES_R4, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R4 
 import { INTRO_CUES as INTRO_CUES_R5, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_R5 } from "./introR5.js";
 import { INTRO_CUES as INTRO_CUES_M1, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M1 } from "./introM1.js";
 import { INTRO_CUES as INTRO_CUES_M3, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M3 } from "./introM3.js";
+import { INTRO_CUES as INTRO_CUES_NL, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_NL } from "./introNL.js";
+import { INTRO_CUES as INTRO_CUES_S1, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_S1 } from "./introS1.js";
+import { INTRO_CUES as INTRO_CUES_CMP, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_CMP } from "./introCmp.js";
 import SettingsButton from "./SettingsButton.jsx";
 import { getSettings } from "./settings.js";
 
@@ -37,6 +40,9 @@ const INTROS = {
   r5: { cues: INTRO_CUES_R5, persistKey: STAGE_PERSIST_KEY_R5 },
   m1: { cues: INTRO_CUES_M1, persistKey: STAGE_PERSIST_KEY_M1 },
   m3: { cues: INTRO_CUES_M3, persistKey: STAGE_PERSIST_KEY_M3 },
+  nl: { cues: INTRO_CUES_NL, persistKey: STAGE_PERSIST_KEY_NL },
+  s1: { cues: INTRO_CUES_S1, persistKey: STAGE_PERSIST_KEY_S1 },
+  cmp: { cues: INTRO_CUES_CMP, persistKey: STAGE_PERSIST_KEY_CMP },
 };
 
 export default function RoomIntro({ room, onContinue, onBack }) {

@@ -30,6 +30,7 @@ import Rosette from "./components/Rosette.jsx";
 import FitStage from "./components/FitStage.jsx";
 import QuestionBand from "./components/QuestionBand.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, LessonGoal } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 
 import "./styles/nl.css";
@@ -47,6 +48,10 @@ const STAGES = [
   { id: "1-place",   n: 1, tag: "Place",   blurb: "Drag the point to the fraction" },
   { id: "2-write",   n: 2, tag: "Write",   blurb: "Name the marked point" },
   { id: "3-numbers", n: 3, tag: "Numbers", blurb: "Past 1 — place a fraction bigger than a whole" },
+  // Auto-generated, estimator-paced practice: the engine mints fresh
+  // FRACTION_ON_LINE variations, re-rolls on a correct answer, fades to harder
+  // problems on a clean streak, and probes transfer. Purely additive.
+  { id: "practice",  n: "★", tag: "Practice", blurb: "Fresh problems — paced to your mastery" },
 ];
 
 // Per-stage problem: the fraction, its ruler width (wholes), and the denominator.
@@ -76,21 +81,26 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
   const [placed, setPlaced] = useState(false);   // has the child committed a drag this stage?
   const [slate, setSlate] = useState({ n: "", d: "" });  // Stage 2 written name
 
-  const {
-    stage, goStage, nextStage,
-    reportAttempt, applyEngineDecision,
-    solved, solvedRef, stars, cook, setCook, status, setStatus,
-    say, speaking, stageRef,
-  } = useLessonScaffold({
+  const sc = useLessonScaffold({
     nodeId: "FRACTION_ON_LINE",
     lessonId: "nl",
     initialStage: "1-place",
     stagesOrder: STAGES.map((s) => s.id),
+    // The final "practice" stage serves auto-generated FRACTION_ON_LINE variations,
+    // paced by the engine (re-roll on correct, fade on a clean streak, transfer probe).
+    generatedStages: ["practice"],
+    generatorSkill: "FRACTION_ON_LINE",
     introFor: (s) => initialStatus(s),
     resetStage: () => {
       setPointK(0); setPlaced(false); setSlate({ n: "", d: "" });
     },
   });
+  const {
+    stage, goStage, nextStage,
+    reportAttempt, applyEngineDecision,
+    solved, solvedRef, stars, cook, setCook, status, setStatus,
+    say, speaking, stageRef,
+  } = sc;
 
   const P = probFor(stage);                 // this stage's fraction + ruler
   const TARGET_K = P.num;                    // the correct tick index (num/den in wholes)
@@ -298,17 +308,23 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
     />
   );
 
-  const body = (
-    <LessonBoard
-      variant="split"
-      footHeight={196}
-      railWidth={396}
-      stage={Stage}
-      rail={Rail}
-      answer={Answer}
-      tutor={Tutor}
-    />
-  );
+  let body;
+  if (stage === "practice") {
+    // PRACTICE — auto-generated FRACTION_ON_LINE variations, paced by the engine.
+    body = <GenPracticeBoard skill="FRACTION_ON_LINE" scaffold={sc} />;
+  } else {
+    body = (
+      <LessonBoard
+        variant="split"
+        footHeight={196}
+        railWidth={396}
+        stage={Stage}
+        rail={Rail}
+        answer={Answer}
+        tutor={Tutor}
+      />
+    );
+  }
 
   return (
     <LessonShell
@@ -324,7 +340,7 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
         current: stage,
         onSelect: goStage,
       }}
-      band={Band}
+      band={stage !== "practice" ? Band : null}
       goal={Goal}
     >
       {body}

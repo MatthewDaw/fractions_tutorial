@@ -122,11 +122,16 @@ vi.mock('../../src/components/Slate.jsx', () => ({
     ),
 }));
 vi.mock('../../src/components/WordProblem.jsx', () => ({
-  default: ({ onCheck, checkLabel, slots, values, onChange, disabled, story, answerLead }) =>
+  // Faithful-enough stand-in. The real WordProblem is used two ways: with a
+  // `slots` array (legacy) and, in AppR5's "applied" stage, with `setup` + nested
+  // `children` and NO slots. Default slots to [] and render setup/children so a
+  // stage that advances into it (e.g. 4-numbers → applied) doesn't crash the mock.
+  default: ({ onCheck, checkLabel, slots = [], values = {}, onChange, disabled, story, setup, children }) =>
     React.createElement(
       'div',
       { 'data-testid': 'wordproblem' },
       React.createElement('div', { 'data-testid': 'story' }, story),
+      setup,
       ...slots.map((slot) =>
         React.createElement('input', {
           key: slot.key,
@@ -136,6 +141,7 @@ vi.mock('../../src/components/WordProblem.jsx', () => ({
           onChange: (e) => onChange(slot.key, e.target.value),
         })
       ),
+      children,
       React.createElement('button', {
         'data-testid': 'wp-check',
         onClick: () => !disabled && onCheck && onCheck(values),
@@ -193,6 +199,32 @@ function findAnswerSubmitEvent() {
 // AppR1 — ADD_SAME_DEN
 // ---------------------------------------------------------------------------
 
+// AppR1 Stage 1 is drag-only — the "Count them up" button was removed in the
+// drag-only UX pass. To unlock the slate we simulate the bring-together drag:
+// grab stack A (lane y≈186) and drop it onto stack B's lane (y≈44) so dropBar()
+// sees them adjacent and fires doMerge(). setPosA writes posARef synchronously,
+// so a single act() batch is enough. grabBar reads #stage/#r1canvas rects (jsdom
+// returns zeros → scale factor falls back to 1), so we just ensure #stage exists.
+async function mergeAppR1Stage1() {
+  if (!document.getElementById('stage')) {
+    const s = document.createElement('div');
+    s.id = 'stage';
+    document.body.appendChild(s);
+  }
+  const barA = document.querySelectorAll('.nbar')[0];
+  // jsdom has no PointerEvent constructor, so testing-library's fireEvent.pointer*
+  // drops clientX/clientY → NaN positions → no merge. MouseEvent carries clientX
+  // reliably; dispatch native pointer-typed MouseEvents (React's onPointerDown and
+  // the app's window pointermove/up listeners both key off the event TYPE).
+  const ev = (type, target, x, y) =>
+    target.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true }));
+  await act(async () => {
+    ev('pointerdown', barA, 96, 186); // grab stack A at its home lane
+    ev('pointermove', window, 96, 44); // drag it up onto stack B's lane
+    ev('pointerup', window, 96, 44);   // drop → dropBar sees them adjacent → doMerge
+  });
+}
+
 describe('AppR1 — engine emission on correct answer (happy path)', () => {
   it('renders without crashing', () => {
     const { container } = render(
@@ -214,8 +246,7 @@ describe('AppR1 — engine emission on correct answer (happy path)', () => {
     render(React.createElement(AppR1, { no: 1, title: 'Test' }));
 
     // First, trigger the merge by clicking the "Count them up" button.
-    const mergeBtn = screen.getByRole('button', { name: /count them up/i });
-    await act(async () => { fireEvent.click(mergeBtn); });
+    await mergeAppR1Stage1();
 
     // Fill in the slate: correct answer is 5 (ANSWER = A_N + B_N = 2+3).
     const numInput = screen.getByTestId('slate-num');
@@ -246,8 +277,7 @@ describe('AppR1 — engine emission on correct answer (happy path)', () => {
   it('judged event error_signature is null on a correct answer', async () => {
     render(React.createElement(AppR1, { no: 1, title: 'Test' }));
 
-    const mergeBtn = screen.getByRole('button', { name: /count them up/i });
-    await act(async () => { fireEvent.click(mergeBtn); });
+    await mergeAppR1Stage1();
 
     const numInput = screen.getByTestId('slate-num');
     await act(async () => { fireEvent.change(numInput, { target: { value: '5' } }); });
@@ -263,8 +293,7 @@ describe('AppR1 — engine emission on correct answer (happy path)', () => {
   it('nextDecision is called exactly once on a correct answer', async () => {
     render(React.createElement(AppR1, { no: 1, title: 'Test' }));
 
-    const mergeBtn = screen.getByRole('button', { name: /count them up/i });
-    await act(async () => { fireEvent.click(mergeBtn); });
+    await mergeAppR1Stage1();
 
     const numInput = screen.getByTestId('slate-num');
     await act(async () => { fireEvent.change(numInput, { target: { value: '5' } }); });
@@ -282,8 +311,7 @@ describe('AppR1 — engine emission on correct answer (happy path)', () => {
     // is LOCKED to 7, so the "added the bottoms" slip (5/7 + 2/7 -> 5/14) cannot be
     // entered as a denominator; it surfaces as num === DEN, which the Stage-1 grader
     // flags as add_denominators.
-    const mergeBtn = screen.getByRole('button', { name: /count them up/i });
-    await act(async () => { fireEvent.click(mergeBtn); });
+    await mergeAppR1Stage1();
 
     const numInput = screen.getByTestId('slate-num');
     await act(async () => {
@@ -430,13 +458,10 @@ describe('AppR5 — engine emission on correct answer (happy path)', () => {
     render(React.createElement(AppR5, { no: 5, title: 'Test' }));
     await act(async () => {});
 
-    // Navigate to stage 4 (4-numbers), which uses 14/7.
-    const stageBtns = screen.getAllByRole('button', { name: /^[1-5]$/ });
-    // Stage buttons are numbered 1-5; click 4.
-    const stage4Btn = stageBtns.find((b) => b.textContent === '4');
-    if (stage4Btn) {
-      await act(async () => { fireEvent.click(stage4Btn); });
-    }
+    // Navigate to "4-numbers" (uses 14/7). The shared <StageTabs> exposes all 8
+    // STAGES as role="tab"; "4-numbers" is index 4 (index 3 is "workbench").
+    const stageBtns = screen.getAllByRole('tab');
+    await act(async () => { fireEvent.click(stageBtns[4]); });
 
     // Reset event tracking for a clean measurement.
     vi.mocked(appendEvent).mockClear();
@@ -471,11 +496,9 @@ describe('AppR5 — engine emission on correct answer (happy path)', () => {
     render(React.createElement(AppR5, { no: 5, title: 'Test' }));
     await act(async () => {});
 
-    // Go to stage 2-bind for a written answer.
-    const stage2Btn = screen.getAllByRole('button', { name: /^[1-5]$/ }).find((b) => b.textContent === '2');
-    if (stage2Btn) {
-      await act(async () => { fireEvent.click(stage2Btn); });
-    }
+    // Go to stage 2-bind for a written answer (2nd shared <StageTabs> tab, index 1).
+    const stage2Btn = screen.getAllByRole('tab')[1];
+    await act(async () => { fireEvent.click(stage2Btn); });
 
     // Stage 2 uses 9/7 = 1 whole, 2 leftover.
     // Place all pieces to unlock the Slate (click "Group a piece" 7 times).
@@ -525,8 +548,7 @@ describe('Stage advancement driven by engine Decision', () => {
     expect(activeTab).toBeTruthy();
 
     // Merge and answer correctly.
-    const mergeBtn = screen.getByRole('button', { name: /count them up/i });
-    await act(async () => { fireEvent.click(mergeBtn); });
+    await mergeAppR1Stage1();
 
     const numInput = screen.getByTestId('slate-num');
     await act(async () => { fireEvent.change(numInput, { target: { value: '5' } }); });

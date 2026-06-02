@@ -11,7 +11,10 @@
   :root{
     --paper-1:#ede2c8; --paper-2:#e3d4b1;
     --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
-    --food:#caa35a; --food-edge:#8a6a2e; --jar:#6b5a3c;
+    /* the scoop holds 8 → cubes are colored by group SIZE via the denominator
+       palette: eighths = vermilion (denomColor 8) with the v-stripe hatch, exactly
+       like SkipJar.m3-cube. (was a generic gold "food" tone — corrected to match.) */
+    --eighths:#d1495b; --eighths-edge:rgba(20,14,10,.6); --jar:#6b5a3c;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;}
@@ -48,9 +51,11 @@
   /* a tidy grid of 8 distinct cubes — one COUNTABLE group of eight per jar */
   .jar .cubes{ position:absolute; left:4px; right:4px; bottom:4px;
     display:grid; grid-template-columns:repeat(2,1fr); gap:3px; }
-  .jar .cube{ width:100%; aspect-ratio:1; border:1.5px solid var(--food-edge);
-    border-radius:2px; background:var(--food);
-    background-image:repeating-linear-gradient(90deg, rgba(40,28,16,.30) 0 1px, transparent 1px 5px);
+  /* one cube — matches SkipJar.m3-cube: vermilion eighths fill, the eighths v-stripe
+     hatch (denomHatch 8, ink tone @ .34, 6px period), 1.5px denomTone(8) outline */
+  .jar .cube{ width:100%; aspect-ratio:1; border:1.5px solid var(--eighths-edge);
+    border-radius:3px; background:var(--eighths);
+    background-image:repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px);
     opacity:0; transform:translateY(-14px) scale(.6);
     transition:opacity .28s ease, transform .28s cubic-bezier(.34,1.4,.64,1); }
   .jar.full .cube{ opacity:1; transform:none; }
@@ -83,7 +88,7 @@
   #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
     transition:opacity .55s ease, transform .55s ease; }
   #caption .cap.on{ opacity:1; transform:none; }
-  .f{color:var(--food-edge);font-weight:700;} .r{color:var(--red);font-weight:700;}
+  .f{color:var(--eighths);font-weight:700;} .r{color:var(--red);font-weight:700;}
 
   #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
     background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }

@@ -29,6 +29,7 @@ import BigFrac from "./components/BigFrac.jsx";
 import NumberLine from "./components/NumberLine.jsx";
 import QuestionBand from "./components/QuestionBand.jsx";
 import { LessonShell, LessonBoard, TutorRibbon, LessonGoal } from "./components/lesson";
+import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 
 import "./styles/cmp.css";
@@ -38,6 +39,10 @@ const STAGES = [
   { id: "1-compare",   n: 1, tag: "Compare",   blurb: "Which is bigger? Pick < = or >" },
   { id: "2-benchmark", n: 2, tag: "Benchmark", blurb: "Nearest of 0, one-half, or 1?" },
   { id: "3-reason",    n: 3, tag: "Reason",    blurb: "Is the sum less, about, or more than 1?" },
+  // Auto-generated, estimator-paced practice: the engine mints fresh
+  // COMPARE_BENCHMARK variations, re-rolls on a correct answer, fades to harder
+  // problems on a clean streak, and probes transfer. Purely additive.
+  { id: "practice",    n: "★", tag: "Practice",  blurb: "Fresh problems — paced to your mastery" },
 ];
 
 // ── Stage-1 comparison items (in-grade denominators only) ────────────────────
@@ -93,19 +98,25 @@ export default function AppCompare({ no, title, onBack, onRewatchIntro }) {
   const [pick, setPick] = useState(null);     // the choice the child committed
 
   // ── shared controller backbone ─────────────────────────────────────────────
+  const sc = useLessonScaffold({
+    nodeId: "COMPARE_BENCHMARK",
+    lessonId: "cmp",
+    initialStage: "1-compare",
+    stagesOrder: STAGES.map((s) => s.id),
+    // The final "practice" stage serves auto-generated COMPARE_BENCHMARK
+    // variations, paced by the engine (re-roll on correct, fade on a clean
+    // streak, transfer probe).
+    generatedStages: ["practice"],
+    generatorSkill: "COMPARE_BENCHMARK",
+    introFor: (s) => initialStatus(s),
+    resetStage: () => { setItemIdx(0); setPick(null); },
+  });
   const {
     stage, goStage, nextStage,
     reportAttempt, applyEngineDecision,
     solved, setSolved, solvedRef, stars, setStars, cook, setCook, status, setStatus,
     say, speaking, stageRef,
-  } = useLessonScaffold({
-    nodeId: "COMPARE_BENCHMARK",
-    lessonId: "cmp",
-    initialStage: "1-compare",
-    stagesOrder: STAGES.map((s) => s.id),
-    introFor: (s) => initialStatus(s),
-    resetStage: () => { setItemIdx(0); setPick(null); },
-  });
+  } = sc;
 
   function initialStatus(s) {
     switch (s) {
@@ -220,9 +231,15 @@ export default function AppCompare({ no, title, onBack, onRewatchIntro }) {
   const Tutor = <TutorRibbon cook={cook} status={status} />;
 
   // ── per-stage body ─────────────────────────────────────────────────────────
+  let body = null;
   let canvas = null, railNode = null, answerNode = null;
 
-  if (stage === "1-compare") {
+  if (stage === "practice") {
+    // PRACTICE — auto-generated COMPARE_BENCHMARK variations, paced by the mastery
+    // engine. This skill answers with RELATION buttons, which GenPracticeBoard
+    // renders automatically from the generated problem.
+    body = <GenPracticeBoard skill="COMPARE_BENCHMARK" scaffold={sc} />;
+  } else if (stage === "1-compare") {
     // Two stacked 0→1 lines, one fraction marked on each. The mark for the larger
     // value reaches farther — the comparison is visible before any sign is picked.
     // NumberLine renders ABSOLUTELY-positioned children inside .canvas, so each
@@ -336,17 +353,19 @@ export default function AppCompare({ no, title, onBack, onRewatchIntro }) {
     );
   }
 
-  const body = (
-    <LessonBoard
-      variant="split"
-      footHeight={196}
-      railWidth={396}
-      stage={canvas}
-      rail={railNode}
-      answer={answerNode}
-      tutor={Tutor}
-    />
-  );
+  if (stage !== "practice") {
+    body = (
+      <LessonBoard
+        variant="split"
+        footHeight={196}
+        railWidth={396}
+        stage={canvas}
+        rail={railNode}
+        answer={answerNode}
+        tutor={Tutor}
+      />
+    );
+  }
 
   return (
     <LessonShell
@@ -362,7 +381,7 @@ export default function AppCompare({ no, title, onBack, onRewatchIntro }) {
         current: stage,
         onSelect: goStage,
       }}
-      band={Band}
+      band={stage !== "practice" ? Band : null}
       goal={Goal}
     >
       {body}

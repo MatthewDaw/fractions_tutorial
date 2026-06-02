@@ -52,20 +52,38 @@
   .rB .flab{ color:var(--fourths); }   /* 1/4 teal      */
   .rB.toEighths .flab{ color:var(--eighths); }
 
-  /* a bar = a sequence of equal pieces; total width encodes the amount */
-  .bar-track{ display:flex; gap:0; height:48px; }
+  /* a bar = a sequence of equal pieces; total width encodes the amount.
+     Each piece matches the lesson Plank: the denominator hue + that denom's hatch
+     overlay + a 2px ink outline (with inset highlight/shadow like .plank-body) and
+     a divider between pieces in the denominator's own tone (denomTone). */
+  .bar-track{ display:flex; gap:0; height:52px; }
   .pc{
-    height:100%; border:2px solid rgba(20,14,10,.5); border-right-width:1px;
+    position:relative; overflow:hidden;
+    height:100%; border:2px solid var(--ink); border-right-width:1px;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.18), inset 0 -4px 8px rgba(20,12,6,.18);
     display:flex; align-items:center; justify-content:center;
-    font-family:"Russo One",sans-serif; font-size:13px; color:rgba(255,250,235,.92);
+    font-family:"Russo One",sans-serif; font-size:14px; color:#1c1612;
+    text-shadow:0 1px 0 rgba(255,250,235,.25);
     transition:background .6s ease, opacity .45s ease;
   }
   .pc:last-child{ border-right-width:2px; }
-  .pc .plab{ opacity:0; transition:opacity .4s ease; }
-  .rA .pc{ background:var(--eighths); }
-  .rB .pc{ background:var(--fourths); }
-  .rB.toEighths .pc{ background:var(--eighths); }
+  /* the per-denominator hatch overlay (denomHatch) sits over the hue fill */
+  .pc::before{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0; }
+  .pc .plab{ position:relative; z-index:1; opacity:0; transition:opacity .4s ease; }
   .show-plab .pc .plab{ opacity:1; }
+
+  /* eighths (8) — vermilion, vertical-stripe hatch 90deg (ink tone), ink label */
+  .rA .pc{ background:var(--eighths); }
+  .rA .pc::before{ background-image:repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
+  /* fourths (4) — teal, grid hatch 0/90 (ink tone), ink label */
+  .rB .pc{ background:var(--fourths); }
+  .rB .pc::before{
+    background-image:
+      repeating-linear-gradient(0deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
+  /* when the quarter is sliced into eighths, the row switches to the eighths v-stripe */
+  .rB.toEighths .pc{ background:var(--eighths); }
+  .rB.toEighths .pc::before{ background-image:repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
 
   /* "a quarter = two eighths" ghost markers: show where the cut will fall */
   .pc.ghost{ position:relative; }
@@ -103,8 +121,10 @@
     opacity:0; transition:opacity .6s ease, transform .6s ease;
   }
   #result.on{ opacity:1; transform:translate(-50%,-50%); }
-  #joined{ display:flex; gap:0; height:48px; }
+  #joined{ display:flex; gap:0; height:52px; }
+  /* the joined result is five eighths — vermilion + v-stripe + ink label */
   #joined .pc{ background:var(--eighths); }
+  #joined .pc::before{ background-image:repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
   #eq{ display:flex; align-items:center; gap:14px; font-family:"Russo One",sans-serif; }
   #eq .f{ display:flex; flex-direction:column; align-items:center; line-height:1; }
   #eq .f .n,#eq .f .d{ font-size:40px; } #eq .f .bar{ width:42px; height:4px; background:var(--ink); border-radius:2px; margin:5px 0; }

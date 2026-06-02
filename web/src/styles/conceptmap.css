@@ -185,3 +185,35 @@
 .cm-scene .cm-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--red); }
 .cm-scene .cm-bar-num { position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
   font-family: var(--display); font-size: 10px; color: var(--ink); mix-blend-mode: multiply; }
+
+/* ── top concept navigation (the high-level math ideas) ── */
+.cm-scene .cm-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 16px; padding-bottom: 14px;
+  border-bottom: 2px solid var(--ink); }
+.cm-scene .cm-nav-tab { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 11px;
+  padding: 9px 15px 9px 11px; border: 1.5px solid var(--ink); border-left-width: 5px; background: var(--paper-1);
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.12); transition: transform .1s ease, box-shadow .1s ease, background .1s ease; }
+.cm-scene .cm-nav-tab.strong { border-left-color: var(--red); }
+.cm-scene .cm-nav-tab.partial { border-left-color: var(--red-soft); }
+.cm-scene .cm-nav-tab.weak { border-left-color: var(--paper-3); }
+.cm-scene .cm-nav-tab.empty { border-left-color: var(--ink-mute); }
+.cm-scene .cm-nav-tab:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 rgba(28,22,18,0.16); }
+.cm-scene .cm-nav-tab.is-active { background: var(--paper-2);
+  box-shadow: inset 0 0 0 2px var(--red), 3px 3px 0 rgba(110,28,22,0.22); }
+.cm-scene .cm-nav-tx { display: flex; flex-direction: column; gap: 1px; }
+.cm-scene .cm-nav-title { font-family: var(--display); font-size: 15px; color: var(--ink); line-height: 1.05; }
+.cm-scene .cm-nav-count { font-family: var(--serif); font-style: italic; font-size: 11px; color: var(--ink-mute); }
+
+/* ── selected-concept detail panel ── */
+.cm-scene .cm-detail { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.cm-scene .cm-detail-head { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
+.cm-scene .cm-detail-tx { display: flex; flex-direction: column; gap: 2px; }
+.cm-scene .cm-detail-title { font-family: var(--display); font-size: 26px; color: var(--ink); margin: 0; line-height: 1; }
+.cm-scene .cm-detail-blurb { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-mute);
+  margin: 0; max-width: 760px; }
+
+/* node sub-header row: prereqs (left) + CCSS alignment tag (right) */
+.cm-scene .cm-node-subhead { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; margin: 8px 0 2px; }
+.cm-scene .cm-node-subhead .cm-prereqs { margin: 0; }
+.cm-scene .cm-node-ccss { font-family: var(--mono); font-size: 10px; letter-spacing: 0.03em; color: var(--ink-mute);
+  border: 1px dashed rgba(28,22,18,0.3); padding: 2px 8px; background: rgba(227,212,177,0.35); white-space: nowrap; }

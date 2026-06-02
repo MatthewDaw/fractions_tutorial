@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson — Compare &amp; Check intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --eighths:#d1495b;   /* 8 = red (denomColor(8)) */
+    --eighths-tone:rgba(20,14,10,.34);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── two stacked 0→1 number lines (same scale) with fill bars + beads ── */
+  #board{ position:relative; width:600px; max-width:92vw; height:248px; }
+
+  .nl{ position:absolute; left:60px; right:30px; }
+  #nlA{ top:60px; } #nlB{ top:168px; }
+  .nline{ position:absolute; left:0; right:0; top:0; height:4px; background:var(--ink); border-radius:2px; }
+  /* whole-end ticks + labels */
+  .endtick{ position:absolute; top:-12px; width:3px; height:28px; background:var(--ink); transform:translateX(-50%); }
+  .endlab{ position:absolute; top:18px; transform:translateX(-50%); font-family:"Russo One",sans-serif; font-size:13px; color:var(--ink); }
+
+  /* the row fraction tag, parked at the left edge (the .cmp-line-tag look) */
+  .ftag{ position:absolute; left:2px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-width:42px; padding:2px 6px; border:1.5px solid var(--ink); background:var(--paper-1);
+    box-shadow:2px 2px 0 rgba(28,22,18,.14); line-height:1; font-family:"Russo One",sans-serif; }
+  #tagA{ top:44px; } #tagB{ top:152px; }
+  .ftag .n,.ftag .d{ font-size:17px; }
+  .ftag .fbar{ width:18px; height:3px; background:var(--ink); border-radius:2px; margin:3px 0; }
+
+  /* translucent fill 0→point (length = the amount, comparable at a glance) */
+  .fill{ position:absolute; left:0; top:-5px; height:14px; width:0; background:rgba(209,73,91,.26);
+    border-radius:7px; transition:width 1.0s cubic-bezier(.5,.05,.2,1); }
+  /* the red bead at the point */
+  .bead{ position:absolute; top:2px; width:22px; height:22px; margin-left:-11px; margin-top:-11px;
+    border-radius:50%; background:var(--red); border:3px solid #fff; box-shadow:0 3px 8px rgba(0,0,0,.32);
+    transition:left 1.0s cubic-bezier(.5,.05,.2,1); }
+
+  /* the ½ benchmark tick (tall + labelled), revealed late */
+  .half{ position:absolute; top:-8px; width:3px; height:30px; background:var(--ink-soft); transform:translateX(-50%);
+    opacity:0; transition:opacity .5s ease; }
+  .halflab{ position:absolute; top:-30px; transform:translateX(-50%); font-family:"Russo One",sans-serif; font-size:16px;
+    color:var(--ink-soft); opacity:0; transition:opacity .5s ease; }
+  #board.bench .half,#board.bench .halflab{ opacity:.95; }
+
+  /* the comparison sign that drops in between the two lines */
+  #sign{ position:absolute; left:24px; top:104px; transform:scale(.5);
+    font-family:"Russo One",sans-serif; font-size:54px; color:var(--red);
+    opacity:0; transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.56,.64,1); }
+  #board.signed #sign{ opacity:1; transform:scale(1); }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(700px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .e{color:var(--eighths);font-weight:700;} .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Compare &amp; Check</div>
+
+    <div id="board">
+      <!-- line A: 3/8 -->
+      <div class="ftag" id="tagA"><span class="n">3</span><span class="fbar"></span><span class="d">8</span></div>
+      <div class="nl" id="nlA">
+        <div class="nline"></div>
+        <span class="endtick" style="left:0;"></span><span class="endtick" id="endA1"></span>
+        <span class="endlab" style="left:0;">0</span><span class="endlab" id="labA1">1</span>
+        <span class="fill" id="fillA"></span>
+        <span class="half" id="halfA"></span><span class="halflab" id="halflabA">½</span>
+        <span class="bead" id="beadA"></span>
+      </div>
+
+      <!-- line B: 5/8 -->
+      <div class="ftag" id="tagB"><span class="n">5</span><span class="fbar"></span><span class="d">8</span></div>
+      <div class="nl" id="nlB">
+        <div class="nline"></div>
+        <span class="endtick" style="left:0;"></span><span class="endtick" id="endB1"></span>
+        <span class="endlab" style="left:0;">0</span><span class="endlab" id="labB1">1</span>
+        <span class="fill" id="fillB"></span>
+        <span class="half" id="halfB"></span><span class="halflab" id="halflabB">½</span>
+        <span class="bead" id="beadB"></span>
+      </div>
+
+      <div id="sign">&lt;</div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">Two amounts on the same scale: <span class="e">3/8</span> and <span class="e">5/8</span>.</div>
+      <div class="cap" data-i="1">Same-size pieces — the longer bar reaches <b>farther right</b>.</div>
+      <div class="cap" data-i="2">So <span class="e">3/8</span> is <span class="r">less than</span> <span class="e">5/8</span>.</div>
+      <div class="cap" data-i="3"><span class="e">3/8</span> <span class="r">&lt;</span> <span class="e">5/8</span> — fewer pieces is less.</div>
+      <div class="cap" data-i="4">Check against the <b>½</b> mark: 3/8 falls short, 5/8 clears it.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "comparecheck.v1";
+  var DURATION = 21;            // seconds
+
+  function el(id){ return document.getElementById(id); }
+
+  // geometry: each .nl line spans from its left:0 to the right edge (board width - 60 - 30).
+  function lineW(){ return el("nlA").getBoundingClientRect().width; }
+  function px(n){ return n + "px"; }
+
+  // place the "1" end tick/label and the ½ marks at the true line width
+  function layout(){
+    var w = lineW();
+    ["endA1","endB1"].forEach(function(id){ el(id).style.left = px(w); });
+    ["labA1","labB1"].forEach(function(id){ el(id).style.left = px(w); });
+    ["halfA","halfB","halflabA","halflabB"].forEach(function(id){ el(id).style.left = px(w*0.5); });
+    // park beads at 0
+    el("beadA").style.left = "0px"; el("beadB").style.left = "0px";
+  }
+  layout();
+  window.addEventListener("resize", layout);
+
+  function fillTo(side, v){
+    var w = lineW();
+    el("fill"+side).style.width = px(v*w);
+    el("bead"+side).style.left = px(v*w);
+  }
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  var board = el("board");
+
+  var beatsDone = [];
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — two amounts on the same scale (the bars grow to 3/8 and 5/8)
+    [1.4, function(){ showCap(0); fillTo("A", 3/8); fillTo("B", 5/8); }],
+
+    // Beat 2 — same-size pieces; the longer bar reaches farther right
+    [5.0, function(){ showCap(1); }],
+
+    // Beat 3 — so 3/8 is less than 5/8 (drop the < sign between them)
+    [9.0, function(){ showCap(2); board.classList.add("signed"); }],
+
+    // Beat 4 — 3/8 < 5/8, fewer pieces is less
+    [13.0, function(){ showCap(3); }],
+
+    // Beat 5 — check against the ½ benchmark
+    [16.5, function(){ showCap(4); board.classList.add("bench"); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // playhead + pause-aware clock
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[];
+      board.classList.remove("signed","bench");
+      fillTo("A",0); fillTo("B",0); showCap(-1);
+    }
+  };
+})();
+</script>
+</body>
+</html>
