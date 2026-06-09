@@ -123,7 +123,9 @@ export default function TapToRead() {
       const speaker = (speakerEl && speakerEl.getAttribute("data-vox-speaker")) || "cook";
       const textOrKey = key || (host && (host.innerText || host.textContent)) || "";
       setOn(btn, true);                               // optimistic; effect corrects it
-      say(textOrKey, { speaker });
+      // source:'tap' exempts a learner press from decorative-narration suppression
+      // (the assisted-reader access path is never cut — U10/R14).
+      say(textOrKey, { speaker, source: "tap" });
     };
     stage.addEventListener("click", onClick, true);
 

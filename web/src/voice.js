@@ -42,6 +42,32 @@ let busActive = false;    // mirrors audioBus start/end so they always balance
 let soundOn = true;       // app-wide mute
 let lastAppSayAt = 0;     // last app-driven say() — taps yield to it (no talk-over)
 
+// ── Decorative-narration suppression (plan 002 U10 / R14) ────────────────────
+// The active manipulation/answer window sets this flag (via
+// setSuppressDecorativeNarration) to silence AMBIENT, perceptually-salient
+// narration during the solve — the seductive-details extraneous-load risk the
+// themed-load rubric flags. Suppression is tagged at the CALL SITE, not the audio
+// source: it gates ONLY auto-play calls marked `say(key, { decorative: true })`.
+// Structural / math-carrying narration (no `decorative` flag) and learner-
+// initiated tap-to-read (`source: 'tap'`) ALWAYS play, so the shared channel and
+// the assisted-reader access path are never cut. It also never touches the user's
+// mute/volume settings — accessibility is never broken.
+let suppressDecorative = false;
+
+/**
+ * Set whether DECORATIVE auto-play narration is suppressed (e.g. while the
+ * learner is mid-operation). Only `say(key, { decorative: true })` calls are
+ * affected; structural narration and tap-to-read always play. Idempotent.
+ */
+export function setSuppressDecorativeNarration(on) {
+  suppressDecorative = !!on;
+}
+
+/** Read-only: is decorative auto-play currently suppressed? (for tests/debug) */
+export function isDecorativeNarrationSuppressed() {
+  return suppressDecorative;
+}
+
 const speakingSubs = new Set(); // each useVoice()'s setSpeaking (UI pulse)
 const soundSubs = new Set();    // each useVoice()'s setSoundOn (mute button)
 const emit = (subs, v) => { for (const fn of subs) { try { fn(v); } catch (_) {} } };
@@ -131,6 +157,12 @@ playArbitrary._token = 0;
 // playing/loading TOGGLES IT OFF (stop), rather than restarting it.
 function speak(keyOrText, opts = {}) {
   if (!soundOn) return;
+  // Decorative-load gate (U10/R14): during an active-operation window, suppress
+  // ONLY ambient auto-play narration explicitly tagged `decorative: true`.
+  // Learner-initiated tap-to-read (`source: 'tap'`) is exempt even if the line
+  // is decorative — the child asked for it. Structural narration is untagged and
+  // therefore always plays. This gate never reads or mutates user settings.
+  if (suppressDecorative && opts.decorative === true && opts.source !== "tap") return;
   const key = clipKeyFor(keyOrText);
   let id, run;
   if (key) {
@@ -155,7 +187,9 @@ function speak(keyOrText, opts = {}) {
 export function readAloud(textOrKey, speaker) {
   if (!soundOn) return;
   if (Date.now() - lastAppSayAt < 250) return;
-  speak(textOrKey, { speaker });
+  // Tag as learner-initiated so the decorative-suppression gate never silences a
+  // tapped line — tap-to-read is the assisted-reader access path (R14).
+  speak(textOrKey, { speaker, source: "tap" });
 }
 
 function setSoundOnGlobal(v) {
