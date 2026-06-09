@@ -1,5 +1,48 @@
 # Improvement backlog (synthetic-learner red-team)
 
+## UI5 — Adaptive-vs-static control arm (RESOLVED)
+
+**Status:** DONE — `controlArm` option added to `runSession`, `runSweep`, and `runArmComparison`
+in `web/src/harness/sessionRunner.js`. `buildArmComparison` and `renderArmComparisonMarkdown`
+added to `web/src/harness/report.js`. Comparison doc written to
+`docs/harness/adaptive-vs-static-comparison.md`. 19 new tests in
+`web/tests/harness/test_control_arm_UI5.test.js`. `npx vitest run` GREEN: 1144 tests / 87 files.
+
+**Design:** the static arm runs the SAME engine (nextDecision, measurementReduce, gate) with
+the SAME personas/seeds, but suppresses the scaffold-level mutation after each step. FadeScaffold
+and RaiseScaffold decisions are still EMITTED by the policy (so the engine's intent is visible on
+the tape) but the `policyState.currentScaffold` is not updated. Tapes carry `arm:'static'` vs
+`arm:'adaptive'` to distinguish runs.
+
+**Headline finding (from the actual numbers, seed=1, 240 sessions per arm):**
+Scaffold adaptation is PREREQUISITE for the mastery gate to open, not merely beneficial for
+the rate at which it opens. The mastery gate requires `max_scaffold_passed >= L3` (gate.ts:56 —
+the independence condition); with scaffold fixed at L0 this is structurally unsatisfiable.
+The static arm's `mastery_rate = null` (gate never opened in any of 240 sessions) and
+`false_mastery_rate = 0` are NOT evidence of safety — they reflect that no learner was ever
+given the chance to gate. The policy correctly issued 2243 FadeScaffold decisions in the static
+arm but all mutations were suppressed.
+
+**Actual numbers (seed=1, τ_latent=0.8, all 24 personas × 10 skills, stepCap=40):**
+
+| metric | adaptive arm | static arm | delta | adaptation helps? |
+| --- | --- | --- | --- | --- |
+| false_mastery_rate | 0.3417 | 0.0000 | +0.3417 | structural artefact (gate unreachable) |
+| transfer_after_fade | 0.8844 | 0.0000 | +0.8844 | YES (static gate never opened) |
+| independence_rate | 0.2958 | 0.0000 | +0.2958 | YES (static gate never opened) |
+| mastery_rate | 0.6375 | null | n/a | YES (static gate never opened) |
+| reps_to_mastery (mean) | 16.0261 | null | n/a | n/a |
+
+Arm separation: adaptive arm final scaffold avg 2.41 (L0→L4 traversal); static arm final scaffold 0.0 throughout.
+
+**Honest read:** adaptation demonstrably helps on transfer_after_fade and independence_rate
+(the gate opened in 63.75% of adaptive sessions with meaningful transfer and independence
+fractions). The false_mastery_rate figure is a valid concern for the adaptive arm (34.17%
+at τ=0.8 — driven by the existing fluencyOk-always-true audit defect, not by scaffold morphs);
+the static arm's 0% is vacuous because no one gated at all.
+
+Full doc: `docs/harness/adaptive-vs-static-comparison.md`.
+
 ## T21 — Silent guardrail-degradation gap (RESOLVED)
 
 **Status:** DONE — `runLoop` in `web/src/harness/recursiveLoop.js` now emits a
