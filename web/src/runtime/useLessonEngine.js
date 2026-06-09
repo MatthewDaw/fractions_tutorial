@@ -37,7 +37,7 @@ import { nextDecision } from '../engine/policy.js';
 import { isMastered } from '../engine/gate.js';
 import { PARAMS } from '../engine/params.js';
 import { toScaffoldLevel } from './scaffoldMap.js';
-import { publishDecision } from './engineStore.js';
+import { publishDecision, markTrigger } from './engineStore.js';
 import { checkTooFastCorrect, makeTier2Window } from './tier2.js';
 import { observeBehavior, countAttempts } from '../engine/observe/index.js';
 
@@ -283,6 +283,11 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
   const judgeAndAdvance = useCallback((answer, meta) => {
     const now = Date.now();
 
+    // UI2: mark the trigger (the judged boundary opens here, on submit) so the
+    // store can measure time-to-UI-change once the decision surfaces below.
+    // Advisory instrumentation only — does not affect the fold or the decision.
+    markTrigger(now);
+
     const {
       value: answerValue = null,
       modality: answerModality = 'tap',
@@ -444,7 +449,9 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
     // Publish to the global store so the always-mounted RationaleBanner shows
     // the "why", and the MasteryInspector sees the live map + decision log +
     // counter-metrics — without threading props through every lesson (KTD8, R18).
-    publishDecision(dec, reduceResult.mastery, now);
+    // UI2: surface with a freshly-read clock so time-to-UI-change captures the
+    // (synchronous) fold cost from the trigger marked at the top of this fn.
+    publishDecision(dec, reduceResult.mastery, Date.now());
 
     // Update scaffoldLevel if the decision changes it.
     if (dec.kind === 'FadeScaffold') {

@@ -18,7 +18,7 @@ import React, { useEffect } from 'react';
 import RationaleBanner from './RationaleBanner.jsx';
 import MasteryInspector from './MasteryInspector.jsx';
 import { useEngineStore } from '../runtime/useEngineStore.js';
-import { clearNudge } from '../runtime/engineStore.js';
+import { clearNudge, acknowledgeRationale, deriveUiMetrics } from '../runtime/engineStore.js';
 import '../styles/engine-surfaces.css';
 
 const NUDGE_TTL_MS = 5000;
@@ -74,20 +74,25 @@ const CHANGE_KINDS = new Set([
  * @param {object|null} props.fallbackMasteryMap — map to show when no live one yet
  */
 export default function EngineSurfaces({ active = false, showInspector = false, fallbackMasteryMap = null }) {
-  const { decision, rationale, nudge, masteryMap, decisionLog, metrics } = useEngineStore();
+  const { decision, rationale, nudge, masteryMap, decisionLog, metrics, uiMetrics } = useEngineStore();
 
   // Banner shows only for change-decisions; routine PresentProblem is silent.
   const bannerRationale = decision && CHANGE_KINDS.has(decision.kind) ? rationale : '';
 
+  // UI2: derive the reportable UI-responsiveness metrics from the raw tallies.
+  const uiResponsiveness = deriveUiMetrics(uiMetrics);
+
   return (
     <>
-      {active && <RationaleBanner rationale={bannerRationale} />}
+      {/* UI2: dismissing a change-rationale banner is the "understood why" ack. */}
+      {active && <RationaleBanner rationale={bannerRationale} onDismiss={acknowledgeRationale} />}
       {active && <NudgeToast nudge={nudge} />}
       {showInspector && (
         <MasteryInspector
           masteryMap={masteryMap ?? fallbackMasteryMap}
           decisionLog={decisionLog}
           counterMetrics={{ uiChurn: metrics?.uiChurn ?? 0 }}
+          uiMetrics={uiResponsiveness}
         />
       )}
     </>

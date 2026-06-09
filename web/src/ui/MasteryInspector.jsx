@@ -148,6 +148,45 @@ function DecisionLog({ log }) {
   );
 }
 
+/**
+ * UI2: UI-responsiveness counter-metrics (the PDF's "interface" axis), shown
+ * alongside the LEARNING counter-metrics. Pure display — the store derives the
+ * rates; this renders them. Advisory instrumentation, never adaptation input.
+ */
+function UiResponsivenessMetrics({ uiMetrics }) {
+  const {
+    avgTimeToChangeMs = null,
+    ackRate = null,
+    churnRate = null,
+    uiChanges = 0,
+    problemsJudged = 0,
+    changeBannersShown = 0,
+    changeBannersAcked = 0,
+  } = uiMetrics || {};
+  return (
+    <dl className="inspector-metrics">
+      <dt className="inspector-metric-label">Time-to-UI-change (mean ms, trigger→surface)</dt>
+      <dd className="inspector-metric-value" data-testid="metric-timeToChange">
+        {avgTimeToChangeMs !== null ? Math.round(avgTimeToChangeMs) + ' ms' : '—'}
+      </dd>
+
+      <dt className="inspector-metric-label">Understood-why (rationale acked / shown)</dt>
+      <dd className="inspector-metric-value" data-testid="metric-ackRate">
+        {ackRate !== null
+          ? (ackRate * 100).toFixed(0) + '% (' + changeBannersAcked + '/' + changeBannersShown + ')'
+          : '—'}
+      </dd>
+
+      <dt className="inspector-metric-label">Churn rate (UI changes / problem)</dt>
+      <dd className="inspector-metric-value" data-testid="metric-churnRate">
+        {churnRate !== null
+          ? churnRate.toFixed(2) + ' (' + uiChanges + '/' + problemsJudged + ')'
+          : '—'}
+      </dd>
+    </dl>
+  );
+}
+
 function CounterMetrics({ metrics }) {
   const { uiChurn = 0, dependence = null, falsePosRate = null } = metrics || {};
   return (
@@ -179,11 +218,16 @@ function CounterMetrics({ metrics }) {
  * @param {Record<string, import('../engine/types.js').MasteryEstimate>|null} props.masteryMap
  * @param {Array<{kind: string, rationale: string, t?: number}>} [props.decisionLog]
  * @param {{ uiChurn?: number, dependence?: number|null, falsePosRate?: number|null }} [props.counterMetrics]
+ * @param {{ avgTimeToChangeMs?: number|null, ackRate?: number|null, churnRate?: number|null,
+ *           uiChanges?: number, problemsJudged?: number, changeBannersShown?: number,
+ *           changeBannersAcked?: number }} [props.uiMetrics]
+ *   UI2: derived UI-responsiveness metrics (from engineStore.deriveUiMetrics).
  */
 export default function MasteryInspector({
   masteryMap = null,
   decisionLog = [],
   counterMetrics = {},
+  uiMetrics = {},
 }) {
   // Inspector starts hidden by default. A header button opens it in any
   // environment (dev or prod) for field debugging. Callers may also pass
@@ -276,6 +320,12 @@ export default function MasteryInspector({
           <section className="inspector-section" aria-label="Counter metrics">
             <h3>Counter-Metrics</h3>
             <CounterMetrics metrics={effectiveMetrics} />
+          </section>
+
+          {/* UI2: UI-responsiveness counter-metrics (interface axis) */}
+          <section className="inspector-section" aria-label="UI responsiveness metrics">
+            <h3>UI-Responsiveness Metrics</h3>
+            <UiResponsivenessMetrics uiMetrics={uiMetrics} />
           </section>
 
           {/* Decision log */}

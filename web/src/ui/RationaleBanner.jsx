@@ -27,8 +27,10 @@ import React, { useState, useEffect } from 'react';
  * @param {object}  props
  * @param {string}  props.rationale  — The current rationale string. Empty = hidden.
  * @param {string}  [props.className] — Optional additional CSS class.
+ * @param {() => void} [props.onDismiss] — UI2: called when the learner dismisses
+ *   the banner (the "understood why" ack signal). Optional; advisory only.
  */
-export default function RationaleBanner({ rationale = '', className = '' }) {
+export default function RationaleBanner({ rationale = '', className = '', onDismiss }) {
   // Track whether the user has manually dismissed the current rationale.
   const [dismissed, setDismissed] = useState(false);
   // Track the rationale we last showed — when it changes, un-dismiss.
@@ -60,7 +62,10 @@ export default function RationaleBanner({ rationale = '', className = '' }) {
       <span className="rationale-banner__text">{rationale}</span>
       <button
         className="rationale-banner__dismiss"
-        onClick={() => setDismissed(true)}
+        onClick={() => {
+          setDismissed(true);
+          onDismiss?.();
+        }}
         aria-label="Dismiss"
         type="button"
       >
