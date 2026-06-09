@@ -143,6 +143,59 @@ export interface EngineParams {
    * escalationCompetenceGuard is on.
    */
   escalateCompetenceFloor: number;
+  /**
+   * T22 (round2 gate-hardening) — Misconception-persistence guard. When true,
+   * isMastered ALSO requires the last N recent attempts to be misconception-free
+   * (no error_signature), so a stable misconception blocks the gate until cleared.
+   * DEFAULT false ⇒ the conjunct is skipped entirely and the gate is byte-identical
+   * to today. Pedagogy choice (documented): N=2 consecutive misconception-free
+   * attempts (misconceptionFreeWindowN). REVERSIBLE: flip back to false to restore.
+   */
+  requireMisconceptionFree: boolean;
+  /** T22: how many trailing attempts must be misconception-free under the flag. */
+  misconceptionFreeWindowN: number;
+  /**
+   * T23 (round2 gate-hardening) — Pre-acquisition debounce. When true, isMastered ALSO
+   * requires a STABLE estimate (est.estimate_stable: N=2 consecutive in-band corrects /
+   * non-decreasing trend) AND at least stableEstimateEvidenceFloor gate-relevant evidence
+   * attempts before banking Mastered, so the gate cannot open several steps before latent
+   * crosses τ. DEFAULT false ⇒ conjunct skipped, byte-identical to today. REVERSIBLE.
+   */
+  requireStableEstimate: boolean;
+  /** T23: evidence-count floor (gate-relevant attempts) required before mastery under the flag. */
+  stableEstimateEvidenceFloor: number;
+  /** T23: consecutive in-band corrects required for est.estimate_stable to be true. */
+  stableEstimateWindowN: number;
+  /**
+   * T24 (round2 gate-hardening) — τ-band calibration. When true, the gate uses the
+   * STRICTER P_known bar (strictGateThreshold) instead of gateThreshold, chosen so
+   * population false_mastery is bounded (target ≤0.20) at the committed τ=0.85.
+   * DEFAULT false ⇒ the gate uses gateThreshold and is byte-identical to today.
+   * REVERSIBLE. See strictGateThreshold below for the chosen value + rationale.
+   */
+  strictGateThreshold: boolean;
+  /**
+   * T24: the stricter P_known bar applied when strictGateThreshold is on. Chosen value
+   * 0.985 (vs the 0.95 default). RATIONALE: the red-team curve has false_mastery rising
+   * 0.34→0.60 across τ .80→.90, steepest .85→.90; the gate constant was not tied to a
+   * committed τ. Committing to τ=0.85 and raising the BKT posterior bar from 0.95→0.985
+   * shifts the gate-open point materially later on the BKT trajectory (the slip/guess
+   * BKT with P_S=0.10,P_G=0.20 still climbs to 0.985 on a genuinely-known stream, but a
+   * misconception-/guess-driven stream that plateaus around 0.95–0.97 no longer banks),
+   * targeting false_mastery ≤0.20 at τ=0.85. The exact aggregate is certified by T28.
+   */
+  strictGateThresholdValue: number;
+  /**
+   * T25 (round2 gate-hardening) — Per-skill transfer-probe requirement. When the flag
+   * is on AND a node's id is listed here, isMastered ALSO requires ≥1 correct attempt at
+   * a VARIED surface_form (est.varied_transfer_forms ≥ 1), the independent transfer signal
+   * (T13). DEFAULT false ⇒ conjunct skipped for all skills, byte-identical to today.
+   * Rollout per-skill: the list starts with FRACTION_ON_LINE (highest false-transfer risk).
+   * REVERSIBLE: clear the flag or remove a skill from the list.
+   */
+  requireTransferProbe: boolean;
+  /** T25: skills for which the varied-transfer-probe conjunct is enforced when the flag is on. */
+  transferProbeSkills: readonly string[];
   /** Escalation trigger thresholds. */
   escalation: EscalationParams;
 }
@@ -201,6 +254,24 @@ export const PARAMS: EngineParams = {
   // gateThreshold (0.95) so the latent-0.9314 over-hinter is spared while a low plateau
   // (the genuinely-stuck learner) still escalates. Read only when the guard is on.
   escalateCompetenceFloor: 0.85,
+  // T22 — Misconception-persistence guard. DEFAULT off so the gate is byte-identical
+  // to today; flip to true to require the trailing N attempts be misconception-free.
+  requireMisconceptionFree: false,
+  misconceptionFreeWindowN: 2,
+  // T23 — Pre-acquisition debounce. DEFAULT off; flip to true to require a stable
+  // estimate (N=2 consecutive in-band corrects) AND an evidence floor of 10 before mastery.
+  requireStableEstimate: false,
+  stableEstimateEvidenceFloor: 10,
+  stableEstimateWindowN: 2,
+  // T24 — τ-band calibration. DEFAULT off (uses gateThreshold 0.95). When on, raises the
+  // P_known bar to 0.985 targeting false_mastery ≤0.20 at the committed τ=0.85 (see the
+  // interface comment for the rationale; aggregate certified by T28).
+  strictGateThreshold: false,
+  strictGateThresholdValue: 0.985,
+  // T25 — Per-skill transfer-probe requirement. DEFAULT off; rollout list starts with the
+  // highest false-transfer-risk skill, FRACTION_ON_LINE (red-team risk 0.804).
+  requireTransferProbe: false,
+  transferProbeSkills: ['FRACTION_ON_LINE'],
   escalation: {
     nStuck: 6,
     nDiseng: 5,

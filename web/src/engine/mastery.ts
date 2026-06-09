@@ -18,6 +18,7 @@ import {
   hasTransferred,
   computeHintDependence,
 } from './dimensions.js';
+import { PARAMS } from './params.js';
 
 // ---------------------------------------------------------------------------
 // MasteryEstimate assembly
@@ -65,6 +66,22 @@ export function buildMasteryEstimate(
     max_scaffold_passed = 3;
   }
 
+  // --- Round-2 gate-hardening derived signals (T22/T23/T25) ---
+  // PURE folds over the same observation stream. Always populated; the gate reads
+  // them ONLY under the matching PARAMS flag, so default-off behavior is unchanged.
+
+  // T22: last N=2 attempts misconception-free (no error_signature). A stable
+  // misconception (recent error_signature) leaves this false.
+  const recent_misconception_free = recentMisconceptionFree(observations);
+
+  // T23: stable estimate — N=2 consecutive in-band corrects at the tail (a
+  // non-decreasing competence trend), plus the gate-relevant evidence count.
+  const estimate_stable = isEstimateStable(observations);
+  const evidence_count = countGateRelevantEvidence(observations);
+
+  // T25: count of DISTINCT varied surface_forms seen correct, hint-free, in-band.
+  const varied_transfer_forms = countVariedTransferForms(observations);
+
   return {
     P_known,
     fluency_stats,
@@ -73,7 +90,76 @@ export function buildMasteryEstimate(
     hint_dependence,
     last_retention_probe: lastRetentionProbe,
     mastered_at: masteredAt,
+    recent_misconception_free,
+    estimate_stable,
+    evidence_count,
+    varied_transfer_forms,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Round-2 gate-hardening derived signals — PURE, deterministic helpers.
+// ---------------------------------------------------------------------------
+
+/**
+ * T22 — true when the trailing PARAMS.misconceptionFreeWindowN (=2) attempts carry
+ * NO error_signature. With fewer than N attempts it is vacuously true (insufficient
+ * evidence does not assert a stable misconception). A recent fingerprinted wrong
+ * pattern (error_signature !== null) leaves it false until cleared.
+ */
+function recentMisconceptionFree(observations: readonly Observation[]): boolean {
+  const n = PARAMS.misconceptionFreeWindowN;
+  const tail = observations.slice(-n);
+  return tail.every((o) => o.error_signature === null);
+}
+
+/**
+ * T23 — true when the trailing PARAMS.stableEstimateWindowN (=2) attempts are all
+ * in-band corrects (a non-decreasing competence trend: no recent miss/oscillation
+ * back below the band). "In-band correct" = correct, hint-free, latency above the
+ * too-fast floor. Fewer than N qualifying tail attempts ⇒ not yet stable.
+ */
+function isEstimateStable(observations: readonly Observation[]): boolean {
+  const n = PARAMS.stableEstimateWindowN;
+  if (observations.length < n) return false;
+  const tail = observations.slice(-n);
+  return tail.every(
+    (o) => o.correct && o.hint_max_rung === 0 && o.latency >= PARAMS.latencyFloorMs
+  );
+}
+
+/**
+ * T23 — count of gate-relevant evidence attempts: hint-free corrects answered in-band
+ * (not implausibly fast). This is the evidence the gate banks mastery on; T23 raises
+ * the floor on it (stableEstimateEvidenceFloor) so the gate cannot open before latent
+ * has accumulated enough crossings.
+ */
+function countGateRelevantEvidence(observations: readonly Observation[]): number {
+  let count = 0;
+  for (const o of observations) {
+    if (o.correct && o.hint_max_rung === 0 && o.latency >= PARAMS.latencyFloorMs) count++;
+  }
+  return count;
+}
+
+/**
+ * T25 — count of DISTINCT varied surface_forms seen CORRECT, hint-free, low-scaffold,
+ * in-band. Uses the structural surface_form key (the independent transfer signal, T13),
+ * with the documented answer_value denominator proxy fallback only when surface_form is
+ * absent — matching dimensions.hasTransferred's keying.
+ */
+function countVariedTransferForms(observations: readonly Observation[]): number {
+  const forms = new Set<string>();
+  for (const o of observations) {
+    if (!o.correct || o.hint_max_rung !== 0) continue;
+    if (o.scaffold_level > 3) continue;
+    if (o.latency < PARAMS.latencyFloorMs) continue;
+    const form: string =
+      (o as Observation & { surface_form?: string }).surface_form ??
+      (o.answer_value !== null ? `${o.answer_value[1]}` : `anon-${o.scaffold_level}`);
+    forms.add(form);
+  }
+  return forms.size;
 }
 
 // ---------------------------------------------------------------------------

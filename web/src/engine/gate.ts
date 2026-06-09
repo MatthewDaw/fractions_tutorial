@@ -42,13 +42,43 @@ import { PARAMS } from './params.js';
  *                         (PARAMS.requireDelayedProbe) so the extra conjunct is
  *                         skipped and certification is byte-identical to today.
  */
+/**
+ * Optional round-2 gate-hardening flag overlay (T22–T25). Each defaults to its
+ * PARAMS value so existing call sites — `isMastered(est)` — pick up the live
+ * (default-OFF) configuration and behave byte-identically to today. `nodeId` is
+ * only consulted by the per-skill T25 conjunct; when omitted, T25 never fires.
+ */
+export interface GateHardeningFlags {
+  requireMisconceptionFree?: boolean;
+  requireStableEstimate?: boolean;
+  strictGateThreshold?: boolean;
+  requireTransferProbe?: boolean;
+  /** The node id under evaluation — needed for the per-skill T25 conjunct. */
+  nodeId?: string;
+}
+
 export function isMastered(
   est: MasteryEstimate,
   fluencyHardMode = PARAMS.fluencyHardMode,
-  requireDelayedProbe = PARAMS.requireDelayedProbe
+  requireDelayedProbe = PARAMS.requireDelayedProbe,
+  hardening: GateHardeningFlags = {}
 ): boolean {
-  // Condition 1 — BKT accuracy
-  if (est.P_known < PARAMS.gateThreshold) return false;
+  const requireMisconceptionFree =
+    hardening.requireMisconceptionFree ?? PARAMS.requireMisconceptionFree;
+  const requireStableEstimate =
+    hardening.requireStableEstimate ?? PARAMS.requireStableEstimate;
+  const strictGateThreshold =
+    hardening.strictGateThreshold ?? PARAMS.strictGateThreshold;
+  const requireTransferProbe =
+    hardening.requireTransferProbe ?? PARAMS.requireTransferProbe;
+
+  // Condition 1 — BKT accuracy. T24 (round2): when strictGateThreshold is on, use the
+  // STRICTER P_known bar (strictGateThresholdValue) tied to the committed τ=0.85;
+  // OFF (default) uses gateThreshold (0.95) — byte-identical to today.
+  const accuracyBar = strictGateThreshold
+    ? PARAMS.strictGateThresholdValue
+    : PARAMS.gateThreshold;
+  if (est.P_known < accuracyBar) return false;
 
   // Condition 2 — scaffold independence: max_scaffold_passed must be ≥ L3
   // (the independence check in mastery.ts guarantees this when isIndependent()
@@ -67,6 +97,33 @@ export function isMastered(
   // the rollback is a genuine no-op. delayed_probe_passed is undefined/false until
   // decay.applyProbeResult stamps it on a correct probe.
   if (requireDelayedProbe && est.delayed_probe_passed !== true) return false;
+
+  // Condition 6 — T22 misconception-persistence guard. Only enforced when
+  // requireMisconceptionFree is on. The trailing N=2 attempts must be
+  // misconception-free (est.recent_misconception_free), so a stable misconception
+  // blocks the gate until cleared. OFF (default) ⇒ skipped, byte-identical.
+  if (requireMisconceptionFree && est.recent_misconception_free !== true) return false;
+
+  // Condition 7 — T23 pre-acquisition debounce. Only enforced when
+  // requireStableEstimate is on: require a STABLE estimate (N=2 consecutive in-band
+  // corrects) AND an evidence floor of stableEstimateEvidenceFloor (10) gate-relevant
+  // attempts before banking Mastered. OFF (default) ⇒ skipped, byte-identical.
+  if (requireStableEstimate) {
+    if (est.estimate_stable !== true) return false;
+    if ((est.evidence_count ?? 0) < PARAMS.stableEstimateEvidenceFloor) return false;
+  }
+
+  // Condition 8 — T25 per-skill transfer-probe requirement. Only enforced when
+  // requireTransferProbe is on AND this node id is in PARAMS.transferProbeSkills:
+  // require ≥1 correct attempt at a VARIED surface_form (est.varied_transfer_forms ≥ 1),
+  // the independent transfer signal (T13). OFF (default) or unlisted skill ⇒ skipped.
+  if (
+    requireTransferProbe &&
+    hardening.nodeId !== undefined &&
+    PARAMS.transferProbeSkills.includes(hardening.nodeId)
+  ) {
+    if ((est.varied_transfer_forms ?? 0) < 1) return false;
+  }
 
   // AFFECT FIREWALL: est.last_retention_probe and any affect_window are never
   // read here. The gate is structurally limited to the Chain A conditions.
@@ -87,19 +144,47 @@ export function isMastered(
 export function gateConditions(
   est: MasteryEstimate,
   fluencyHardMode = PARAMS.fluencyHardMode,
-  requireDelayedProbe = PARAMS.requireDelayedProbe
+  requireDelayedProbe = PARAMS.requireDelayedProbe,
+  hardening: GateHardeningFlags = {}
 ): {
   accuracyOk: boolean;
   independenceOk: boolean;
   transferOk: boolean;
   fluencyOk: boolean;
   durableOk: boolean;
+  misconceptionFreeOk: boolean;
+  stableEstimateOk: boolean;
+  transferProbeOk: boolean;
 } {
+  const requireMisconceptionFree =
+    hardening.requireMisconceptionFree ?? PARAMS.requireMisconceptionFree;
+  const requireStableEstimate =
+    hardening.requireStableEstimate ?? PARAMS.requireStableEstimate;
+  const strictGateThreshold =
+    hardening.strictGateThreshold ?? PARAMS.strictGateThreshold;
+  const requireTransferProbe =
+    hardening.requireTransferProbe ?? PARAMS.requireTransferProbe;
+  const accuracyBar = strictGateThreshold
+    ? PARAMS.strictGateThresholdValue
+    : PARAMS.gateThreshold;
+  const transferProbeApplies =
+    requireTransferProbe &&
+    hardening.nodeId !== undefined &&
+    PARAMS.transferProbeSkills.includes(hardening.nodeId);
   return {
-    accuracyOk: est.P_known >= PARAMS.gateThreshold,
+    accuracyOk: est.P_known >= accuracyBar,
     independenceOk: est.max_scaffold_passed !== null && est.max_scaffold_passed >= 3,
     transferOk: est.transfer_passed,
     fluencyOk: fluencyOk(est.fluency_stats, fluencyHardMode),
     durableOk: !requireDelayedProbe || est.delayed_probe_passed === true,
+    // Each hardening condition is trivially true when its flag is off (the conjunct
+    // does not constrain the gate), so (all-conditions-true ⟺ isMastered) holds in
+    // every flag state — mirroring the durableOk contract.
+    misconceptionFreeOk: !requireMisconceptionFree || est.recent_misconception_free === true,
+    stableEstimateOk:
+      !requireStableEstimate ||
+      (est.estimate_stable === true &&
+        (est.evidence_count ?? 0) >= PARAMS.stableEstimateEvidenceFloor),
+    transferProbeOk: !transferProbeApplies || (est.varied_transfer_forms ?? 0) >= 1,
   };
 }

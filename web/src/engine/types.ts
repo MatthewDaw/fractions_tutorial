@@ -153,6 +153,37 @@ export interface MasteryEstimate {
    * so pre-T09 estimate literals still typecheck and default to "no passed probe".
    */
   delayed_probe_passed?: boolean;
+  /**
+   * T22 (round2 gate-hardening): true when the LAST N=2 recent attempts carried NO
+   * error_signature (misconception-free). A stable misconception leaves this false,
+   * which blocks the gate ONLY when PARAMS.requireMisconceptionFree is on. Derived in
+   * the pure fold from the observation stream (buildMasteryEstimate); read by the gate
+   * only under the flag, so the flag-off path is byte-identical to today. Optional so
+   * pre-round2 estimate literals still typecheck (undefined ⇒ treated as not-yet-clear).
+   */
+  recent_misconception_free?: boolean;
+  /**
+   * T23 (round2 gate-hardening): true when the recent attempts show a STABLE estimate —
+   * N=2 consecutive in-band corrects (a non-decreasing competence trend), evidence that
+   * latent has crossed and held, not a single lucky crossing. Read by the gate only when
+   * PARAMS.requireStableEstimate is on. Derived in the pure fold. Optional.
+   */
+  estimate_stable?: boolean;
+  /**
+   * T23 (round2 gate-hardening): count of gate-relevant evidence attempts accumulated for
+   * this node (the corrects/attempts that could bank mastery). Used to raise the
+   * evidence-count-at-gate-open floor (PARAMS.stableEstimateEvidenceFloor) so the gate
+   * cannot open several steps before latent crosses τ. Read by the gate only when
+   * PARAMS.requireStableEstimate is on. Derived in the pure fold. Optional.
+   */
+  evidence_count?: number;
+  /**
+   * T25 (round2 gate-hardening): count of DISTINCT varied surface_forms seen CORRECT
+   * (hint-free, low-scaffold, in-band) — the independent transfer signal (T13). When
+   * PARAMS.requireTransferProbe is on for this skill, isMastered requires ≥1 such varied
+   * form (i.e. ≥1 here, distinct from the home form). Derived in the pure fold. Optional.
+   */
+  varied_transfer_forms?: number;
 }
 
 // ---------------------------------------------------------------------------

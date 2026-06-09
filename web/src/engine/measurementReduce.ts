@@ -194,7 +194,10 @@ export function measurementReduce(
       const bindingAcc = acc.get(nodeId);
       if (bindingAcc) {
         const checkEst = buildMasteryEstimate(bindingAcc.observations, bindingAcc.P_known);
-        if (isMastered(checkEst)) masteredAt.set(nodeId, judgedTs[i] ?? now);
+        // Pass nodeId so the per-skill T25 transfer-probe conjunct can apply on the run
+        // path. Default-off (PARAMS.requireTransferProbe === false) ⇒ no behavior change.
+        if (isMastered(checkEst, PARAMS.fluencyHardMode, PARAMS.requireDelayedProbe, { nodeId }))
+          masteredAt.set(nodeId, judgedTs[i] ?? now);
       }
     }
   }
