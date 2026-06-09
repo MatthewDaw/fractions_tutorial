@@ -52,6 +52,7 @@ function state(over = {}) {
     pKnownHistory: [],
     heavyHintAtFloorCount: 0,
     disengagedCount: 0,
+    disengagedScaffoldCount: 0,
     ...over,
   };
 }

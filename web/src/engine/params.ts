@@ -16,6 +16,15 @@ export interface EscalationParams {
   nStuck: number;
   /** Number of sustained disengaged/avoiding observations before escalation. */
   nDiseng: number;
+  /**
+   * U9/KTD7: separate, LOWER disengagement threshold that arms the frustration
+   * SCAFFOLD (a reachable RaiseScaffold), DECOUPLED from `nDiseng` (which arms
+   * EscalateToHuman). The disengagement writer feeds `disengagedScaffoldCount`,
+   * NOT `disengagedCount`, so wiring the scaffold trigger never spuriously fires
+   * the (never-built handoff) escalation path. Read only when
+   * PARAMS.frustrationScaffold is on.
+   */
+  nDisengScaffold: number;
 }
 
 export interface EngineParams {
@@ -96,5 +105,6 @@ export const PARAMS: EngineParams = {
   escalation: {
     nStuck: 6,
     nDiseng: 5,
+    nDisengScaffold: 3,
   },
 };

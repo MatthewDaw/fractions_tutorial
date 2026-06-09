@@ -94,8 +94,17 @@ export interface PolicyState {
   /**
    * Count of consecutive observations flagged as disengaged/avoiding
    * (idle, repeated abandon without attempt, oscillation without progress).
+   * This drives the EscalateToHuman "disengaged" trigger at `nDiseng`.
    */
   disengagedCount: number;
+  /**
+   * U9/KTD7: separate disengagement counter that drives the reachable frustration
+   * SCAFFOLD (a warm RaiseScaffold) at the LOWER `nDisengScaffold` threshold. It is
+   * DECOUPLED from `disengagedCount` (the escalation counter) so the disengagement
+   * writer can arm a reachable scaffold WITHOUT spuriously firing EscalateToHuman.
+   * Reset on re-engagement; read only when PARAMS.frustrationScaffold is on.
+   */
+  disengagedScaffoldCount: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -246,6 +255,28 @@ export function nextDecision(
       return dec;
     }
     // All skills mastered — fall through to PresentProblem
+  }
+
+  // ---- 3b. RaiseScaffold (frustration scaffold) — sustained DISENGAGEMENT ----
+  // U9/KTD7: when the disengagement writer has armed the separate
+  // `disengagedScaffoldCount` past its LOWER threshold and the frustrationScaffold
+  // flag is on, respond with a warm, reachable-foothold RaiseScaffold — keeping the
+  // felt wall but guaranteeing a step is one tap away. This uses a SEPARATE counter
+  // and threshold from the escalation `disengagedCount`/`nDiseng`, so arming the
+  // scaffold trigger does NOT spuriously fire EscalateToHuman. Default-off (flag),
+  // so prior behavior is unchanged when the flag is off (reversible).
+  if (
+    PARAMS.frustrationScaffold &&
+    legal.has('RaiseScaffold') &&
+    state.disengagedScaffoldCount >= PARAMS.escalation.nDisengScaffold
+  ) {
+    const dec: DecisionRaiseScaffold = {
+      kind: 'RaiseScaffold',
+      preserveWork: true,
+      rationale:
+        "Let's take a smaller step together — here's a hint to get you started.",
+    };
+    return dec;
   }
 
   // ---- 4. RaiseScaffold — m≥2 errors at current scaffold ----
@@ -425,6 +456,7 @@ function buildHandoffPacket(
     `Consecutive clean corrects: ${state.consecutiveCleanCorrects}`,
     `Heavy hint at floor count: ${state.heavyHintAtFloorCount}`,
     `Disengaged count: ${state.disengagedCount}`,
+    `Disengaged scaffold count: ${state.disengagedScaffoldCount}`,
     `P_known history (last ${state.pKnownHistory.length}): [${state.pKnownHistory.map((p) => p.toFixed(3)).join(', ')}]`,
     `Recent observations (${recentBehavior.observations.length}):`,
   ];

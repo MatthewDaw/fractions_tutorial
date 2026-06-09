@@ -40,6 +40,7 @@ function baseState(overrides: Partial<PolicyState> = {}): PolicyState {
     pKnownHistory: [],
     heavyHintAtFloorCount: 0,
     disengagedCount: 0,
+    disengagedScaffoldCount: 0,
     ...overrides,
   };
 }

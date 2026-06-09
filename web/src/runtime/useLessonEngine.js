@@ -39,6 +39,52 @@ import { PARAMS } from '../engine/params.js';
 import { toScaffoldLevel } from './scaffoldMap.js';
 import { publishDecision } from './engineStore.js';
 import { checkTooFastCorrect, makeTier2Window } from './tier2.js';
+import { observeBehavior, countAttempts } from '../engine/observe/index.js';
+
+// U9/KTD7: the observe-layer Signal types that count as a disengagement signal
+// for the frustration-scaffold writer. These are the behavioral "off-task / wall"
+// signals the observe floor already emits (idle / abandoned work / no-work submit /
+// own-baseline stall). A re-engaged attempt (a real worked attempt with none of
+// these) RESETS the counter (mirrors how consecutiveErrors resets on a correct).
+const DISENGAGEMENT_SIGNAL_TYPES = new Set([
+  'idle',
+  'orphaned_interaction',
+  'rapid_submit',
+  'latency_stall',
+]);
+
+/**
+ * Decide whether the MOST RECENT attempt in the log shows a disengagement signal,
+ * derived from the existing observe layer (engine/observe). Pure read over the log;
+ * the engine module stays wall-clock-free (signals are derived from event.t only).
+ *
+ * Only ACTIONABLE signals count (the observe layer's cold-start control window is
+ * honored — observeOnly signals are ignored), so the first few attempts of a
+ * session never arm the scaffold spuriously.
+ *
+ * @param {Array} log — the full event log.
+ * @returns {boolean} true when the latest attempt is disengaged.
+ */
+function _latestAttemptIsDisengaged(log) {
+  let result;
+  try {
+    result = observeBehavior(log);
+  } catch {
+    return false;
+  }
+  const signals = result?.signals ?? [];
+  // The LATEST attempt is the last completed span (NOT the last span that happened
+  // to emit a signal) — so a re-engaged attempt that emits NO disengagement signal
+  // correctly reads as "not disengaged" and RESETS the counter.
+  const latestIdx = countAttempts(log) - 1;
+  if (latestIdx < 0) return false;
+  return signals.some(
+    (s) =>
+      s.attemptIndex === latestIdx &&
+      !s.observeOnly &&
+      DISENGAGEMENT_SIGNAL_TYPES.has(s.signal?.type)
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -58,6 +104,11 @@ function buildInitialPolicyState(nodeId, scaffoldLevel, { inKitchen = false, stu
     pKnownHistory: [],
     heavyHintAtFloorCount: 0,
     disengagedCount: 0,
+    // U9/KTD7: separate disengagement counter that drives the reachable
+    // frustration scaffold, DECOUPLED from disengagedCount (escalation). The
+    // disengagement writer (below) feeds THIS counter, never disengagedCount, so
+    // arming the scaffold trigger does not spuriously fire EscalateToHuman.
+    disengagedScaffoldCount: 0,
   };
 }
 
@@ -324,6 +375,21 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
       latency,
       currentScaffold,
     });
+
+    // ---- U9/KTD7: disengagement writer (the missing input edge) -------------
+    // Derive a disengagement signal from the observe layer (idle / abandoned
+    // work / no-work submit / own-baseline stall) and maintain the SEPARATE
+    // disengagedScaffoldCount, mirroring how consecutiveErrors is maintained:
+    // increment on the signal, reset on a re-engaged attempt. This feeds the
+    // frustration-scaffold trigger (decoupled threshold), NOT disengagedCount —
+    // so wiring this never spuriously arms EscalateToHuman. The counter is live
+    // regardless of the flag; only the policy RESPONSE is gated behind
+    // PARAMS.frustrationScaffold (default off → reversible no-op).
+    if (_latestAttemptIsDisengaged(log)) {
+      policyStateRef.current.disengagedScaffoldCount += 1;
+    } else {
+      policyStateRef.current.disengagedScaffoldCount = 0;
+    }
 
     // ---- Tier-2: too-fast-correct → queue a TransferProbe (false-positive guard).
     // A correct answer below the plausible-compute floor is the brief's

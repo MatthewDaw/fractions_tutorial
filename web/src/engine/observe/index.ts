@@ -97,6 +97,16 @@ function attemptSpans(log: readonly Event[]): Event[][] {
   return spans;
 }
 
+/**
+ * Count completed attempt spans in a log (present … judged), using the SAME span
+ * boundaries observeBehavior uses. The disengagement writer (useLessonEngine) reads
+ * this to find the LATEST attempt's index so a re-engaged attempt that emits no
+ * disengagement signal can reset the frustration-scaffold counter. Pure; no clock.
+ */
+export function countAttempts(log: readonly Event[]): number {
+  return attemptSpans(log).length;
+}
+
 // ---------------------------------------------------------------------------
 // Per-attempt context + latency
 // ---------------------------------------------------------------------------
