@@ -164,7 +164,7 @@ describe('bktUpdate — golden values (§4.1)', () => {
 // ---------------------------------------------------------------------------
 
 describe('bktUpdate — clamps', () => {
-  it('repeated corrects approach but never reach 1.0 (pKnownClamp[1] = 0.99)', () => {
+  it('repeated corrects approach but never reach 1.0 (pKnownClamp[1] = 0.995)', () => {
     const after100 = repeatUpdate(0.3, true, 100);
     expect(after100).toBeLessThanOrEqual(PARAMS.pKnownClamp[1]);
     expect(after100).toBeGreaterThan(0.9); // should be very high
@@ -181,7 +181,7 @@ describe('bktUpdate — clamps', () => {
     expect(after100).toBeLessThan(0.9);
   });
 
-  it('all outputs are in [0.01, 0.99]', () => {
+  it('all outputs are in [0.01, 0.995]', () => {
     for (const prior of [0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99]) {
       for (const correct of [true, false]) {
         const p = bktUpdate(prior, correct);

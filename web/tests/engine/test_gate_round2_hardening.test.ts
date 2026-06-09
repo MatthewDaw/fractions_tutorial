@@ -25,7 +25,7 @@ import { PARAMS } from '../../src/engine/params.js';
  *  is on — this is the "genuinely mastered" baseline. */
 function passingEstimate(): MasteryEstimate {
   return {
-    P_known: 0.99, // above both gateThreshold (0.95) AND strict (0.985)
+    P_known: 0.995, // above both gateThreshold (0.95) AND strict (0.992, T30 re-tune)
     fluency_stats: { median_latency: 5000, slope: -50, n: 7 },
     max_scaffold_passed: 3,
     transfer_passed: true,
@@ -205,9 +205,13 @@ describe('T24 strictGateThreshold — raised P_known bar tied to τ=0.85', () =>
    *  (passes 0.95 default, fails 0.985 strict). */
   const borderline: MasteryEstimate = { ...passingEstimate(), P_known: 0.97 };
 
-  it('chosen strict value is 0.985 (above the 0.95 default)', () => {
-    expect(PARAMS.strictGateThresholdValue).toBe(0.985);
+  it('chosen strict value is 0.992 (above the 0.95 default; T30 re-tune)', () => {
+    expect(PARAMS.strictGateThresholdValue).toBe(0.992);
     expect(PARAMS.strictGateThresholdValue).toBeGreaterThan(PARAMS.gateThreshold);
+    // T30: the strict bar must sit BELOW the BKT ceiling (pKnownClamp[1]) so it is
+    // genuinely reachable-but-hard, not moot (the prior 0.985 was below the old 0.99
+    // clamp but a high-correct stream pinned at 0.99 cleared it in <10 steps).
+    expect(PARAMS.strictGateThresholdValue).toBeLessThan(PARAMS.pKnownClamp[1]);
   });
 
   it('flag OFF → behavior identical to today (uses gateThreshold 0.95)', () => {
@@ -219,7 +223,7 @@ describe('T24 strictGateThreshold — raised P_known bar tied to τ=0.85', () =>
     expect(isMastered(borderline, undefined, undefined, { strictGateThreshold: true })).toBe(false);
   });
 
-  it('flag ON → a learner above the strict bar (0.99) still certifies', () => {
+  it('flag ON → a learner above the strict bar (0.995) still certifies', () => {
     expect(isMastered(passingEstimate(), undefined, undefined, { strictGateThreshold: true })).toBe(true);
   });
 

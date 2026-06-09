@@ -95,12 +95,17 @@ describe('T28 overlay mutations: each gate flag mutates and restores PARAMS', ()
     expect(PARAMS.requireTransferProbe).toBe(false);
   });
 
-  it('escalationCompetenceGuard mutates then restores', () => {
-    expect(PARAMS.escalationCompetenceGuard).toBe(false);
+  it('escalationCompetenceGuard is DEFAULT-ON (T30) and the overlay round-trips it', () => {
+    // T30 flipped this flag default-ON (T28 certified it a strict improvement). The
+    // overlay's resolveOverrides only applies truthy values, so it cannot flip a
+    // default-true flag OFF; we instead verify the routing round-trips against the
+    // live default (save → set true → restore to the captured default).
+    const before = PARAMS.escalationCompetenceGuard;
+    expect(before).toBe(true);
     const h = applyFlagOverlay({ escalationCompetenceGuard: true });
     expect(PARAMS.escalationCompetenceGuard).toBe(true);
     h.restore();
-    expect(PARAMS.escalationCompetenceGuard).toBe(false);
+    expect(PARAMS.escalationCompetenceGuard).toBe(before);
   });
 
   it('all hardening flags together restore cleanly', () => {

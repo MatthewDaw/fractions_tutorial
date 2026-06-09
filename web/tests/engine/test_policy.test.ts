@@ -504,7 +504,14 @@ describe('nextDecision — EscalateToHuman stuck', () => {
       heavyHintAtFloorCount: PARAMS.escalation.nStuck,
       pKnownHistory: flatHistory,
     });
-    const obs = [correctObs(), correctObs()];
+    // T30: escalationCompetenceGuard is now default-ON, so a genuinely-stuck learner
+    // must present a LOW competence signal (flat-low P_known AND not-all-correct recent
+    // attempts) to still escalate. The handoff-packet shape assertion is unchanged; only
+    // the observation stream is made consistent with a genuinely-stuck (failing) learner
+    // — previously two all-correct obs (incidental to this packet-shape test) would now
+    // trip the succeeding-plateau guard and suppress the escalation (covered by the T27
+    // block below).
+    const obs = [correctObs({ correct: false }), correctObs({ correct: false })];
     const decision = nextDecision(
       state,
       allWeakMastery(),
@@ -591,8 +598,10 @@ describe('nextDecision — false-escalation guard', () => {
 // ---------------------------------------------------------------------------
 
 describe('nextDecision — T27 escalation competence-guard', () => {
+  // T30 flipped escalationCompetenceGuard DEFAULT-ON, so restore to the true default
+  // (true) after each case that mutates it — not to the pre-T30 false.
   afterEach(() => {
-    (PARAMS as any).escalationCompetenceGuard = false;
+    (PARAMS as any).escalationCompetenceGuard = true;
   });
 
   /** The over-hinter at genuine mastery: floor + heavy hints + flat P_known,
@@ -636,9 +645,11 @@ describe('nextDecision — T27 escalation competence-guard', () => {
     }
   });
 
-  it('REVERSIBLE: with guard OFF (default) the succeeding over-hinter still escalates (today\'s bug preserved)', () => {
-    // Documents that the fix is gated: default-off behavior is byte-identical to
-    // today, so the existing suite stays green and the change is reversible.
+  it('REVERSIBLE: with guard explicitly OFF the succeeding over-hinter escalates (pre-T27 rollback path)', () => {
+    // T30 flipped the guard DEFAULT-ON, so this case sets it OFF explicitly to document
+    // the rollback: with the guard off, behavior is byte-identical to the pre-T27 bug
+    // (the succeeding over-hinter is escalated), proving the change is reversible.
+    (PARAMS as any).escalationCompetenceGuard = false;
     const decision = nextDecision(
       succeedingOverHinterState(),
       allWeakMastery(),

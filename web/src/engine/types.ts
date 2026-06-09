@@ -117,7 +117,7 @@ export interface FluencyStats {
 // ---------------------------------------------------------------------------
 
 export interface MasteryEstimate {
-  /** BKT posterior P(known) ∈ [0.01, 0.99]. */
+  /** BKT posterior P(known) ∈ [0.01, 0.995] (T30 re-tune raised the clamp ceiling). */
   P_known: number;
   /** Fluency statistics; fluency_ok = soft gate (advisory pre-calibration). */
   fluency_stats: FluencyStats;

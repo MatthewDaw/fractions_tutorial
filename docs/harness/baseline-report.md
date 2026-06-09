@@ -18,6 +18,19 @@ Full library sweep: 216 sessions (24 personas × 9 skills), seed=1, stepCap=40.
 Beneficiary: `anxious-low-energy` persona, all 9 skills (9/9 resolved at τ=0.80).
 τ=0.85 limitation: `strictGateThreshold=0.985` is moot vs `pKnownClamp` ceiling 0.99; requires pKnownClamp re-tune (see decision-log.md §T28).
 
+## T30 Re-tune Re-Certification (2026-06-09)
+
+Re-tuned: `pKnownClamp[1]` 0.99 → **0.995**, `strictGateThresholdValue` 0.985 → **0.992**, `escalationCompetenceGuard` flipped **DEFAULT-ON**. Same full-library sweep (216 sessions, seed=1, stepCap=40). OFF baseline forces the (now default-on) guard OFF to recover pre-T30 behavior.
+
+| metric | flags-OFF (baseline) | flags-ON (T22–T25+T27, re-tuned) | delta |
+| --- | --- | --- | --- |
+| false_mastery_rate (τ=0.80) | 0.3796 | **0.3380** | -0.0416 |
+| false_mastery_rate (τ=0.85) | 0.4583 | **0.4583** | **0.0000** |
+| false_escalation_rate | 0.0046 | **0.0000** | -0.0046 |
+| transfer_after_fade | 0.8844 | 0.8844 | 0.0000 |
+
+**Honest verdict: the re-tune did NOT move τ=0.85 (target ≤0.20 NOT MET — still 0.4583).** Diagnostic: ALL 99 τ=0.85 false_mastery tapes gate-open with P_known ≥ 0.992 (observed 0.9933–0.9950). Raising the clamp ceiling and the strict bar in lockstep moved everyone's P_known ceiling up together, so the 0.992 bar (which must sit below the 0.995 ceiling to remain reachable by genuine learners) is still cleared by every majority-correct stream — including low-latent gaming personas (confident-guesser latent 0.595, bimodal 0.500, misconception-stable 0.607). A P_known-threshold lever is structurally incapable of separating false from true mastery because BKT P_known saturates at the clamp for any majority-correct stream regardless of latent truth. τ=0.80 improvement and the counter-direction (false_escalation ↓, guardrail flat, 0 regressions) are unchanged from T28. See decision-log.md §T30 for the next lever.
+
 ## Counter-paired population metrics (KTD5)
 
 | headline | value | counter | value |

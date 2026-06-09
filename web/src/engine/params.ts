@@ -127,11 +127,13 @@ export interface EngineParams {
    * level / recent-attempt accuracy). It does NOT touch the disengaged escalation
    * counter (disengagedCount / nDiseng, T03) or consecutiveErrors.
    *
-   * REVERSIBLE / DEFAULT-OFF: default false so behavior is byte-identical to today
-   * (a flat-at-low-level genuinely-stuck learner still escalates exactly as before).
-   * Flip to true — product-wide or via the harness flag overlay — to add the
-   * competence guard. The escalateCompetenceFloor below is the level at/above which
-   * a flat-and-heavily-hinted learner is treated as succeeding (nudge, not escalate).
+   * REVERSIBLE / DEFAULT-ON (T30): default true — T28 certified the guard is a strict
+   * improvement (false_escalation 0.0046 → 0, no guardrail or persona harm). A
+   * flat-at-low-level genuinely-stuck learner (below escalateCompetenceFloor) still
+   * escalates; only a flat-AT-HIGH-P_known heavily-hinted learner is spared (nudged).
+   * Flip back to false — product-wide or via the harness flag overlay — to restore the
+   * pre-T27 escalation behavior. The escalateCompetenceFloor below is the level at/above
+   * which a flat-and-heavily-hinted learner is treated as succeeding (nudge, not escalate).
    */
   escalationCompetenceGuard: boolean;
   /**
@@ -176,13 +178,15 @@ export interface EngineParams {
   strictGateThreshold: boolean;
   /**
    * T24: the stricter P_known bar applied when strictGateThreshold is on. Chosen value
-   * 0.985 (vs the 0.95 default). RATIONALE: the red-team curve has false_mastery rising
-   * 0.34→0.60 across τ .80→.90, steepest .85→.90; the gate constant was not tied to a
-   * committed τ. Committing to τ=0.85 and raising the BKT posterior bar from 0.95→0.985
-   * shifts the gate-open point materially later on the BKT trajectory (the slip/guess
-   * BKT with P_S=0.10,P_G=0.20 still climbs to 0.985 on a genuinely-known stream, but a
-   * misconception-/guess-driven stream that plateaus around 0.95–0.97 no longer banks),
-   * targeting false_mastery ≤0.20 at τ=0.85. The exact aggregate is certified by T28.
+   * 0.992 (vs the 0.95 default; T30 raised it from 0.985). RATIONALE: the red-team curve
+   * has false_mastery rising 0.34→0.60 across τ .80→.90, steepest .85→.90; the gate
+   * constant was not tied to a committed τ. Committing to τ=0.85 and raising the BKT
+   * posterior bar to 0.992 shifts the gate-open point materially later on the BKT
+   * trajectory. T30 also raised pKnownClamp[1] 0.99→0.995 so this 0.992 bar sits BELOW the
+   * BKT ceiling and is genuinely reachable-but-hard (the prior 0.985 was moot — a
+   * high-correct stream pinned at the old 0.99 clamp cleared 0.985 in <10 steps). A
+   * misconception-/guess-driven stream that plateaus below 0.992 no longer banks. The
+   * exact aggregate is certified by T28/T30.
    */
   strictGateThresholdValue: number;
   /**
@@ -234,7 +238,11 @@ export const PARAMS: EngineParams = {
   P_L0: 0.10,
   prereqWeight: 0.3,
   priorClamp: [0.05, 0.85],
-  pKnownClamp: [0.01, 0.99],
+  // T30 re-tune: upper bound raised 0.99 → 0.995 so the strict gate bar (0.992) sits
+  // genuinely BELOW the BKT ceiling. Previously the strictGateThresholdValue (0.985) was
+  // moot — high-correct personas pinned at the 0.99 clamp already cleared it in <10 steps.
+  // Now a guess/misconception-driven stream that plateaus ~0.99 stays below the 0.992 bar.
+  pKnownClamp: [0.01, 0.995],
   gateThreshold: 0.95,
   wallTheta: 0.6,
   fadeStreakK: 3,
@@ -269,11 +277,13 @@ export const PARAMS: EngineParams = {
   // mastery. The applyProbeResult demotion-on-fail path is independent of this flag.
   requireDelayedProbe: false,
   // T27 / REVERSIBLE: the escalation competence-guard CAPABILITY is built and routed
-  // through PARAMS (policy.ts reads this at call time), but the DEFAULT stays false so
-  // escalation is byte-identical to today (a genuinely-stuck low-P_known learner still
-  // escalates). Flip to true — product-wide or via the harness flag overlay — to stop
-  // escalating a heavy-hint-BUT-succeeding learner (they get nudged via Tier-2 instead).
-  escalationCompetenceGuard: false,
+  // through PARAMS (policy.ts reads this at call time). T30 FLIPPED IT DEFAULT-ON: T28
+  // certified it is a strict improvement (false_escalation 0.0046 → 0, guardrail intact,
+  // 0 regressions), so a heavy-hint-BUT-succeeding learner is now nudged via Tier-2
+  // instead of escalated. REVERSIBLE: flip back to false (or pass
+  // escalationCompetenceGuard:false via the harness overlay) to restore the pre-T27
+  // behavior (a flat-at-low-level genuinely-stuck learner still escalates either way).
+  escalationCompetenceGuard: true,
   // Competence floor: a flat-and-heavily-hinted plateau AT/ABOVE this P_known level reads
   // as a ceiling plateau (succeeding) rather than a stuck plateau. Set just below the
   // gateThreshold (0.95) so the latent-0.9314 over-hinter is spared while a low plateau
@@ -289,10 +299,12 @@ export const PARAMS: EngineParams = {
   stableEstimateEvidenceFloor: 10,
   stableEstimateWindowN: 2,
   // T24 — τ-band calibration. DEFAULT off (uses gateThreshold 0.95). When on, raises the
-  // P_known bar to 0.985 targeting false_mastery ≤0.20 at the committed τ=0.85 (see the
-  // interface comment for the rationale; aggregate certified by T28).
+  // P_known bar to 0.992 targeting false_mastery ≤0.20 at the committed τ=0.85 (see the
+  // interface comment for the rationale; aggregate certified by T28/T30).
+  // T30 re-tune: raised 0.985 → 0.992 (above the new pKnownClamp ceiling-minus-epsilon
+  // 0.995) so the strict bar is genuinely harder to reach and is no longer moot.
   strictGateThreshold: false,
-  strictGateThresholdValue: 0.985,
+  strictGateThresholdValue: 0.992,
   // T25 — Per-skill transfer-probe requirement. DEFAULT off; rollout list starts with the
   // highest false-transfer-risk skill, FRACTION_ON_LINE (red-team risk 0.804).
   requireTransferProbe: false,
