@@ -226,7 +226,7 @@ export default function RoomIntro({ room, onContinue, onBack }) {
           <div className="intro-endcard">
             <button className="ctrl-btn intro-back intro-endcard-back" title="Back to the lesson map" onClick={onBack}>←</button>
             <div className="intro-endcard-card">
-              <div className="intro-endcard-tag">Lesson {room.no} · Adding Fractions</div>
+              <div className="intro-endcard-tag">Lesson {room.no} · {room.verb ?? room.title}</div>
               <div className="intro-endcard-title">{room.title}</div>
               <div className="intro-endcard-q">Watch the intro again, or start the lesson?</div>
               <div className="intro-endcard-btns">
