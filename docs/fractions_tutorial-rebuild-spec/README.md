@@ -2,6 +2,8 @@
 
 This is a complete, rebuildable specification for **`fractions_tutorial`**, reverse-engineered from the source so a fresh team (or agent) could recreate the project from these documents alone.
 
+> **Coverage audit: ✅ PASS** (run `rp-260608-2215`) — 9/9 subsystems, 18/18 screens, 10/10 models, 4/4 endpoints documented; 0 real open items; 0 duplicated docs. Built via a MECE partition (9 parallel slice workers → synthesis → audit). Full report: [`_coverage/audit.md`](_coverage/audit.md). See `_coverage/census.md` + `_coverage/partition.md` for the inventory and ownership map.
+
 ## Project overview
 
 `fractions_tutorial` ("Babushka's Fractions") is a single-page web app — an adaptive, manipulative-first math tutor for elementary fractions and the multiplication foundations beneath them, themed as a Russian-grandmother kitchen. A child works through ten lesson **rooms** on a two-level map, practices word problems in **Babushka's Kitchen**, and a pure **mastery/measurement engine** continuously estimates per-skill knowledge (BKT over a 10-node skill DAG) and decides what to present next — fading scaffolds, probing transfer, routing to upstream gaps, or escalating to a human. There is no backend: it is a static Vite/React SPA persisting an append-only event log, progress, and settings to localStorage; the only "AI" running in-browser is a tiny ONNX MNIST model for handwriting recognition. An **advisory affect layer** adds behavior-aware nudges that are firewalled from the mastery estimate, and an offline **synthetic-learner harness** red-teams the engine for false-mastery and missed escalation.
