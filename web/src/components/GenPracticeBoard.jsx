@@ -16,7 +16,17 @@ import React, { useState, useEffect, useRef } from "react";
 import Slate from "./Slate.jsx";
 import { gradeAnswer, answerShape } from "../generators/grade.js";
 import { hintsFor } from "../generators/hints.js";
+import VoicePredictionBeat from "../ui/VoicePredictionBeat.jsx";
+import { supportsVoicePrediction } from "../runtime/voicePrediction.js";
+import { recordPrediction } from "../runtime/engineStore.js";
 import "../styles/gen-practice.css";
+
+// UI7: how often the opt-in voice pre-commitment beat is offered. The beat is
+// OCCASIONAL by design (R12 taste — the child must not have to reorient every
+// turn): we offer it on the FIRST generated problem of a stage and then every
+// VOICE_BEAT_EVERY problems thereafter (counted per board mount). It is always
+// skippable ("Skip — just stack") and never blocks the answer step.
+const VOICE_BEAT_EVERY = 4;
 
 const OK_LINES = [
   "Yes — that's it! Here's another.",
@@ -73,6 +83,21 @@ export default function GenPracticeBoard({ skill, scaffold, title, reteachAutoAd
   const [hintRung, setHintRung] = useState(0);
   // Which problem already showed a reteach beat (once-per-problem guard).
   const reteachKeyRef = useRef(null);
+
+  // UI7: the opt-in voice pre-commitment beat ("say the answer before you stack
+  // it"). It is gated to fraction/integer skills (supportsVoicePrediction filters
+  // mixed/relation), OCCASIONAL (every VOICE_BEAT_EVERY problems), and OPT-IN /
+  // non-blocking — it overlays ABOVE the answer input and the answer is still
+  // graded by `submit` below on the real attempt. `voiceDone` hides it once the
+  // child predicts or skips this problem.
+  const voiceSupported = supportsVoicePrediction(skill);
+  const [voiceDone, setVoiceDone] = useState(false);
+  // Monotonic count of distinct problems seen on this board mount (drives the
+  // occasional cadence). Starts at -1 so the FIRST problem reads as index 0.
+  const voiceCountRef = useRef(-1);
+  const voiceKeyRef = useRef(null);
+  // Whether THIS problem is an offered-beat problem (set when the problem changes).
+  const [voiceOffered, setVoiceOffered] = useState(false);
   // U5 interaction states: the reteach beat AUTO-ADVANCES after the clip plays
   // (no hard gate — the child is never trapped behind it) and a "Got it" tap
   // dismisses it early. We hold the auto-advance timer here so both the manual
@@ -100,7 +125,20 @@ export default function GenPracticeBoard({ skill, scaffold, title, reteachAutoAd
       clearTimeout(reteachTimerRef.current);
       reteachTimerRef.current = null;
     }
-  }, [prob?.skill, prob?.level, prob?.index, prob?.surfaceForm]);
+    // UI7: a fresh variation re-arms the per-problem voice beat. We bump the
+    // problem counter ONCE per distinct problem (guarded by voiceKeyRef so a
+    // benign re-render doesn't double-count) and decide whether THIS problem is
+    // an offered-beat problem on the occasional cadence. The beat is opt-in even
+    // when offered — the child can always Skip.
+    if (!prob) return;
+    const key = `${prob.skill}:${prob.level}:${prob.index}:${prob.surfaceForm}`;
+    if (voiceKeyRef.current !== key) {
+      voiceKeyRef.current = key;
+      voiceCountRef.current += 1;
+    }
+    setVoiceDone(false);
+    setVoiceOffered(voiceSupported && voiceCountRef.current % VOICE_BEAT_EVERY === 0);
+  }, [prob?.skill, prob?.level, prob?.index, prob?.surfaceForm, voiceSupported]);
 
   // Clear any pending auto-advance timer on unmount.
   useEffect(() => () => {
@@ -234,6 +272,23 @@ export default function GenPracticeBoard({ skill, scaffold, title, reteachAutoAd
       <div className="gen-practice__q">
         <span className="gen-practice__prompt">{prob.prompt}</span>
       </div>
+      {/* UI7: opt-in voice pre-commitment beat — ABOVE the manipulate/answer step.
+          Offered occasionally for fraction/integer skills; always skippable; never
+          blocks the answer. onPredict's `signal` is ADVISORY only: it is recorded
+          to the engine store's prediction counter-metrics / signal channel and is
+          NEVER fed to judgeAndAdvance / the gate. The real answer is still graded
+          by `submit` when the child actually stacks + checks. */}
+      {voiceOffered && !voiceDone && !solved && (
+        <VoicePredictionBeat
+          problem={prob}
+          onPredict={(_result, signal) => {
+            // advisory pre-commitment signal → store only (not the gate).
+            recordPrediction(signal);
+            setVoiceDone(true);
+          }}
+          onSkip={() => setVoiceDone(true)}
+        />
+      )}
       <div className="gen-practice__answer">{input}</div>
       {shape !== "relation" && (
         <button
