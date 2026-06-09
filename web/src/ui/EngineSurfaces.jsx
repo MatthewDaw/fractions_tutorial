@@ -17,6 +17,7 @@
 import React, { useEffect } from 'react';
 import RationaleBanner from './RationaleBanner.jsx';
 import MasteryInspector from './MasteryInspector.jsx';
+import SelfReportProbes from './SelfReportProbes.jsx';
 import { useEngineStore } from '../runtime/useEngineStore.js';
 import { clearNudge, acknowledgeRationale, deriveUiMetrics } from '../runtime/engineStore.js';
 import '../styles/engine-surfaces.css';
@@ -87,6 +88,10 @@ export default function EngineSurfaces({ active = false, showInspector = false, 
       {/* UI2: dismissing a change-rationale banner is the "understood why" ack. */}
       {active && <RationaleBanner rationale={bannerRationale} onDismiss={acknowledgeRationale} />}
       {active && <NudgeToast nudge={nudge} />}
+      {/* UI8+UI9: the shared occasional cadence for the two self-report probes
+          (OrientationProbe + AffectProbe). Same in-lesson `active` gate as the
+          banner/nudge; the cadence itself enforces boundary-only + ≤ once/N. */}
+      <SelfReportProbes active={active} />
       {showInspector && (
         <MasteryInspector
           masteryMap={masteryMap ?? fallbackMasteryMap}
