@@ -6,6 +6,7 @@ import { ROOMS } from "./rooms.js";
 export const NODE_STANDARDS = {
   // Multiplication foundations (grade 3).
   MULT_EQUAL_GROUPS: { grade: "3", codes: ["3.OA.A.1"] },
+  MULT_ARRAYS: { grade: "3", codes: ["3.OA.A.1", "3.OA.A.3"] },
   MULT_FACTS: { grade: "3", codes: ["3.OA.A.1", "3.OA.C.7"] },
 
   // Fraction strand.
