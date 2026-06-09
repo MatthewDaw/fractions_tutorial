@@ -54,6 +54,9 @@ import "./styles/momsroom.css";
 
 /** Map from rooms.js roomId → engine SkillNode id. */
 export const ROOM_TO_NODE = {
+  m1: "MULT_EQUAL_GROUPS",
+  m2: "MULT_ARRAYS",
+  m3: "MULT_FACTS",
   r1: "ADD_SAME_DEN",
   r3: "ADD_UNLIKE_NESTED",
   r2: "ADD_UNLIKE_COPRIME",

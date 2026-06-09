@@ -184,6 +184,7 @@ vi.mock('../../src/styles/momsroom.css', () => ({}));
 // ---------------------------------------------------------------------------
 
 import { useLessonEngine } from '../../src/runtime/useLessonEngine.js';
+import { loadMastered } from '../../src/kitchenProgress.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -473,6 +474,9 @@ describe('MomsRoom — ROOM_TO_NODE covers all curriculum rooms', () => {
 
     // The mapping defined in MomsRoom.jsx (kept in sync here):
     const ROOM_TO_NODE = {
+      m1: 'MULT_EQUAL_GROUPS',
+      m2: 'MULT_ARRAYS',
+      m3: 'MULT_FACTS',
       r1: 'ADD_SAME_DEN',
       r3: 'ADD_UNLIKE_NESTED',
       r2: 'ADD_UNLIKE_COPRIME',
@@ -513,6 +517,9 @@ describe('MomsRoom — errorSignature derivation from slip codes', () => {
 
   it('5/14 answer on 3/8+2/8 question triggers add_denominators errorSignature', async () => {
     resetMockState();
+    // The mult foundation rooms (m1/m2/m3) now lead the kitchen CURRICULUM, so
+    // mark them mastered to reach the first FRACTION recipe (r1 · choc, 3/8+2/8).
+    vi.mocked(loadMastered).mockReturnValueOnce(['m1', 'm2', 'm3']);
     const jaaFn = vi.fn(() => ({
       kind: 'PresentProblem',
       node: 'ADD_SAME_DEN',
