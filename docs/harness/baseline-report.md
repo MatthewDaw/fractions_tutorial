@@ -13,6 +13,22 @@ Sessions: **240**  ·  τ_latent: **0.8**
 | hints_given | 44 | independence_rate | 0.2958 |
 | reps_to_mastery | 16.0261 | transfer_after_fade | 0.8844 |
 
+<!-- T17: τ-sensitivity section — keep this block contiguous for mechanical merge -->
+## τ-sensitivity — false_mastery_rate and missed_escalation_rate across τ_latent (PDF Req 8)
+
+_τ_latent is a judgement call, not a fact (oracle header). Results must be reported as a curve, never a single point (review A6). A higher τ means a stricter bar for "genuinely knows it": both rates are expected to be non-decreasing as τ rises. Seed: 1 · Sessions: 210._
+
+| τ_latent | false_mastery_rate | missed_escalation_rate |
+| --- | --- | --- |
+| 0.70 | 0.1286 | 0.0 |
+| 0.75 | 0.2571 | 0.0 |
+| 0.80 | 0.3429 | 0.0 |
+| 0.85 | 0.3857 | 0.0 |
+| 0.90 | 0.5571 | 0.0 |
+
+**Interpretation:** `false_mastery_rate` is strictly non-decreasing across all five τ values as expected — a higher threshold flags more gate-open steps as false-positive (the rate rises from 0.1286 at τ=0.70 to 0.5571 at τ=0.90). `missed_escalation_rate` is 0.0 across the full sweep: the STUCK trigger conditions did not hold for any tape in this population (the off-task / disengaged escalation path is structurally unreachable in the headless runner — see limitations memo). The τ=0.80 row matches the single-τ report above, confirming the curve is consistent with the existing baseline. The PDF's warning against single-point estimates is vindicated: the 4× spread in `false_mastery_rate` (0.13→0.56) shows the oracle verdict is τ-sensitive, and τ=0.80 is a defensible centroid, not a special fixed point.
+<!-- end T17: τ-sensitivity section -->
+
 ## Failure clusters (persona × skill × decision), ranked
 
 | rank | persona | skill | decision | labels | count | severity |

@@ -228,6 +228,74 @@ export function renderVerdictCardsMarkdown(cards) {
 }
 
 // ---------------------------------------------------------------------------
+// τ-sensitivity curve — sweep τ_latent across a range, show how false_mastery_rate
+// and missed_escalation_rate change (PDF Req 8 / oracle header mandate).
+//
+// The oracle header explicitly states results must NEVER be a single-point estimate
+// (review A6). This function sweeps τ ∈ TAU_SWEEP and returns one row per τ value
+// so a reader can judge how sensitive the verdicts are to the threshold choice.
+//
+// monotonicity expectation:
+//   false_mastery_rate   should be NON-INCREASING as τ rises (a stricter bar
+//                        flags MORE tapes as false mastery at any given τ):
+//                        LOWER τ → fewer tapes are "below τ" → fewer false masteries.
+//                        HIGHER τ → more tapes are "below τ" → more false masteries.
+//                        So false_mastery_rate is NON-DECREASING with τ.
+//   missed_escalation_rate likewise depends on isLatentlyStuck(τ) — a higher τ
+//                        widens the "stuck" region, so missed_escalation_rate is
+//                        also NON-DECREASING with τ (weakly).
+// ---------------------------------------------------------------------------
+
+/** The canonical τ sweep points (PDF Req 8 / oracle header). */
+export const TAU_SWEEP = Object.freeze([0.70, 0.75, 0.80, 0.85, 0.90]);
+
+/**
+ * Build a τ-sensitivity curve for the tape population.
+ *
+ * @param {object[]} tapes
+ * @param {object} [opts]
+ *   @param {readonly number[]} [opts.tauSweep=TAU_SWEEP]  τ values to sweep.
+ * @returns {Array<{ tau:number, false_mastery_rate:number, missed_escalation_rate:number }>}
+ *   One row per τ value in tauSweep order.
+ */
+export function buildTauSensitivityCurve(tapes, { tauSweep = TAU_SWEEP } = {}) {
+  return tauSweep.map((tau) => {
+    const m = aggregate(tapes, { tauLatent: tau });
+    const mj = m.toJSON ? m.toJSON() : m;
+    return {
+      tau,
+      false_mastery_rate: mj.false_mastery_rate,
+      missed_escalation_rate: mj.missed_escalation_rate,
+    };
+  });
+}
+
+/**
+ * Render the τ-sensitivity curve as a markdown table.
+ *
+ * @param {Array<{ tau:number, false_mastery_rate:number, missed_escalation_rate:number }>} curve
+ * @returns {string}
+ */
+export function renderTauSensitivityMarkdown(curve) {
+  const lines = [];
+  lines.push('## τ-sensitivity — false_mastery_rate and missed_escalation_rate across τ_latent (PDF Req 8)');
+  lines.push('');
+  lines.push(
+    '_τ_latent is a judgement call, not a fact (oracle header). Results must be reported as a_ ' +
+    '_curve, never a single point (review A6). A higher τ means a stricter bar for "genuinely_ ' +
+    '_knows it": both rates are expected to be non-decreasing as τ rises._'
+  );
+  lines.push('');
+  lines.push('| τ_latent | false_mastery_rate | missed_escalation_rate |');
+  lines.push('| --- | --- | --- |');
+  for (const row of curve) {
+    lines.push(`| ${row.tau.toFixed(2)} | ${fmt(row.false_mastery_rate)} | ${fmt(row.missed_escalation_rate)} |`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // Baseline report — the failure-mode report (clusters + counter-paired metrics).
 // ---------------------------------------------------------------------------
 
@@ -235,18 +303,20 @@ export function renderVerdictCardsMarkdown(cards) {
  * @param {object[]} tapes
  * @param {object} [opts] { tauLatent? }
  * @returns {{ metrics:object, clusters:object[], cards:object[], tauLatent:number,
- *             n_tapes:number }}
+ *             n_tapes:number, tauCurve:object[] }}
  */
 export function buildBaselineReport(tapes, { tauLatent = DEFAULT_TAU_LATENT } = {}) {
   const metrics = aggregate(tapes, { tauLatent });
   const clusters = clusterFailures(tapes, { tauLatent });
   const cards = buildVerdictCards(tapes, { tauLatent });
+  const tauCurve = buildTauSensitivityCurve(tapes);
   return {
     tauLatent,
     n_tapes: tapes.length,
     metrics: metrics.toJSON ? metrics.toJSON() : metrics,
     clusters,
     cards,
+    tauCurve,
   };
 }
 
@@ -281,6 +351,11 @@ export function renderBaselineReportMarkdown(report) {
       `"hints up, independence down" — large when heavy hint use coincides with low independence |`
   );
   lines.push('');
+  // τ-sensitivity curve (PDF Req 8 / oracle header mandate — never a single-point estimate).
+  if (report.tauCurve && report.tauCurve.length > 0) {
+    lines.push(renderTauSensitivityMarkdown(report.tauCurve));
+  }
+
   lines.push('## Failure clusters (persona × skill × decision), ranked');
   lines.push('');
   if (report.clusters.length === 0) {

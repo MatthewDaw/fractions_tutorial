@@ -263,6 +263,39 @@ fixes (via the sealed held-out judge).
 
 ---
 
+## (e) τ-sensitivity — why a curve, not a point (T17 / PDF Req 8)
+
+The oracle header (`latentTruth.js:8-29`) mandates that results be reported as a CURVE over
+τ_latent (sweep 0.7…0.9), never as a single-point estimate. The implementation (`report.js
+buildTauSensitivityCurve`, `TAU_SWEEP = [0.70, 0.75, 0.80, 0.85, 0.90]`) sweeps five τ
+values and records `false_mastery_rate` and `missed_escalation_rate` at each point. The five
+points on the baseline-seed1 population (210 tapes):
+
+| τ_latent | false_mastery_rate | missed_escalation_rate |
+|---|---|---|
+| 0.70 | 0.1286 | 0.0 |
+| 0.75 | 0.2571 | 0.0 |
+| 0.80 | 0.3429 | 0.0 |
+| 0.85 | 0.3857 | 0.0 |
+| 0.90 | 0.5571 | 0.0 |
+
+The 4× spread in `false_mastery_rate` (0.13→0.56) across a modest ±0.1 band around τ=0.80
+confirms the PDF's warning: treating τ=0.80 as a fixed fact would give a misleadingly precise
+verdict. The τ=0.80 centroid (the `DEFAULT_TAU_LATENT`) sits at the inflection region
+(rate 0.34) and is a defensible central estimate, but a reader evaluating severity must see
+the full band.
+
+`missed_escalation_rate` is 0.0 across the sweep. This is NOT a reporting artifact: the STUCK
+trigger requires ≥6 steps at scaffold=0 with heavy hints (rung ≥3) and a near-flat P_known —
+conditions the 210-session baseline population does not satisfy (most stuck-ish tapes hit the
+step-cap before accumulating 6 qualifying floor steps). The "disengaged" escalation path is
+structurally unreachable on the headless runner (see limitations memo). The curve correctly
+reports the absence; it does not paper over it.
+
+**Monotonicity.** Both rates are expected to be non-decreasing as τ rises (higher τ = stricter
+"genuinely knows it" bar = more gate-open steps qualify as false mastery). The curve is
+verified non-decreasing by `test_tau_sensitivity_T17.test.js` (monotonicity assertions).
+
 ## References (literature that shaped the design)
 
 - **BKT** — Corbett & Anderson (1995), *Knowledge tracing: modeling the acquisition of

@@ -25,6 +25,35 @@ under "guardrail_degraded warning (T07 gap)"):
 
 `npx vitest run` GREEN: 1109 tests / 84 files all pass.
 
+## T17 — τ-sensitivity curve (RESOLVED)
+
+**Status:** DONE — `buildTauSensitivityCurve`, `renderTauSensitivityMarkdown`, and
+`TAU_SWEEP = [0.70, 0.75, 0.80, 0.85, 0.90]` added to `web/src/harness/report.js`.
+`buildBaselineReport` now includes a `tauCurve` field (array of `{tau, false_mastery_rate,
+missed_escalation_rate}` rows). `renderBaselineReportMarkdown` inserts the τ-sensitivity table
+before the failure-cluster table. `docs/harness/baseline-report.md` has a clearly-delimited
+τ-sensitivity section with the actual curve for the 210-session seed-1 population.
+`docs/harness/research-notes.md` section (e) explains why a curve is required and interprets
+the numbers.
+
+Curve (baseline-seed1, 210 tapes):
+  τ=0.70 → fmr=0.1286, mer=0.0
+  τ=0.75 → fmr=0.2571, mer=0.0
+  τ=0.80 → fmr=0.3429, mer=0.0  ← DEFAULT_TAU_LATENT centroid
+  τ=0.85 → fmr=0.3857, mer=0.0
+  τ=0.90 → fmr=0.5571, mer=0.0
+
+`false_mastery_rate` is strictly non-decreasing (4× spread, 0.13→0.56) — confirms the PDF
+warning against single-point estimates is well-founded. `missed_escalation_rate` is 0.0 across
+the full sweep (STUCK trigger conditions not met in 210 sessions; disengaged path unreachable).
+
+Test coverage in `web/tests/harness/test_tau_sensitivity_T17.test.js` (16 assertions):
+TAU_SWEEP shape (length 5, sorted, covers 0.70–0.90), curve shape (row count, field types,
+range), tau-value alignment, custom sweep, non-decreasing false_mastery_rate, strict increase
+between τ=0.75 and τ=0.80, non-decreasing missed_escalation_rate, determinism, markdown
+heading/columns/sweep-point rows/oracle mandate mention, integration (tauCurve on
+buildBaselineReport output).
+
 ## T18 — Joint counter-metrics (RESOLVED)
 
 **Status:** DONE — `transfer_per_mastery_gain` and `hint_independence_divergence` added to
