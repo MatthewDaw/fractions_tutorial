@@ -369,7 +369,13 @@ function checkEscalationTriggers(
   if (
     state.currentScaffold === 0 &&
     state.heavyHintAtFloorCount >= nStuck &&
-    isPKnownFlat(state.pKnownHistory, nStuck)
+    isPKnownFlat(state.pKnownHistory, nStuck) &&
+    // T27 competence-guard: when on, do NOT escalate a learner whose flat,
+    // heavily-hinted plateau sits AT/ABOVE the competence floor — that is a
+    // ceiling plateau (succeeding), not a stuck plateau. Such a learner is
+    // nudged (Tier-2), not handed to a human. Default-off → byte-identical to
+    // today (a low, genuinely-stuck plateau still escalates).
+    !isSucceedingPlateau(state, recentBehavior)
   ) {
     const mostUpstream = findMostUpstreamNodeForEscalation(state.currentNodeId);
     if (mostUpstream === state.currentNodeId || mostUpstream === state.currentNodeId) {
@@ -406,6 +412,46 @@ function checkEscalationTriggers(
   }
 
   return null;
+}
+
+/**
+ * T27 escalation competence-guard.
+ *
+ * Returns true when a flat, heavily-hinted plateau is actually a SUCCEEDING
+ * plateau (a ceiling plateau) rather than a STUCK plateau — in which case the
+ * stuck escalation trigger must NOT fire (the learner is nudged via Tier-2, not
+ * handed to a human).
+ *
+ * "Succeeding" = the recent competence signal is HIGH:
+ *   (a) the most recent P_known sits AT/ABOVE the competence floor, OR
+ *   (b) every recent attempt in the behavior window was correct.
+ * Either signal means heavy-hint use is over-hinting, not distress.
+ *
+ * REVERSIBLE: returns false whenever PARAMS.escalationCompetenceGuard is off, so
+ * the guard is a no-op at the default and prior escalation behavior is unchanged.
+ * Affect-advisory firewall: reads only accuracy/P_known competence signals, never
+ * affect, to decide a NON-escalation (a safe, advisory-only relaxation).
+ */
+function isSucceedingPlateau(
+  state: PolicyState,
+  recentBehavior: RecentBehavior
+): boolean {
+  if (!PARAMS.escalationCompetenceGuard) return false;
+
+  const { escalateCompetenceFloor } = PARAMS;
+
+  // (a) P_known plateau at/above the competence floor → ceiling plateau.
+  const history = state.pKnownHistory;
+  if (history.length > 0) {
+    const recentP = history[history.length - 1];
+    if (recentP >= escalateCompetenceFloor) return true;
+  }
+
+  // (b) Recent attempts are all correct → the learner is succeeding despite hints.
+  const obs = recentBehavior.observations;
+  if (obs.length > 0 && obs.every((o) => o.correct)) return true;
+
+  return false;
 }
 
 /**

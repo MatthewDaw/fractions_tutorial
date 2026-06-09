@@ -113,6 +113,36 @@ export interface EngineParams {
    * P_known) is independent of this flag and is unaffected by the default-off setting.
    */
   requireDelayedProbe: boolean;
+  /**
+   * T27 (round-2 escalation competence-guard): when true, the STUCK
+   * human-escalation trigger additionally requires evidence that the learner is
+   * NOT succeeding — i.e. LOW recent accuracy / low P_known — before escalating.
+   * This closes the lone over-strict (false-escalation) error in the harness: an
+   * over-hinter on MULT_EQUAL_GROUPS at GENUINE mastery (latent 0.9314) whose
+   * P_known had simply gone flat NEAR THE CEILING was read as "stuck" (heavy hints
+   * + flat trajectory) and handed to a human, when they should be nudged (Tier-2),
+   * not escalated.
+   *
+   * The guard reads ONLY the stuck trigger's competence signal (recent P_known
+   * level / recent-attempt accuracy). It does NOT touch the disengaged escalation
+   * counter (disengagedCount / nDiseng, T03) or consecutiveErrors.
+   *
+   * REVERSIBLE / DEFAULT-OFF: default false so behavior is byte-identical to today
+   * (a flat-at-low-level genuinely-stuck learner still escalates exactly as before).
+   * Flip to true — product-wide or via the harness flag overlay — to add the
+   * competence guard. The escalateCompetenceFloor below is the level at/above which
+   * a flat-and-heavily-hinted learner is treated as succeeding (nudge, not escalate).
+   */
+  escalationCompetenceGuard: boolean;
+  /**
+   * T27: P_known level at/above which a flat-trajectory, heavily-hinted learner is
+   * judged to be SUCCEEDING (a ceiling plateau, not a stuck plateau) and is NOT
+   * escalated when escalationCompetenceGuard is on. Set just below the gate so a
+   * near-/at-gate plateau (the latent-0.9314 over-hinter) reads as competence, while
+   * a low plateau (the genuinely-stuck learner) still escalates. Read only when
+   * escalationCompetenceGuard is on.
+   */
+  escalateCompetenceFloor: number;
   /** Escalation trigger thresholds. */
   escalation: EscalationParams;
 }
@@ -160,6 +190,17 @@ export const PARAMS: EngineParams = {
   // harness delayedProbe overlay — to require a passed delayed probe for durable
   // mastery. The applyProbeResult demotion-on-fail path is independent of this flag.
   requireDelayedProbe: false,
+  // T27 / REVERSIBLE: the escalation competence-guard CAPABILITY is built and routed
+  // through PARAMS (policy.ts reads this at call time), but the DEFAULT stays false so
+  // escalation is byte-identical to today (a genuinely-stuck low-P_known learner still
+  // escalates). Flip to true — product-wide or via the harness flag overlay — to stop
+  // escalating a heavy-hint-BUT-succeeding learner (they get nudged via Tier-2 instead).
+  escalationCompetenceGuard: false,
+  // Competence floor: a flat-and-heavily-hinted plateau AT/ABOVE this P_known level reads
+  // as a ceiling plateau (succeeding) rather than a stuck plateau. Set just below the
+  // gateThreshold (0.95) so the latent-0.9314 over-hinter is spared while a low plateau
+  // (the genuinely-stuck learner) still escalates. Read only when the guard is on.
+  escalateCompetenceFloor: 0.85,
   escalation: {
     nStuck: 6,
     nDiseng: 5,

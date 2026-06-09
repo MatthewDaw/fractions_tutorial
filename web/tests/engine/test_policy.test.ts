@@ -16,7 +16,7 @@
 //  12. There is no code path that emits a Decision with kind "DeclareMastered" (R9).
 //  13. legalMoves returns only valid moves for the given state.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { legalMoves, nextDecision } from '../../src/engine/policy.js';
 import type { PolicyState, RecentBehavior } from '../../src/engine/policy.js';
 import type { MasteryEstimate, Observation } from '../../src/engine/types.js';
@@ -574,6 +574,96 @@ describe('nextDecision — false-escalation guard', () => {
       disengagedCount: 0,
     });
     const decision = nextDecision(state, allWeakMastery(), emptyBehavior(), NOW);
+    expect(decision.kind).not.toBe('EscalateToHuman');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T27. Escalation competence-guard — a heavy-hint-but-SUCCEEDING learner is NOT
+// escalated; a genuinely-stuck (low-accuracy) learner still escalates.
+//
+// Verdict-card #74: an over-hinter on MULT_EQUAL_GROUPS at GENUINE mastery
+// (latent 0.9314) was escalated to a human because the stuck trigger read heavy
+// hints + a flat P_known trajectory as distress — WITHOUT checking whether the
+// learner was actually succeeding. The competence-guard (PARAMS.escalationCompetenceGuard,
+// default-off, reversible) gates the stuck trigger on LOW recent accuracy / low
+// P_known, so a flat-AT-CEILING plateau is nudged (Tier-2), not escalated.
+// ---------------------------------------------------------------------------
+
+describe('nextDecision — T27 escalation competence-guard', () => {
+  afterEach(() => {
+    (PARAMS as any).escalationCompetenceGuard = false;
+  });
+
+  /** The over-hinter at genuine mastery: floor + heavy hints + flat P_known,
+   *  but the plateau sits NEAR THE CEILING (latent 0.9314 → P_known ≈ 0.93). */
+  function succeedingOverHinterState(): PolicyState {
+    const flatHighHistory = new Array(PARAMS.escalation.nStuck).fill(0.9314);
+    return baseState({
+      currentNodeId: 'MULT_EQUAL_GROUPS', // most-upstream node (stuck-trigger requirement)
+      currentScaffold: 0,                 // at floor
+      heavyHintAtFloorCount: PARAMS.escalation.nStuck, // over-hinting
+      pKnownHistory: flatHighHistory,     // flat — but flat at the CEILING
+      consecutiveErrors: 0,
+      consecutiveCleanCorrects: 2,
+    });
+  }
+
+  it('succeeding over-hinter (high P_known, flat at ceiling) with guard ON → NOT escalated (nudged instead)', () => {
+    (PARAMS as any).escalationCompetenceGuard = true;
+    const decision = nextDecision(
+      succeedingOverHinterState(),
+      allWeakMastery(),
+      emptyBehavior(),
+      NOW
+    );
+    expect(decision.kind).not.toBe('EscalateToHuman');
+  });
+
+  it('genuinely-stuck learner (low P_known, flat at floor) with guard ON → STILL escalates (stuck)', () => {
+    (PARAMS as any).escalationCompetenceGuard = true;
+    const flatLowHistory = new Array(PARAMS.escalation.nStuck).fill(0.15);
+    const state = baseState({
+      currentNodeId: 'MULT_EQUAL_GROUPS',
+      currentScaffold: 0,
+      heavyHintAtFloorCount: PARAMS.escalation.nStuck,
+      pKnownHistory: flatLowHistory, // flat AND low — genuinely stuck
+    });
+    const decision = nextDecision(state, allWeakMastery(), emptyBehavior(), NOW);
+    expect(decision.kind).toBe('EscalateToHuman');
+    if (decision.kind === 'EscalateToHuman') {
+      expect(decision.reason).toBe('stuck');
+    }
+  });
+
+  it('REVERSIBLE: with guard OFF (default) the succeeding over-hinter still escalates (today\'s bug preserved)', () => {
+    // Documents that the fix is gated: default-off behavior is byte-identical to
+    // today, so the existing suite stays green and the change is reversible.
+    const decision = nextDecision(
+      succeedingOverHinterState(),
+      allWeakMastery(),
+      emptyBehavior(),
+      NOW
+    );
+    expect(decision.kind).toBe('EscalateToHuman');
+  });
+
+  it('guard ON + all-correct recent attempts (even without a ceiling plateau) → NOT escalated', () => {
+    (PARAMS as any).escalationCompetenceGuard = true;
+    // Flat-low P_known would normally escalate, but every recent attempt is correct
+    // → the learner is succeeding (over-hinting), so the accuracy signal spares them.
+    const flatLowHistory = new Array(PARAMS.escalation.nStuck).fill(0.15);
+    const state = baseState({
+      currentNodeId: 'MULT_EQUAL_GROUPS',
+      currentScaffold: 0,
+      heavyHintAtFloorCount: PARAMS.escalation.nStuck,
+      pKnownHistory: flatLowHistory,
+    });
+    const behavior: RecentBehavior = {
+      observations: [correctObs(), correctObs(), correctObs()],
+      isDisengaged: false,
+    };
+    const decision = nextDecision(state, allWeakMastery(), behavior, NOW);
     expect(decision.kind).not.toBe('EscalateToHuman');
   });
 });
