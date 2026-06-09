@@ -1,33 +1,23 @@
-﻿// generate-comparison.test.js — runs the arm comparison and writes the doc
-// This is a vitest 'test' in name only; it is a one-shot data generation script.
-import { it } from 'vitest';
-import { writeFileSync } from 'fs';
+// UI5 — adaptive-vs-static arm comparison smoke test.
+// The comparison doc (docs/harness/adaptive-vs-static-comparison.md) is committed;
+// this asserts the comparison pipeline runs end-to-end and renders a non-empty
+// report. It does NOT write any file (a CI run must not regenerate committed docs
+// or depend on a developer worktree path).
+import { it, expect } from 'vitest';
 import { runArmComparison } from '../../src/harness/sessionRunner.js';
 import { buildArmComparison, renderArmComparisonMarkdown } from '../../src/harness/report.js';
 
-it('generates adaptive-vs-static comparison doc (UI5)', () => {
-  const { adaptiveTapes, staticTapes, seed } = runArmComparison({
-    seed: 1,
-    stepCap: 40,
-  });
-
-  console.log('adaptive tapes:', adaptiveTapes.length, '/ static tapes:', staticTapes.length);
+it('runs the adaptive-vs-static arm comparison end-to-end (UI5)', () => {
+  const { adaptiveTapes, staticTapes, seed } = runArmComparison({ seed: 1, stepCap: 40 });
+  expect(adaptiveTapes.length).toBeGreaterThan(0);
+  expect(staticTapes.length).toBe(adaptiveTapes.length); // both arms run the identical population
 
   const cmp = buildArmComparison(adaptiveTapes, staticTapes, { seed });
-
-  console.log('ARM SEPARATION:', JSON.stringify(cmp.arm_separation));
-  for (const d of cmp.deltas) {
-    console.log(d.metric + ': adaptive=' + (d.adaptive != null ? d.adaptive.toFixed(4) : 'null') +
-      ' static=' + (d.static != null ? d.static.toFixed(4) : 'null') +
-      ' delta=' + (d.delta != null ? d.delta.toFixed(4) : 'null') +
-      ' helps=' + d.adaptationHelps);
-  }
+  expect(cmp.arm_separation).toBeTruthy();
+  expect(Array.isArray(cmp.deltas)).toBe(true);
+  expect(cmp.deltas.length).toBeGreaterThan(0);
 
   const md = renderArmComparisonMarkdown(cmp);
-  writeFileSync(
-    'C:/Users/mattd/Documents/gauntlet/wt-UI5/docs/harness/adaptive-vs-static-comparison.md',
-    md,
-    'utf8'
-  );
-  console.log('Wrote adaptive-vs-static-comparison.md');
+  expect(typeof md).toBe('string');
+  expect(md.length).toBeGreaterThan(0);
 });
