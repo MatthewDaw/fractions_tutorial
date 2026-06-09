@@ -1,0 +1,65 @@
+%% Two load-bearing flows. Both are SEQUENCE diagrams.
+%% (1) judge -> advance: the boundary consult, run exactly ONCE per submit (R16, ADR-RT-001).
+sequenceDiagram
+  autonumber
+  actor Child
+  participant Room as Lesson room / GenPracticeBoard
+  participant ULE as useLessonEngine.judgeAndAdvance
+  participant Grade as generators/grade
+  participant Log as engine/log (append-only)
+  participant Reduce as measurementReduce
+  participant Gate as gate.isMastered
+  participant Policy as policy.nextDecision
+  participant Flow as practiceFlow.nextPractice
+  participant Gen as generators/generateFor
+  participant Store as engineStore -> EngineSurfaces
+
+  Child->>Room: submit answer
+  Room->>Grade: gradeAnswer(problem, answer)
+  Grade-->>Room: stars + error_signature
+  Room->>ULE: judgeAndAdvance(attempt) %% THE boundary
+  ULE->>Log: append submit + judged burst (affect_window = [])
+  ULE->>Reduce: fold whole log -> MasteryEstimate map
+  Note over Reduce: segment -> bind node_id -> credit + BKT -> assemble
+  Reduce-->>ULE: masteryMap
+  ULE->>Gate: isMastered(estimate) %% U2 certified, reuses SAME fold
+  Gate-->>ULE: mastered? (read-only; no DeclareMastered)
+  ULE->>Policy: nextDecision(state, masteryMap) %% ONCE per attempt
+  Policy-->>ULE: Decision (+ rationale)
+  ULE->>Store: publishDecision(decision, rationale, masteryMap)
+  Store-->>Child: RationaleBanner / NudgeToast / Inspector update
+  ULE->>Flow: nextPractice(decision, state)
+  Flow->>Gen: generateFor(skill, level, surfaceForm, index)
+  Gen-->>Room: next validated problem (or exit)
+  Room-->>Child: present next problem
+
+%% (2) wall -> room -> return: Babushka's Kitchen stumping handoff.
+%% A weak upstream skill blocks a recipe; the engine routes the child out to
+%% strengthen it, then returns to finish the stumping recipe.
+sequenceDiagram
+  autonumber
+  actor Child
+  participant Moms as MomsRoom (kitchen)
+  participant ULE as useLessonEngine
+  participant Wall as engine/wall.detectWall
+  participant Policy as policy.nextDecision
+  participant Sess as sessionStorage (stumpingRecipeId)
+  participant Shell as Shell hash router
+  participant Room as Lesson room (upstream skill)
+
+  Child->>Moms: attempt a recipe
+  Moms->>ULE: judgeAndAdvance(attempt)
+  ULE->>Wall: detectWall(recipe, masteryMap)
+  Wall-->>ULE: binding-gap on upstream node
+  ULE->>Policy: nextDecision(...)
+  Policy-->>ULE: RouteToRoom(node)  %% leave kitchen to strengthen
+  ULE->>Sess: persist stumpingRecipeId (handoff)
+  ULE->>Shell: go(#/<roomId>)
+  Shell->>Room: mount upstream room at entry scaffold
+  Room->>ULE: judgeAndAdvance ... (practice loop until mastered)
+  ULE->>Policy: nextDecision(...)
+  Policy-->>ULE: ReturnToKitchen(recipe)  %% binding skill now mastered
+  ULE->>Shell: go(#/mom)
+  Shell->>Sess: read stumpingRecipeId
+  Shell->>Moms: resume the stumping recipe
+  Moms-->>Child: finish the recipe in the kitchen
