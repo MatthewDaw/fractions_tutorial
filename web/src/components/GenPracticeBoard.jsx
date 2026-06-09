@@ -61,7 +61,7 @@ const RETEACH = {
   },
 };
 
-export default function GenPracticeBoard({ skill, scaffold, title }) {
+export default function GenPracticeBoard({ skill, scaffold, title, reteachAutoAdvanceMs = 6000 }) {
   const { prob, solved, badInput, status, award, reportAttempt, flashBad, setStatus } = scaffold;
   const shape = answerShape(skill);
   const hints = hintsFor(skill);
@@ -73,6 +73,22 @@ export default function GenPracticeBoard({ skill, scaffold, title }) {
   const [hintRung, setHintRung] = useState(0);
   // Which problem already showed a reteach beat (once-per-problem guard).
   const reteachKeyRef = useRef(null);
+  // U5 interaction states: the reteach beat AUTO-ADVANCES after the clip plays
+  // (no hard gate — the child is never trapped behind it) and a "Got it" tap
+  // dismisses it early. We hold the auto-advance timer here so both the manual
+  // skip and a fresh problem can cancel a pending dismissal.
+  const reteachTimerRef = useRef(null);
+
+  // Dismiss the reteach beat (auto-advance OR "Got it"). The learner stays on the
+  // SAME problem to retry — dismissal clears the corrective card and the warn
+  // ribbon, it does not advance/skip the problem (no hard gate, input stays live).
+  const dismissReteach = () => {
+    if (reteachTimerRef.current) {
+      clearTimeout(reteachTimerRef.current);
+      reteachTimerRef.current = null;
+    }
+    setReteach(null);
+  };
 
   // Reset the inputs, reteach, and hint ladder whenever a new variation arrives.
   useEffect(() => {
@@ -80,7 +96,16 @@ export default function GenPracticeBoard({ skill, scaffold, title }) {
     setReteach(null);
     setHintRung(0);
     reteachKeyRef.current = null;
+    if (reteachTimerRef.current) {
+      clearTimeout(reteachTimerRef.current);
+      reteachTimerRef.current = null;
+    }
   }, [prob?.skill, prob?.level, prob?.index, prob?.surfaceForm]);
+
+  // Clear any pending auto-advance timer on unmount.
+  useEffect(() => () => {
+    if (reteachTimerRef.current) clearTimeout(reteachTimerRef.current);
+  }, []);
 
   if (!prob) return null;
   const set = (k, v) => setVals((s) => ({ ...s, [k]: v }));
@@ -102,6 +127,16 @@ export default function GenPracticeBoard({ skill, scaffold, title }) {
         reteachKeyRef.current = probKey;
         setReteach(r);
         setStatus({ tone: "warn", text: r.ribbon });
+        // Auto-advance: the corrective beat clears itself after the clip so the
+        // child is never hard-gated behind it (they can also tap "Got it" to skip
+        // early). A non-positive duration disables the timer (test/opt-out).
+        if (reteachTimerRef.current) clearTimeout(reteachTimerRef.current);
+        if (reteachAutoAdvanceMs > 0) {
+          reteachTimerRef.current = setTimeout(() => {
+            reteachTimerRef.current = null;
+            setReteach(null);
+          }, reteachAutoAdvanceMs);
+        }
       } else {
         setReteach(null);
         setStatus({ tone: "warn", text: "Not quite — take another look and try again." });
@@ -241,6 +276,13 @@ export default function GenPracticeBoard({ skill, scaffold, title }) {
         <div className="gen-practice__reteach" data-vox={`${reteach.title}. ${reteach.body}`}>
           <div className="gen-practice__reteach-title">{reteach.title}</div>
           <div className="gen-practice__reteach-body">{reteach.body}</div>
+          <button
+            type="button"
+            className="gen-practice__reteach-skip"
+            onClick={dismissReteach}
+          >
+            Got it
+          </button>
         </div>
       )}
       {status?.text && <div className={"ribbon ribbon--" + (status.tone || "normal")}>{status.text}</div>}
