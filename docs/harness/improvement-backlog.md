@@ -1,5 +1,34 @@
 # Improvement backlog (synthetic-learner red-team)
 
+## T18 — Joint counter-metrics (RESOLVED)
+
+**Status:** DONE — `transfer_per_mastery_gain` and `hint_independence_divergence` added to
+`computeMetrics` in `web/src/harness/metrics.js`. Both are present on every `MetricsRecord`
+(population and per-persona-class) and survive `toJSON()` serialization. Surfaced in the
+baseline-report markdown table under a new "Joint counter-metrics" section in `report.js`.
+
+`transfer_per_mastery_gain = false_transfer_rate / max(false_mastery_rate, 1e-6)` — detects
+"score/mastery up but transfer flat": high when the engine credits transfer (via gate open with
+no surface variation — T13 independent signal) far above the mastery-error rate. A value >> 1
+flags performance-oriented gaming where the learner locks onto one surface form and the engine
+gates without structural breadth.
+
+`hint_independence_divergence = hints_given * (1 - independence_rate)` — detects "hints up,
+independence down": zero when hints are rare or independence is high; large when heavy hint use
+(top-rung answer giveaways) coincides with low genuine independence (few tapes gate without
+false mastery). Captures the over-hinter pattern where hint pressure increases as independent
+mastery decreases.
+
+Both metrics depend on and are validated against T13's independent `false_transfer_rate` (not
+a duplicate of `false_mastery_rate`). `JOINT_METRIC_EPSILON = 1e-6` prevents division-by-zero
+in `transfer_per_mastery_gain` when `false_mastery_rate` is 0.
+
+Test coverage in `web/tests/harness/test_joint_metrics_T18.test.js` (12 assertions): presence
+on MetricsRecord, presence in per-class breakdowns, toJSON survival, single-surface-form
+population produces high ratio (>1000), clean population yields 0, equal signals yield ~1.0,
+gaming-pattern tape produces ratio > 100, heavy-hint tape divergence = 3, no-hint tape
+divergence = 0, high-independence tape divergence = 0, mixed population blend = 1.5.
+
 Ranked findings: **24**  ·  human-audit agreement: **25%**
 
 ## T16 — Performance-oriented persona (RESOLVED)

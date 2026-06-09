@@ -268,6 +268,19 @@ export function renderBaselineReportMarkdown(report) {
   lines.push(`| hints_given | ${fmt(m.hints_given)} | independence_rate | ${fmt(m.independence_rate)} |`);
   lines.push(`| reps_to_mastery | ${fmt(m.reps_to_mastery)} | transfer_after_fade | ${fmt(m.transfer_after_fade)} |`);
   lines.push('');
+  lines.push('## Joint counter-metrics — cross-condition gaming detectors (T18 / PDF Req 7)');
+  lines.push('');
+  lines.push('| joint metric | value | detects |');
+  lines.push('| --- | --- | --- |');
+  lines.push(
+    `| transfer_per_mastery_gain | ${fmt(m.transfer_per_mastery_gain)} | ` +
+      `"score/mastery up but transfer flat" — high ratio flags mastery credit without structural breadth |`
+  );
+  lines.push(
+    `| hint_independence_divergence | ${fmt(m.hint_independence_divergence)} | ` +
+      `"hints up, independence down" — large when heavy hint use coincides with low independence |`
+  );
+  lines.push('');
   lines.push('## Failure clusters (persona × skill × decision), ranked');
   lines.push('');
   if (report.clusters.length === 0) {

@@ -9,6 +9,21 @@
 //   hints_given           ⇒ independence_rate
 //   reps_to_mastery       ⇒ transfer_after_fade
 //
+// T18 JOINT COUNTER-METRICS (PDF Req 7 — cross-conditioned gaming detectors):
+// These are derived from PAIRS of scalars and require no additional pairing contract
+// (they are themselves the cross-condition signal — each one IS a counter-metric).
+//
+//   transfer_per_mastery_gain  = false_transfer_rate / max(false_mastery_rate, ε)
+//       Catches "score/mastery up but transfer flat": when mastery grows but
+//       false_transfer_rate stays high relative to false_mastery_rate, the ratio
+//       diverges — a gaming pattern where the engine credits mastery without genuine
+//       structural breadth. Requires T13's independent false_transfer_rate.
+//
+//   hint_independence_divergence = hints_given × (1 − independence_rate)
+//       Catches "hints up, independence down": scales hints_given by the fraction
+//       of sessions that are NOT independent. Zero when hints are rare or independence
+//       is high; large when both hints are heavy and independence is low.
+//
 // aggregate(tapes, {tauLatent}) folds the oracle-labeled tape population into one
 // MetricsRecord (population + per-persona-class). clusterFailures groups labeled
 // failures by (persona_class, skill, decision_kind) ranked by severity×count.
@@ -21,6 +36,12 @@ import { labelTape, tapeHasAnyLabel, DEFAULT_TAU_LATENT } from './oracle/latentT
 // The top hint rung that "gives the answer away" (reveals the solution).
 // ---------------------------------------------------------------------------
 const ANSWER_GIVEAWAY_RUNG = 3;
+
+// ---------------------------------------------------------------------------
+// T18 — epsilon guard for the transfer_per_mastery_gain denominator.
+// Prevents division-by-zero when false_mastery_rate is 0 or near-0.
+// ---------------------------------------------------------------------------
+const JOINT_METRIC_EPSILON = 1e-6;
 
 // ---------------------------------------------------------------------------
 // MetricsRecord — pairing enforced in the constructor (KTD5)
@@ -156,7 +177,7 @@ function computeMetrics(factsList) {
 
   const falseMastery = factsList.filter((f) => f.label.labels.falsePositiveMastery).length;
 
-  return {
+  const out = {
     n_tapes: n,
     // headline + counters.
     // mastery_rate is NULL (absent, not 0) when NO tape gated: its paired counter
@@ -206,6 +227,21 @@ function computeMetrics(factsList) {
       n
     ),
   };
+
+  // T18 — joint counter-metrics: cross-condition gaming detectors (PDF Req 7).
+  // Computed AFTER the scalar block so both inputs are available as named locals.
+
+  // transfer_per_mastery_gain: high when transfer rate is elevated relative to
+  // mastery rate — signals "mastery credited without structural breadth".
+  // Uses T13-independent false_transfer_rate (not a duplicate of false_mastery_rate).
+  out.transfer_per_mastery_gain =
+    out.false_transfer_rate / Math.max(out.false_mastery_rate, JOINT_METRIC_EPSILON);
+
+  // hint_independence_divergence: high when many hints were given AND independence
+  // is low — signals "hints up, independence down" gaming pattern.
+  out.hint_independence_divergence = out.hints_given * (1 - out.independence_rate);
+
+  return out;
 }
 
 // ---------------------------------------------------------------------------
