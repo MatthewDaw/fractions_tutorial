@@ -19,6 +19,12 @@ const SIGNAL_CHANNEL = {
   orphaned_interaction: 'orphaned_interaction',
   rapid_submit: 'rapid_submit',
   scribble_burst: 'orphaned_interaction', // a scribble-out is wheel-spin evidence
+  // Phase 4 (S2): the presence gate is just ANOTHER corroborating channel — capped
+  // like every other, so it can never cross a band alone (it disambiguates idle, it
+  // does not drive intervention by itself). `sensor_unavailable` is deliberately NOT
+  // mapped: an invalid/occluded reading must not read as disengagement (it would mask
+  // attention:away — the Phase-0 sensor_unavailable reservation).
+  presence: 'presence_away',
 };
 
 export const COMPOSITE_PARAMS = {

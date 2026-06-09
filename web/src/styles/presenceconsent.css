@@ -1,0 +1,77 @@
+/* presenceconsent.css — Phase 4 opt-in camera consent gate (plan 005, S2).
+   A calm, honest overlay. The camera is OFF until "Turn the camera on" is tapped. */
+
+.presence-consent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(40, 26, 18, 0.45);
+  z-index: 40;
+}
+
+.presence-consent__card {
+  background: #fbf3e6;
+  border: 3px solid #b8865b;
+  border-radius: 18px;
+  padding: 24px 28px 20px;
+  max-width: 560px;
+  box-shadow: 0 14px 40px rgba(40, 26, 18, 0.35);
+  text-align: center;
+}
+
+.presence-consent__prompt {
+  font-size: 1.25rem;
+  color: #4a3526;
+  margin: 0 0 14px;
+  line-height: 1.4;
+}
+
+.presence-consent__facts {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  text-align: left;
+  color: #5a4636;
+  font-size: 0.98rem;
+}
+
+.presence-consent__facts li {
+  padding: 4px 0 4px 22px;
+  position: relative;
+}
+
+.presence-consent__facts li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  color: #5a8a4a;
+  font-weight: 700;
+}
+
+.presence-consent__choices {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.presence-consent__yes,
+.presence-consent__no {
+  font-size: 1.05rem;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 2px solid #b8865b;
+  cursor: pointer;
+}
+
+.presence-consent__yes {
+  background: #5a8a4a;
+  color: #fff;
+  border-color: #4a7a3a;
+}
+
+.presence-consent__no {
+  background: #fbf3e6;
+  color: #5a4636;
+}
