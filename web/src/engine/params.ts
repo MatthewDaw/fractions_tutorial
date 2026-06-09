@@ -196,6 +196,31 @@ export interface EngineParams {
   requireTransferProbe: boolean;
   /** T25: skills for which the varied-transfer-probe conjunct is enforced when the flag is on. */
   transferProbeSkills: readonly string[];
+  /**
+   * T29 (live Tier-2 nudge) — when true, the LIVE submit boundary
+   * (useLessonEngine.judgeAndAdvance) populates the recentBehavior.observations
+   * channel from the SAME segment()-derived Observations the engine already
+   * computes, and surfaces the resulting Tier-2 in-the-moment nudge (idle /
+   * oscillation / too-fast-correct) via engineStore.publishNudge so a REAL
+   * child's session gets it. T26 wired this on the harness sessionRunner path
+   * only (the live recentObsRef was allocated but never appended, so the buffer
+   * was always empty and the nudge never fired in the browser); this flag is the
+   * live counterpart.
+   *
+   * ADVISORY / FIREWALL: the populated observations are read by the policy ONLY
+   * on default-off paths (isSucceedingPlateau behind escalationCompetenceGuard;
+   * the handoff packet, which only renders once an escalation has ALREADY fired
+   * on disengagedCount/stuck — neither of which this touches). It NEVER mutates
+   * disengagedCount, consecutiveErrors, the engine gate, or the T03 escalation
+   * counter, so the banked Decision is unchanged. The nudge is published to the
+   * advisory toast channel only.
+   *
+   * REVERSIBLE / DEFAULT-OFF: default false so the live recentBehavior channel
+   * stays empty exactly as before (byte-identical) and no nudge is published.
+   * Flip to true — product-wide or via the harness flag overlay — to light the
+   * live path.
+   */
+  tier2NudgeLive: boolean;
   /** Escalation trigger thresholds. */
   escalation: EscalationParams;
 }
@@ -272,6 +297,11 @@ export const PARAMS: EngineParams = {
   // highest false-transfer-risk skill, FRACTION_ON_LINE (red-team risk 0.804).
   requireTransferProbe: false,
   transferProbeSkills: ['FRACTION_ON_LINE'],
+  // T29 — Live Tier-2 nudge wiring. DEFAULT off so the live recentBehavior channel
+  // stays empty (byte-identical) and no nudge is published. Flip to true (product-wide
+  // or via the harness flag overlay) to populate recentObsRef from segment() at the
+  // live submit boundary and surface the idle/oscillation/too-fast nudge.
+  tier2NudgeLive: false,
   escalation: {
     nStuck: 6,
     nDiseng: 5,

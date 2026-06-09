@@ -37,9 +37,15 @@ import { nextDecision } from '../engine/policy.js';
 import { isMastered } from '../engine/gate.js';
 import { PARAMS } from '../engine/params.js';
 import { toScaffoldLevel } from './scaffoldMap.js';
-import { publishDecision, markTrigger } from './engineStore.js';
-import { checkTooFastCorrect, makeTier2Window } from './tier2.js';
+import { publishDecision, markTrigger, publishNudge } from './engineStore.js';
+import {
+  checkTooFastCorrect,
+  checkOscillation,
+  checkLongPause,
+  makeTier2Window,
+} from './tier2.js';
 import { observeBehavior, countAttempts } from '../engine/observe/index.js';
+import { segment } from '../engine/observation.js';
 
 // U9/KTD7: the observe-layer Signal types that count as a disengagement signal
 // for the frustration-scaffold writer. These are the behavioral "off-task / wall"
@@ -117,6 +123,48 @@ const EMPTY_RECENT_BEHAVIOR = {
   observations: [],
   isDisengaged: false,
 };
+
+// T29: friendly learner-facing copy for each Tier-2 nudge type, mirroring
+// useLessonScaffold.NUDGE_TEXT so the live toast shows the same gentle prompts.
+const NUDGE_TEXT = {
+  HINT_OFFER: 'Take a look at the picture — drag a piece to try it out.',
+  TAKE_YOUR_TIME: "No rush — take your time and think it through.",
+  TRANSFER_PROBE_QUEUED: "Nice and quick! Let's try one more to be sure.",
+};
+
+/**
+ * T29: fire AT MOST ONE Tier-2 in-the-moment nudge for the just-completed attempt,
+ * reusing tier2.js's existing detectors against the REAL segment()-derived recent
+ * observation — the live counterpart of sessionRunner.fireTier2Nudge (no detector
+ * duplication, no invented signal). Priority mirrors tier2.checkTier2:
+ * long-pause > oscillation > too-fast. ADVISORY: the caller publishes the result to
+ * the toast channel only; it never mutates PolicyState or the engine Decision.
+ *
+ * The idle/long-pause channel reads the observation's own latency as the idle time
+ * (lastInteraction=0, now=obs.latency) so an idle attempt (latency ≥ PAUSE
+ * threshold) fires HINT_OFFER — the same window the harness path flags.
+ *
+ * @param {Array} observations  the recent segment() Observations (most recent last).
+ * @returns {{ type: string, payload: object } | null}
+ */
+function fireLiveTier2Nudge(observations) {
+  const obs = observations.length > 0 ? observations[observations.length - 1] : null;
+  if (!obs) return null;
+  const window = makeTier2Window();
+  const recent = { observations: [obs], isDisengaged: false };
+
+  const hintRung = obs.hint_max_rung ?? 0;
+  // 1. long pause → HINT_OFFER (idle time = the attempt's own latency).
+  const pause = checkLongPause(0, obs.latency ?? 0, window, hintRung);
+  if (pause) return pause;
+  // 2. oscillation → TAKE_YOUR_TIME.
+  const osc = checkOscillation(recent, window);
+  if (osc) return osc;
+  // 3. too-fast-correct → TRANSFER_PROBE_QUEUED.
+  const fast = checkTooFastCorrect(obs, window);
+  if (fast) return fast;
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -425,6 +473,23 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
     // isMastered defaults fluencyHardMode from PARAMS (U1).
     certifiedRef.current = !!(nodeEst && isMastered(nodeEst));
 
+    // ---- T29: populate the recentObsRef buffer (the missing input edge) ------
+    // FINDING (T26 report + limitations-memo): recentObsRef was allocated but
+    // NEVER appended, so the live recentBehavior.observations channel was always
+    // empty and the policy's Tier-2 window read nothing — the nudge never fired in
+    // the browser even though T26 proved it fires on the harness sessionRunner
+    // path. Here we populate the buffer from the SAME segment()-derived
+    // Observations the engine already computes from THIS log (no duplicated
+    // detectors, no invented signals) — exactly how sessionRunner builds
+    // `segment(log).slice(-10)`. Gated behind PARAMS.tier2NudgeLive (default off)
+    // so the channel stays byte-identical (empty) when the flag is off; the policy
+    // reads these observations only on default-off paths, so the banked Decision
+    // is unchanged regardless. Mirrors the T03 disengaged-writer pattern: the
+    // input edge is wired in the runtime layer, the engine stays pure.
+    if (PARAMS.tier2NudgeLive) {
+      recentObsRef.current = segment(log);
+    }
+
     // Build recent behavior buffer.
     // (We keep the last 10 observations for the current node.)
     // The reduce result segmented from the full log contains all observations,
@@ -452,6 +517,24 @@ export function useLessonEngine({ nodeId, lessonConfig = {} } = {}) {
     // UI2: surface with a freshly-read clock so time-to-UI-change captures the
     // (synchronous) fold cost from the trigger marked at the top of this fn.
     publishDecision(dec, reduceResult.mastery, Date.now());
+
+    // ---- T29: surface the live Tier-2 in-the-moment nudge --------------------
+    // Now that recentBehavior.observations is real, run tier2.js's detectors
+    // against the latest observation and publish the (at-most-one) nudge to the
+    // advisory toast channel — the live counterpart of the harness recording a
+    // nudge per step. ADVISORY-ONLY: this is published to the toast store, never
+    // fed back into PolicyState or the engine Decision (the advisory/affect
+    // firewall). Gated behind the SAME default-off flag so prior behavior (no
+    // live nudge published) is byte-identical when off.
+    if (PARAMS.tier2NudgeLive) {
+      const liveNudge = fireLiveTier2Nudge(recentBehavior.observations);
+      if (liveNudge) {
+        publishNudge(
+          { type: liveNudge.type, text: NUDGE_TEXT[liveNudge.type] ?? '' },
+          Date.now()
+        );
+      }
+    }
 
     // Update scaffoldLevel if the decision changes it.
     if (dec.kind === 'FadeScaffold') {
