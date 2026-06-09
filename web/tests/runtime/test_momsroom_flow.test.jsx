@@ -21,7 +21,7 @@
 // NOTE: Do NOT run the full test suite. This file is checked by the orchestrator.
 
 import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 
 // ---------------------------------------------------------------------------
@@ -215,8 +215,10 @@ describe('MomsRoom — narrative UX preserved', () => {
 
   it('renders the Read aloud speaker button', async () => {
     const { default: MomsRoom } = await import('../../src/MomsRoom.jsx');
-    const { unmount } = render(<MomsRoom onBack={noop} onOpenRoom={noop} />);
-    expect(screen.getByText(/read aloud/i)).toBeTruthy();
+    const { container, unmount } = render(<MomsRoom onBack={noop} onOpenRoom={noop} />);
+    // Scope to this render's container so a leaked tree can't produce a
+    // "multiple elements found" failure under parallel load.
+    expect(within(container).getByText(/read aloud/i)).toBeTruthy();
     unmount();
   });
 

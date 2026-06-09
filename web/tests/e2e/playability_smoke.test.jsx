@@ -28,7 +28,7 @@
 //     kitchenProgress.js and BackgroundMusic need no stub.
 
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 // ---------------------------------------------------------------------------
@@ -157,7 +157,7 @@ describe('Playability smoke — LessonUnlikeDen (r2-unit config)', () => {
       import('../../src/LessonUnlikeDen.jsx'),
       import('../../src/lessons/r2-unit.js'),
     ]);
-    render(
+    const { container } = render(
       <LessonUnlikeDen
         no={2}
         title="The Cook's Lesson"
@@ -166,10 +166,12 @@ describe('Playability smoke — LessonUnlikeDen (r2-unit config)', () => {
       />
     );
     // The component renders a .goal-text div once mounted at beat L0.
-    const goal = document.querySelector('.goal-text');
+    const goal = container.querySelector('.goal-text');
     expect(goal).not.toBeNull();
     // The lesson always shows a "Read aloud" speaker button (present on every beat).
-    expect(screen.getByText(/read aloud/i)).toBeTruthy();
+    // Scope to this render's container so a leaked tree from another test can't
+    // turn this into a "multiple elements found" failure under parallel load.
+    expect(within(container).getByText(/read aloud/i)).toBeTruthy();
   });
 });
 
@@ -210,16 +212,18 @@ describe('Playability smoke — AppR5', () => {
 describe('Playability smoke — MomsRoom', () => {
   it('mounts without throwing and shows the topbar title', async () => {
     const { default: MomsRoom } = await import('../../src/MomsRoom.jsx');
-    render(
+    const { container } = render(
       <MomsRoom
         onBack={noop}
         onOpenRoom={noop}
       />
     );
     // The topbar always contains the stable subtitle "Babushka's Kitchen".
-    expect(screen.getByText(/Babushka'?s Kitchen/i)).toBeTruthy();
+    // Scope to this render's container so a leaked tree from another test can't
+    // turn this into a "multiple elements found" failure under parallel load.
+    expect(within(container).getByText(/Babushka'?s Kitchen/i)).toBeTruthy();
     // The "Read aloud" speaker button is rendered in the goal bar.
-    expect(screen.getByText(/read aloud/i)).toBeTruthy();
+    expect(within(container).getByText(/read aloud/i)).toBeTruthy();
   });
 });
 

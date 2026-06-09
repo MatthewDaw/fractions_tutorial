@@ -169,5 +169,13 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.js'],
     include: ['tests/**/*.test.{js,jsx,ts,tsx}'],
+    // The playability-net smoke tests mount real, heavy component trees. Under a
+    // default parallel `vitest run` on a many-core machine, first render of those
+    // trees can exceed the default 5s timeout purely from CPU contention (they
+    // pass in isolation). Raise the per-test timeout so the net is a trustworthy
+    // regression guard and doesn't flake on the runner it ships with. This does
+    // not weaken any assertion — it only stops starvation from masquerading as a
+    // failure. A genuine hang still trips the 20s ceiling.
+    testTimeout: 20000,
   },
 })

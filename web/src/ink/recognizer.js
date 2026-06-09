@@ -31,11 +31,21 @@ ort.env.logLevel = "error";
 const INPUT_SCALE = 255;
 let SESSION = null;            // set once the model is ready
 let LOAD_ERR = null;           // load failure message, for debugging
-const sessionPromise = fetch("/mnist-12.onnx")
-  .then((r) => r.arrayBuffer())
-  .then((buf) => ort.InferenceSession.create(buf, { executionProviders: ["wasm"] }))
-  .then((s) => { SESSION = s; return s; })
-  .catch((e) => { LOAD_ERR = String((e && (e.message || e)) || e); console.warn("mnist model load failed; using fallback matcher", e); return null; });
+
+// Model URL. In the browser a bare "/mnist-12.onnx" is resolved against the
+// document base, but Node's fetch (undici, as used by the jsdom test runner)
+// rejects a path-only URL ("Failed to parse URL"). Resolve it against the Vite
+// BASE_URL so the specifier is always absolute-relative-correct, and skip the
+// network entirely under the test runner (jsdom serves no static assets, so the
+// fetch could only ever fail; the recognizer's $P fallback covers tests).
+const MODEL_URL = (import.meta.env?.BASE_URL ?? "/") + "mnist-12.onnx";
+const sessionPromise = import.meta.env?.VITEST
+  ? Promise.resolve(null) // test env: use the geometric $P fallback, no model fetch
+  : fetch(MODEL_URL)
+      .then((r) => r.arrayBuffer())
+      .then((buf) => ort.InferenceSession.create(buf, { executionProviders: ["wasm"] }))
+      .then((s) => { SESSION = s; return s; })
+      .catch((e) => { LOAD_ERR = String((e && (e.message || e)) || e); console.warn("mnist model load failed; using fallback matcher", e); return null; });
 
 // Debug probe (used by the headless validation harness).
 export function modelStatus() { return { ready: !!SESSION, error: LOAD_ERR }; }
