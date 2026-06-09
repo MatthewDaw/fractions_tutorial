@@ -91,6 +91,9 @@ function buildInitialPolicyState(nodeId, scaffoldLevel, { inKitchen = false, stu
     pKnownHistory: [],
     heavyHintAtFloorCount: 0,
     disengagedCount: 0,
+    // T03: separate, LOWER-threshold disengagement counter that arms the frustration
+    // SCAFFOLD (3b branch in policy.ts) without spuriously firing EscalateToHuman.
+    disengagedScaffoldCount: 0,
   };
 }
 
@@ -401,9 +404,13 @@ function appendAttemptBurst(log, clock, {
  *   @param {number} args.seed     run seed (determinism).
  *   @param {number} [args.stepCap=40]  max attempts before forced terminate.
  *   @param {object} [args.flags]  plan-002 reversible flags (threaded into tape).
+ *   @param {number} [args.startScaffold=0]  initial scaffold level (default 0 = L0).
+ *     Set > 0 to probe disengagement at a non-floor scaffold (used by oracle probes
+ *     that verify the T03 frustration-scaffold path; e.g. startScaffold=1 puts the
+ *     session at L1 so RaiseScaffold is legal and the 3b branch is reachable).
  * @returns {object} tape
  */
-export function runSession({ persona, skillId, seed = 1, stepCap = 40, flags = {} }) {
+export function runSession({ persona, skillId, seed = 1, stepCap = 40, flags = {}, startScaffold = 0 }) {
   if (!persona) throw new Error('runSession: persona is required');
   if (!skillId) throw new Error('runSession: skillId is required');
 
@@ -415,13 +422,15 @@ export function runSession({ persona, skillId, seed = 1, stepCap = 40, flags = {
   // overlay is a no-op and behavior is byte-identical to before. paramsHash() below
   // is read INSIDE the overlay so the tape's params_hash reflects the gated PARAMS.
   return withFlags(flags, () =>
-    runSessionInner({ persona, skillId, seed, stepCap, flags }));
+    runSessionInner({ persona, skillId, seed, stepCap, flags, startScaffold }));
 }
 
 /** The session loop, run with the flag overlay already applied to engine PARAMS. */
-function runSessionInner({ persona, skillId, seed, stepCap, flags }) {
-  // PolicyState: currentNodeId=skillId, L0 entry, no prior — exactly as the live hook.
-  const policyState = buildInitialPolicyState(skillId, 0, { inKitchen: false, stumpingRecipe: null });
+function runSessionInner({ persona, skillId, seed, stepCap, flags, startScaffold = 0 }) {
+  // PolicyState: currentNodeId=skillId, entry scaffold, no prior — exactly as the live hook.
+  // startScaffold > 0 is used by oracle probes that need scaffold > L0 to make
+  // RaiseScaffold legal (e.g. the T03 frustration-scaffold reachability probe).
+  const policyState = buildInitialPolicyState(skillId, startScaffold, { inKitchen: false, stumpingRecipe: null });
 
   // Practice state for nextPractice (level/index/surfaceForm bookkeeping).
   let practiceState = { skill: skillId, level: 0, index: 0, surfaceForm: undefined };
@@ -523,6 +532,28 @@ function runSessionInner({ persona, skillId, seed, stepCap, flags }) {
       currentScaffold: answeredScaffold,
     });
 
+    // (6b) T03 disengagement writer — mirror of the submit-boundary disengagement
+    // writer in useLessonEngine.js. The DECOUPLED `disengagedScaffoldCount` (arms
+    // the 3b RaiseScaffold at nDisengScaffold) is incremented when the attempt
+    // carries an idle signal (the child paused/abandoned without engaging), and
+    // reset on GENUINE re-engagement (a clean correct in-band latency WITHOUT an
+    // idle signal — an idle+correct is ambiguous and does not clear the count).
+    // This is SEPARATE from `disengagedCount` (which arms EscalateToHuman) so
+    // wiring the scaffold trigger never spuriously fires the escalation path
+    // (T03 DECOUPLED design).
+    const hasIdleSignal = Array.isArray(attempt.signals) &&
+      attempt.signals.some((sig) => sig && sig.type === 'idle');
+    // Re-engagement: correct AND in-band latency AND no hints AND no idle signal.
+    // A correct answer with an idle signal is not genuine re-engagement (the child
+    // may have been idle then guessed). A plain wrong answer does not clear count.
+    const isReengaged = gradeResult.correct && latencyMs >= 800 && latencyMs <= 30000 &&
+      hintRung === 0 && !hasIdleSignal;
+    if (isReengaged) {
+      policyState.disengagedScaffoldCount = 0;
+    } else if (hasIdleSignal) {
+      policyState.disengagedScaffoldCount += 1;
+    }
+
     const post = measurementReduce(log, clock.t);
     const nodeEst = post.mastery[skillId];
     if (nodeEst) {
@@ -543,8 +574,14 @@ function runSessionInner({ persona, skillId, seed, stepCap, flags }) {
     const observation = observations[observations.length - 1] ?? null;
     const gateOpen = nodeEst ? isMastered(nodeEst) : false;
 
+    // Record decision fields that are relevant to oracle checks. `preserveWork`
+    // is present on RaiseScaffold decisions and signals the T03 warm-foothold
+    // response (distinguishes frustration-scaffold 3b from the normal raise-on-error).
+    const decisionRecord = { kind: decision.kind, rationale: decision.rationale };
+    if ('preserveWork' in decision) decisionRecord.preserveWork = decision.preserveWork;
+
     steps.push({
-      decision: { kind: decision.kind, rationale: decision.rationale },
+      decision: decisionRecord,
       observation,
       gate: gateOpen,
       latent: persona.truePKnown(skillId),

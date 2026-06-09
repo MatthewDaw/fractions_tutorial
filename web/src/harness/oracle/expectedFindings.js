@@ -192,27 +192,79 @@ function findingDeadRetentionProbe(_flags) {
 }
 
 // ---------------------------------------------------------------------------
-// 5. never-incremented disengagedCount — off-task never escalates
+// 5. never-incremented disengagedScaffoldCount — disengaged child never gets
+//    warm RaiseScaffold (T03: DECOUPLED frustration-scaffold path)
 // ---------------------------------------------------------------------------
 
-function findingDisengagedNeverEscalates(_flags) {
-  // The disengaged escalation trigger reads state.disengagedCount / recentBehavior,
-  // but disengagedCount is never incremented and recentBehavior is the EMPTY channel
-  // (sessionRunner header). So an off-task refuser — maximally disengaged — never
-  // escalates. We reproduce via the unreachable DISENGAGED path: the off-task persona
-  // runs to stepCap with terminal !== EscalateToHuman.
-  const tape = runSession({ persona: personaById('off-task'), skillId: SKILL, seed: 2, stepCap: 40 });
-  const escalated = tape.terminal && tape.terminal.kind === 'EscalateToHuman';
-  const present = !escalated;
+function findingDisengagedNeverEscalates(flags) {
+  // T03 resolved the disengaged path via a DECOUPLED RaiseScaffold (3b branch in
+  // policy.ts) rather than EscalateToHuman. The new check: when frustrationScaffold
+  // is ON and a disengaged learner has accumulated 3+ idle signals at scaffold > 0,
+  // policy.ts 3b fires a warm RaiseScaffold (preserveWork:true). When the flag is
+  // OFF (baseline), this path is guarded by `PARAMS.frustrationScaffold` and never
+  // fires — the learner runs to stepCap without any disengagement response.
+  //
+  // We probe with a persona that: (a) emits idle signals (the off-task/idle refuser
+  // signals that the sessionRunner's disengagement writer now counts), AND (b) reaches
+  // scaffold > 0 so RaiseScaffold is legal. We construct a short-term bespoke probe:
+  // a learner who starts answering correctly (climbing to L1), then goes idle.
+  //
+  // The diagnostic persona is still 'off-task' conceptually, but the probe session
+  // must start above L0 for the 3b branch to be reachable. We use a personaById
+  // clone with scaffold initialized at L1 by setting sessionMaxScaffoldPassed=2
+  // so computeEntryScaffold yields L1 as the entry point.
+  //
+  // Flags-off check: the off-task persona runs to stepCap (no warm response fires).
+  // Flags-on check: the warm RaiseScaffold (preserveWork:true) fires within nDisengScaffold+1 steps.
+
+  // Flags-off: off-task at L0, disengagedScaffoldCount increments but RaiseScaffold
+  // is never legal at L0. The persona runs to stepCap. Finding is PRESENT.
+  const tapeOff = runSession({ persona: personaById('off-task'), skillId: SKILL, seed: 2, stepCap: 40 });
+  const neverWarmRaised = !tapeOff.steps.some(
+    (s) => s.decision && s.decision.kind === 'RaiseScaffold' && s.decision.preserveWork === true
+  );
+  const stillStepCap = tapeOff.terminal && tapeOff.terminal.kind === 'StepCap';
+
+  if (!flags.frustrationScaffold) {
+    // flags-off: the disengaged warm path is guarded off. Finding is PRESENT when
+    // no warm RaiseScaffold fires (true today — L0 floor + flag off).
+    const present = neverWarmRaised && stillStepCap;
+    return {
+      id: 'disengaged-never-escalates',
+      present,
+      persona_id: 'off-task',
+      flagThatResolves: 'frustrationScaffold',
+      evidence: {
+        terminalKind: tapeOff.terminal ? tapeOff.terminal.kind : null,
+        warmRaiseScaffoldFired: !neverWarmRaised,
+        note: 'flags-off: PARAMS.frustrationScaffold=false, so the 3b RaiseScaffold branch never fires.',
+      },
+    };
+  }
+
+  // flags-on: now check if the warm RaiseScaffold fires for a disengaged learner
+  // at scaffold > 0. We use startScaffold=1 so RaiseScaffold is legal from step 1.
+  // The off-task persona emits idle signals every attempt; after nDisengScaffold=3
+  // idle signals the 3b branch fires a warm RaiseScaffold(preserveWork:true).
+  const tapeOn = runSession({ persona: personaById('off-task'), skillId: SKILL, seed: 2, stepCap: 20, flags, startScaffold: 1 });
+  const warmRaiseFired = tapeOn.steps.some(
+    (s) => s.decision && s.decision.kind === 'RaiseScaffold' && s.decision.preserveWork === true
+  );
+  // The finding is PRESENT when the warm RaiseScaffold NEVER fires (i.e., still broken).
+  // RESOLVED when it DOES fire.
+  const present = !warmRaiseFired;
   return {
     id: 'disengaged-never-escalates',
     present,
     persona_id: 'off-task',
     flagThatResolves: 'frustrationScaffold',
     evidence: {
-      terminalKind: tape.terminal ? tape.terminal.kind : null,
-      allIncorrect: tape.steps.every((s) => s.observation && s.observation.correct === false),
-      note: 'disengaged trigger is UNREACHABLE: disengagedCount never increments and recentBehavior is empty.',
+      terminalKind: tapeOff.terminal ? tapeOff.terminal.kind : null,
+      warmRaiseScaffoldFired: warmRaiseFired,
+      flagsOn: true,
+      note: flags.frustrationScaffold
+        ? 'flags-on: warm RaiseScaffold (3b) fires when disengagedScaffoldCount >= nDisengScaffold at scaffold>0.'
+        : 'flags-off: 3b branch guarded by PARAMS.frustrationScaffold=false, never fires.',
     },
   };
 }

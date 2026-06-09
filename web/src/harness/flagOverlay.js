@@ -36,20 +36,23 @@ import { PARAMS } from './engineApi.js';
  * flag drives. A flag absent from this table has NO engine routing today and is
  * therefore inert (tape-only attribution), NOT silently dropped.
  *
- *   fluencyHardMode      → PARAMS.fluencyHardMode      (gate.ts: hard fluency conjunct)
- *   frustrationScaffold  → PARAMS.frustrationScaffold  (policy.ts: warm RaiseScaffold rationale)
+ *   fluencyHardMode         → PARAMS.fluencyHardMode         (gate.ts: hard fluency conjunct)
+ *   frustrationScaffold     → PARAMS.frustrationScaffold     (policy.ts: warm RaiseScaffold rationale)
  *
  * Escalation knobs are nested under PARAMS.escalation; the overlay supports a
  * dotted form so a sweep can tighten/loosen the disengagement/stuck thresholds:
  *
- *   escalation.nDiseng   → PARAMS.escalation.nDiseng   (policy.ts: disengaged escalation)
- *   escalation.nStuck    → PARAMS.escalation.nStuck    (policy.ts: stuck escalation)
+ *   escalation.nDiseng        → PARAMS.escalation.nDiseng        (policy.ts: disengaged escalation)
+ *   escalation.nStuck         → PARAMS.escalation.nStuck         (policy.ts: stuck escalation)
+ *   escalation.nDisengScaffold → PARAMS.escalation.nDisengScaffold (policy.ts: 3b frustration-scaffold threshold)
  */
 const FLAG_TO_PARAM = Object.freeze({
   fluencyHardMode: 'fluencyHardMode',
   frustrationScaffold: 'frustrationScaffold',
+  fluencyLatencyTargetMs: 'fluencyLatencyTargetMs',
   'escalation.nDiseng': 'escalation.nDiseng',
   'escalation.nStuck': 'escalation.nStuck',
+  'escalation.nDisengScaffold': 'escalation.nDisengScaffold',
 });
 
 /** Flags carried for attribution that have NO engine PARAMS routing yet (inert). */

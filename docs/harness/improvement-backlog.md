@@ -37,12 +37,12 @@ no-null-answer guard, majority-correct guard, distinct-from-fast-mastery compari
 - **proposed lever**: emit retention_probe: set last_retention_probe so the time-based demotion path can fire
 - **evidence**: 1 ref(s) — audit dead-retention-probe
 
-### dead-pedagogy:disengaged-never-escalates ✓audit
+### dead-pedagogy:disengaged-never-escalates ✓audit [U13: oracle re-keyed, writer wired; loop still NO_CHANGE]
 - **severity**: 100
 - **skill**: ADD_SAME_DEN
 - **personas**: off-task
-- **proposed lever**: wire disengagedCount: increment it from recentBehavior so the disengaged escalation trigger is reachable
-- **evidence**: 1 ref(s) — audit disengaged-never-escalates
+- **proposed lever**: U13 partial: oracle re-keyed to check warm RaiseScaffold (not EscalateToHuman); disengagedScaffoldCount wired in sessionRunner.js; finding flips present→resolved when frustrationScaffold=true. Loop verdict remains NO_CHANGE because held-out family idle signals appear only at scaffold=0. Next: add a held-out persona with idle signals at scaffold > 0 (e.g. an "at-scaffold-disengaged" variant) to make the loop REAL gate achievable.
+- **evidence**: 1 ref(s) — audit disengaged-never-escalates; U13 oracle flip verified seed=2 startScaffold=1
 
 ### dead-pedagogy:fluencyOk-always-true ✓audit
 - **severity**: 100
