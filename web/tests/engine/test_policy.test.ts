@@ -111,6 +111,7 @@ function emptyBehavior(observations: Observation[] = []): RecentBehavior {
 function allWeakMastery(): Record<string, MasteryEstimate> {
   return {
     MULT_EQUAL_GROUPS: weakEst(0.2),
+    MULT_ARRAYS: weakEst(0.2),
     MULT_FACTS: weakEst(0.2),
     ADD_SAME_DEN: weakEst(0.3),
     ADD_UNLIKE_NESTED: weakEst(0.2),
@@ -129,6 +130,7 @@ function multMasteredFractionsWeak(): Record<string, MasteryEstimate> {
   return {
     ...allWeakMastery(),
     MULT_EQUAL_GROUPS: masteredEst(),
+    MULT_ARRAYS: masteredEst(),
     MULT_FACTS: masteredEst(),
   };
 }
@@ -137,6 +139,7 @@ function multMasteredFractionsWeak(): Record<string, MasteryEstimate> {
 function allMasteredMastery(): Record<string, MasteryEstimate> {
   return {
     MULT_EQUAL_GROUPS: masteredEst(),
+    MULT_ARRAYS: masteredEst(),
     MULT_FACTS: masteredEst(),
     ADD_SAME_DEN: masteredEst(),
     ADD_UNLIKE_NESTED: masteredEst(),

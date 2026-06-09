@@ -389,6 +389,7 @@ import { ROOMS } from '../../src/rooms.js';
 describe('rooms.js — nodeId field present (additive, R19)', () => {
   const EXPECTED = {
     m1: 'MULT_EQUAL_GROUPS',
+    m2: 'MULT_ARRAYS',
     m3: 'MULT_FACTS',
     nl: 'FRACTION_ON_LINE',
     r1: 'ADD_SAME_DEN',
@@ -416,8 +417,9 @@ describe('rooms.js — nodeId field present (additive, R19)', () => {
 
   it('existing fields (no, title, built, pos, intro) are unchanged', () => {
     const r1 = ROOMS.find((r) => r.id === 'r1');
-    // With arrays cut, the mult strand is m1=1, m3=2; nl=3; r1=4.
-    expect(r1.no).toBe(4);
+    // The mult strand is m1=1, m2=2, m3=3; nl=4; r1=5 (plan 006 R-B4 renumber,
+    // applied to the live 11-room map with nl/s1/cmp present).
+    expect(r1.no).toBe(5);
     expect(r1.title).toBe('Same Denominators');
     expect(r1.built).toBe(true);
     expect(r1.pos).toMatchObject({ x: 1100, y: 420 });
@@ -569,9 +571,9 @@ describe('WorldMap — two-level shelf/submenu rendering', () => {
     unmount();
   });
 
-  it('opening every shelf reveals 10 lesson cards in total', async () => {
-    // 10 = 2 multiplication-foundation rooms (arrays cut) + 8 fraction rooms,
-    // grouped 2 + 4 + 4 across the three shelves.
+  it('opening every shelf reveals 11 lesson cards in total', async () => {
+    // 11 = 3 multiplication-foundation rooms (m1/m2/m3) + 8 fraction rooms,
+    // grouped 3 + 4 + 4 across the three shelves.
     const { default: WorldMap } = await import('../../src/WorldMap.jsx');
     const { unmount } = render(
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: null })
@@ -582,7 +584,7 @@ describe('WorldMap — two-level shelf/submenu rendering', () => {
       total += document.querySelectorAll('.wcard').length;
       fireEvent.click(document.querySelector('.world-back')); // back to shelves
     }
-    expect(total).toBe(10);
+    expect(total).toBe(11);
     unmount();
   });
 

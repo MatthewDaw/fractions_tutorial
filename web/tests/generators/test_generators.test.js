@@ -65,6 +65,12 @@ const VALIDATORS = {
     if (p.surfaceForm === 'canonical') expect(groups).toBeLessThanOrEqual(size);
     if (p.surfaceForm === 'commuted') expect(groups).toBeGreaterThan(size);
   },
+  MULT_ARRAYS: (p) => {
+    const { rows, cols } = p.operands;
+    expect(p.answer.product).toBe(rows * cols);
+    if (p.surfaceForm === 'upright') expect(rows).toBeLessThanOrEqual(cols);
+    if (p.surfaceForm === 'rotated') expect(rows).toBeGreaterThan(cols);
+  },
   MULT_FACTS: (p) => {
     const { a, b } = p.operands;
     expect(p.answer.product).toBe(a * b);
@@ -103,8 +109,8 @@ const VALIDATORS = {
 const SKILLS = generatorSkills();
 
 describe('generator registry', () => {
-  it('covers all ten skills with a validator each', () => {
-    expect(SKILLS.length).toBe(10);
+  it('covers all eleven skills with a validator each', () => {
+    expect(SKILLS.length).toBe(11);
     for (const s of SKILLS) {
       expect(hasGenerator(s)).toBe(true);
       expect(VALIDATORS[s]).toBeDefined();

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 2 — Baking Trays intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    /* whole-number food objects (R-M3): a fixed neutral bun tone, no denomColor */
+    --bun:#c9a36b; --bun-edge:#9a7740; --rim:#8a6a3c;
+    --teal:#2a9d8f; --terra:#e76f51; /* the two distributive halves */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{ position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* the heap of loose buns, before they're tidied into the tray */
+  #heap{ position:absolute; left:50%; top:46%; transform:translate(-50%,-50%);
+    width:280px; height:170px; opacity:0; transition:opacity .5s ease; }
+  #heap.on{opacity:1;} #heap.off{opacity:0;}
+  #heap .b{ position:absolute; width:26px; height:26px; border-radius:50%;
+    background:var(--bun); border:1.6px solid var(--bun-edge);
+    box-shadow:inset 0 -2px 3px rgba(120,90,50,.35); }
+
+  /* the baking tray — a 4×6 grid inside a raised rim */
+  #traywrap{ position:relative; opacity:0; transform:translateY(10px) scale(.96);
+    transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.4,.64,1);
+    padding:16px; }
+  #traywrap.on{ opacity:1; transform:none; }
+  #trayrim{ position:absolute; inset:0; border:8px solid var(--rim); border-radius:14px;
+    background:linear-gradient(180deg, rgba(180,150,108,.32), rgba(140,110,70,.22));
+    box-shadow:inset 0 2px 6px rgba(60,40,20,.28); }
+  #tray{ position:relative; display:grid; gap:5px; padding:3px; }
+  .cell{ width:46px; height:46px; border:1.5px solid rgba(107,90,60,.5); border-radius:6px;
+    background:rgba(255,255,255,.28); display:flex; align-items:center; justify-content:center; }
+  .cell .bun{ width:70%; height:70%; border-radius:50%; background:var(--bun);
+    border:1.6px solid var(--bun-edge); box-shadow:inset 0 -2px 3px rgba(120,90,50,.35);
+    opacity:0; transform:scale(.4); transition:opacity .26s ease, transform .26s cubic-bezier(.34,1.4,.64,1); }
+  .cell.full .bun{ opacity:1; transform:none; }
+  /* distributive tint after the score */
+  #tray.scored .cell.left .bun{ background:var(--teal); border-color:#1f7e72; }
+  #tray.scored .cell.right .bun{ background:var(--terra); border-color:#c0563b; }
+  #scoreline{ position:absolute; top:-6px; bottom:-6px; left:50%; width:0;
+    border-left:3px dashed var(--red); opacity:0; transition:opacity .4s ease; }
+  #scoreline.on{ opacity:1; }
+
+  /* the running row-count tally */
+  #rowcount{ position:absolute; right:-72px; top:50%; transform:translateY(-50%);
+    font-family:"Russo One",sans-serif; font-size:30px; color:var(--ink);
+    opacity:0; transition:opacity .35s ease; }
+  #rowcount.on{ opacity:1; }
+
+  /* the equation / partials, revealed late */
+  #eq{ position:absolute; left:50%; bottom:104px; transform:translateX(-50%);
+    display:flex; align-items:center; gap:12px; font-family:"Russo One",sans-serif; z-index:7;
+    opacity:0; transition:opacity .5s ease; }
+  #eq.on{ opacity:1; }
+  #eq .t{ font-size:46px; color:var(--ink); } #eq .op{ font-size:34px; color:var(--red); }
+  #eq .ans{ font-size:46px; color:var(--red); }
+  #parts{ position:absolute; left:50%; bottom:104px; transform:translateX(-50%);
+    font-family:"Old Standard TT",serif; font-size:24px; color:var(--ink-soft);
+    opacity:0; transition:opacity .5s ease; }
+  #parts.on{ opacity:1; }
+  #parts .l{ color:#1f7e72; font-weight:700; } #parts .r{ color:#c0563b; font-weight:700; }
+
+  #caption{ position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(820px,94vw); text-align:center; font-size:24px; color:var(--ink); min-height:60px; }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .f{color:var(--bun-edge);font-weight:700;} .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Baking Trays</div>
+
+    <div id="heap"></div>
+
+    <div id="traywrap">
+      <div id="trayrim"></div>
+      <div id="tray"></div>
+      <div id="scoreline"></div>
+      <div id="rowcount">0</div>
+    </div>
+
+    <div id="eq">
+      <span class="t">4</span><span class="op">×</span><span class="t">6</span><span class="op">=</span><span class="ans">24</span>
+    </div>
+    <div id="parts"><span class="l">4×4</span> + <span class="r">4×2</span> = 16 + 8 = <b>24</b></div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">A heap of loose <span class="f">buns</span> — too messy to count.</div>
+      <div class="cap" data-i="1">Tidy them into a tray: <b>4 rows of 6</b>.</div>
+      <div class="cap" data-i="2">Count by rows — 6, 12, 18, <span class="r">24</span>.</div>
+      <div class="cap" data-i="3"><b>Spin</b> it: 4 rows of 6, or 6 rows of 4 — still <span class="r">24</span>.</div>
+      <div class="cap" data-i="4"><b>Score</b> it: 4×4 and 4×2 — 16 and 8 make <span class="r">24</span>.</div>
+      <div class="cap" data-i="5">A tray is a rectangle — <b>rows times columns</b>.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "arrays.v1";
+  var DURATION = 24;
+  var ROWS = 4, COLS = 6, PRODUCT = 24, SCORE = 4;
+  var ROWTOT = [6,12,18,24];
+
+  function el(id){ return document.getElementById(id); }
+
+  // build the heap of loose buns (a scattered cluster)
+  var heap = el("heap");
+  for (var h=0; h<ROWS*COLS; h++){
+    var b=document.createElement("div"); b.className="b";
+    b.style.left = (Math.random()*250)+"px";
+    b.style.top  = (Math.random()*140)+"px";
+    heap.appendChild(b);
+  }
+
+  // build the 4×6 tray grid
+  var tray = el("tray");
+  tray.style.gridTemplateColumns = "repeat("+COLS+", 46px)";
+  tray.style.gridTemplateRows = "repeat("+ROWS+", 46px)";
+  var cells = [];
+  for (var r=0; r<ROWS; r++){
+    for (var c=0; c<COLS; c++){
+      var cell=document.createElement("div");
+      cell.className = "cell" + (c < SCORE ? " left" : " right");
+      var bun=document.createElement("span"); bun.className="bun";
+      cell.appendChild(bun); tray.appendChild(cell);
+      cells.push({ node: cell, r: r, c: c });
+    }
+  }
+  // position the score line after SCORE columns (cell 46px + gap 5px)
+  el("scoreline").style.left = (SCORE*(46+5) + 3) + "px";
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.16)";
+    setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
+  function fillRow(r){ cells.forEach(function(x){ if (x.r===r) x.node.classList.add("full"); }); }
+
+  var beatsDone = [];
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — the loose heap of buns
+    [1.5, function(){ showCap(0); heap.classList.add("on"); }],
+
+    // Beat 2 — heap tidies into the tray (4 rows of 6 snap in)
+    [4.5, function(){
+      showCap(1);
+      heap.classList.add("off");
+      el("traywrap").classList.add("on");
+    }],
+
+    // Beat 3 — count by rows; tally 6,12,18,24
+    [8.5, function(){
+      showCap(2);
+      el("rowcount").classList.add("on");
+      for (var i=0;i<ROWS;i++){ (function(k){
+        setTimeout(function(){ fillRow(k); el("rowcount").textContent = ROWTOT[k]; pulse(el("rowcount")); }, k*620);
+      })(i); }
+    }],
+
+    // Beat 4 — spin the tray (commutativity); show 4 × 6 = 24
+    [13.0, function(){
+      showCap(3);
+      el("traywrap").style.transition = "transform .6s cubic-bezier(.34,1.3,.64,1)";
+      el("traywrap").style.transform = "rotate(90deg) scale(.82)";
+      setTimeout(function(){ el("traywrap").style.transform = "rotate(0deg)"; }, 1200);
+      el("rowcount").classList.remove("on");
+      el("eq").classList.add("on"); pulse(el("eq"));
+    }],
+
+    // Beat 5 — score the tray (distributivity); show 4×4 + 4×2 = 16 + 8 = 24
+    [17.0, function(){
+      showCap(4);
+      el("eq").classList.remove("on");
+      tray.classList.add("scored"); el("scoreline").classList.add("on");
+      el("parts").classList.add("on"); pulse(el("parts"));
+    }],
+
+    // Beat 6 — the close
+    [20.5, function(){ showCap(5); pulse(el("traywrap")); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[];
+      el("kicker").classList.remove("on");
+      heap.classList.remove("on","off");
+      el("traywrap").classList.remove("on"); el("traywrap").style.transform="";
+      cells.forEach(function(x){ x.node.classList.remove("full"); });
+      tray.classList.remove("scored"); el("scoreline").classList.remove("on");
+      el("rowcount").classList.remove("on"); el("rowcount").textContent="0";
+      el("eq").classList.remove("on"); el("parts").classList.remove("on");
+      showCap(-1);
+    }
+  };
+})();
+</script>
+</body>
+</html>

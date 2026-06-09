@@ -10,6 +10,7 @@ import type { SkillNode } from './types.js';
 
 // Room ids verified against web/src/rooms.js:
 //   m1 — Equal Groups (whole-number multiplication: a groups of b)
+//   m2 — Baking Trays / Arrays (rows × columns; commutativity + distributivity)
 //   m3 — Multiplication Facts (skip-count → fluent single-digit recall)
 //   r1 — Same Denominators
 //   r3 — Scale One (Add Unlike, one already fits)
@@ -20,9 +21,12 @@ import type { SkillNode } from './types.js';
 // ---------------------------------------------------------------------------
 // Multiplication-foundations strand (plan 006) — CANONICAL NODE IDS.
 //
-// The canonical ids are EXACTLY: MULT_EQUAL_GROUPS, MULT_FACTS.
+// The canonical ids are EXACTLY: MULT_EQUAL_GROUPS, MULT_ARRAYS, MULT_FACTS
+// (R-B1). The arrays node is MULT_ARRAYS (not MULT_ARRAY_AREA / MULT_ARRAYS_AREA).
 // getNode() throws on an unknown id and prereqsOf maps every prereq through
 // getNode, so any id mismatch crashes the DAG at init. Use these ids only.
+// The teaching chain is MULT_EQUAL_GROUPS → MULT_ARRAYS → MULT_FACTS;
+// MULT_FACTS.prereqs = ['MULT_ARRAYS'].
 //
 // PREREQ-ORDERING CONSTRAINT (load-bearing — see credit.ts:97):
 //   credit.ts resolveImplicatedPrereq() handles `add_across_unlike` by docking
@@ -49,12 +53,30 @@ const MULT_EQUAL_GROUPS: SkillNode = {
   // bkt_params omitted → global PARAMS.bkt (meaning-level node; fluency tuning lives in MULT_FACTS)
 };
 
-// Inserted at INDEX 1 of ALL_NODES (after MULT_EQUAL_GROUPS, before ADD_SAME_DEN).
+// Inserted at INDEX 1 of ALL_NODES (after MULT_EQUAL_GROUPS, before MULT_FACTS).
+// The arrays / area model: rows × columns make commutativity (rotate the tray) and
+// distributivity (score / cut the tray) visible — the pedagogical bridge from
+// "what multiplication means" (m1) to "know the fact" (m3).
+const MULT_ARRAYS: SkillNode = {
+  id: 'MULT_ARRAYS',
+  roomId: 'm2',
+  prereqs: ['MULT_EQUAL_GROUPS'],
+  scaffold_ladder: [
+    ['arrays_visual'],   // L0
+    ['arrays_guided'],   // L1
+    ['arrays_partial'],  // L2
+    ['arrays_bare'],     // L3
+    ['arrays_transfer'], // L4
+  ],
+  transfer_forms: ['arrays_bare', 'arrays_transfer'], // length 2 → TransferProbe legal
+};
+
+// Inserted at INDEX 2 of ALL_NODES (after MULT_ARRAYS, before ADD_SAME_DEN).
 // The fluency layer: becomes a prereq of ADD_UNLIKE_COPRIME (r2) and SIMPLIFY (r4).
 const MULT_FACTS: SkillNode = {
   id: 'MULT_FACTS',
   roomId: 'm3',
-  prereqs: ['MULT_EQUAL_GROUPS'],
+  prereqs: ['MULT_ARRAYS'], // R-B1: the arrays node (NOT MULT_ARRAY_AREA)
   scaffold_ladder: [
     ['facts_visual'],   // L0
     ['facts_guided'],   // L1
@@ -200,14 +222,14 @@ const IMPROPER_TO_MIXED: SkillNode = {
 
 /** All nodes, in topological (teaching) order. */
 const ALL_NODES: readonly SkillNode[] = [
-  // Multiplication foundations (plan 006) — inserted at the FRONT (indices 0–1),
+  // Multiplication foundations (plan 006) — inserted at the FRONT (indices 0–2),
   // strictly upstream of the fraction strand. Order is load-bearing for
   // mostUpstreamUnmastered / escalation / suggestedNextRoom (all walk front-to-back).
-  // Equal Groups builds the meaning of multiplication; Facts is the fluency layer
-  // the fraction-renaming steps (cross-multiply, scaling, simplify) consume. The
-  // arrays/area lesson was cut — its only downstream use is multiplying fractions,
-  // which this app never does.
+  // Equal Groups builds the meaning of multiplication; Arrays makes commutativity /
+  // distributivity visible (the area-model bridge); Facts is the fluency layer the
+  // fraction-renaming steps (cross-multiply, scaling, simplify) consume.
   MULT_EQUAL_GROUPS,
+  MULT_ARRAYS,
   MULT_FACTS,
   // CCSS gap-fill: FRACTION_ON_LINE precedes ADD_SAME_DEN (grade-3 foundation).
   FRACTION_ON_LINE,
@@ -273,6 +295,7 @@ export function mostUpstreamUnmastered(
 // Export node constants for use by other engine modules.
 export {
   MULT_EQUAL_GROUPS,
+  MULT_ARRAYS,
   MULT_FACTS,
   FRACTION_ON_LINE,
   ADD_SAME_DEN,

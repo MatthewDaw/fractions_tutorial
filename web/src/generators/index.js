@@ -15,6 +15,7 @@ import * as addUnlikeNested from './addUnlikeNested.js';
 import * as simplify from './simplify.js';
 import * as improperToMixed from './improperToMixed.js';
 import * as multEqualGroups from './multEqualGroups.js';
+import * as multArrays from './multArrays.js';
 import * as multFacts from './multFacts.js';
 import * as fractionOnLine from './fractionOnLine.js';
 import * as subSameDen from './subSameDen.js';
@@ -28,6 +29,7 @@ const MODULES = [
   simplify,
   improperToMixed,
   multEqualGroups,
+  multArrays,
   multFacts,
   fractionOnLine,
   subSameDen,

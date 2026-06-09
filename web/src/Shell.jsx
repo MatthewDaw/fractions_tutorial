@@ -23,6 +23,7 @@ import AppR1 from "./AppR1.jsx";
 import AppR4 from "./AppR4.jsx";
 import AppR5 from "./AppR5.jsx";
 import AppM1 from "./AppM1.jsx";
+import AppM2 from "./AppM2.jsx";
 import AppM3 from "./AppM3.jsx";
 import AppNumberLine from "./AppNumberLine.jsx";
 import AppSubtract from "./AppSubtract.jsx";
@@ -236,6 +237,7 @@ export default function Shell() {
     else if (room.id === "r4") screen = <AppR4 {...p} />;
     else if (room.id === "r5") screen = <AppR5 {...p} />;
     else if (room.id === "m1") screen = <AppM1 {...p} />;
+    else if (room.id === "m2") screen = <AppM2 {...p} />;
     else if (room.id === "m3") screen = <AppM3 {...p} />;
     else if (room.id === "nl") screen = <AppNumberLine {...p} />;
     else if (room.id === "s1") screen = <AppSubtract {...p} initialStage={initialBeat} />;

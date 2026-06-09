@@ -292,6 +292,26 @@ export const LINES = {
   mr_mom_nudge_1:
     "Same plates either way, povaryonok — three plates of four. Set the plates first, then the pelmeni on each.",
 
+  // --- m2 "Baking Trays" intro (Cook). Worked example 4 × 6 = 24, products in words. ---
+  m2i_intro: "A heap of loose buns — too messy to count.",
+  m2i_tidy: "Tidy them into a tray: four rows of six.",
+  m2i_count: "Count by rows: six, twelve, eighteen, twenty-four.",
+  m2i_spin: "Spin the tray. Four rows of six, or six rows of four — still twenty-four.",
+  m2i_score: "Score it: four fours and four twos — sixteen and eight make twenty-four.",
+  m2i_close: "A tray is a rectangle, povaryonok — rows times columns.",
+
+  // --- m2 in-room goal/award lines (Babushka). Products spelled in words. ---
+  mr_mom_goal_tray:
+    "Babushka lines a tray four rows deep and six columns across — rows times columns, the same whichever way you turn it: four times six.",
+  mr_mom_goal_buns:
+    "Yes! Four rows of six fill the tray — four times six is twenty-four. Count the inside of the rectangle.",
+  mr_mom_goal_spin:
+    "Same tray, spun around — four rows of six or six rows of four, still twenty-four. Rows times columns either way.",
+  mr_mom_goal_score:
+    "Yes! Cut the tray into four fours and four twos — sixteen and eight make twenty-four. Multiply each piece, then add them.",
+  mr_mom_nudge_parts:
+    "Multiply each piece, povaryonok — four fours is sixteen, four twos is eight. Don't just write the split sizes.",
+
   // --- m3 "Times Facts" intro (Cook). Worked example 7 × 8 = 56, products in words. ---
   m3i_intro: "Seven empty jars, and a scoop that holds eight.",
   m3i_scoop: "One handful into each jar — eight at a time.",

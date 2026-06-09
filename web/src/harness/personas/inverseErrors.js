@@ -123,6 +123,10 @@ const CATALOGUE = {
     'gap_thinking',         // add instead of multiply → 'other'
     'whole_number_bias',    // off-by-one product → 'other'
   ],
+  MULT_ARRAYS: [
+    'gap_thinking',         // add rows + cols (the array_perimeter / add slip) → 'other'
+    'whole_number_bias',    // off-by-one product (mis-tiled tray) → 'other'
+  ],
   MULT_FACTS: [
     'gap_thinking',         // add the factors → 'other'
     'whole_number_bias',    // identity slip (a*1 vs a*0) → 'other'

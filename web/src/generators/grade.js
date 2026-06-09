@@ -8,7 +8,7 @@
 //   fraction  {num,den}        → ADD_SAME_DEN, ADD_UNLIKE_COPRIME/NESTED, SUB_SAME_DEN, FRACTION_ON_LINE
 //   simplify  {num,den}        → SIMPLIFY (full marks ONLY in lowest terms; equal-but-not-reduced = 2★, not_simplified)
 //   mixed     {whole,num,den}  → IMPROPER_TO_MIXED (exact-whole = empty/zero leftover)
-//   integer   {value}          → MULT_EQUAL_GROUPS, MULT_FACTS
+//   integer   {value}          → MULT_EQUAL_GROUPS, MULT_ARRAYS, MULT_FACTS
 //   relation  {rel}            → COMPARE_BENCHMARK
 import { gcd } from './core.js';
 
@@ -93,6 +93,7 @@ export function gradeAnswer(problem, answer = {}) {
     }
 
     case 'MULT_EQUAL_GROUPS':
+    case 'MULT_ARRAYS':
     case 'MULT_FACTS': {
       const v = num(answer.value ?? answer.product);
       return v === a.product
@@ -124,6 +125,7 @@ export function answerShape(skill) {
   switch (skill) {
     case 'IMPROPER_TO_MIXED': return 'mixed';
     case 'MULT_EQUAL_GROUPS':
+    case 'MULT_ARRAYS':
     case 'MULT_FACTS': return 'integer';
     case 'COMPARE_BENCHMARK': return 'relation';
     default: return 'fraction';

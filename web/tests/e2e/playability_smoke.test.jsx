@@ -209,6 +209,23 @@ describe('Playability smoke — AppR5', () => {
   });
 });
 
+describe('Playability smoke — AppM2 (Baking Trays / Arrays)', () => {
+  it('mounts without throwing and shows the goal text', async () => {
+    const { default: AppM2 } = await import('../../src/AppM2.jsx');
+    render(
+      <AppM2
+        no={2}
+        title="Baking Trays"
+        onBack={noop}
+      />
+    );
+    // The component renders a .goal-text div about the 4 × 6 tray (rows × columns).
+    const goal = document.querySelector('.goal-text');
+    expect(goal).not.toBeNull();
+    expect(goal.textContent).toMatch(/Babushka|rows|tray|4 . 6/i);
+  });
+});
+
 describe('Playability smoke — MomsRoom', () => {
   it('mounts without throwing and shows the topbar title', async () => {
     const { default: MomsRoom } = await import('../../src/MomsRoom.jsx');

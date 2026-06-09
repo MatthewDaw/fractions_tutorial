@@ -42,6 +42,10 @@ const HINTS = {
     "It's that many equal groups. Count up by the group size.",
     "Skip-count by the second number, once for each group.",
   ],
+  MULT_ARRAYS: [
+    "It's a rectangle of dots — rows times columns. The same tray spun sideways counts the same.",
+    "Count one full row, then add that row once for every row — or cut the tray into two easier pieces and add them.",
+  ],
   MULT_FACTS: [
     "Think of it as that many equal groups, or skip-count.",
     "If one factor is 0 the answer is 0; if it's 1 the answer is the other factor.",
