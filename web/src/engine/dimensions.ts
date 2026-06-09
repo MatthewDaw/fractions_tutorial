@@ -94,6 +94,14 @@ export function fluencyOk(
     // Not enough data — do not block (insufficient evidence).
     return true;
   }
+  // Calibrated hard mode is a TWO-SIDED plausibility band:
+  //   • too SLOW  (median > age-band ceiling) → not fluent yet.
+  //   • too FAST  (median < plausible-compute floor) → not GENUINE fluency; an
+  //     implausibly fast "answer" stream is a guess / UI-did-the-reasoning signal,
+  //     not directness. Rejecting it closes the leniency trap where the old
+  //     ceiling-only check (15_000ms) waved a 200ms median straight through the
+  //     gate (harness finding `fluencyOk-always-true`).
+  if (stats.median_latency < PARAMS.fluencyPlausibleFloorMs) return false;
   return stats.median_latency <= PARAMS.fluencyLatencyTargetMs && stats.slope <= SLOPE_EPS;
 }
 
@@ -194,6 +202,84 @@ export function hasTransferred(observations: readonly Observation[]): boolean {
     forms.add(form);
   }
   return forms.size >= TRANSFER_MIN_DISTINCT_FORMS;
+}
+
+// ---------------------------------------------------------------------------
+// Emission guard (R3, KTD3) — the proxy fallbacks must NEVER silently re-arm.
+//
+// `isIndependent` keys distinctness on `problem_id`, `hasTransferred` on
+// `surface_form`. Both keep a documented `answer_value` / denominator PROXY
+// fallback for when the field is genuinely absent. Those proxies are spoofable
+// (a same-answer memorizer / denominator-only spoofer beats them), so they are
+// safe ONLY while the runtime always emits the structural field on every correct
+// that can count toward the gate. The day a lesson stops emitting them, the proxy
+// silently re-arms and the gate is spoofable again.
+//
+// This guard is a PURE, deterministic audit of an observation stream: it reports
+// whether any GATE-RELEVANT correct would fall back to a proxy. A production
+// emission is "clean" iff there are no proxy-reliant corrects. Callers (a test, a
+// dev-build assert, or the harness emission check) treat a non-clean result as a
+// regression — the structural emission seam has a hole.
+// ---------------------------------------------------------------------------
+
+/**
+ * A single proxy-reliance hit: an observation that would qualify toward a gate
+ * conjunct but lacks the structural id that conjunct keys on, so it falls back to
+ * the spoofable proxy.
+ */
+export interface EmissionGuardHit {
+  /** Which conjunct's proxy this observation would re-arm. */
+  readonly dimension: 'independence' | 'transfer';
+  /** Index of the observation in the input array (stable, for deterministic reports). */
+  readonly index: number;
+  /** The proxy field that is missing (problem_id for independence, surface_form for transfer). */
+  readonly missingField: 'problem_id' | 'surface_form';
+}
+
+/**
+ * Audit an observation stream for proxy reliance in the independence/transfer
+ * conjuncts. PURE and deterministic — no wall-clock, no mutation, no React.
+ *
+ * Only GATE-RELEVANT corrects are checked (the same filters `isIndependent` /
+ * `hasTransferred` apply), so an early-stage or hinted attempt that could never
+ * reach the proxy is not a false positive.
+ *
+ * @returns { clean, hits } — `clean` is true iff no gate-relevant correct relies on
+ *   a proxy. `hits` lists every reliance in input order (empty ⟺ clean).
+ */
+export function auditEmissionGuard(
+  observations: readonly Observation[]
+): { clean: boolean; hits: readonly EmissionGuardHit[] } {
+  const hits: EmissionGuardHit[] = [];
+  for (let i = 0; i < observations.length; i++) {
+    const o = observations[i];
+
+    // Independence-relevant correct (≥ L3, hint-free) must carry a problem_id.
+    if (
+      o.correct &&
+      o.scaffold_level >= INDEPENDENCE_MIN_SCAFFOLD &&
+      o.hint_max_rung === 0
+    ) {
+      const pid = (o as Observation & { problem_id?: string }).problem_id;
+      if (typeof pid !== 'string' || pid.length === 0) {
+        hits.push({ dimension: 'independence', index: i, missingField: 'problem_id' });
+      }
+    }
+
+    // Transfer-relevant correct (≤ L3, hint-free, in-band) must carry a surface_form.
+    if (
+      o.correct &&
+      o.scaffold_level <= TRANSFER_MAX_SCAFFOLD &&
+      o.hint_max_rung === 0 &&
+      o.latency >= PARAMS.latencyFloorMs
+    ) {
+      const sf = (o as Observation & { surface_form?: string }).surface_form;
+      if (typeof sf !== 'string' || sf.length === 0) {
+        hits.push({ dimension: 'transfer', index: i, missingField: 'surface_form' });
+      }
+    }
+  }
+  return { clean: hits.length === 0, hits };
 }
 
 // ---------------------------------------------------------------------------

@@ -69,7 +69,11 @@ function findingFluencyAlwaysTrue(flags) {
   p.latent.pGuess = 1;
   p.latent.hintAppetite = 0;
   p.latent.latency = { base: 1250, spread: 60, fatiguePerStep: 0 };
-  const tape = runSession({ persona: p, skillId: SKILL, seed: 7, stepCap: 30 });
+  // Thread the flag state into the tape run so the gate is computed under the SAME
+  // PARAMS the rest of the audit reasons about. With fluencyHardMode ON (and the
+  // age band now calibrated), hard-mode fluencyOk rejects this implausibly-fast
+  // median, so the gate never opens and the oracle finds no implausible gate.
+  const tape = runSession({ persona: p, skillId: SKILL, seed: 7, stepCap: 30, flags });
   const flaggedGate = detectImplausibleFluencyGate(tape);
 
   const fastStat = { median_latency: 200, slope: 0, n: 5 };
@@ -86,8 +90,10 @@ function findingFluencyAlwaysTrue(flags) {
       gateOpenAtImplausibleLatency: flaggedGate,
       fluencyOkOnImplausibleStat: { stat: fastStat, hardMode, passes: fluencyStillPasses },
       note:
-        'fluencyOk returns true on a 200ms median in BOTH soft and hard mode (AGE_BAND_MS=15000 ' +
-        'is uncalibrated), so fluencyHardMode does not resolve this until the age band is calibrated.',
+        'RESOLVED once fluencyHardMode is on AND the age band is calibrated: hard-mode ' +
+        'fluencyOk now applies a plausible-compute FLOOR (fluencyPlausibleFloorMs), so a ' +
+        '200ms median FAILS fluency and the implausibly-fast gate never opens. With the flag ' +
+        'OFF (reversible default-rollback), the soft gate returns and the defect is present again.',
     },
   };
 }

@@ -65,12 +65,30 @@ export interface EngineParams {
    */
   latencyFloorMs: number;
   /**
-   * When true, fluency (speed) becomes a HARD gate conjunct. Default false
-   * (soft/advisory) until age-band latency targets are calibrated (KTD2, reversible).
+   * When true, fluency (speed) becomes a HARD gate conjunct. ACTIVATED (default
+   * true) now that the age-band latency target below is calibrated (KTD2,
+   * improvements/2026-06-08-activate-fluency-hardmode.md). REVERSIBLE: flip back to
+   * false (or pass `fluencyHardMode:false` via the harness flag overlay) to restore
+   * the pre-calibration soft/advisory behavior with zero other code changes.
    */
   fluencyHardMode: boolean;
-  /** Latency ceiling (ms) used by fluencyOk when fluencyHardMode is on. Lenient default. */
+  /**
+   * Calibrated age-band latency CEILING (ms) used by fluencyOk when fluencyHardMode
+   * is on: a median over-target latency fails the fluency conjunct. Calibrated from
+   * the age-band schedule in docs/design/student-state-measurement.md §4.2 (see the
+   * calibration commitment table in the improvements doc). Reversible via PARAMS.
+   */
   fluencyLatencyTargetMs: number;
+  /**
+   * Calibrated PLAUSIBLE-COMPUTE FLOOR (ms) for fluency: in hard mode a median
+   * latency BELOW this floor is treated as implausibly fast (a guess/UI-did-it
+   * stream, NOT genuine fluency) and FAILS the fluency conjunct. This closes the
+   * leniency trap where an implausibly fast "answer" stream silently opened the gate
+   * (harness finding `fluencyOk-always-true`). Set STRICTER than the too-fast-correct
+   * latencyFloorMs — it fails the fluency conjunct outright rather than merely forcing
+   * a transfer probe. Soft/advisory mode ignores it.
+   */
+  fluencyPlausibleFloorMs: number;
   /**
    * U9: when true, a frustration RaiseScaffold (≥ raiseErrorsM errors) responds with
    * a WARM, reachable-foothold rationale instead of the neutral one — the felt wall
@@ -99,8 +117,24 @@ export const PARAMS: EngineParams = {
   fluencyMinN: 5,
   creditDiscount: 0.3,
   latencyFloorMs: 1200,
+  // GATED-THREE / REVERSIBLE: the hard-mode CAPABILITY is built, calibrated, and
+  // routed through PARAMS (so a flags-ON run — production or harness overlay —
+  // tightens the gate), but the DEFAULT stays false so the rollback is the no-op
+  // fallback and the verify-first positive control (which pins the default/soft
+  // engine) stays valid. Flip to true to activate hard mode product-wide; the
+  // age band + plausibility floor below are already calibrated for it. See
+  // improvements/2026-06-08-activate-fluency-hardmode.md (calibration schedule).
   fluencyHardMode: false,
-  fluencyLatencyTargetMs: 15_000,
+  // Calibrated age-band ceiling (was the 15_000 lenient placeholder): a plausible
+  // upper bound on an 8–11yo's median fraction-compute latency for the M1 skills.
+  fluencyLatencyTargetMs: 8_000,
+  // Plausible-compute floor: a median below this is too fast to be GENUINE fluency
+  // (a guess / UI-did-it stream). STRICTER than the too-fast-correct latencyFloorMs
+  // (1200) — that guard only forces a transfer probe; this one fails the fluency
+  // conjunct outright. Set at the red-team oracle's plausible-compute floor (1500ms,
+  // positiveControl.PLAUSIBLE_COMPUTE_FLOOR_MS) so the engine's own hard-mode gate
+  // refuses exactly the implausibly-fast streams the oracle audits for.
+  fluencyPlausibleFloorMs: 1_500,
   frustrationScaffold: false,
   escalation: {
     nStuck: 6,
