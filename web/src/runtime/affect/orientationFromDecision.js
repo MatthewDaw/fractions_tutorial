@@ -61,7 +61,7 @@ const WHY_BY_KIND = {
     expectedKey: 'build_up',
     options: [
       { key: 'build_up', label: 'I need to practise something else first' },
-      { key: 'doing_well', label: "I'm doing great, so I get a reward" },
+      { key: 'finished_room', label: 'We finished that room' },
       { key: 'almost_done', label: "We're almost finished" },
     ],
   },
@@ -105,7 +105,7 @@ export function orientationFromDecision(decision) {
   const kind = decision?.kind;
   if (kind && CHANGE_KINDS.has(kind) && WHY_BY_KIND[kind]) {
     return {
-      prompt: 'Why did the screen just change?',
+      prompt: 'Why did the screen change?',
       options: WHY_BY_KIND[kind].options,
       expectedKey: WHY_BY_KIND[kind].expectedKey,
     };

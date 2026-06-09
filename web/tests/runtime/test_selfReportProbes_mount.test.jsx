@@ -111,7 +111,7 @@ describe('SelfReportProbes — mounting + cadence', () => {
     advanceBoundaries(4);
     advanceBoundaries(1, 'FadeScaffold');
     const probe = screen.getByTestId('orientation-probe');
-    expect(probe.textContent).toMatch(/why did the screen just change/i);
+    expect(probe.textContent).toMatch(/why did the screen change/i);
     // The coherent answer for FadeScaffold is the "doing well" option.
     fireEvent.click(screen.getByRole('button', { name: /doing great, so i get fewer hints/i }));
     const s = getSnapshot();

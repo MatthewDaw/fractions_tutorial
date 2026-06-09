@@ -52,8 +52,12 @@ export default function SelfReportProbes({
   everyN = SELF_REPORT_CADENCE.everyN,
   onAffectReport,
 }) {
-  const { decision, decisionLog } = useEngineStore();
-  const boundaryCount = decisionLog ? decisionLog.length : 0;
+  const { decision, uiMetrics } = useEngineStore();
+  // NIT-1 fix: use the MONOTONE problemsJudged tally, not decisionLog.length.
+  // decisionLog is capped at 50 (.slice(-50)), so its length pins at 50 and would
+  // silently halt all probes after ~50 problems in a long session. problemsJudged
+  // (UI2) increments once per judged boundary and is never capped.
+  const boundaryCount = uiMetrics ? uiMetrics.problemsJudged : 0;
 
   // Cadence state + the last boundary we evaluated, kept in refs so the boundary
   // effect runs its decision exactly once per new boundary (not on every render).
