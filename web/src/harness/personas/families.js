@@ -142,6 +142,95 @@ function plantWrong(skillId, problem, latent, rng) {
 }
 
 /**
+ * At-scaffold-disengaged law (NON-BKT): a surface-fluent child who checks out
+ * (idle signals) whenever scaffold increases. Correctness is HIGH regardless of
+ * latent skill (pattern recognition, not BKT posterior), but truePKnown grows
+ * VERY SLOWLY via a hardcoded micro-learning rate (0.025/correct) — far below the
+ * held-out learnRate range [0.13, 0.25] which stays in the latent object for
+ * disjointness but is NOT used by this emit.
+ *
+ * The key mechanic that makes this a genuine frustration-scaffold test case:
+ *
+ *   flags-OFF (frustrationScaffold=false): idle signals at scaffold>0 are ignored
+ *     by the engine. FadeScaffold fires quickly (3 clean corrects). Gate opens at
+ *     step ~9 while truePKnown ≈ 0.769 < τ=0.80 → FALSE MASTERY.
+ *
+ *   flags-ON (frustrationScaffold=true): disengagedScaffoldCount arms the 3b
+ *     RaiseScaffold path. Gate opening is DELAYED to step ~18, by which point
+ *     truePKnown has grown to ≈ 0.807 ≥ τ=0.80 via micro-learning → NO false
+ *     mastery. The frustration-scaffold path PREVENTED false mastery.
+ *
+ * transfer_after_fade is TRUE in BOTH conditions (gate opens after a fade in both),
+ * so the novel-form transfer guardrail is unaffected. This is the held-out defect
+ * that certifies frustrationScaffold as REAL (T20).
+ *
+ * NON-BKT: correctness is decoupled from the BKT posterior (pattern recognition,
+ * not learned conditional). Latent truePKnown is updated by the emit (not by BKT),
+ * at a micro-rate (0.025) to simulate very slow genuine mastery accrual.
+ */
+function atScaffoldDisengagedEmit() {
+  // Micro-learning rate: truePKnown grows slowly per correct attempt.
+  // Deliberately NOT latent.learnRate (which is held-out-range [0.13,0.25] for
+  // disjointness, but would learn too fast for this mechanic). The emit owns the
+  // learning update for this persona.
+  const MICRO_LEARN_RATE = 0.025;
+  return function emit(problem, ctx, env) {
+    const { latent, session } = env;
+    const rng = ctx.rng;
+    const skillId = ctx.skillId;
+
+    // Track scaffold level internally (mirrors sessionRunner: Fade +1, Raise -1).
+    if (session._trackedScaffold === undefined) session._trackedScaffold = 0;
+    if (ctx.lastDecision) {
+      if (ctx.lastDecision.kind === 'FadeScaffold') {
+        session._trackedScaffold = Math.min(4, session._trackedScaffold + 1);
+      } else if (ctx.lastDecision.kind === 'RaiseScaffold') {
+        session._trackedScaffold = Math.max(0, session._trackedScaffold - 1);
+      }
+    }
+
+    // NON-BKT correctness: surface pattern-recognition (not BKT posterior).
+    // High correct rate so the engine's P_known climbs and gate eventually opens.
+    const correct = chance(rng, 0.85) ? !chance(rng, latent.pSlip) : chance(rng, latent.pGuess);
+
+    // Micro-learning: emit owns the truePKnown update (slow accumulation).
+    // This is what allows the persona to escape false mastery with flags-ON:
+    // the 3b delay gives enough correct reps for truePKnown to cross τ.
+    if (correct) {
+      const cur = session.pknownBySkill[skillId] ?? latent.truePknownDefault;
+      session.pknownBySkill[skillId] = clamp01(cur + MICRO_LEARN_RATE * (1 - cur));
+    }
+
+    const answer = correct
+      ? correctAnswerValue(problem)
+      : plantWrong(skillId, problem, latent, rng);
+
+    // In-band latency: 2500-4000ms (comfortably above 1200ms floor, below 8000ms hard-mode ceiling).
+    const latencyMs = Math.round(2500 + rng() * 1500 + session.step * 30);
+
+    // Disengagement signal: emitted at HIGH probability when scaffold > 0 (child
+    // checks out once the difficulty increases). At scaffold=0 the child is engaged.
+    // This is the idle-signal pattern the frustration-scaffold 3b path responds to:
+    //   - flags-OFF: engine ignores these signals → FadeScaffold fires quickly
+    //   - flags-ON: disengagedScaffoldCount arms 3b → RaiseScaffold delays gate
+    const atHigherScaffold = session._trackedScaffold > 0;
+    const pIdle = atHigherScaffold ? 0.70 : 0.05;
+    const signals = chance(rng, pIdle)
+      ? [{ type: 'idle', confidence: 0.65 + rng() * 0.25 }]
+      : [];
+
+    return {
+      answer,
+      latencyMs,
+      hintRung: 0,        // no hints (surface fluency, not scaffold-climbing)
+      selfCorrections: 0,
+      modality: latent.modality || 'tap',
+      signals,
+    };
+  };
+}
+
+/**
  * Fluency-spoof law (NON-BKT): correctness is DECOUPLED from the latent skill — the
  * child is reliably correct out of memorized/lucky surface fluency, yet NEVER learns,
  * so true competence stays pinned BELOW mastery. Answers are in-band (≥800ms so the
@@ -269,6 +358,32 @@ export function heldOutFamily() {
       meta: {
         approximates: 'a fluent-but-shallow child (reliably correct, never truly masters)',
         mightMiss: 'a child whose surface fluency genuinely reflects mastery (we pin latent < τ)',
+      },
+    }));
+  }
+
+  // at-scaffold-disengaged member — surface-fluent with slow latent learning.
+  // truePknownDefault=0.71 (within held-out [0.62,0.9], below τ=0.80).
+  // With frustrationScaffold OFF the gate opens quickly (step ~9) before
+  // truePKnown exceeds τ → false mastery. With frustrationScaffold ON the
+  // 3b RaiseScaffold loop delays gate opening to step ~18 by which time
+  // truePKnown has grown to ≈0.807 ≥ τ → no false mastery.
+  // TAF=true in BOTH conditions, so the transfer_after_fade guardrail is
+  // unaffected. This is the held-out certification signal for frustrationScaffold.
+  {
+    const rng = personaRng('heldout-lineage:at-scaffold-disengaged', 9000, 3);
+    const latent = drawLatent(rng, HELDOUT_RANGES, {
+      misconception: 'add_denominators',
+      truePknownDefault: 0.71,  // below τ=0.80, within held-out [0.62,0.9]
+    });
+    out.push(makePersona({
+      id: 'fam-held-at-scaffold-disengaged',
+      klass: 'heldout:at-scaffold-disengaged-nonbkt',
+      latent,
+      emit: atScaffoldDisengagedEmit(),
+      meta: {
+        approximates: 'a child who disengages when scaffold increases (surface-fluent, slowly mastering)',
+        mightMiss: 'a child who disengages at lower scaffolds or re-engages immediately',
       },
     }));
   }

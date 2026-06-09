@@ -18,10 +18,14 @@ Every line below is grounded in a tape field or flagged "(not observable)".
   - _grounding_: tape: persona_latents of tapes with persona_id="anxious-low-energy"
 - Persona "bimodal" might miss: difficulty that is not captured by level alone.
   - _grounding_: tape: persona_latents of tapes with persona_id="bimodal"
+- Persona "bored-high-skill" might miss: a bored child who re-engages when given harder material (we model monotone disengagement).
+  - _grounding_: tape: persona_latents of tapes with persona_id="bored-high-skill"
 - Persona "confident-guesser" might miss: guesser who also reads hints (we keep appetite low).
   - _grounding_: tape: persona_latents of tapes with persona_id="confident-guesser"
 - Persona "denominator-transfer-spoofer" might miss: whether surface_form (the real fix) defeats the spoof — the AUDIT.
   - _grounding_: tape: persona_latents of tapes with persona_id="denominator-transfer-spoofer"
+- Persona "fam-held-at-scaffold-disengaged" might miss: a child who disengages at lower scaffolds or re-engages immediately.
+  - _grounding_: tape: persona_latents of tapes with persona_id="fam-held-at-scaffold-disengaged"
 - Persona "fam-held-bimodal" might miss: gradual within-session drift between the two modes.
   - _grounding_: tape: persona_latents of tapes with persona_id="fam-held-bimodal"
 - Persona "fam-held-fluency-spoofer" might miss: a child whose surface fluency genuinely reflects mastery (we pin latent < τ).
@@ -50,13 +54,11 @@ Every line below is grounded in a tape field or flagged "(not observable)".
   - _grounding_: tape: persona_latents of tapes with persona_id="oscillator"
 - Persona "over-hinter" might miss: hint-then-internalize (our appetite stays high).
   - _grounding_: tape: persona_latents of tapes with persona_id="over-hinter"
+- Persona "performance-oriented" might miss: a child who learns to optimise AND internalises the material over time.
+  - _grounding_: tape: persona_latents of tapes with persona_id="performance-oriented"
 - Persona "same-answer-memorizer" might miss: whether problem_id (the real fix) defeats the spoof — that is the AUDIT.
   - _grounding_: tape: persona_latents of tapes with persona_id="same-answer-memorizer"
 - Persona "short-attention" might miss: second-wind recovery after a break.
   - _grounding_: tape: persona_latents of tapes with persona_id="short-attention"
 - Persona "slow-but-steady" might miss: giving up before mastery (we keep grinding).
   - _grounding_: tape: persona_latents of tapes with persona_id="slow-but-steady"
-- Archetype "socially-motivated" (PDF rubric: performs differently when watched; works to please an authority rather than to learn) is intentionally NOT modeled and has no persona entry.
-  - WHY: the harness is a headless state-machine driver. There is no observation channel (no "being watched" bit), no affect/social channel, and no social-reward term. The two defining behaviors — "performs differently when observed" and "answers to please rather than to understand" — have no observable surface in a headless session tape: every run is unwatched and authority-free by construction. Adding a stub persona that emits slightly higher correct rates would not model the archetype; it would paper over the structural absence of the channel. The rubric's own "name what you miss" requirement is better served by this note than by a cosmetic imitation.
-  - WHAT WOULD BE NEEDED: (a) an observation/affect-present condition injected into the session context — a boolean `observed: true/false` on the problem context that the runner can flip between runs, which is exactly the kind of channel the plan-005 Phase 4 presence/validity gate (`docs/improvements/2026-06-08-presence-camera-gate.md`) would provide once the T11 presence-gate work lands; (b) a social-reward term in the emit law that shifts pGuess / pSlip upward when `observed=true` relative to `observed=false`, so the harness can compare the two distributions and detect engine insensitivity to social context. Until both (a) and (b) are in place any "socially-motivated" persona would be indistinguishable from a confidence-adjusted BKT archetype already in the library.
-  - _grounding_: (not observable) no observation-present or social-reward field exists on problem context, session, or tape steps; plan-005 Phase 4 presence gate deferred (docs/improvements/2026-06-08-presence-camera-gate.md)
