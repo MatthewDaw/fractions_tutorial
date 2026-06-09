@@ -1,5 +1,30 @@
 # Improvement backlog (synthetic-learner red-team)
 
+## T21 — Silent guardrail-degradation gap (RESOLVED)
+
+**Status:** DONE — `runLoop` in `web/src/harness/recursiveLoop.js` now emits a
+`guardrail_degraded` WARNING independently of the REAL/GAMING/NO_CHANGE verdict.
+
+**Root cause (T07 MEDIUM finding):** `guardrailDegraded` was only consulted inside the
+GAMING branch. A change that left target metrics unmoved (verdict = NO_CHANGE) but
+silently dropped `transfer_after_fade` on the held-out family (e.g. fluencyHardMode
+dropping 0.8→0.6) produced NO visible signal — the guardrail damage was hidden.
+
+**Fix:** Added `GUARDRAIL_WARN_THRESHOLD = 0.05` constant and a `guardrailWarning`
+object computed AFTER guardrailDegraded, BEFORE the verdict switch. The return value
+now always carries a `warnings` array: non-empty when `guardBefore - guardAfter >
+GUARDRAIL_WARN_THRESHOLD`, empty otherwise. The GAMING verdict logic (`IMPROVE_EPS`
+epsilon) is unchanged.
+
+**Test coverage** in `web/tests/harness/test_recursive_loop.test.js` (4 new assertions
+under "guardrail_degraded warning (T07 gap)"):
+- (8a) NO_CHANGE + guardrail drop → `warnings` contains `guardrail_degraded` with before/after/drop fields
+- (8b) NO_CHANGE + no drop → `warnings` is empty
+- (8c) GAMING + guardrail drop → warning fires independently of verdict
+- (8d) REAL + no drop → `warnings` is empty
+
+`npx vitest run` GREEN: 1109 tests / 84 files all pass.
+
 ## T18 — Joint counter-metrics (RESOLVED)
 
 **Status:** DONE — `transfer_per_mastery_gain` and `hint_independence_divergence` added to

@@ -63,6 +63,13 @@ const DEFAULT_LOOP_SKILLS = Object.freeze([
 // this margin (kills float-noise ties as improvements).
 const IMPROVE_EPS = 1e-9;
 
+// A guardrail drop is considered "meaningful" (worth surfacing as a warning) when it
+// exceeds this threshold.  IMPROVE_EPS already gates the GAMING verdict (any drop at
+// all); this larger threshold is used for the independent WARNING so a 1-in-a-billion
+// float-noise wobble does not spam the output while a real 0.8→0.6 drop is never
+// silently swallowed by a NO_CHANGE verdict.
+const GUARDRAIL_WARN_THRESHOLD = 0.05;
+
 // ---------------------------------------------------------------------------
 // change specs.
 // ---------------------------------------------------------------------------
@@ -295,6 +302,16 @@ export function runLoop({
   const guardAfter = guardrailValue(heldOutAfter.metrics);
   const guardrailDegraded = guardAfter < guardBefore - IMPROVE_EPS;
 
+  // Independent WARNING: fires when the held-out guardrail drops by a meaningful
+  // margin (GUARDRAIL_WARN_THRESHOLD) regardless of the REAL/GAMING/NO_CHANGE verdict.
+  // This surfaces silent guardrail degradation on NO_CHANGE runs (T07 gap) — a change
+  // can crater transfer_after_fade on held-out while target metrics don't move, leaving
+  // the verdict NO_CHANGE with no indication of the guardrail damage.
+  const guardrailDropped = guardAfter < guardBefore - GUARDRAIL_WARN_THRESHOLD;
+  const guardrailWarning = guardrailDropped
+    ? { kind: 'guardrail_degraded', before: guardBefore, after: guardAfter, drop: guardBefore - guardAfter }
+    : null;
+
   // --- deflated pass-rate (discount for #search-trials) ---
   const heldOutDeflated = deflatedImprovement(heldOutDelta.netImprovement, spec.searchTrials);
 
@@ -335,6 +352,9 @@ export function runLoop({
     verdict,
   };
 
+  // Collect all warnings emitted this run (currently only guardrail_degraded).
+  const warnings = guardrailWarning ? [guardrailWarning] : [];
+
   return {
     verdict,
     trainDelta,
@@ -342,6 +362,7 @@ export function runLoop({
     guardrail: { before: guardBefore, after: guardAfter, degraded: guardrailDegraded },
     deflated: { heldOutNet: heldOutDelta.netImprovement, deflatedNet: heldOutDeflated, searchTrials: spec.searchTrials },
     regressions,
+    warnings,
     decisionLogEntry,
   };
 }

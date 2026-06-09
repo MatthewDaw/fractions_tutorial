@@ -270,6 +270,124 @@ describe('distillChampions + replayChampions — frozen CI regression fixtures',
 });
 
 // ---------------------------------------------------------------------------
+// (8) T07 guardrail_degraded WARNING — independent of the REAL/GAMING/NO_CHANGE
+//     verdict.  A NO_CHANGE run where the held-out guardrail drops must surface
+//     the warning; a run with no drop must not.
+// ---------------------------------------------------------------------------
+
+describe('guardrail_degraded warning (T07 gap) — independent of verdict', () => {
+  /** Drop the held-out guardrail (transfer_after_fade) by a large margin while
+   *  leaving all TARGET metrics (false_mastery_rate, transfer_after_fade used for
+   *  improvement) unchanged on the train family. The trick: we only crater the
+   *  guardrail on heldOut but do NOT move false_mastery_rate on either family, so
+   *  the held-out net-improvement is 0 and the train net-improvement is 0 → verdict
+   *  would naturally be NO_CHANGE — but the drop should still emit a warning. */
+  function onlyCratersGuardrail() {
+    // perturbMetrics receives { record, family, tapes, role }. We only touch
+    // transfer_after_fade on the heldOut AFTER run, producing a deliberate 0.8→0.0
+    // collapse that far exceeds GUARDRAIL_WARN_THRESHOLD (0.05).
+    return ({ record, family }) => {
+      const data = record.toJSON ? record.toJSON() : { ...record };
+      if (family === 'heldOut') {
+        // Crater transfer_after_fade so the held-out guardrail reading collapses.
+        data.transfer_after_fade = Math.max(0, (data.transfer_after_fade ?? 0) - 0.8);
+      }
+      return data;
+    };
+  }
+
+  it('(8a) NO_CHANGE+guardrail-drop → warnings includes guardrail_degraded', () => {
+    // We need the verdict to be NO_CHANGE: neither false_mastery_rate nor
+    // transfer_after_fade (on the improvement axis) should move. We accomplish that
+    // by ONLY changing transfer_after_fade on heldOut AND ensuring the held-out
+    // net-improvement is not positive (crashing transfer = negative improvement → net
+    // is negative → heldOutImproved = false, and trainMoved = false → NO_CHANGE).
+    const result = runLoop({
+      change: {
+        id: 'silent-guardrail-drop',
+        flags: {},
+        perturbMetrics: onlyCratersGuardrail(),
+      },
+      seed: 3,
+      skillIds: SKILLS,
+      stepCap: STEP_CAP,
+      tauLatent: TAU,
+    });
+
+    // The verdict must be NO_CHANGE (target metrics didn't improve on either family).
+    expect(result.verdict).toBe('NO_CHANGE');
+    // The warning MUST fire despite the NO_CHANGE verdict.
+    expect(result.warnings).toBeDefined();
+    const guardWarn = result.warnings.find((w) => w.kind === 'guardrail_degraded');
+    expect(guardWarn).toBeDefined();
+    expect(guardWarn.before).toBeGreaterThan(guardWarn.after);
+    expect(guardWarn.drop).toBeGreaterThan(0.05); // exceeds GUARDRAIL_WARN_THRESHOLD
+    // The warning carries before/after values so the caller can report them.
+    expect(typeof guardWarn.before).toBe('number');
+    expect(typeof guardWarn.after).toBe('number');
+  });
+
+  it('(8b) NO_CHANGE+no-guardrail-drop → warnings is empty', () => {
+    // The canonical inert 002 flags: neither family moves, guardrail is unchanged.
+    const result = runLoop({
+      change: {
+        id: 'plan-002-flags-no-drop',
+        flags: { fluencyHardMode: true, frustrationScaffold: true },
+      },
+      seed: 3,
+      skillIds: SKILLS,
+      stepCap: STEP_CAP,
+      tauLatent: TAU,
+    });
+
+    expect(result.verdict).toBe('NO_CHANGE');
+    expect(result.warnings).toBeDefined();
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it('(8c) GAMING+guardrail-drop → warning still fires independent of verdict', () => {
+    // A change that helps both fm + craters the guardrail → verdict is GAMING (guardrail
+    // degraded), AND the warning should also fire.
+    const result = runLoop({
+      change: {
+        id: 'gaming-plus-guardrail-drop',
+        flags: { fluencyHardMode: true },
+        perturbMetrics: helpsButBreaksGuardrail(0.5),
+      },
+      seed: 3,
+      skillIds: SKILLS,
+      stepCap: STEP_CAP,
+      tauLatent: TAU,
+    });
+
+    expect(result.verdict).toBe('GAMING');
+    expect(result.guardrail.degraded).toBe(true);
+    // Warning fires independently of the verdict.
+    const guardWarn = result.warnings.find((w) => w.kind === 'guardrail_degraded');
+    expect(guardWarn).toBeDefined();
+  });
+
+  it('(8d) REAL verdict with no guardrail drop → warnings is empty', () => {
+    // A genuine improvement where the guardrail holds → no warning.
+    const result = runLoop({
+      change: {
+        id: 'genuine-no-guardrail-drop',
+        flags: { fluencyHardMode: true },
+        perturbMetrics: helpsBoth(0.5),
+      },
+      seed: 3,
+      skillIds: SKILLS,
+      stepCap: STEP_CAP,
+      tauLatent: TAU,
+    });
+
+    expect(result.verdict).toBe('REAL');
+    expect(result.guardrail.degraded).toBe(false);
+    expect(result.warnings).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // (7) decisionLogEntry contract (U11/U13 consume this).
 // ---------------------------------------------------------------------------
 
