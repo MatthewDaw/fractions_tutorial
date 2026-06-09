@@ -44,6 +44,7 @@ import {
 import { gradeAnswer } from '../generators/grade.js';
 import { personaRng } from './rng.js';
 import { paramsHash } from './config.js';
+import { withFlags } from './flagOverlay.js';
 import { correctAnswerValue } from './personas/model.js';
 import { personaById, allPersonas } from './personas/library.js';
 import { serializeSession } from './tape.js';
@@ -406,6 +407,19 @@ export function runSession({ persona, skillId, seed = 1, stepCap = 40, flags = {
   if (!persona) throw new Error('runSession: persona is required');
   if (!skillId) throw new Error('runSession: skillId is required');
 
+  // T12: APPLY the plan-002 flags to the engine PARAMS for the whole session, then
+  // restore (withFlags's finally) so flags never leak across sessions/sweeps. The
+  // engine reads PARAMS at CALL TIME, so this is what makes a flags-ON sweep gate
+  // DIFFERENTLY from flags-OFF (e.g. fluencyHardMode tightens isMastered; frustration
+  // Scaffold changes the RaiseScaffold rationale). With baseline/empty flags the
+  // overlay is a no-op and behavior is byte-identical to before. paramsHash() below
+  // is read INSIDE the overlay so the tape's params_hash reflects the gated PARAMS.
+  return withFlags(flags, () =>
+    runSessionInner({ persona, skillId, seed, stepCap, flags }));
+}
+
+/** The session loop, run with the flag overlay already applied to engine PARAMS. */
+function runSessionInner({ persona, skillId, seed, stepCap, flags }) {
   // PolicyState: currentNodeId=skillId, L0 entry, no prior — exactly as the live hook.
   const policyState = buildInitialPolicyState(skillId, 0, { inKitchen: false, stumpingRecipe: null });
 

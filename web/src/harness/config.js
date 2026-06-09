@@ -2,23 +2,30 @@
 //
 // `flags` carries plan-002 flag overrides (fluencyHardMode, frustrationScaffold,
 // delayedProbe, unifiedTaxonomy) so a sweep can run flags-off (baseline) vs
-// flags-on (activated) WITHOUT editing the engine (KTD15). PARAMS is read
-// READ-ONLY here, only to hash into the tape — never to seed personas (KTD2).
+// flags-on (activated) WITHOUT editing the engine (KTD15). The routed flags
+// (fluencyHardMode, frustrationScaffold, escalation.*) are now APPLIED to the
+// live engine PARAMS per-session by harness/flagOverlay.js (T12) — the engine's
+// 002 PARAMS routing already exists; the harness flips it for the flags-on sweep.
+// HERE PARAMS is read READ-ONLY, only to hash into the tape for attribution —
+// never to seed personas (KTD2).
 import { PARAMS } from './engineApi.js';
 import { hashObject } from './tape.js';
 
 /**
  * Plan-002 reversible flags. All default OFF = today's (baseline) behavior.
- * Until 002 lands, these are STUBS the harness threads through explicitly; an
- * arg-backed flag (e.g. fluencyHardMode) only changes engine gating once 002
- * routes it through PARAMS (review F1 / Open Q on PARAMS-backed vs arg-backed).
+ * The ROUTED flags (fluencyHardMode, frustrationScaffold, and escalation.*) are
+ * PARAMS-backed: harness/flagOverlay.js applies them to the live engine PARAMS for
+ * the duration of a session, so a flags-on sweep gates DIFFERENTLY from flags-off.
+ * delayedProbe + unifiedTaxonomy have NO engine PARAMS routing yet, so they remain
+ * inert attribution-only flags (carried onto the tape but not applied) until the
+ * engine grows a knob for them (e.g. T09 for delayedProbe).
  */
 export function defaultFlags() {
   return {
-    fluencyHardMode: false, // arg-backed today; PARAMS-backed once 002 wires it
-    frustrationScaffold: false,
-    delayedProbe: false,
-    unifiedTaxonomy: false,
+    fluencyHardMode: false, // PARAMS-backed via flagOverlay.js (gate.ts fluency conjunct)
+    frustrationScaffold: false, // PARAMS-backed via flagOverlay.js (policy.ts RaiseScaffold)
+    delayedProbe: false, // inert: no engine PARAMS routing yet (attribution-only)
+    unifiedTaxonomy: false, // inert: no engine PARAMS routing yet (attribution-only)
   };
 }
 

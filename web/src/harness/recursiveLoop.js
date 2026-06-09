@@ -11,12 +11,16 @@
 // the judge the change was not allowed to peek at.
 //
 // THE CANONICAL CHANGE is plan-002's flags: before = flags-off (baseline), after =
-// flags-on (activated). 002's flags are currently INERT STUBS (config.js: a flag
-// only changes engine gating once 002 routes it through PARAMS), so the canonical
-// change's verdict will read NO_CHANGE today — the train/held-out deltas are zero
-// because nothing downstream of the flags moved. That is CORRECT: the MECHANISM
-// (run before/after on both families, diff via aggregate, seal the judge) is built
-// now and will report REAL/GAMING the moment 002 wires a flag through PARAMS.
+// flags-on (activated). As of T12 the ROUTED flags (fluencyHardMode,
+// frustrationScaffold, escalation.*) are PARAMS-BACKED: harness/flagOverlay.js
+// applies them to the live engine PARAMS for each session, so flags-on and
+// flags-off runs gate DIFFERENTLY and the canonical change can produce a REAL /
+// GAMING verdict instead of always NO_CHANGE. The verdict still reads NO_CHANGE
+// only when neither family actually moves (e.g. a flag whose effect doesn't reach
+// the target metrics on these families, or one of the still-inert flags —
+// delayedProbe/unifiedTaxonomy — that has no engine routing yet). The MECHANISM
+// (run before/after on both families, diff via aggregate, seal the judge) is
+// unchanged; T12 just made the flags actually move the engine.
 //
 // VERDICT RULE:
 //   REAL    ⟺ the held-out family IMPROVED on a target metric
@@ -27,7 +31,8 @@
 //                 improvement for #search-trials so a lucky single trial cannot pass).
 //   GAMING  ⟺ TRAIN improved but the sealed held-out did NOT (overfit / auto-revert
 //             intent), OR the guardrail degraded, OR the deflated bar failed.
-//   NO_CHANGE ⟺ neither family moved (e.g. the inert 002 flags).
+//   NO_CHANGE ⟺ neither family moved (e.g. a flag with no effect on the target
+//             metrics for these families, or a still-inert flag with no engine routing).
 //
 // A regression check flags any persona that PASSED before the change and FAILS
 // after it (a previously-clean child the change broke), independent of the verdict.
@@ -80,13 +85,13 @@ const IMPROVE_EPS = 1e-9;
 //                                          //   { tapes, family }.
 //   }
 //
-// THE perturbMetrics HOOK exists because 002's flags are inert today (a real flag
-// would change the engine and thus the tapes; an inert flag changes nothing). To
-// EXERCISE the REAL/GAMING/regression machinery deterministically in a few seconds,
-// a test supplies perturbMetrics to apply a direct, family-targeted metric delta —
-// standing in for "002 wired a flag that helps train-only" (GAMING) or "helps both"
-// (REAL). In production the hook is absent and the verdict reads off the genuine
-// before/after tapes (NO_CHANGE until a flag is wired).
+// THE perturbMetrics HOOK lets a test apply a direct, family-targeted metric delta
+// to PRECISELY EXERCISE the REAL/GAMING/regression machinery in a few seconds —
+// standing in for "a flag that helps train-only" (GAMING) or "helps both" (REAL)
+// without depending on a specific flag's exact effect size on a specific family. As
+// of T12 the routed flags DO move the engine (flagOverlay.js), so a real flags-on
+// change can also produce a non-NO_CHANGE verdict from the genuine before/after
+// tapes WITHOUT this hook; the hook remains for targeted, deterministic coverage.
 
 function normalizeChange(change) {
   const spec = typeof change === 'function' ? change() : change || {};
