@@ -90,10 +90,18 @@ export interface ProbeResult {
 /**
  * Apply a retention-probe result to a MasteryEstimate.
  *
- * Pass:   Record the probe timestamp; P_known and transfer_passed unchanged.
+ * Pass:   Record the probe timestamp AND set delayed_probe_passed = true (the
+ *         durable-mastery signal, 002 U7 R9 / T09); P_known and transfer_passed
+ *         unchanged.
  * Fail:   Clear transfer_passed AND drop P_known below gateThreshold (0.95)
  *         by applying a BKT incorrect update — the node is re-opened for the
- *         next wall encounter.
+ *         next wall encounter. delayed_probe_passed is NOT set by a fail (and a
+ *         prior true is left intact; the lapse re-closes the gate via P_known +
+ *         transfer instead).
+ *
+ * delayed_probe_passed is read by gate.isMastered ONLY when
+ * PARAMS.requireDelayedProbe is on; with the flag off it is inert, so this stamp
+ * never changes flag-off certification.
  *
  * Returns a new MasteryEstimate (does not mutate the input).
  */
@@ -106,7 +114,10 @@ export function applyProbeResult(
     last_retention_probe: result.now,
   };
 
-  if (!result.correct) {
+  if (result.correct) {
+    // Passed delayed probe: record the durable-mastery signal (idempotent).
+    updated.delayed_probe_passed = true;
+  } else {
     // Failed probe: clear transfer_passed and drop P_known below threshold.
     // We apply one BKT incorrect update to reflect the lapse.
     const demotedPKnown = bktUpdate(est.P_known, false);

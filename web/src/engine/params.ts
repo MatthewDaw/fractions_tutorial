@@ -96,6 +96,23 @@ export interface EngineParams {
    * Default false until trigger sensitivity is observed on a tablet (reversible).
    */
   frustrationScaffold: boolean;
+  /**
+   * 002 U7 R9 (T09): when true, CERTIFICATION (isMastered) requires at least one
+   * PASSED DELAYED retention probe — distinguishing ACQUIRED (the four in-session
+   * Chain-A conjuncts all green) from durable MASTERED (the skill also survived a
+   * spaced, out-of-session probe). In-session evidence alone (P_known + independence
+   * + transfer + fluency) yields only ACQUIRED while this flag is on; durable mastery
+   * additionally needs est.delayed_probe_passed === true (stamped by
+   * decay.applyProbeResult on a CORRECT probe).
+   *
+   * GATED-THREE / REVERSIBLE: DEFAULT false so behavior is BYTE-IDENTICAL to today
+   * (the conjunct is skipped entirely — a node that has never been probed still
+   * certifies exactly as before). Flip to true (product-wide) or drive it via the
+   * harness flag overlay (delayedProbe → requireDelayedProbe) to require durable
+   * mastery. The demotion-on-FAIL path (applyProbeResult clears transfer + drops
+   * P_known) is independent of this flag and is unaffected by the default-off setting.
+   */
+  requireDelayedProbe: boolean;
   /** Escalation trigger thresholds. */
   escalation: EscalationParams;
 }
@@ -136,6 +153,13 @@ export const PARAMS: EngineParams = {
   // refuses exactly the implausibly-fast streams the oracle audits for.
   fluencyPlausibleFloorMs: 1_500,
   frustrationScaffold: false,
+  // GATED-THREE / REVERSIBLE: the delayed-probe certification gate CAPABILITY is
+  // built and routed through PARAMS (gate.ts reads this at call time), but the
+  // DEFAULT stays false so certification is byte-identical to today (in-session
+  // ACQUIRED == durable MASTERED when off). Flip to true — product-wide or via the
+  // harness delayedProbe overlay — to require a passed delayed probe for durable
+  // mastery. The applyProbeResult demotion-on-fail path is independent of this flag.
+  requireDelayedProbe: false,
   escalation: {
     nStuck: 6,
     nDiseng: 5,

@@ -137,6 +137,17 @@ export interface MasteryEstimate {
    * from logged judged timestamps — never wall-clock.
    */
   mastered_at: number | null;
+  /**
+   * 002 U7 R9 (T09): true once this node has PASSED at least one DELAYED retention
+   * probe — the durable-mastery signal that distinguishes ACQUIRED (in-session
+   * Chain-A green) from durable MASTERED. Stamped by decay.applyProbeResult on a
+   * CORRECT probe and never cleared by a later failed probe (the lapse drops P_known
+   * + transfer instead, which re-closes the gate on those conjuncts). Read by the
+   * gate ONLY when PARAMS.requireDelayedProbe is on; ignored (and may be undefined)
+   * when the flag is off, so the flag-off path is byte-identical to today. Optional
+   * so pre-T09 estimate literals still typecheck and default to "no passed probe".
+   */
+  delayed_probe_passed?: boolean;
 }
 
 // ---------------------------------------------------------------------------
