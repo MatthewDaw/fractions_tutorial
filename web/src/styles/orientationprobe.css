@@ -1,0 +1,77 @@
+/* orientationprobe.css — UI3 orientation self-report probe (gap-build-260609).
+   A calm, in-fiction overlay shown only OCCASIONALLY (parent-governed cadence).
+   2–3 big tap targets, reader-safe labels, generous spacing for small hands.
+   Mirrors affectprobe.css. */
+
+.orient-probe {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(40, 26, 18, 0.45);
+  z-index: 40;
+}
+
+.orient-probe__card {
+  background: #fbf3e6;
+  border: 3px solid #b8865b;
+  border-radius: 18px;
+  padding: 24px 28px 18px;
+  max-width: 620px;
+  box-shadow: 0 14px 40px rgba(40, 26, 18, 0.35);
+  text-align: center;
+}
+
+.orient-probe__prompt {
+  font-size: 1.35rem;
+  color: #4a3526;
+  margin: 0 0 18px;
+}
+
+.orient-probe__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: center;
+}
+
+.orient-probe__option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+  min-height: 120px;
+  padding: 18px 16px;
+  border-radius: 16px;
+  border: 2px solid #c9a06a;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.orient-probe__option:hover,
+.orient-probe__option:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(40, 26, 18, 0.22);
+  outline: none;
+}
+
+.orient-probe__emoji { font-size: 2.6rem; line-height: 1; }
+
+.orient-probe__label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #4a3526;
+}
+
+.orient-probe__skip {
+  margin-top: 16px;
+  background: none;
+  border: none;
+  color: #8a6f57;
+  font-size: 0.95rem;
+  text-decoration: underline;
+  cursor: pointer;
+}

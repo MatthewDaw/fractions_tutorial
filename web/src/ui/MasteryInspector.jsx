@@ -188,7 +188,14 @@ function UiResponsivenessMetrics({ uiMetrics }) {
 }
 
 function CounterMetrics({ metrics }) {
-  const { uiChurn = 0, dependence = null, falsePosRate = null } = metrics || {};
+  const {
+    uiChurn = 0,
+    dependence = null,
+    falsePosRate = null,
+    coherenceAsked = 0,
+    coherenceCorrect = 0,
+  } = metrics || {};
+  const coherence = coherenceAsked > 0 ? coherenceCorrect / coherenceAsked : null;
   return (
     <dl className="inspector-metrics">
       <dt className="inspector-metric-label">UI churn (T3/session)</dt>
@@ -202,6 +209,13 @@ function CounterMetrics({ metrics }) {
       <dt className="inspector-metric-label">False-positive rate (mastered → later failed probe)</dt>
       <dd className="inspector-metric-value" data-testid="metric-falsePosRate">
         {falsePosRate !== null ? (falsePosRate * 100).toFixed(1) + '%' : '—'}
+      </dd>
+
+      <dt className="inspector-metric-label">Orientation coherence (named goal/why @ probe)</dt>
+      <dd className="inspector-metric-value" data-testid="metric-coherence">
+        {coherence !== null
+          ? (coherence * 100).toFixed(1) + '% (' + coherenceCorrect + '/' + coherenceAsked + ')'
+          : '—'}
       </dd>
     </dl>
   );
@@ -217,7 +231,7 @@ function CounterMetrics({ metrics }) {
  * @param {object} props
  * @param {Record<string, import('../engine/types.js').MasteryEstimate>|null} props.masteryMap
  * @param {Array<{kind: string, rationale: string, t?: number}>} [props.decisionLog]
- * @param {{ uiChurn?: number, dependence?: number|null, falsePosRate?: number|null }} [props.counterMetrics]
+ * @param {{ uiChurn?: number, dependence?: number|null, falsePosRate?: number|null, coherenceAsked?: number, coherenceCorrect?: number }} [props.counterMetrics]
  * @param {{ avgTimeToChangeMs?: number|null, ackRate?: number|null, churnRate?: number|null,
  *           uiChanges?: number, problemsJudged?: number, changeBannersShown?: number,
  *           changeBannersAcked?: number }} [props.uiMetrics]
@@ -272,6 +286,8 @@ export default function MasteryInspector({
     uiChurn: counterMetrics.uiChurn ?? 0,
     dependence: counterMetrics.dependence !== undefined ? counterMetrics.dependence : derivedDependence,
     falsePosRate: counterMetrics.falsePosRate !== undefined ? counterMetrics.falsePosRate : derivedFalsePosRate,
+    coherenceAsked: counterMetrics.coherenceAsked ?? 0,
+    coherenceCorrect: counterMetrics.coherenceCorrect ?? 0,
   };
 
   return (

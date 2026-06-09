@@ -60,7 +60,12 @@ let state = {
   // Append-only, capped log of decisions this session: {kind, rationale, t}.
   decisionLog: [],
   // Counter-metrics surfaced in the inspector (the brief's anti-shallow guards).
-  metrics: { uiChurn: 0 },
+  //   uiChurn          — T3 scaffold-level structural changes this session.
+  //   coherenceAsked   — orientation probes the child answered (denominator).
+  //   coherenceCorrect — of those, how many correctly named goal/why (numerator).
+  // Coherence answers the state-model "Orientation" success criterion: does the
+  // learner know what they are working on / why the surface changed?
+  metrics: { uiChurn: 0, coherenceAsked: 0, coherenceCorrect: 0 },
   // UI2: UI-responsiveness counter-metrics (instrumentation only — advisory,
   // never feeds adaptation). Raw tallies; the inspector derives rates from them.
   uiMetrics: emptyUiMetrics(),
@@ -175,6 +180,26 @@ export function acknowledgeRationale() {
 }
 
 /**
+ * Record one answered orientation-probe (UI3). Advisory instrumentation only —
+ * this feeds the coherence counter-metric and NEVER the mastery gate. A skip
+ * records nothing (the probe never blocks and an unanswered probe is not a
+ * coherence failure).
+ *
+ * @param {boolean} coherent — did the child correctly name goal / why-changed?
+ */
+export function recordCoherence(coherent) {
+  state = {
+    ...state,
+    metrics: {
+      ...state.metrics,
+      coherenceAsked: state.metrics.coherenceAsked + 1,
+      coherenceCorrect: state.metrics.coherenceCorrect + (coherent ? 1 : 0),
+    },
+  };
+  notify();
+}
+
+/**
  * UI2: derive the reportable UI-responsiveness metrics from the raw tallies.
  *   • avgTimeToChangeMs — mean ms from trigger to a UI-change surfacing (null if none)
  *   • ackRate           — fraction of change-banners acknowledged (null if none shown)
@@ -223,7 +248,7 @@ export function resetEngineStore() {
     rationale: '',
     masteryMap: null,
     decisionLog: [],
-    metrics: { uiChurn: 0 },
+    metrics: { uiChurn: 0, coherenceAsked: 0, coherenceCorrect: 0 },
     uiMetrics: emptyUiMetrics(),
     pendingTriggerT: null,
     nudge: null,
