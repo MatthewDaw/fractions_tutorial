@@ -60,6 +60,7 @@ function perStepView(tape) {
     latency: s.observation ? s.observation.latency : null,
     answerValue: s.observation ? s.observation.answer_value : null,
     tooFast: s.observation ? !!s.observation.too_fast_correct : false,
+    surfaceForm: s.observation ? (s.observation.surface_form ?? null) : null,
   }));
 }
 
@@ -115,6 +116,26 @@ function stuckConditionsHeld(view, nStuck) {
   return flat;
 }
 
+/**
+ * Returns true when the tape shows zero structural surface-form variation:
+ * the session never presented more than one distinct surface_form value.
+ *
+ * A gate that opens with only one surface form seen means the engine credited
+ * transfer without the learner ever facing structurally varied problems.
+ * This is INDEPENDENT of whether latent < τ (a child can be latently competent
+ * yet still have been presented only one surface form — falseTransfer fires but
+ * falsePositiveMastery does not, and vice-versa).
+ *
+ * Steps whose surfaceForm is null (not recorded) are excluded; if NO step
+ * recorded a surface form we cannot make the claim and return false.
+ */
+function hasNoSurfaceVariation(view) {
+  const forms = view.map((v) => v.surfaceForm).filter((f) => f !== null);
+  if (forms.length === 0) return false; // no surface data — cannot claim absent
+  const distinct = new Set(forms);
+  return distinct.size <= 1;
+}
+
 // ---------------------------------------------------------------------------
 // labelTape — the per-tape oracle.
 // ---------------------------------------------------------------------------
@@ -150,17 +171,23 @@ export function labelTape(tape, { tauLatent = DEFAULT_TAU_LATENT, nStuck = 6 } =
   const stuckHeld = stuckConditionsHeld(view, nStuck);
   const missedEscalation = !escalated && latentlyStuck && stuckHeld;
 
-  // ---- falseTransfer: transfer credited while latent transfer is absent ----
-  // We infer "engine credited transfer" from a gate-open step (gate ⟹ transfer_passed),
-  // and "latent transfer absent" from the persona/decision history: the latent never
-  // crossed τ, OR the only structural variation the engine saw was a denominator/
-  // surface relabel rather than genuine structural breadth (decision history shows no
-  // qualifying spread). We approximate the latter conservatively: a gate-open step
-  // whose latent is below τ is a false transfer (the engine credited transfer the
-  // child does not latently have). This is intentionally a SUBSET of false-positive
-  // mastery cases that specifically implicate the transfer dimension.
-  const ftSteps = view.filter((v) => v.gate && v.latent !== null && v.latent < tauLatent);
-  const falseTransfer = ftSteps.length > 0;
+  // ---- falseTransfer: transfer credited while structural breadth was absent ----
+  // "Engine credited transfer" ← any gate-open step (gate ⟹ transfer_passed).
+  // "Latent transfer absent" ← the session never varied surface_form: only one
+  //   distinct surface_form appeared across all attempts, so the engine never
+  //   saw the structural diversity that transfer credit requires.
+  //
+  // This signal is INDEPENDENT of latent < τ:
+  //   • falsePositiveMastery ∧ ¬falseTransfer: gate opened below τ but surface
+  //     forms DID vary — mastery credit is false, but transfer signal was real.
+  //   • ¬falsePositiveMastery ∧ falseTransfer: gate opened above τ (child
+  //     genuinely knew it) but only one surface form appeared — latent mastery
+  //     is real, but transfer evidence was structurally absent.
+  //   • Both true: gate opened below τ AND no surface variation.
+  const gateOpened = view.some((v) => v.gate);
+  const noSurfaceVariation = hasNoSurfaceVariation(view);
+  const falseTransfer = gateOpened && noSurfaceVariation;
+  const ftSteps = falseTransfer ? view.filter((v) => v.gate) : [];
 
   return {
     tauLatent,
@@ -177,7 +204,12 @@ export function labelTape(tape, { tauLatent = DEFAULT_TAU_LATENT, nStuck = 6 } =
         falseEscalation: falseEscalation
           ? [{ terminalKind, finalLatent: fLatent }]
           : [],
-        falseTransfer: ftSteps.map((v) => ({ step: v.i, latent: v.latent, pknown: v.pknown })),
+        falseTransfer: ftSteps.map((v) => ({
+          step: v.i,
+          latent: v.latent,
+          pknown: v.pknown,
+          noSurfaceVariation: true,
+        })),
       },
     },
     perStep: view,

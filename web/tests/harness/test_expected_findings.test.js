@@ -125,11 +125,17 @@ describe('latentTruth.labelTape — fixture labels', () => {
     };
   }
 
-  it('a gate-open step below τ_latent yields falsePositiveMastery AND falseTransfer', () => {
+  it('a gate-open step below τ_latent yields falsePositiveMastery (falseTransfer requires surface_form data)', () => {
+    // T13 fix: falseTransfer is now independent of latent < τ. It keys on whether
+    // surface_form varied across the session, NOT on latent < τ. This fixture has
+    // no surface_form field in its observations, so hasNoSurfaceVariation returns
+    // false (no data = no claim) and falseTransfer stays false.
+    // For the combined case (no surface variation AND latent < τ), see
+    // tests/harness/test_false_transfer_independence.test.js tape B.
     const tape = mkTape([step(), step({ gate: true, latent: 0.5 })]);
     const label = labelTape(tape, { tauLatent: 0.8 });
     expect(label.labels.falsePositiveMastery).toBe(true);
-    expect(label.labels.falseTransfer).toBe(true);
+    expect(label.labels.falseTransfer).toBe(false); // no surface_form data → no claim
     expect(label.labels.evidence.falsePositiveMastery).toHaveLength(1);
     expect(label.labels.evidence.falsePositiveMastery[0].latent).toBe(0.5);
   });
