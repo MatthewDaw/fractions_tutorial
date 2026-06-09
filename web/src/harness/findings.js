@@ -193,10 +193,19 @@ function nudgeWindowFor(obs) {
   return null;
 }
 
-/** Did the tape record ANY Tier-2 nudge? (None ever do today — this is the gap.) */
+/**
+ * Did the tape record ANY Tier-2 nudge? Historically NONE did (the dead channel —
+ * this was the gap). T26 wires the in-the-moment nudge: with the `tier2Nudge` flag
+ * on, the runner records a `step.nudge` ({ type, payload }) for an idle / oscillation
+ * / too-fast-correct window. We count that recorded nudge here (in addition to the
+ * legacy decision-kind probe), so a flags-on tape with a fired nudge is no longer
+ * flagged as a nudge gap. Flags-off tapes carry no nudge field → behavior unchanged.
+ */
 function tapeRecordedNudge(tape) {
   return (tape.steps || []).some(
-    (s) => s.decision && /nudge|hint_offer|take_your_time|transfer_probe/i.test(s.decision.kind || '')
+    (s) =>
+      (s.nudge && typeof s.nudge.type === 'string') ||
+      (s.decision && /nudge|hint_offer|take_your_time|transfer_probe/i.test(s.decision.kind || ''))
   );
 }
 

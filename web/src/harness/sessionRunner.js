@@ -48,6 +48,12 @@ import { withFlags } from './flagOverlay.js';
 import { correctAnswerValue } from './personas/model.js';
 import { personaById, allPersonas } from './personas/library.js';
 import { serializeSession } from './tape.js';
+import {
+  makeTier2Window,
+  checkOscillation,
+  checkLongPause,
+  checkTooFastCorrect,
+} from '../runtime/tier2.js';
 
 // ---------------------------------------------------------------------------
 // Constants — the EMPTY recentBehavior channel (mirror of useLessonEngine).
@@ -392,6 +398,60 @@ function appendAttemptBurst(log, clock, {
 }
 
 // ---------------------------------------------------------------------------
+// T26 — Tier-2 nudge wiring (the dead in-the-moment channel).
+//
+// FINDING (confirmed): the live submit boundary (useLessonEngine.judgeAndAdvance)
+// passes the policy a recentBehavior whose `observations` come from `recentObsRef`
+// — a ref that is ALLOCATED but NEVER appended — so the buffer is empty on every
+// session, and the runner here mirrored that with the frozen EMPTY_RECENT_BEHAVIOR.
+// The T03 disengaged writer feeds `disengagedScaffoldCount` (the escalation/scaffold
+// counter) ONLY; it does NOT reach the Tier-2 in-the-moment nudge (idle / oscillation
+// / too-fast-correct), so that channel records ZERO firings. tier2.js computes the
+// nudges but nothing on the run path calls its oscillation/long-pause detectors or
+// records the result.
+//
+// FIX (reversible, flag `tier2Nudge`, default-off): build a REAL recentBehavior
+// from the SAME segment()-derived Observation the tape already records (we do NOT
+// invent signals or duplicate the observe-layer detectors), then drive tier2.js's
+// existing detectors at the boundary and RECORD the fired nudge on the step. With
+// the flag off the channel stays exactly as before (EMPTY_RECENT_BEHAVIOR, no nudge
+// recorded) so prior behavior is byte-identical. The nudge is ADVISORY: it is
+// recorded for the harness's nudge-gap detector but never mutates the engine
+// PolicyState or the engine Decision (affect/advisory firewall — escalation and the
+// banked decision are untouched).
+// ---------------------------------------------------------------------------
+
+/**
+ * Fire at most one Tier-2 nudge for the just-completed attempt, reusing the
+ * existing tier2.js detectors against the REAL segment-derived observation.
+ *
+ * Priority mirrors tier2.checkTier2 (long-pause > oscillation > too-fast). The
+ * idle/long-pause channel reads the observation's own latency as the idle time
+ * (lastInteraction=0, now=obs.latency) so an idle attempt (latency ≥ PAUSE
+ * threshold) fires HINT_OFFER — the SAME window findings.nudgeWindowFor flags.
+ *
+ * @param {object|null} obs  the segment() Observation for this attempt.
+ * @returns {{ type:string, payload:object } | null}
+ */
+function fireTier2Nudge(obs) {
+  if (!obs) return null;
+  const window = makeTier2Window();
+  const recent = { observations: [obs], isDisengaged: false };
+
+  const hintRung = obs.hint_max_rung ?? 0;
+  // 1. long pause → HINT_OFFER (idle time = the attempt's own latency).
+  const pause = checkLongPause(0, obs.latency ?? 0, window, hintRung);
+  if (pause) return pause;
+  // 2. oscillation → TAKE_YOUR_TIME.
+  const osc = checkOscillation(recent, window);
+  if (osc) return osc;
+  // 3. too-fast-correct → TRANSFER_PROBE_QUEUED.
+  const fast = checkTooFastCorrect(obs, window);
+  if (fast) return fast;
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // runSession — the headless loop.
 // ---------------------------------------------------------------------------
 
@@ -427,6 +487,10 @@ export function runSession({ persona, skillId, seed = 1, stepCap = 40, flags = {
 
 /** The session loop, run with the flag overlay already applied to engine PARAMS. */
 function runSessionInner({ persona, skillId, seed, stepCap, flags, startScaffold = 0 }) {
+  // T26: reversible Tier-2 nudge wiring. Default OFF → the empty recentBehavior
+  // channel + no recorded nudge (byte-identical to prior tapes). ON → a real
+  // recentBehavior (from segment) feeds the policy and the Tier-2 nudge is recorded.
+  const tier2NudgeOn = flags?.tier2Nudge === true;
   // PolicyState: currentNodeId=skillId, entry scaffold, no prior — exactly as the live hook.
   // startScaffold > 0 is used by oracle probes that need scaffold > L0 to make
   // RaiseScaffold legal (e.g. the T03 frustration-scaffold reachability probe).
@@ -450,7 +514,16 @@ function runSessionInner({ persona, skillId, seed, stepCap, flags, startScaffold
     const { mastery } = measurementReduce(log, now);
 
     // (2) BOUNDARY: nextDecision called ONCE here (mirrors the judged boundary).
-    const decision = nextDecision(policyState, mastery, EMPTY_RECENT_BEHAVIOR, now);
+    // T26: when the flag is on, feed a REAL recentBehavior built from the SAME
+    // segment()-derived Observations the tape records (last 10), so the channel is
+    // no longer empty. The engine reads recentBehavior ONLY for the disengaged
+    // escalation trigger (gated on disengagedCount, which stays 0 here), so this is
+    // advisory and does NOT change the banked decision — it just makes the Tier-2
+    // nudge below recordable. Off → EMPTY_RECENT_BEHAVIOR (prior behavior).
+    const recentBehavior = tier2NudgeOn
+      ? { observations: segment(log).slice(-10), isDisengaged: false }
+      : EMPTY_RECENT_BEHAVIOR;
+    const decision = nextDecision(policyState, mastery, recentBehavior, now);
     lastDecision = decision;
 
     // (3) nextPractice → spec OR terminal exit.
@@ -580,13 +653,21 @@ function runSessionInner({ persona, skillId, seed, stepCap, flags, startScaffold
     const decisionRecord = { kind: decision.kind, rationale: decision.rationale };
     if ('preserveWork' in decision) decisionRecord.preserveWork = decision.preserveWork;
 
-    steps.push({
+    // T26: fire + record the Tier-2 in-the-moment nudge for THIS attempt, reusing
+    // tier2.js's detectors against the real Observation (no detector duplication,
+    // no invented signal). Advisory-only: it never mutates PolicyState or the
+    // engine Decision. Off → no nudge field (tapes byte-identical to before).
+    const nudge = tier2NudgeOn ? fireTier2Nudge(observation) : null;
+
+    const stepRecord = {
       decision: decisionRecord,
       observation,
       gate: gateOpen,
       latent: persona.truePKnown(skillId),
       pknown: nodeEst ? nodeEst.P_known : null,
-    });
+    };
+    if (nudge) stepRecord.nudge = nudge;
+    steps.push(stepRecord);
   }
 
   return {

@@ -55,8 +55,16 @@ const FLAG_TO_PARAM = Object.freeze({
   'escalation.nDisengScaffold': 'escalation.nDisengScaffold',
 });
 
-/** Flags carried for attribution that have NO engine PARAMS routing yet (inert). */
-const INERT_FLAGS = Object.freeze(['delayedProbe', 'unifiedTaxonomy']);
+/**
+ * Flags carried for attribution that have NO engine PARAMS routing.
+ *   delayedProbe / unifiedTaxonomy — no engine knob yet (tape-only attribution).
+ *   tier2Nudge (T26) — a RUN-PATH flag consumed by sessionRunner (it wires the
+ *     dead Tier-2 in-the-moment nudge: a real recentBehavior + a recorded nudge).
+ *     It deliberately touches NO engine PARAMS (the nudge is advisory and never
+ *     changes the banked engine Decision), so it is inert to this PARAMS overlay
+ *     but still threaded onto the tape for attribution.
+ */
+const INERT_FLAGS = Object.freeze(['delayedProbe', 'unifiedTaxonomy', 'tier2Nudge']);
 
 /** Read a (possibly dotted) path off an object. */
 function getPath(obj, path) {
