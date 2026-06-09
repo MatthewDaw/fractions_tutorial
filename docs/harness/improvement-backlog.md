@@ -2,6 +2,16 @@
 
 Ranked findings: **24**  ·  human-audit agreement: **25%**
 
+## T15 — Bored-high-skill persona (RESOLVED)
+
+**Status:** DONE — `bored-high-skill` persona added in `web/src/harness/personas/library.js`
+(nonBkt section). Bespoke `boredHighSkillEmit` law: `pBoredomError` grows linearly
+0→0.25 over the first 20 steps; boredom latency bonus adds 120ms/step on top of normal
+fatigue. Test coverage in `web/tests/harness/test_bored_high_skill.test.js` (7 assertions:
+wired-in check, metadata check, rising-latency signature, late-error signature,
+no-null-answer guard, majority-correct guard, distinct-from-fast-mastery comparison).
+`meta.approximates` = "bored high-skill learner who needs challenge" (PDF archetype).
+
 ## Dead / bypassed pedagogy (audit-corroborated)
 
 ### dead-pedagogy:dead-retention-probe ✓audit

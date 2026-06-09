@@ -176,6 +176,27 @@ function nonBkt() {
       meta: { approximates: 'a disengaged child who refuses / times out / scribbles',
               mightMiss: 'partial engagement (we model full refusal)' },
     }),
+    // bored-high-skill: already-competent learner who disengages across the session.
+    // NON-BKT: boredom is NOT a BKT parameter — competence is high and stable but
+    // latency RISES (boredom drift) and intentional errors INCREASE with session
+    // length, distinct from fast-mastery (succeeds cleanly) and off-task (full
+    // refusal). The boredom law: pBoredomError grows linearly from 0 at step 0 to
+    // ~0.25 at step 20, independent of latent skill.
+    makePersona({
+      id: 'bored-high-skill',
+      klass: 'bored-high-skill-nonbkt',
+      latent: {
+        truePknownDefault: 0.85, learnRate: 0.02, pSlip: 0.04, pGuess: 0.1,
+        hintAppetite: 0.02, idleRate: 0.12,
+        latency: { base: 3000, spread: 1500, fatiguePerStep: 180 }, // strong drift
+        misconception: 'add_denominators',
+      },
+      emit: boredHighSkillEmit,
+      meta: {
+        approximates: 'bored high-skill learner who needs challenge',
+        mightMiss: 'a bored child who re-engages when given harder material (we model monotone disengagement)',
+      },
+    }),
   ];
 }
 
@@ -243,6 +264,81 @@ function spoofers() {
 // ---------------------------------------------------------------------------
 
 function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+
+/**
+ * bored-high-skill: NON-BKT boredom-drift law.
+ *
+ * The child already knows the material (truePknownDefault ~0.85, learnRate ~0.02).
+ * Two boredom signals RISE with session step:
+ *   (1) Latency drift: boredom latency bonus grows linearly, so later steps take
+ *       meaningfully longer even though the child "knows" the answer.
+ *   (2) Intentional error rate (pBoredomError): grows linearly from 0 at step 0 to
+ *       BOREDOM_ERROR_RATE_AT_20 at step 20 (capped there). These are deliberate
+ *       wrong answers from a competent child who is no longer trying, not slips.
+ *
+ * This is distinct from:
+ *   - fast-mastery: succeeds cleanly with low latency, no intentional errors.
+ *   - off-task: full refusal (null/NaN answers), not high-competence wrong answers.
+ *   - short-attention: rising latency but starts at moderate competence (0.5), not high.
+ */
+const BOREDOM_ERROR_RATE_AT_20 = 0.25; // pBoredomError at step 20+
+
+function boredHighSkillEmit(problem, ctx, env) {
+  const { latent, session, truePKnown } = env;
+  const rng = ctx.rng;
+  const skillId = ctx.skillId;
+
+  // Boredom error rate grows linearly with session step, capped at step 20.
+  const boredSteps = Math.min(session.step, 20);
+  const pBoredomError = (boredSteps / 20) * BOREDOM_ERROR_RATE_AT_20;
+
+  // Intentional boredom error: despite knowing the material, the child submits a
+  // wrong answer. This is NOT a slip — it fires at pBoredomError independent of
+  // latent skill, and it does not suppress learning (they know it).
+  let correct;
+  if (chance(rng, pBoredomError)) {
+    // Deliberate boredom error — high-skill child not trying.
+    correct = false;
+  } else {
+    // Normal correctness from latent skill (high pknown → usually correct).
+    const p = truePKnown(skillId);
+    correct = chance(rng, p) ? !chance(rng, latent.pSlip) : chance(rng, latent.pGuess);
+    if (correct) {
+      const cur = truePKnown(skillId);
+      session.pknownBySkill[skillId] = clamp01(cur + latent.learnRate * (1 - cur));
+    }
+  }
+
+  const answer = correct
+    ? correctAnswerValue(problem)
+    : plantWrong(skillId, problem, latent, rng);
+
+  // Boredom latency bonus: rises linearly with session step (additional drift
+  // on top of the standard fatigue term from drawLatency). This is the boredom-
+  // specific signal: the child lingers, daydreams, checks out — even at high skill.
+  const L = latent.latency;
+  const overAttention = Math.max(0, session.step - (latent.attentionSpan || 12));
+  const fatigue = (session.step * 0.4 + overAttention) * (L.fatiguePerStep || 0);
+  const boredLatencyBonus = session.step * 120; // 120ms/step boredom drift
+  const jitter = rng() * (L.spread || 0);
+  const latencyMs = Math.round((L.base || 0) + jitter + fatigue + boredLatencyBonus);
+
+  // Idle signals increase with boredom (daydreaming, off-gaze).
+  const idleP = latent.idleRate + pBoredomError * 0.5;
+  const signals = [];
+  if (chance(rng, idleP)) {
+    signals.push({ type: 'idle', confidence: 0.5 + rng() * 0.4 });
+  }
+
+  return {
+    answer,
+    latencyMs,
+    hintRung: 0, // bored child doesn't bother ringing hints
+    selfCorrections: 0,
+    modality: latent.modality || 'tap',
+    signals,
+  };
+}
 
 function plantWrong(skillId, problem, latent, rng) {
   const ms = misconceptionsFor(skillId);
