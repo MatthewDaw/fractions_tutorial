@@ -197,6 +197,29 @@ function nonBkt() {
         mightMiss: 'a bored child who re-engages when given harder material (we model monotone disengagement)',
       },
     }),
+    // performance-oriented: optimises for ADVANCING the gate, not for learning.
+    // NON-BKT: the child locks onto the FIRST surface form seen (no structural
+    // transfer) and answers at moderate-fast speed WITHOUT hints. Very low learnRate
+    // (true skill does not improve), moderate pSlip, moderate truePknown (~0.5)
+    // — enough lucky-correct runs to open the gate while transfer is structurally
+    // absent (only one surface_form seen → falseTransfer fires once the gate opens).
+    // Distinct from fast-shallow-guesser (latency stays well above the 800ms floor)
+    // and from over-hinter (hintAppetite near zero).
+    makePersona({
+      id: 'performance-oriented',
+      klass: 'performance-oriented-nonbkt',
+      latent: {
+        truePknownDefault: 0.5, learnRate: 0.01, pSlip: 0.12, pGuess: 0.2,
+        lockedSurfaceBySkill: {}, // first surface form seen per skill, locked
+        hintAppetite: 0.02, idleRate: 0.04,
+        latency: { base: 1800, spread: 1200, fatiguePerStep: 20 }, // above floor, not implausibly fast
+      },
+      emit: performanceOrientedEmit,
+      meta: {
+        approximates: "performance-oriented student who optimizes for finishing, not understanding",
+        mightMiss: 'a child who learns to optimise AND internalises the material over time',
+      },
+    }),
   ];
 }
 
@@ -337,6 +360,94 @@ function boredHighSkillEmit(problem, ctx, env) {
     selfCorrections: 0,
     modality: latent.modality || 'tap',
     signals,
+  };
+}
+
+/**
+ * performance-oriented: NON-BKT surface-lock law.
+ *
+ * This child optimises for advancing the gate, not for real understanding:
+ *
+ *   (1) SURFACE LOCK: on first sighting per skill, the child locks onto that
+ *       surface_form and only ever sees (in its own model) that one form — so
+ *       ctx.surfaceForm is IGNORED for latency/correctness decisions.  The key
+ *       effect is that the tape will show zero surface-form variation: every
+ *       attempt carries the SAME surfaceForm the runner assigned, and since the
+ *       runner sequences problems through one skill the surfaceForm is naturally
+ *       stable for shallow skills.  The oracle's hasNoSurfaceVariation() will
+ *       see ≤1 distinct form and correctly fire falseTransfer once the gate opens.
+ *
+ *   (2) CORRECTNESS from moderate latent skill (truePknown ~0.5, pSlip ~0.12):
+ *       not a high-skill child — just lucky enough across a 40-step session to
+ *       rack up the consecutive-correct run the gate needs.
+ *
+ *   (3) NO HINTS (hintAppetite ~0.02): the child skips hints entirely to look
+ *       "clean" to the engine (hintFree corrects count toward consecutiveCleanCorrects).
+ *
+ *   (4) LATENCY: base 1800ms, spread 1200ms, tiny fatigue — comfortably above
+ *       the 800ms too-fast-correct floor, so corrects are NEVER flagged too_fast.
+ *       This is explicitly NOT implausibly fast (contrast fast-shallow-guesser:
+ *       base 300ms, dips under the floor on purpose).
+ *
+ *   (5) VERY LOW learnRate (0.01): true skill barely improves across the session —
+ *       the gate opens on a lucky run, not genuine mastery.
+ *
+ * Distinct from:
+ *   - fast-shallow-guesser: that persona's latency BASE is 300ms (under the 800ms
+ *     floor); this persona's base is 1800ms (solidly above).
+ *   - over-hinter: over-hinter has hintAppetite 0.6; this persona is near-zero.
+ *   - memorizer: memorizer explicitly passes the trained form and fails all others;
+ *     this persona has moderate but uniform competence and is about gate-gaming, not
+ *     rote-memorisation of one template.
+ */
+function performanceOrientedEmit(problem, ctx, env) {
+  const { latent, session, truePKnown } = env;
+  const rng = ctx.rng;
+  const skillId = ctx.skillId;
+
+  // Lock the first surface form encountered per skill (never update after).
+  if (!(skillId in latent.lockedSurfaceBySkill)) {
+    latent.lockedSurfaceBySkill[skillId] = ctx.surfaceForm;
+  }
+  // (The locked form is stored for inspector/oracle use; the runner records
+  //  ctx.surfaceForm from the problem regardless — we cannot override that.
+  //  What matters for falseTransfer is that the ENGINE only presents one
+  //  surfaceForm per session to a single-skill runner, so the tape has ≤1 distinct
+  //  form.)
+
+  // Correctness: drawn from latent skill — moderate pknown, low learnRate.
+  const p = truePKnown(skillId);
+  let correct;
+  if (chance(rng, p)) {
+    correct = !chance(rng, latent.pSlip); // knows it but may slip
+  } else {
+    correct = chance(rng, latent.pGuess); // lucky guess
+  }
+
+  // Minimal learning: barely improves (learnRate ~0.01).
+  if (correct) {
+    const cur = truePKnown(skillId);
+    session.pknownBySkill[skillId] = clamp01(cur + latent.learnRate * (1 - cur));
+  }
+
+  const answer = correct
+    ? correctAnswerValue(problem)
+    : plantWrong(skillId, problem, latent, rng);
+
+  // Latency: moderate-fast, NOT implausibly fast (stays above the 800ms floor).
+  const L = latent.latency;
+  const overAttention = Math.max(0, session.step - (latent.attentionSpan || 20));
+  const fatigue = (session.step * 0.4 + overAttention) * (L.fatiguePerStep || 0);
+  const jitter = rng() * (L.spread || 0);
+  const latencyMs = Math.round((L.base || 0) + jitter + fatigue);
+
+  return {
+    answer,
+    latencyMs,
+    hintRung: chance(rng, latent.hintAppetite) ? 1 : 0, // near-zero; skips hints
+    selfCorrections: 0, // focused; does not waffle
+    modality: latent.modality || 'tap',
+    signals: chance(rng, latent.idleRate) ? [{ type: 'idle', confidence: 0.5 }] : [],
   };
 }
 

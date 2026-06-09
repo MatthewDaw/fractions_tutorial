@@ -2,6 +2,22 @@
 
 Ranked findings: **24**  ·  human-audit agreement: **25%**
 
+## T16 — Performance-oriented persona (RESOLVED)
+
+**Status:** DONE — `performance-oriented` persona added in `web/src/harness/personas/library.js`
+(nonBkt section). Bespoke `performanceOrientedEmit` law: moderate truePknown (~0.5), very low
+learnRate (0.01), moderate pSlip (0.12), low hintAppetite (0.02), latency base 1800ms (above
+the 800ms too-fast floor — NOT implausibly fast). Surface-lock field (`lockedSurfaceBySkill`)
+records the first form seen per skill. Test coverage in
+`web/tests/harness/test_performance_oriented.test.js` (13 assertions: wired-in check, metadata
+check, latency-base above floor, no too_fast_correct flags, latency 3x higher than
+fast-shallow-guesser, low hint count, hint count vs over-hinter comparison, hintAppetite ratio,
+synthetic-tape falseTransfer (latent<tau), synthetic-tape falseTransfer independence
+(latent>=tau), low learnRate param check, low learnRate net-rise check).
+`meta.approximates` = "performance-oriented student who optimizes for finishing, not
+understanding" (PDF archetype). Oracle falseTransfer tested via synthetic tapes (T13 pattern)
+because the engine always presents >=2 surface forms in live sessions.
+
 ## T15 — Bored-high-skill persona (RESOLVED)
 
 **Status:** DONE — `bored-high-skill` persona added in `web/src/harness/personas/library.js`
