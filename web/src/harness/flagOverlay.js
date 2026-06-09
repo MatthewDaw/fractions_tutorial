@@ -45,6 +45,17 @@ import { PARAMS } from './engineApi.js';
  *   escalation.nDiseng        → PARAMS.escalation.nDiseng        (policy.ts: disengaged escalation)
  *   escalation.nStuck         → PARAMS.escalation.nStuck         (policy.ts: stuck escalation)
  *   escalation.nDisengScaffold → PARAMS.escalation.nDisengScaffold (policy.ts: 3b frustration-scaffold threshold)
+ *
+ * T22–T25 round-2 gate-hardening flags (isMastered reads PARAMS at call time):
+ *
+ *   requireMisconceptionFree  → PARAMS.requireMisconceptionFree  (gate.ts T22: stable-misconception guard)
+ *   requireStableEstimate     → PARAMS.requireStableEstimate     (gate.ts T23: pre-acquisition debounce)
+ *   strictGateThreshold       → PARAMS.strictGateThreshold       (gate.ts T24: τ-band calibration bar)
+ *   requireTransferProbe      → PARAMS.requireTransferProbe      (gate.ts T25: per-skill transfer probe)
+ *
+ * T27 escalation competence-guard:
+ *
+ *   escalationCompetenceGuard → PARAMS.escalationCompetenceGuard (policy.ts T27: false-escalation guard)
  */
 const FLAG_TO_PARAM = Object.freeze({
   fluencyHardMode: 'fluencyHardMode',
@@ -53,6 +64,13 @@ const FLAG_TO_PARAM = Object.freeze({
   'escalation.nDiseng': 'escalation.nDiseng',
   'escalation.nStuck': 'escalation.nStuck',
   'escalation.nDisengScaffold': 'escalation.nDisengScaffold',
+  // T22–T25 gate-hardening flags (round 2).
+  requireMisconceptionFree: 'requireMisconceptionFree',
+  requireStableEstimate: 'requireStableEstimate',
+  strictGateThreshold: 'strictGateThreshold',
+  requireTransferProbe: 'requireTransferProbe',
+  // T27 escalation competence-guard.
+  escalationCompetenceGuard: 'escalationCompetenceGuard',
 });
 
 /**
@@ -63,6 +81,12 @@ const FLAG_TO_PARAM = Object.freeze({
  *     It deliberately touches NO engine PARAMS (the nudge is advisory and never
  *     changes the banked engine Decision), so it is inert to this PARAMS overlay
  *     but still threaded onto the tape for attribution.
+ *
+ * NOTE: the T22–T25 gate-hardening flags (requireMisconceptionFree,
+ * requireStableEstimate, strictGateThreshold, requireTransferProbe) and the
+ * T27 escalationCompetenceGuard are NOW routed (FLAG_TO_PARAM above) — they
+ * are NO LONGER inert. Removing them from INERT_FLAGS means a flags-on sweep
+ * that includes any of them will genuinely mutate PARAMS and change gating.
  */
 const INERT_FLAGS = Object.freeze(['delayedProbe', 'unifiedTaxonomy', 'tier2Nudge']);
 

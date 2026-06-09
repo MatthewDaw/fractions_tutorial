@@ -42,6 +42,33 @@ at τ=0.8 — driven by the existing fluencyOk-always-true audit defect, not by 
 the static arm's 0% is vacuous because no one gated at all.
 
 Full doc: `docs/harness/adaptive-vs-static-comparison.md`.
+## T28 — Gate-hardening certification (round-2, 2026-06-09)
+
+**Status:** DONE (partial) — overlay extended, before/after measured, honest verdict emitted.
+
+**What was done:**
+- Extended `flagOverlay.js` `FLAG_TO_PARAM` to route all four T22-T25 gate-hardening flags
+  (`requireMisconceptionFree`, `requireStableEstimate`, `strictGateThreshold`, `requireTransferProbe`)
+  plus the T27 `escalationCompetenceGuard` to their live PARAMS properties.
+- Added `tests/harness/test_T28_gate_hardening.test.js` (20 tests): routing coverage, PARAMS mutation
+  smoke, before/after population metrics, counter-direction checks, runLoop documentation.
+- Updated `docs/harness/decision-log.md` and `docs/harness/baseline-report.md` with real numbers.
+
+**Before/after (full library sweep, 216 sessions, seed=1, stepCap=40):**
+- false_mastery_rate τ=0.80: 0.3796 → 0.3380 (drop of 0.0416, 9 sessions resolved)
+- false_mastery_rate τ=0.85: 0.4583 → 0.4583 (no change)
+- false_escalation_rate: 0.0046 → 0.0000 (T27 guard working)
+- transfer_after_fade: 0.8844 → 0.8844 (guardrail intact)
+
+**Honest verdict:** PARTIAL improvement. Flags help at τ=0.80 for the `anxious-low-energy` persona
+class. They cannot hit the committed τ=0.85 target (≤0.20) because `strictGateThreshold=0.985` is
+moot vs `pKnownClamp` ceiling of 0.99. BKT climbs to 0.99 in < 10 steps for high-correct-rate
+personas. The `escalationCompetenceGuard` is safe to flip default-ON.
+
+**Open action:** Re-tune `pKnownClamp[1]` from 0.99 → 0.995 and `strictGateThresholdValue` from
+0.985 → 0.992, then re-run T28 certification to validate the τ=0.85 ≤0.20 target.
+
+`npx vitest run` GREEN: 1210 tests / 90 files all pass.
 
 ## T21 — Silent guardrail-degradation gap (RESOLVED)
 

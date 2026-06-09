@@ -4,6 +4,20 @@ Scope: the ENGINE PATH (measurementReduce → nextDecision → gate). The live s
 
 Sessions: **240**  ·  τ_latent: **0.8**
 
+## T28 Gate-Hardening Before/After (2026-06-09, round-2 certification)
+
+Full library sweep: 216 sessions (24 personas × 9 skills), seed=1, stepCap=40.
+
+| metric | flags-OFF (baseline) | flags-ON (T22–T25+T27) | delta |
+| --- | --- | --- | --- |
+| false_mastery_rate (τ=0.80) | **0.3796** | **0.3380** | **-0.0416** |
+| false_mastery_rate (τ=0.85) | 0.4583 | 0.4583 | 0.0000 |
+| false_escalation_rate | 0.0046 | **0.0000** | -0.0046 |
+| transfer_after_fade | 0.8844 | 0.8844 | 0.0000 |
+
+Beneficiary: `anxious-low-energy` persona, all 9 skills (9/9 resolved at τ=0.80).
+τ=0.85 limitation: `strictGateThreshold=0.985` is moot vs `pKnownClamp` ceiling 0.99; requires pKnownClamp re-tune (see decision-log.md §T28).
+
 ## Counter-paired population metrics (KTD5)
 
 | headline | value | counter | value |
