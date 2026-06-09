@@ -58,6 +58,77 @@ function classifyAddError(operands, an, ad) {
 }
 
 /**
+ * Pull the two whole-number factors out of a mult generator's `operands`
+ * ({groups,size} for m1, {rows,cols} for m2, {a,b} for m3), as [x, y] or null.
+ */
+function twoFactors(operands) {
+  if (!operands || typeof operands !== 'object') return null;
+  let x;
+  let y;
+  if ('groups' in operands && 'size' in operands) { x = num(operands.groups); y = num(operands.size); }
+  else if ('rows' in operands && 'cols' in operands) { x = num(operands.rows); y = num(operands.cols); }
+  else if ('a' in operands && 'b' in operands) { x = num(operands.a); y = num(operands.b); }
+  else return null;
+  return Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
+}
+
+/**
+ * Classify a wrong multiplication answer into a specific engine ErrorSignature
+ * (006 O1), or null to fall through to the generic 'other'. Operand-aware so the
+ * mult strand gets error-specific remediation instead of collapsing to 'other'.
+ *
+ *   add_factors            v === a+b           (added the factors)
+ *   array_perimeter        v === 2(a+b)        (m2: counted the border, not the area)
+ *   skip_count_drift       v === a*b ± min(a,b) (skip-count off by one whole group)
+ *   distributive_add_parts v === a + b1 + b2   (summed split sizes, not partial products)
+ *
+ * @param {string} skill   the mult skill id (m1/m2/m3 binding)
+ * @param {object} operands the problem operands (carries the two factors)
+ * @param {number} v       the submitted product
+ * @param {number} product the correct product
+ */
+function classifyMultError(skill, operands, v, product) {
+  if (!Number.isFinite(v)) return null;
+  const factors = twoFactors(operands);
+  if (!factors) return null;
+  const [a, b] = factors;
+
+  // add_factors: a×b → a+b (the canonical "added instead of multiplied" slip).
+  // Guard against a+b === a*b (e.g. 2×2) so a genuine product isn't misread.
+  if (v === a + b && a + b !== a * b) return 'add_factors';
+
+  // array_perimeter (m2 specifically): rows×cols → 2(rows+cols), the border count.
+  if (skill === 'MULT_ARRAYS' && v === 2 * (a + b) && 2 * (a + b) !== a * b) {
+    return 'array_perimeter';
+  }
+
+  // skip_count_drift: skip-counting that lands one whole group short or long
+  // (e.g. counted 5 sixes as 4 or 6 sixes — off by one skip of size `a` OR `b`).
+  // Checked before distributive so a ±one-group drift isn't mis-read as a split slip.
+  for (const step of [a, b]) {
+    if (step > 0 && (v === product + step || v === product - step) && v !== product) {
+      return 'skip_count_drift';
+    }
+  }
+
+  // distributive_add_parts: the child splits one factor into b = b1 + b2, but only
+  // multiplies ONE part and then ADDS the other part's bare size instead of taking
+  // its partial product — i.e. a*b1 + b2 (or a*b2 + b1) for some interior split.
+  // Correct distributive is a*b1 + a*b2; this is the "summed the split size" slip.
+  // Scanned over the splittable factor's interior cuts (deterministic, operand-driven).
+  for (const [whole, other] of [[a, b], [b, a]]) {
+    for (let part = 1; part < whole; part++) {
+      const rest = whole - part;
+      // multiplied `part` by `other`, then added the leftover size `rest` raw
+      const slip = other * part + rest;
+      if (v === slip && slip !== a * b && slip !== a + b) return 'distributive_add_parts';
+    }
+  }
+
+  return null;
+}
+
+/**
  * @param {object} problem  a GeneratedProblem (problem.skill, problem.answer, problem.operands)
  * @param {object} answer   the learner's answer in the skill's shape
  * @returns {{ correct: boolean, stars: number, errorSignature: string|null }}
@@ -96,9 +167,15 @@ export function gradeAnswer(problem, answer = {}) {
     case 'MULT_ARRAYS':
     case 'MULT_FACTS': {
       const v = num(answer.value ?? answer.product);
-      return v === a.product
-        ? { correct: true, stars: 3, errorSignature: null }
-        : { correct: false, stars: 0, errorSignature: 'other' };
+      if (v === a.product) return { correct: true, stars: 3, errorSignature: null };
+      // 006 O1: fingerprint the specific mult misconception (add_factors /
+      // array_perimeter / skip_count_drift / distributive_add_parts) so the mult
+      // strand gets error-specific remediation instead of collapsing to 'other'.
+      return {
+        correct: false,
+        stars: 0,
+        errorSignature: classifyMultError(problem.skill, problem.operands, v, a.product) || 'other',
+      };
     }
 
     case 'COMPARE_BENCHMARK': {

@@ -286,7 +286,11 @@ export function segment(log: readonly Event[]): Observation[] {
       const emittedSig = judgedAction.payload['error_signature'];
       const VALID_SIGS = new Set([
         'add_denominators', 'add_across_unlike', 'scaled_bottom_only',
-        'forced_leftover', 'not_simplified', 'other',
+        'forced_leftover', 'not_simplified',
+        // 006 O1: multiplication misconceptions (m1/m2/m3) — keep these out of the
+        // 'other' coercion so the specific signature reaches credit/reteach.
+        'add_factors', 'skip_count_drift', 'array_perimeter', 'distributive_add_parts',
+        'other',
       ]);
       if (typeof emittedSig === 'string' && emittedSig.length > 0) {
         error_signature = (VALID_SIGS.has(emittedSig) ? emittedSig : 'other') as ErrorSignature;

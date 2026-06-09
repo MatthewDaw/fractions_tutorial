@@ -50,6 +50,11 @@ export type ErrorSignature =
   | 'scaled_bottom_only'     // scales denominator without scaling numerator
   | 'forced_leftover'        // improper→mixed conversion error
   | 'not_simplified'         // answer correct value but not in lowest terms
+  // --- 006 O1: multiplication misconceptions (m1/m2/m3) ---
+  | 'add_factors'            // a×b → a+b (added the factors instead of multiplying)
+  | 'skip_count_drift'       // skip-count that drifts off the multiple (off by ±one group)
+  | 'array_perimeter'        // rows×cols → 2(rows+cols) (counted the border, not the area)
+  | 'distributive_add_parts' // summed the split sizes instead of the partial products
   | 'other'                  // any other recognisable wrong pattern
   | null;                    // correct, or no pattern recognised
 

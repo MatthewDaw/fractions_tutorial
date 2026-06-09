@@ -49,6 +49,12 @@ export const ERROR_PREREQ_IMPLICATION: Readonly<Record<NonNullable<ErrorSignatur
   scaled_bottom_only:  null,                // error in current skill, not a prereq gap
   forced_leftover:     null,                // improper→mixed error; binding-only
   not_simplified:      null,                // simplification miss; binding-only
+  // 006 O1: mult misconceptions are errors WITHIN the current mult skill, not a
+  // fraction-prereq gap → binding-node only (no cross-strand credit propagation).
+  add_factors:            null,             // a×b → a+b; error in the mult skill itself
+  skip_count_drift:       null,             // skip-count drift; binding-only
+  array_perimeter:        null,             // perimeter-for-area; binding-only
+  distributive_add_parts: null,             // summed split sizes; binding-only
   other:               null,
   null:                null,                // correct or unclassified
 };
