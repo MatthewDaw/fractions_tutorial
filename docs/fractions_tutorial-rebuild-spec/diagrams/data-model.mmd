@@ -1,0 +1,96 @@
+%% Engine wire-DTOs (engine/types.ts) + the 10-node skill DAG (graph.ts).
+%% Two views: a classDiagram of the DTO shapes, then a graph of the DAG edges.
+classDiagram
+  class Event {
+    +t : number
+    +kind : string
+    +Action|Signal payload
+  }
+  class Action {
+    +submit / problem_present / hint / self_correct ...
+  }
+  class Signal {
+    +idle / latency_stall / oscillation / rapid_submit / hint_spend
+  }
+  class Observation {
+    +node_id : string
+    +scaffold_level : ScaffoldLevel
+    +correct : boolean
+    +error_signature : ErrorSignature|null
+    +latency_ms : number
+    +hint_rung : number
+    +affect_window : []  %% always empty (firewall)
+  }
+  class FluencyStats {
+    +median_latency_ms : number
+    +samples : number
+  }
+  class MasteryEstimate {
+    +P_known : number  %% [0.01,0.99]
+    +fluency_stats : FluencyStats
+    +max_scaffold_passed : ScaffoldLevel|null
+    +transfer_passed : boolean
+    +hint_dependence : number
+    +last_retention_probe : number|null
+    +mastered_at : number|null
+  }
+  class Decision {
+    <<union: 7 kinds>>
+    +rationale : string
+  }
+  class PresentProblem
+  class RouteToRoom
+  class ReturnToKitchen
+  class FadeScaffold
+  class RaiseScaffold
+  class TransferProbe
+  class EscalateToHuman
+  class SkillNode {
+    +id : string
+    +roomId : string
+    +prereqs : string[]  %% ORDER load-bearing (ADR-0005)
+    +scaffold_ladder : string[][]
+    +transfer_forms : string[]
+    +bkt_params? : P_T,P_S,P_G,P_L0
+  }
+
+  Event "1" --> "1" Action : carries
+  Event "1" --> "1" Signal : or carries
+  Event "*" --> "1" Observation : segmented into
+  Observation "*" --> "1" MasteryEstimate : folded into
+  MasteryEstimate "1" --> "1" FluencyStats
+  Decision <|-- PresentProblem
+  Decision <|-- RouteToRoom
+  Decision <|-- ReturnToKitchen
+  Decision <|-- FadeScaffold
+  Decision <|-- RaiseScaffold
+  Decision <|-- TransferProbe
+  Decision <|-- EscalateToHuman
+  SkillNode "1" --> "1" MasteryEstimate : keyed by id
+  MasteryEstimate "*" --> "1" Decision : policy chooses
+
+%% --- The 10-node skill DAG (graph.ts, topological/teaching order). ---
+%% Edge A --> B means A is a prereq of B. MULT_FACTS is PREPENDED into the
+%% prereq lists of ADD_UNLIKE_COPRIME and SIMPLIFY so the fraction prereq
+%% stays LAST for credit assignment (ADR-0005).
+graph LR
+  MULT_EQUAL_GROUPS["MULT_EQUAL_GROUPS (m1)"]
+  MULT_FACTS["MULT_FACTS (m3)"]
+  FRACTION_ON_LINE["FRACTION_ON_LINE (nl)"]
+  ADD_SAME_DEN["ADD_SAME_DEN (r1)"]
+  SUB_SAME_DEN["SUB_SAME_DEN (s1)"]
+  COMPARE_BENCHMARK["COMPARE_BENCHMARK (cmp)"]
+  ADD_UNLIKE_NESTED["ADD_UNLIKE_NESTED (r3)"]
+  ADD_UNLIKE_COPRIME["ADD_UNLIKE_COPRIME (r2)"]
+  SIMPLIFY["SIMPLIFY (r4)"]
+  IMPROPER_TO_MIXED["IMPROPER_TO_MIXED (r5)"]
+
+  MULT_EQUAL_GROUPS --> MULT_FACTS
+  ADD_SAME_DEN --> SUB_SAME_DEN
+  FRACTION_ON_LINE --> COMPARE_BENCHMARK
+  ADD_SAME_DEN --> ADD_UNLIKE_NESTED
+  MULT_FACTS --> ADD_UNLIKE_COPRIME
+  ADD_UNLIKE_NESTED --> ADD_UNLIKE_COPRIME
+  MULT_FACTS --> SIMPLIFY
+  ADD_UNLIKE_COPRIME --> SIMPLIFY
+  ADD_UNLIKE_COPRIME --> IMPROPER_TO_MIXED

@@ -1,0 +1,87 @@
+%% Subsystem architecture for fractions_tutorial.
+%% The pure engine is the high-stakes core; everything else drives or observes it.
+%% The advisory affect layer is firewalled from the mastery gate (ADR-0002).
+graph TD
+  subgraph SHELL["shell-nav (App shell / router)"]
+    Shell["Shell.jsx — hash router + stage fit"]
+    World["WorldMap / TitleScreen / ConceptMap / Settings"]
+    Voice["voice.js / TapToRead / BackgroundMusic"]
+  end
+
+  subgraph LR["lessons-rooms"]
+    Rooms["Lesson rooms (AppR1, AppM1, LessonUnlikeDen, ...)"]
+    Moms["MomsRoom (kitchen) / MixedReview"]
+    LessonLib["shared lesson library + manipulatives"]
+  end
+
+  subgraph RT["runtime-affect (React runtime)"]
+    ULE["useLessonEngine.judgeAndAdvance (the boundary)"]
+    Scaffold["useLessonScaffold / useGeneratedPractice"]
+    PracticeFlow["practiceFlow / scaffoldMap / tier2"]
+    Store["engineStore (observable singleton)"]
+  end
+
+  subgraph AFFECT["affect (advisory, firewalled)"]
+    Affect["affect/index composeAffect"]
+    Composite["composite / governor / ledger / selfReport"]
+  end
+
+  subgraph ENGINE["engine-core (PURE, no React, no wall-clock)"]
+    Log["log.ts (append-only Event log)"]
+    Reduce["measurementReduce -> MasteryEstimate map"]
+    Policy["policy.nextDecision (Decision)"]
+    Gate["gate.isMastered"]
+    Graph["graph.ts (10-node skill DAG)"]
+    BKT["bkt / credit / dimensions / decay / mastery"]
+  end
+
+  subgraph GEN["generators (pure, deterministic)"]
+    Generate["generateFor / grade / hints"]
+  end
+
+  subgraph UI["ui-surfaces (engine observers)"]
+    Surfaces["EngineSurfaces: RationaleBanner / MasteryInspector / NudgeToast / AffectProbe"]
+  end
+
+  subgraph INK["ink-recognition"]
+    Recog["recognizer.js (ONNX MNIST + $P fallback)"]
+  end
+
+  subgraph HARNESS["harness (offline red-team)"]
+    Runner["sessionRunner / personas / oracle / search / report"]
+  end
+
+  Shell --> Rooms
+  Shell --> Moms
+  Shell --> World
+  Shell --> Surfaces
+  Shell --> Voice
+  Rooms --> LessonLib
+  Moms --> LessonLib
+  Rooms --> Scaffold
+  Moms --> Scaffold
+  Scaffold --> ULE
+  Scaffold --> PracticeFlow
+  PracticeFlow --> Generate
+  ULE --> Log
+  ULE --> Reduce
+  ULE --> Policy
+  Reduce --> BKT
+  Reduce --> Graph
+  Policy --> Graph
+  Policy -. consults .-> Gate
+  ULE --> Store
+  Store --> Surfaces
+  Scaffold --> Affect
+  Affect --> Composite
+  Affect -. recommendedTier / isDisengaged ONLY .-> Policy
+  Affect -. NEVER writes MasteryEstimate (firewall) .-x Gate
+  LessonLib --> Recog
+  Shell -. mastery load .-> Reduce
+  Runner -. replays seeded personas vs .-> ENGINE
+  Runner -. via engineApi .-> GEN
+
+  classDef pure fill:#e8f5e9,stroke:#2e7d32;
+  classDef firewall fill:#fff3e0,stroke:#e65100;
+  class ENGINE,GEN pure;
+  class AFFECT firewall;
