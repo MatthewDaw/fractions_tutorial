@@ -37,6 +37,7 @@ import { makeTier2Window, checkLongPause, checkOscillation } from "./tier2.js";
 import { publishNudge } from "./engineStore.js";
 import { generateFor, hasGenerator } from "../generators/index.js";
 import { otherSurfaceForm } from "./practiceFlow.js";
+import { toBeatForLevel } from "./scaffoldMap.js";
 
 // Friendly learner-facing copy for each Tier-2 nudge type. Nudges are gentle and
 // never restructure the workspace (state-model §6/§7) — they only prompt.
@@ -90,6 +91,19 @@ export function useLessonScaffold({
   // it starts here and the engine fades/raises the level in place (post-teaching,
   // so the default start is mid-ladder, not L0).
   generatedStartLevel = 2,
+  // ---- UI1: engine-paced TEACHING stages (reversible) -----------------------
+  // When true, a SCRIPTED (non-generated) teaching stage is paced by the engine
+  // DECISION the same way the generated practice stage is — not just on a single
+  // correct. Concretely, on a wrong answer the shared `reportAttempt` routes the
+  // returned Decision through `applyEngineDecision`, so a stumble that the engine
+  // answers with RaiseScaffold steps the teaching stage BACK (to more support,
+  // work preserved), and a default PresentProblem HOLDS the stage (no advance,
+  // work preserved). On a strong run, a FadeScaffold on a teaching stage SKIPS
+  // AHEAD to the stage that matches the faded design level (instead of a single
+  // step). Default ON; pass `adaptiveTeaching: false` to fully restore the prior
+  // advance-on-single-correct / ignore-the-engine-on-error behavior (the kill
+  // switch if this regresses a room).
+  adaptiveTeaching = true,
 }) {
   const resolvedNodeId = typeof nodeId === "function" ? nodeId(lesson) : nodeId;
   const resolvedLessonId = typeof lessonId === "function" ? lessonId(lesson) : lessonId;
@@ -104,6 +118,14 @@ export function useLessonScaffold({
     return false;
   }, [genSkill, generatedStages]);
 
+  // UI1: does this lesson drive its STAGE through the hook (full adopter), or does
+  // it keep its own beat navigation (partial adopter, e.g. LessonUnlikeDen)? Only
+  // the full adopters — those that hand the hook an advance/back fn or a
+  // stagesOrder — get the engine-paced wrong-answer routing; a partial adopter
+  // renders off its OWN beat state and never reads the hook's `stage`, so applying
+  // a stage move there would desync it. So we gate the new routing on this.
+  const drivesStageThroughHook = !!(advance || back || stagesOrder);
+
   // advance / back: explicit callbacks win; otherwise derive from stagesOrder.
   const advanceFn = advance || ((cur) => {
     if (!stagesOrder) return cur;
@@ -115,6 +137,37 @@ export function useLessonScaffold({
     const i = stagesOrder.indexOf(cur);
     return i > 0 ? stagesOrder[i - 1] : cur;
   });
+
+  // UI1: where should a FadeScaffold on TEACHING stage `cur` skip ahead to?
+  // Maps cur's design level → one level up → the lesson's native beat for that
+  // level (toBeatForLevel) → the matching stage in this lesson's order. Returns
+  // that key ONLY if it is STRICTLY FORWARD of `cur` (so a skip never goes
+  // backwards or off the end); otherwise null → the caller does a single advance.
+  // Requires stagesOrder to locate/compare positions; without it we can't safely
+  // skip, so we return null (single advance) — the conservative default.
+  const fadeSkipTarget = useCallback((cur) => {
+    const lid = typeof lessonId === "function" ? lessonId(lesson) : lessonId;
+    if (lid == null || !stagesOrder) return null;
+    const curIdx = stagesOrder.indexOf(cur);
+    if (curIdx < 0) return null;
+    const curLevel = toScaffoldLevel(lid, scaffoldKeyFor(cur));
+    const targetLevel = Math.min(4, curLevel + 1);
+    // The native beat for the faded level; normalize to whatever this lesson
+    // actually uses as a stage key (a few lessons' beat ids differ from their
+    // toBeatForLevel form — only accept it if it's truly one of OUR stages).
+    const targetBeat = toBeatForLevel(lid, targetLevel);
+    let targetIdx = stagesOrder.indexOf(targetBeat);
+    // Fallback: if toBeatForLevel's key isn't a literal stage key in this lesson,
+    // find the FIRST forward stage whose design level reaches targetLevel.
+    if (targetIdx < 0) {
+      for (let i = curIdx + 1; i < stagesOrder.length; i++) {
+        const lvl = toScaffoldLevel(lid, scaffoldKeyFor(stagesOrder[i]));
+        if (lvl >= targetLevel) { targetIdx = i; break; }
+      }
+    }
+    if (targetIdx > curIdx) return stagesOrder[targetIdx];
+    return null;
+  }, [lessonId, lesson, stagesOrder, scaffoldKeyFor]);
 
   const { emit: emitRaw, judgeAndAdvance, isCertified } = useLessonEngine({
     nodeId: resolvedNodeId,
@@ -196,6 +249,11 @@ export function useLessonScaffold({
   // forcing every consumer to re-memoize.
   const cb = useRef({});
   cb.current = { advanceFn, backFn, scaffoldKeyFor, introFor, resetStage, surfaceFormFor, onEnd, isGenStage, makeProbFor, isCertified };
+
+  // UI1: a stable handle to applyEngineDecision (defined below) so the earlier
+  // reportAttempt can route a wrong-answer Decision through it without a forward
+  // reference. Assigned right after applyEngineDecision is created.
+  const applyRef = useRef(null);
 
   // ---- mount: emit the first problem_present (guarded); unmount: stop voice --
   useEffect(() => {
@@ -311,8 +369,35 @@ export function useLessonScaffold({
       }
     );
     selfCorrectionsRef.current = 0;
+
+    // UI1: engine-paced TEACHING stages. On a WRONG answer the rooms historically
+    // called reportAttempt and then simply returned — the engine's Decision was
+    // computed (and logged) but never APPLIED, so a scripted teaching stage never
+    // morphed on a stumble the way the generated practice stage does. Here, on a
+    // FIXED (non-generated) stage we route that wrong-answer Decision through
+    // applyEngineDecision so:
+    //   • RaiseScaffold (≥2 errors at this scaffold) → step the stage BACK to more
+    //     support (work preserved: the prior stage re-enters cleanly; the child is
+    //     never blocked, and the felt step is reachable);
+    //   • PresentProblem (the default) → HOLD this stage (no advance, work intact);
+    //   • escalation/route → the existing onEnd path.
+    // The generated practice stage is intentionally EXCLUDED — its design is
+    // "stay on this problem + reteach + retry" (GenPracticeBoard), and the engine
+    // already paces it on the CORRECT path; auto-stepping it on a wrong answer
+    // would yank the child off a problem mid-reteach. The CORRECT path is
+    // untouched here (rooms still call award/applyEngineDecision themselves).
+    // Reversible: off when adaptiveTeaching is false.
+    if (
+      !correct &&
+      adaptiveTeaching &&
+      drivesStageThroughHook &&
+      !cb.current.isGenStage(stageRef.current) &&
+      applyRef.current
+    ) {
+      applyRef.current(dec, false);
+    }
     return dec;
-  }, [judgeAndAdvance]);
+  }, [judgeAndAdvance, adaptiveTeaching, drivesStageThroughHook]);
 
   // ---- apply the engine Decision ---------------------------------------------
   // GENERATED stage: the estimator paces practice in place. A clean correct
@@ -368,14 +453,32 @@ export function useLessonScaffold({
       return;
     }
     if (dec.kind === "FadeScaffold") {
-      nextStage();
+      // UI1: a strong run (the engine's clean-correct streak) on a TEACHING stage
+      // SKIPS AHEAD to the stage that matches the next faded design level, not just
+      // a single step — so a confident child doesn't have to re-walk every beat.
+      // We read the CURRENT stage's design level, target one level up, translate
+      // that to the lesson's native stage key (toBeatForLevel) and jump to it if
+      // it is a LATER stage in this lesson's order. If that target isn't a real
+      // forward stage (e.g. already at the top of the arc, or the map can't place
+      // it), we fall back to the original single advance — so the arc always stays
+      // reachable and coherent (no skipped-past-the-end, no choice paralysis).
+      const skipTo = adaptiveTeaching ? fadeSkipTarget(cur) : null;
+      if (skipTo != null && skipTo !== cur) {
+        goStage(skipTo);
+      } else {
+        nextStage();
+      }
     } else if (dec.kind === "RaiseScaffold") {
       const prev = cb.current.backFn(cur);
       if (prev != null && prev !== cur) goStage(prev);
     } else if (isCorrect) {
       nextStage();
     }
-  }, [nextStage, goStage, genSkill]);
+  }, [nextStage, goStage, genSkill, adaptiveTeaching]);
+
+  // UI1: keep applyRef pointed at the latest applyEngineDecision so the earlier
+  // reportAttempt can route a wrong-answer Decision through it (no forward ref).
+  applyRef.current = applyEngineDecision;
 
   // ---- award + advance on a correct answer ----------------------------------
   // Positional (line, voice, answerValue, opts) so existing callsites are unchanged.
