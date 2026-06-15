@@ -34,7 +34,6 @@ import MixedReview from "./MixedReview.jsx";
 import BackgroundMusic from "./BackgroundMusic.jsx";
 import TapToRead from "./TapToRead.jsx";
 import EngineSurfaces from "./ui/EngineSurfaces.jsx";
-import FabBar from "./components/scene/FabBar.jsx";
 import r2Unit from "./lessons/r2-unit.js";
 import r3NonUnit from "./lessons/r3-nonunit.js";
 import { ROOMS } from "./rooms.js";
@@ -196,7 +195,7 @@ export default function Shell() {
     screen = <MixedReview skills={eligibleMixSkills(masteryMap)} onExit={toWorld} />;
   } else if (!room) {
     // World map (home) for the 'world' route / anything unrecognised.
-    screen = <WorldMap onOpen={(id) => go(id)} masteryMap={masteryMap} />;
+    screen = <WorldMap onOpen={(id) => go(id)} onConcepts={openConcepts} onSettings={openSettings} masteryMap={masteryMap} />;
   } else if (room.intro && !seenIntros.has(room.id)) {
     // First time entering a room that has an intro: play it before the room.
     showingIntro = true;
@@ -266,9 +265,8 @@ export default function Shell() {
         fallbackMasteryMap={masteryMap}
       />
       <BackgroundMusic scene={sceneFor(route, showingIntro)} />
-      {/* World map gets the shared FabBar overlaid by Shell; the title screen
-          renders its own FabBar (so the overlay is title-excluded here). */}
-      {route === "world" && <FabBar onConcepts={openConcepts} onSettings={openSettings} />}
+      {/* The title screen and the world map each render their OWN FabBar now
+          (shared <FabBar> chrome), so Shell no longer overlays it. */}
     </>
   );
 }
