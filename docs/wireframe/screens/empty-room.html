@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!--
+  empty-room.html — HIGH-FIDELITY wireframe for the "not built yet" room placeholder.
+  Source: web/src/EmptyRoom.jsx. Real DOM mirrored, real CSS reused.
+  Representative state: a fallback lesson slot (№11 · "Coming Soon") whose room isn't built.
+  NAV: back (.backbtn) → world.html (onBack returns to the kitchen / world map).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Empty room · #/room/:id (not built)</title>
+
+  <!-- real app fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- real app CSS: tokens FIRST, then this screen's stylesheet(s) -->
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+
+  <!-- wireframe shell chrome LAST (desk + toolbar; not part of the app) -->
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">Empty room <small>· EmptyRoom</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <!-- EmptyRoom.jsx root -->
+    <div class="emptyroom">
+      <div class="foxing"></div>
+      <div class="er-no">№11</div>
+      <div class="er-tag">Lesson 11</div>
+      <h1>Coming Soon</h1>
+      <div class="er-note">
+        This room isn't built yet. Head back to Babushka's kitchen and pick a lesson that's ready.
+      </div>
+      <!-- onBack → world.html -->
+      <a class="backbtn" href="world.html">← Back to the kitchen map</a>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e596]
+        - generic [ref=e276]:
+          - generic [ref=e735]:
+            - paragraph [ref=e736]: Share 5 cookies equally.
+            - button "🖐️" [ref=e738] [cursor=pointer]:
+              - generic [ref=e739]: 🖐️
+          - generic [ref=e759]:
+            - paragraph [ref=e761]: If you need help, just click the hand.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e280]:
+        - generic [ref=e709]:
+          - generic [ref=e711]:
+            - button [ref=e712] [cursor=pointer]:
+              - img [ref=e713]
+            - button "🔪" [ref=e715] [cursor=pointer]:
+              - generic [ref=e716]: 🔪
+          - generic [ref=e745]:
+            - generic [ref=e748]:
+              - button [active] [ref=e750] [cursor=pointer]
+              - button [ref=e751] [cursor=pointer]
+              - button [ref=e752] [cursor=pointer]
+              - button [ref=e753] [cursor=pointer]
+            - generic [ref=e754]:
+              - generic:
+                - img "Character 1" [ref=e719] [cursor=pointer]
+                - img "Character 2" [ref=e722] [cursor=pointer]
+                - img "Character 3" [ref=e725] [cursor=pointer]
+                - img "Character 4" [ref=e728] [cursor=pointer]
+              - button [ref=e763] [cursor=pointer]
+        - status [ref=e300]: Draggable item whole-0-1781464999410-0.926525223452933 was dropped.
+  - alert [ref=e11]

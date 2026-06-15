@@ -1,0 +1,34 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e273]
+        - generic [ref=e469]:
+          - paragraph [ref=e471]:
+            - generic [ref=e472]: But for the half cookie...
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e280]:
+        - generic [ref=e356]:
+          - generic:
+            - generic:
+              - generic: "2"
+          - generic [ref=e365]:
+            - generic:
+              - img "Character 1" [ref=e368] [cursor=pointer]
+              - img "Character 2" [ref=e371] [cursor=pointer]
+            - generic [ref=e374]:
+              - generic [ref=e381]:
+                - button [disabled] [ref=e412] [cursor=pointer]
+                - button [disabled] [ref=e382] [cursor=pointer]
+                - button [disabled] [ref=e426] [cursor=pointer]
+              - generic [ref=e383]:
+                - button [disabled] [ref=e384] [cursor=pointer]
+                - button [disabled] [ref=e385] [cursor=pointer]
+                - button [disabled] [ref=e432] [cursor=pointer]
+        - status [ref=e300]
+  - alert [ref=e11]

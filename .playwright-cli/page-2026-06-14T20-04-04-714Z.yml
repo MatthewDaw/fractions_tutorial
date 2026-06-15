@@ -1,0 +1,30 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - generic [ref=e1208]:
+        - navigation [ref=e1209]:
+          - button [ref=e1212] [cursor=pointer]:
+            - img [ref=e1213]
+        - paragraph [ref=e1375]:
+          - generic [ref=e1376]:
+            - text: Give each person two
+            - generic [ref=e1377]: whole
+            - text: cookies.
+      - generic [ref=e1220]:
+        - generic [ref=e1296]:
+          - generic [ref=e1299]:
+            - button [ref=e1380] [cursor=pointer]
+            - button [disabled]
+            - button [disabled]
+          - generic [ref=e1305]:
+            - generic:
+              - img "Character 1" [ref=e1308] [cursor=pointer]
+              - img "Character 2" [ref=e1311] [cursor=pointer]
+            - generic [ref=e1314]:
+              - generic [ref=e1321]:
+                - button [ref=e1381] [cursor=pointer]
+                - button [ref=e1382] [cursor=pointer]
+              - button [ref=e1383] [cursor=pointer]
+        - status [ref=e1240]
+  - alert [ref=e11]

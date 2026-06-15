@@ -1,0 +1,532 @@
+/* r4.css — The Tidying Room (R4, SIMPLIFY). Room-specific additions ONLY.
+   Shared look comes from lesson.css + tokens.css; everything here is namespaced
+   .r4-… so it cannot collide with another room. The room reuses the lesson.css
+   shells (.page/.topbar/.goal/.play/.canvas/.plank/.hud/.check/.frinput …) and
+   adds: a fuse-tool tray, a ÷K stamp on top & bottom of the big fraction, a
+   fixed "height-holds" guide on the ruler, and a "pieces remaining" meter. */
+
+/* ---- the messy stack on the ruler: each fuse clumps blocks into fewer/bigger
+   pieces. We reuse .plank/.plank-body/.piece, only adding a settle animation so a
+   successful fuse visibly snaps the new (bigger) blocks into place. ---- */
+.r4-bar { position: absolute; }
+.r4-bar .plank-body { transition: width .42s cubic-bezier(.34,1.45,.6,1); }
+.r4-fuse-anim .plank-body { animation: r4Snap .44s cubic-bezier(.34,1.6,.5,1); }
+@keyframes r4Snap { 0% { transform: scaleX(1.02); } 40% { transform: scaleX(0.985); } 100% { transform: scaleX(1); } }
+
+/* the ÷K stamp that lands on BOTH numerator and denominator of the big fraction */
+.r4-divrow { position: absolute; left: 100%; margin-left: 8px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; top: -2px; }
+.r4-divchip { font-family: var(--stencil); font-weight: 700; font-size: 14px; color: var(--red);
+  border: 1.5px solid var(--red); padding: 1px 7px; background: rgba(163,42,34,0.07); white-space: nowrap; line-height: 1.3; }
+.r4-divchip.pop { animation: r4Stamp .45s cubic-bezier(.34,1.56,.64,1); }
+@keyframes r4Stamp { 0% { transform: scale(1.7) rotate(-9deg); opacity: 0; } 55% { opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+
+/* the fixed "height never changes" guide — a faint red rule the bar's right edge
+   keeps meeting through every fuse (the amount holds). */
+.r4-guide { position: absolute; width: 0; border-left: 2px dashed var(--red); opacity: 0.5; }
+.r4-guide .r4-guide-cap { position: absolute; top: -20px; left: 6px; white-space: nowrap;
+  font-family: var(--display); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); }
+
+/* The full R4 "writing" rail family (bind / fade / numbers) stacks THREE panels
+   — a tool/factor panel, the answer-Slate panel, and the Pieces-Remaining meter
+   — into a rail box that is only ~445px tall (capped by the canvas column). Left
+   at default sizes the third panel overflowed DOWN past the rail and painted over
+   the HUD "Check" button. Compact the panel chrome (hint text, tool buttons, the
+   "fewer pieces" card, the Slate, and the meter) so the whole stack ends within
+   the rail box and clears the Check. Scoped to .r4-* so no other room is touched. */
+/* The R4 rail panels now sit in a TALLER rail (the foot shrank), so let each
+   panel become a flex column that spreads its content to fill the height with
+   comfortable air — no more empty gap pooled at the bottom. Scoped to the R4
+   panels by the R4-specific child each one owns. */
+.lboard-rail .panel:has(.r4-fuse-tray),
+.lboard-rail .panel:has(.r4-factor-tray),
+.lboard-rail .panel:has(.r4-card) {
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 10px 14px 8px;
+}
+.lboard-rail .panel:has(.r4-fuse-tray) .hint,
+.lboard-rail .panel:has(.r4-factor-tray) .hint,
+.lboard-rail .panel:has(.r4-card) .hint { flex: 0 0 auto; }
+
+.r4-fuse-tray { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; flex: 0 0 auto; }
+.r4-fuse-btn { all: unset; cursor: pointer; box-sizing: border-box; display: flex; align-items: center; gap: 13px;
+  padding: 7px 14px; border: 1.5px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.16); }
+.r4-fuse-btn:hover:not(:disabled) { background: var(--paper-2); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.18); }
+.r4-fuse-btn:active:not(:disabled) { transform: translate(1px,1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.16); }
+.r4-fuse-btn:disabled { opacity: 0.3; cursor: default; box-shadow: none; }
+.r4-fuse-btn.bounce { animation: r4Bounce .42s ease-in-out; border-color: var(--red); }
+@keyframes r4Bounce { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+.r4-fuse-k { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto;
+  font-family: var(--display); font-size: 22px; color: var(--paper-1); background: var(--ink); border: 1.5px solid var(--ink); }
+.r4-fuse-btn:hover:not(:disabled) .r4-fuse-k { background: var(--red); border-color: var(--red-deep); }
+.r4-fuse-txt { display: flex; flex-direction: column; line-height: 1.2; }
+.r4-fuse-txt .r4-fuse-title { font-family: var(--display); font-size: 15px; letter-spacing: .02em; color: var(--ink); }
+.r4-fuse-txt .r4-fuse-sub { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
+
+/* Compact the hint paragraph ONLY inside the R4 rail panels (identified by the
+   R4-specific child each panel owns) so the three-panel stack fits the rail box.
+   :has() scopes this to R4 — no other room's .panel .hint is affected. */
+.panel:has(.r4-fuse-tray) .hint,
+.panel:has(.r4-factor-tray) .hint,
+.panel:has(.r4-slate-wrap) .hint,
+.panel:has(.r4-card) .hint { font-size: 11.5px; line-height: 1.25; margin-top: 4px; }
+
+/* "pieces remaining" / fewest-pieces meter. Grows to fill the rail's slack so
+   the Group-Tool panel reads full, not top-clustered. */
+.r4-meter { margin-top: 6px; flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center;
+  padding: 8px 15px; border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02); }
+.r4-meter-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.r4-meter-lab { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-mute); }
+.r4-meter-val { font-family: var(--display); font-size: 23px; color: var(--ink); }
+.r4-meter-val.fewest { color: var(--red); }
+.r4-dots { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.r4-dot { width: 12px; height: 12px; border: 1.5px solid var(--ink); background: var(--paper-1); }
+.r4-dot.gone { background: var(--paper-2); border-color: var(--paper-3); opacity: 0.5; }
+.r4-dot.fewest { border-color: var(--red); background: var(--red); }
+.r4-meter-note { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--red-deep); margin-top: 6px; line-height: 1.2; }
+
+/* simplest-name-state badge in the canvas (mirrors .eqstate.eqfloat usage) */
+.eqstate.r4-simplestflag.ok { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+
+/* the worked-example value readout under the big fraction (the amount holds).
+   Dropped BELOW the number line + its labels so the ruler can't run through it:
+   .r4-bar sits at BAR_Y=150 (AppR4.jsx:40), the ruler at LINE_Y=232 with labels
+   at LINE_Y+12; top:112px → absolute y≈262, clear of the plank, ruler and ticks
+   while staying well inside the 800px stage. */
+.r4-valnote { position: absolute; left: 50%; transform: translateX(-50%); top: 162px; white-space: nowrap;
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+
+/* rail card: what fusing means. On the Numbers stage it grows to fill the rail
+   slack and centers its big fraction. */
+.r4-card { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; justify-content: center; margin-top: 14px; flex: 0 0 auto; min-height: 120px;
+  padding: 16px 18px; border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02); }
+/* The decorative "fewer pieces / same amount" card inside the Fuse Tool panel
+   (bind stage only) duplicates the Pieces-Remaining meter's "SAME AMOUNT" label
+   and pushed the three-panel stack down onto the Check button. The Numbers stage
+   still shows its own .r4-card (it has no fuse tray), so scope the hide to the
+   bind panel via :has(.r4-fuse-tray). */
+.panel:has(.r4-fuse-tray) .r4-card { display: none; }
+.r4-card .bignum .n, .r4-card .bignum .d { font-size: 34px; }
+.r4-card .bignum .bar { width: 44px; height: 4px; margin: 4px 0; }
+.r4-card-note { font-family: var(--display); font-size: 13px; letter-spacing: .02em; color: var(--ink); line-height: 1.4; text-transform: uppercase; }
+.r4-card-note b { color: var(--red); }
+
+/* The shared <QuestionBand> (mounted directly under the stage tabs) is now the
+   single canonical question display on EVERY stage; the old in-topbar header eq
+   (.r4-hdr-q) and the in-canvas/story band (.r4-s-q) were removed from the JSX.
+   Size the band's BigFrac fraction so it reads big and bold like a display eq. */
+.question-band .qb-terms .bignum,
+.question-band .qb-answer .bignum { line-height: 1; }
+.question-band .qb-terms .bignum .n,
+.question-band .qb-terms .bignum .d,
+.question-band .qb-answer .bignum .n,
+.question-band .qb-answer .bignum .d { font-size: 23px; }
+.question-band .qb-terms .bignum .bar,
+.question-band .qb-answer .bignum .bar { width: 30px; height: 3px; margin: 2px 0; }
+.question-band .qb-answer .bignum .n,
+.question-band .qb-answer .bignum .d { color: var(--red); }
+/* keep the band's chip vertical padding tight so the stacked fraction adds the
+   least possible height under the tabs (preserves the .r4-s zone budget). */
+.question-band .qb-chip { padding-top: 6px; padding-bottom: 6px; align-items: center; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE INTERACTION ARC — the per-stage writing/fade additions. The stage selector
+   ("top bar") is now the shared <StageTabs>; see stagetabs.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── the fading bar (Stage 3 Fade): dim to a faint check ───────────────────── */
+.plank.r4-ghost { opacity: 0.32; filter: grayscale(0.35); transition: opacity .5s ease, filter .5s ease; }
+.plank.r4-ghost .piece-lab { opacity: 0.7; }
+
+/* ── Stage 4 Numbers: a bare equation, centered, no blocks at all. Sized BIG to
+   own the now-taller (no-bar) stage — the math is the whole point here. ────── */
+.r4-bare-eq { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 30px; }
+.r4-bare-eq .bignum .n, .r4-bare-eq .bignum .d { font-size: 76px; }
+.r4-bare-eq .bignum .bar { width: 90px; height: 6px; margin: 8px 0; }
+.r4-bigeq-op { font-family: var(--serif); font-size: 72px; color: var(--ink); }
+.r4-bigeq-q { font-family: var(--serif); font-size: 80px; color: var(--red); min-width: 56px; text-align: center; }
+
+/* ── Stage 3: shared-factor chips (the symbolic pick that replaces the bar) ── */
+.r4-factor-tray { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; flex: 0 0 auto; }
+.r4-factor-btn { all: unset; cursor: pointer; box-sizing: border-box; min-width: 64px; text-align: center;
+  padding: 13px 20px; font-family: var(--display); font-size: 24px; color: var(--ink);
+  border: 1.5px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.16); }
+.r4-factor-btn:hover:not(:disabled) { background: var(--paper-2); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.18); }
+.r4-factor-btn:active:not(:disabled) { transform: translate(1px,1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.16); }
+.r4-factor-btn:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.r4-factor-btn:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+.r4-factor-btn.picked { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); box-shadow: 1px 1px 0 rgba(28,22,18,0.2); }
+.r4-factor-btn.bounce { animation: r4Bounce .42s ease-in-out; border-color: var(--red); }
+
+/* the symbolic "8/12 = ?/?" that fills in once a factor's picked. Grows to fill
+   the rail slack under the factor chips and reads large. */
+.r4-fade-eq { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 14px; flex: 0 0 auto; padding: 18px; min-height: 96px;
+  border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02); font-family: var(--display); font-size: 34px; color: var(--ink); }
+.r4-fade-op { color: var(--ink-mute); }
+.r4-fade-out { color: var(--ink-mute); }
+.r4-fade-out.on { color: var(--red); animation: r4Stamp .42s cubic-bezier(.34,1.56,.64,1); }
+
+/* ── the WRITING channel panel (the Slate, present from Stage 2 on) ────────── */
+.r4-slate-panel h3 { color: var(--red); }
+.r4-slate-wrap { display: flex; justify-content: center; margin-top: 4px; }
+/* Shrink the rail-mounted answer Slate so the FULL right rail (fuse tray +
+   "copy the tidied fraction" panel) fits ABOVE the HUD/Check button instead of
+   painting over it (was reading "heck"). Default stacked Slate is 114×90 cells
+   + a 114px bar (slate.css:38-39); compact it for the rail only. */
+.r4-slate-wrap .slate-fraction .slate-cell { width: 80px; height: 40px; }
+.r4-slate-wrap .slate-fraction .slate-bar { width: 80px; }
+.r4-slate-wrap .slate-fraction { gap: 3px; }
+.r4-slate-wrap .slate-fraction .slate-fixed { font-size: 30px; }
+.r4-slate-wrap .slate-fraction .slate-committed-digit { font-size: 32px; }
+.r4-slate-wrap .slate-fraction .slate-ph { font-size: 22px; }
+/* the clear ("×") control under the slate also adds height — pull it in tight */
+.r4-slate-wrap .slate-clear { margin-top: 4px; }
+
+/* ── HUD readouts for the arc (the live "8/12 = ?/?" being written) ────────── */
+.r4-hud-amt { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); }
+.r4-hud-write { color: var(--red); }
+
+/* ── Stage 5 (Words): no diagram — center the recipe + Slate, tutor beside ─── */
+.r4-play-words { grid-template-columns: 1fr 320px; align-items: start; }
+/* Drop the words-stage Cook clear of the goal banner: the cook art was
+   overhanging UPWARD and its white hat occluded the goal-banner text
+   ("...write the s[implest] form..."). Offset the whole right column down so
+   the hat starts below the goal banner without pushing the rosette off-stage. */
+.r4-words-side { display: flex; flex-direction: column; gap: 16px; margin-top: 56px; }
+.r4-words-rosette { display: flex; justify-content: center; }
+
+/* ── Applied (Stage 5): the word→math setup gate (write 8/12, then simplify) ── */
+/* The setup row pairs the transcribe-Slate with its Check (or the confirmed
+   chip). Lives inside WordProblem's .wp-setup region (shared layout). */
+.r4-setup-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.r4-setup-ok { font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   THE TIDYING ROOM — STAGE CONTENT (layout now from the shared <LessonBoard>).
+   The four hand-pinned rectangles (.r4-s / .r4-s-blocks / .r4-s-rail / absolute
+   .r4-s-answer / .r4-s-tutor) were deleted — the lesson-board CSS grid owns the
+   zones now. What remains here is the CONTENT inside those zones: the canvas
+   (which flexes to fill .lboard-stage), the equation row, the answer-card inner
+   styling (.r4-s-answer rides on .lbar), the story/setup, and the GroupBar.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* the canvas holds its ORIGIN-based absolute children (ruler at 60→660, bar at
+   BAR_Y=150, labels at LINE_Y+12=244). It is NOT FitStage-wrapped: instead it
+   flexes to fill .lboard-stage (height:100%, min-height:0) so the absolute
+   children keep their fixed ORIGIN geometry without overflowing the grid track. */
+.r4-s-canvas {
+  position: relative; width: 100%; max-width: 720px; height: 100%;
+  min-height: 0; margin: 0 auto; box-sizing: border-box;
+}
+
+/* the answer-card inner layout. The card FRAME (border/paper/shadow) is .lbar
+   from lesson-board.css; R4's answer uses its OWN inner markup (.r4-s-eqrow +
+   .r4-s-cap), so override .lbar's grid back to a centered flex column. */
+.lbar.r4-s-answer {
+  display: flex; flex-direction: column; justify-content: center; gap: 6px;
+}
+
+/* the equation row: every term on ONE midline (align-items:center). The "8/12"
+   BigFrac, the "=" and the answer Slate all share the same vertical center, and
+   the Check sits IMMEDIATELY to the right of the write area. */
+.r4-s-eqrow { display: flex; align-items: center; gap: 22px; }
+.r4-s-eq { font-family: var(--display); font-size: 40px; color: var(--ink-mute); line-height: 1; }
+.r4-s-amt { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); }
+
+/* the static "8/12" (and manipulate's live num/den) sized to MATCH the answer
+   Slate so both fraction bars sit on the same midline. */
+.r4-s-frac .bignum .n, .r4-s-frac .bignum .d { font-size: 46px; }
+.r4-s-frac .bignum .bar { width: 54px; height: 4px; margin: 5px 0; }
+
+/* the answer Slate — comfortably large handwriting cells for a child's digit,
+   sized to align its fraction bar with the "8/12" bar on the same midline. */
+.r4-s-slate { display: inline-flex; }
+.r4-s-slate .slate-fraction { position: relative; gap: 4px; }
+.r4-s-slate .slate-fraction .slate-cell { width: 96px; height: 60px; }
+.r4-s-slate .slate-fraction .slate-bar { width: 96px; }
+.r4-s-slate .slate-fraction .slate-fixed { font-size: 40px; }
+.r4-s-slate .slate-fraction .slate-committed-digit { font-size: 44px; }
+.r4-s-slate .slate-fraction .slate-ph { font-size: 26px; }
+/* float the verifier "I read N" chip so it can never grow the row's height */
+.r4-s-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; z-index: 4; }
+
+/* the Check (+ rosette) cluster — sits at the right end of the equation row */
+.r4-s-marks { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.r4-s-marks .check { min-width: 150px; height: 56px; }
+
+/* the one-line caption under the equation; clamped so it can never grow the card */
+.r4-s-cap {
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 700px;
+}
+
+/* (the Cook + ribbon zone is now the shared <TutorRibbon> / .ltutor — the old
+   absolute .r4-s-tutor rect was deleted.) */
+
+/* ── WORDS / APPLIED mode — the story card + setup gate, the STAGE content of a
+   wide-ish split board. It fills the .lboard-stage zone (no absolute rect). ── */
+.r4-s-story {
+  width: 100%; height: 100%;
+  box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 12px;
+  overflow: hidden;
+}
+
+/* The question for the prose stages is now the shared <QuestionBand> mounted
+   under the stage tabs (the old in-story .r4-s-q band was removed from the JSX),
+   so the story zone's full height is free for the recipe + the (Words) larger
+   optional scratch surface. */
+.r4-s-card { width: 100%; box-sizing: border-box; margin: 0; padding: 12px 26px; flex: 0 0 auto; }
+/* Show Work step: the card + 360px blank slate are taller than the 348px story
+   zone, so they ride inside a FitStage that downscales the stack to fit (never
+   clips). Restore the column gap the bare .r4-s-story had, and fix the inner
+   width so the 800px slate (not max-content shrink) sets the column width. */
+.r4-s-fit { width: 100%; height: 100%; }
+.r4-s-fit .fit-stage-content { gap: 12px; width: 800px; }
+/* Show Work uses a wide, generous blank slate (1080×420). axis="y" fit scales by
+   height only, so size the content column to the slate so it never overflows
+   horizontally and downscales as one block to fit the stage height. */
+.r4-s-fit-showwork .fit-stage-content { width: 1120px; }
+.r4-s-fit-showwork .r4-s-setup { padding: 10px 16px; gap: 6px; }
+/* the Show Work prompt card is redundant with the goal banner + setup lead — keep
+   it minimal so the blank slate scales up to nearly fill the (band-free) stage. */
+.r4-s-fit-showwork .r4-s-card { padding: 8px 26px; }
+/* clamp the story to 3 lines so a longer/different-font story can't grow the card
+   into the setup gate below it. */
+/* the story/recipe copy is now SECONDARY to the big question band above it —
+   smaller and lighter so the math stays the most readable thing on the page. */
+.r4-s-story-text {
+  font-size: 17px; line-height: 1.38; margin: 0; color: var(--ink-mute);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.r4-s-story-text b { color: var(--ink); }
+.r4-s-setup {
+  flex: 0 0 auto; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 16px;
+  border: 1.5px dashed var(--paper-3); background: rgba(255,248,234,0.5);
+}
+.r4-s-setup-lead { font-family: var(--display); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mute); }
+.r4-s-setup-row { display: flex; align-items: center; gap: 26px; }
+
+/* APPLIED stage (the only story stage with a setup ROW): the card + setup must
+   fit the (now taller) stage WITHOUT clipping the "Check the fraction" row. Make
+   the card compact and let the setup GROW to absorb the slack and vertically
+   center its transcribe row, so nothing overflows the bottom. Scoped to applied
+   via :has(.r4-s-setup-row) so the words-only stage is untouched. */
+.r4-s-story:has(.r4-s-setup-row) { gap: 14px; }
+.r4-s-story:has(.r4-s-setup-row) .r4-s-card { padding: 12px 26px; }
+.r4-s-setup:has(.r4-s-setup-row) {
+  flex: 1 1 auto; min-height: 0; justify-content: center; gap: 14px; padding: 16px 20px;
+}
+/* the setup transcription Slate — a comfortable writing target for the child to
+   copy 8/12, sized so the story zone still fits without clipping the Check row. */
+.r4-s-setup-row .slate-fraction { gap: 4px; }
+.r4-s-setup-row .slate-fraction .slate-cell { width: 88px; height: 58px; }
+.r4-s-setup-row .slate-fraction .slate-bar { width: 88px; }
+.r4-s-setup-row .slate-fraction .slate-fixed { font-size: 38px; }
+.r4-s-setup-row .slate-fraction .slate-committed-digit { font-size: 40px; }
+.r4-s-setup-row .slate-fraction .slate-ph { font-size: 24px; }
+.r4-s-setup-row .slate-fraction { position: relative; }
+.r4-s-setup-row .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; z-index: 4; }
+
+/* the answer card in words mode — prompt on top, Slate + Check beside, one card.
+   Rides on .lbar (frame), but uses its own inner markup → flex column override. */
+.lbar.r4-s-answer-words {
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+}
+.r4-s-ansprompt {
+  font-family: var(--display); font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink);
+  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.r4-s-answrite { display: flex; align-items: center; gap: 22px; }
+.r4-s-answrite .slate-fraction { position: relative; gap: 4px; }
+.r4-s-answrite .slate-fraction .slate-cell { width: 92px; height: 58px; }
+.r4-s-answrite .slate-fraction .slate-bar { width: 92px; }
+.r4-s-answrite .slate-fraction .slate-fixed { font-size: 40px; }
+.r4-s-answrite .slate-fraction .slate-committed-digit { font-size: 42px; }
+.r4-s-answrite .slate-fraction .slate-ph { font-size: 26px; }
+.r4-s-answrite .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; z-index: 4; }
+.r4-s-answrite .check { min-width: 150px; height: 56px; }
+.r4-s-answrite .r4-s-marks { margin-left: 8px; }
+.r4-s-rosette { display: flex; justify-content: center; }
+
+/* the Numbers-stage bare equation fills its zone, centered (already inset:0). */
+.r4-s-canvas .r4-bare-eq { inset: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHANGE C — ENLARGED WRITING SURFACES
+   The Words-stage optional "show your work" scratch was a cramped 150px box in
+   a mostly-empty story zone. With the in-story question band removed, the story
+   zone (318px) has room: let its setup region GROW and the scratch surface fill
+   it, so the optional scratch is now as generous as the Show-Work drawing slate.
+   Scoped to Words via .r4-s-setup:has(.r4-s-scratch-surface). ═══════════════════ */
+.r4-s-setup:has(.r4-s-scratch-surface) {
+  flex: 1 1 auto; min-height: 0;
+}
+.r4-s-scratch-surface { flex: 1 1 auto; min-height: 240px; }
+
+/* ── WORDS-ONLY STAGE — no QuestionBand, so the prose is the only cue ───────────
+   The final words-only stage omits the shared <QuestionBand> (removed in the JSX
+   for stage === "words"), so the child must read the recipe and pull the math.
+   That also frees the ~70px the band used: the play region grows, so give the
+   story zone (and with it the optional drawing slate) extra height and make the
+   scratch a GENEROUS full-width slate — ~744 wide × ~240 tall, consistent with
+   M3's ~756×246 reference. Tighten the secondary copy so the card stays compact
+   and the slate gets the room. Scoped to the words-only stage via .r4-s-onlywords
+   so Applied (which keeps its band + setup gate) is untouched. ═════════════════ */
+.r4-s-onlywords .r4-s-story { height: 100%; gap: 8px; }
+/* the recipe copy is purely a prompt here — keep the card tight so the slate
+   dominates the freed vertical space. */
+.r4-s-onlywords .r4-s-card { padding: 8px 26px; }
+.r4-s-onlywords .r4-s-story-text { font-size: 16px; line-height: 1.32; -webkit-line-clamp: 2; }
+/* the optional drawing slate: a generous, full-width slate (~744 wide; the setup
+   region flexes to fill the rest of the 372px story zone, leaving ~240 tall once
+   the compact card is subtracted — on par with M3's ~756×246 scratch). The
+   scratch fills the setup, so it never forces an overflow that would clip the
+   card or the answer/Check row below. */
+.r4-s-onlywords .r4-s-setup { padding: 8px 16px; gap: 6px; min-height: 0; }
+.r4-s-onlywords .r4-s-scratch-surface {
+  width: 980px; flex: 1 1 auto; min-height: 0; margin: 0 auto; align-self: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHANGE B — DRAG-TO-PLACE: fuse / factor chips drag onto their drop target.
+   The dragged chip is mirrored by a pointer-following GHOST; the drop target
+   (the bar canvas for fuse, the fade equation for factor) shows a soft band
+   while dragging and a stronger red when the pointer is over it (.is-hot).
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* the in-flight chip dims in the tray while its ghost flies */
+.r4-fuse-btn.is-dragging, .r4-factor-btn.is-dragging { opacity: 0.4; }
+
+/* drop targets: a dashed accept-band while dragging; red wash when hot */
+.r4-droptarget { outline: 2px dashed var(--red); outline-offset: -4px; transition: background .12s ease, outline-color .12s ease; }
+.r4-droptarget.is-hot { outline-color: var(--red-deep); background: rgba(163,42,34,0.10); }
+/* the canvas already clips/positions absolutely — keep the accept outline inside */
+.r4-s-canvas.r4-droptarget { outline-offset: -6px; }
+
+/* the pointer-following ghost (position:fixed, set inline; centered on cursor) */
+.r4-drag-ghost {
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 10px;
+  box-sizing: border-box;
+}
+.r4-drag-ghost-fuse {
+  padding: 6px 13px; border: 1.5px solid var(--ink); background: var(--paper-1);
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.22);
+}
+.r4-drag-ghost-fuse .r4-fuse-k {
+  display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto;
+  font-family: var(--display); font-size: 18px; color: var(--paper-1); background: var(--red); border: 1.5px solid var(--red-deep);
+}
+.r4-drag-ghost-lab { font-family: var(--display); font-size: 13px; letter-spacing: .02em; color: var(--ink); }
+.r4-drag-ghost-factor {
+  min-width: 52px; justify-content: center; padding: 7px 14px;
+  font-family: var(--display); font-size: 19px; color: var(--paper-1);
+  background: var(--red); border: 1.5px solid var(--red-deep);
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.22);
+}
+.r4-drag-ghost.is-hot { filter: brightness(1.04); transform: translate(-50%, -50%) scale(1.05); }
+
+@media (prefers-reduced-motion: reduce) {
+  .r4-factor-btn { transition: none; }
+  .r4-fade-out.on { animation: none; }
+  .plank.r4-ghost { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE GROUPBAR (CCSS 4.NF.A.1) — ONE fixed-width whole, re-partitioned.
+   Replaces the old FuseBar visual. The whole bar (= 1) is a fixed SPAN that
+   NEVER changes width across 8/12 → 4/6 → 2/3, so the amount is visibly
+   invariant: only the cut lines move. The first `num` cells are filled, the
+   rest are empty/outlined so "8 OUT OF 12" reads literally. A persistent
+   fill-edge marker at left = num*(SPAN/den) = VALUE*SPAN is IDENTICAL for
+   every equivalent name and proves the amount holds.
+
+   Fill hue follows the denominator (thirds orange, sixths gold, twelfths
+   neutral) — the component paints .is-filled with denomColor(den) inline, so
+   the rules below are the structural baseline + the neutral (twelfths)
+   default; the inline color wins for thirds/sixths. Class names are EXACTLY
+   storyboard.groupBar.classNames. ═══════════════════════════════════════════ */
+
+/* outer wrapper: holds the track + the absolutely-positioned fill-edge + the
+   division annotations. Sits inside .r4-s-canvas; never absolute-fills it. */
+.r4-groupbar { position: relative; box-sizing: border-box; }
+.r4-groupbar.is-ghost { opacity: 0.32; filter: grayscale(0.35); transition: opacity .5s ease, filter .5s ease; }
+
+/* the track = the full bar SPAN. Width is CONSTANT for every grouping (set by
+   the component as the fixed SPAN), which is what makes the amount invariant.
+   A generous fixed height makes the bar read big and tactile on a tablet. */
+.r4-gb-track {
+  position: relative; display: flex; box-sizing: border-box;
+  height: 70px;
+  border: 2px solid var(--ink); background: var(--paper-1);
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.16);
+}
+
+/* each cell = SPAN/den (width set inline by the component). The cell width
+   animates as cells merge (12 → 6 → 3) while the filled run's extent holds. */
+.r4-gb-cell {
+  position: relative; box-sizing: border-box; height: 100%;
+  transition: width .42s cubic-bezier(.34,1.45,.6,1), background .3s ease;
+}
+/* filled cells: painted with denomColor(den) inline; neutral twelfths default. */
+.r4-gb-cell.is-filled { background: var(--paper-3); }
+/* empty cells: outlined / transparent so "8 OUT OF 12" is literally visible —
+   filled vs empty, not just a shaded stub. */
+.r4-gb-cell.is-empty { background: transparent; }
+
+/* internal cut lines between cells */
+.r4-gb-cut { border-right: 1.5px solid rgba(28,22,18,0.55); }
+.r4-gb-cut:last-child { border-right: none; }
+
+/* the FIXED fill-edge: absolutely positioned at left = num*(SPAN/den) =
+   VALUE*SPAN — IDENTICAL across 8/12, 4/6, 2/3. It NEVER changes x. */
+.r4-gb-filledge {
+  position: absolute; top: -8px; bottom: -8px; width: 0;
+  border-left: 2.5px solid var(--red); z-index: 3;
+}
+.r4-gb-filledge.pulse { animation: r4EdgePulse .6s ease-in-out; }
+@keyframes r4EdgePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(163,42,34,0); }
+  45% { box-shadow: 0 0 0 5px rgba(163,42,34,0.28); }
+}
+/* the "same amount" cap riding the fill-edge */
+.r4-gb-edgecap {
+  position: absolute; top: -19px; left: 5px; white-space: nowrap;
+  font-family: var(--display); font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--red);
+}
+
+/* the count chip above the filled run: "<num> of <den>" */
+.r4-gb-counttag {
+  position: absolute; top: -34px; left: 0; white-space: nowrap;
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.04em;
+  color: var(--ink); background: var(--paper-2);
+  border: 1.5px solid var(--ink); padding: 2px 8px;
+  box-shadow: 2px 2px 0 rgba(28,22,18,0.16);
+}
+
+/* division-legality annotation: "div k" (top), "div k" (bottom), plus
+   "div k/k = div 1" — the legality is ON SCREEN, not just spoken. Laid out as a
+   compact HORIZONTAL row so it tucks under the bar without colliding with the
+   ruler in the now-compact canvas. */
+.r4-gb-divrow { position: relative; display: flex; flex-direction: row; gap: 10px; margin-top: 14px; align-items: center; justify-content: center; }
+.r4-gb-div {
+  font-family: var(--stencil); font-weight: 700; font-size: 13px; color: var(--red);
+  border: 1.5px solid var(--red); padding: 1px 7px; background: rgba(163,42,34,0.07);
+  white-space: nowrap; line-height: 1.3;
+}
+.r4-gb-div.pop { animation: r4Stamp .45s cubic-bezier(.34,1.56,.64,1); }
+/* the "div k/k = div 1" chip — the proof that dividing top AND bottom by the
+   same number is dividing by 1, so the amount cannot change. */
+.r4-gb-divone {
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.04em;
+  color: var(--paper-1); background: var(--red); border: 1.5px solid var(--red-deep);
+  padding: 2px 9px; white-space: nowrap; line-height: 1.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .r4-gb-cell { transition: none; }
+  .r4-gb-filledge.pulse, .r4-gb-div.pop { animation: none; }
+}

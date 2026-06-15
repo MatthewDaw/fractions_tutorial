@@ -1,0 +1,32 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e376]
+        - generic [ref=e276]:
+          - generic [ref=e303]:
+            - paragraph [ref=e304]: Share 4 cookies.
+            - button "🖐️" [ref=e306] [cursor=pointer]:
+              - generic [ref=e307]: 🖐️
+          - generic [ref=e310]:
+            - paragraph [ref=e312]: See if you can divide these cookies evenly.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e280]:
+        - generic [ref=e282]:
+          - generic [ref=e285]:
+            - button [ref=e288] [cursor=pointer]
+            - button [ref=e289] [cursor=pointer]
+          - generic [ref=e290]:
+            - generic:
+              - img "Character 1" [ref=e293] [cursor=pointer]
+              - img "Character 2" [ref=e296] [cursor=pointer]
+            - generic [ref=e378]:
+              - button [ref=e379] [cursor=pointer]
+              - button [ref=e380] [cursor=pointer]
+        - status [ref=e300]: Draggable item whole-0-1781464999410-0.926525223452933 was dropped.
+  - alert [ref=e11]

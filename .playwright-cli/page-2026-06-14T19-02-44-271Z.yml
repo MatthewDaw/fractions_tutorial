@@ -1,0 +1,29 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e46]:
+          - paragraph [ref=e191]: Now divvy up that final cookie.
+          - button "🖐️" [ref=e193] [cursor=pointer]:
+            - generic [ref=e194]: 🖐️
+      - generic [ref=e54]:
+        - generic [ref=e125]:
+          - button [active] [ref=e187] [cursor=pointer]
+          - generic [ref=e134]:
+            - generic:
+              - img "Character 1" [ref=e137] [cursor=pointer]
+              - img "Character 2" [ref=e140] [cursor=pointer]
+            - generic [ref=e143]:
+              - generic [ref=e150]:
+                - button [ref=e151] [cursor=pointer]
+                - button [ref=e152] [cursor=pointer]
+                - button [ref=e195] [cursor=pointer]
+              - generic [ref=e153]:
+                - button [ref=e154] [cursor=pointer]
+                - button [ref=e181] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

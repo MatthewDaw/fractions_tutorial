@@ -1,0 +1,241 @@
+/* World / lesson-map view + empty (unbuilt) room. Same printed-page aesthetic. */
+
+.world {
+  position: absolute; inset: 0; overflow: hidden;
+  background-color: var(--paper-1);
+  background-image:
+    radial-gradient(ellipse at 50% 16%, rgba(255,245,220,0.55), transparent 70%),
+    radial-gradient(ellipse at 24% 22%, rgba(163,42,34,0.045), transparent 62%),
+    radial-gradient(ellipse at 82% 86%, rgba(28,22,18,0.07), transparent 60%);
+  box-shadow: 0 2px 0 rgba(255,240,210,0.5) inset, 0 -1px 0 rgba(28,22,18,0.10) inset, 0 30px 70px rgba(20,12,6,0.5);
+  border: 1px solid rgba(28,22,18,0.20);
+}
+
+.world-head { position: absolute; top: 28px; left: 0; right: 0; text-align: center; z-index: 5; }
+.world-head .tag { font-family: var(--display); letter-spacing: 0.3em; color: var(--red); text-transform: uppercase; font-size: 11px; }
+.world-head h1 { font-family: var(--display); font-size: 32px; margin: 5px 0 3px; color: var(--ink); }
+.world-head .sub { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-mute); }
+
+.wedges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+
+/* central kitchen medallion */
+.kitchen-node { position: absolute; transform: translate(-50%, -50%); width: 230px; text-align: center; z-index: 4; }
+.kitchen-medallion {
+  width: 168px; height: 168px; margin: 0 auto; border: 3px solid var(--ink); border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 28%, #fff6e2, var(--paper-1));
+  display: grid; place-items: end center; overflow: hidden; position: relative;
+  box-shadow: 5px 6px 0 rgba(28,22,18,0.18), inset 0 0 0 6px var(--paper-2);
+}
+.kitchen-medallion::after { content: ""; position: absolute; inset: 9px; border: 1px dashed var(--ink-soft); border-radius: 50%; opacity: 0.4; pointer-events: none; }
+.kitchen-medallion svg { margin-bottom: -6px; }
+/* title + CTA floated ABOVE the medallion (out of flow) so the circle stays
+   centered on the hub where the recipe trails converge, and nothing sits on the
+   downward trail to the Simplify room. */
+.kitchen-label { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: 230px; text-align: center; }
+.kitchen-name { font-family: var(--display); font-size: 17px; letter-spacing: 0.03em; margin: 0 0 8px; color: var(--ink); }
+
+/* the kitchen medallion is now a button — reset button chrome, keep the layout
+   from .kitchen-node, and add a hover lift + a "Cook with Babushka" call-to-action */
+.kitchen-open { -webkit-appearance: none; appearance: none; border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; padding: 0; }
+.kitchen-medallion { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.kitchen-open:hover .kitchen-medallion { transform: translateY(-2px); box-shadow: 6px 8px 0 rgba(28,22,18,0.22), inset 0 0 0 6px var(--paper-2); }
+.kitchen-cta { display: inline-block; margin-top: 0; font-family: var(--display); font-size: 11px; letter-spacing: 0.05em;
+  color: var(--paper-1); background: var(--red); border: 1.5px solid var(--red-deep); padding: 5px 12px; box-shadow: 2px 2px 0 rgba(110,28,22,0.3); }
+.kitchen-open:hover .kitchen-cta { box-shadow: 2px 2px 0 rgba(110,28,22,0.3), 0 0 14px rgba(163,42,34,0.45); }
+
+/* lesson node cards */
+.wcard {
+  all: unset; position: absolute; transform: translate(-50%, -50%); width: 250px; box-sizing: border-box;
+  /* Fixed-height template: every card is the same size regardless of how long its
+     description is. Flex column so the example row pins to the bottom and the
+     divider lines stay aligned across the whole shelf. */
+  height: 196px; display: flex; flex-direction: column; overflow: hidden;
+  cursor: pointer; border: 2px solid var(--ink); background: var(--paper-1); padding: 12px 15px 14px; z-index: 3;
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.22); transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.wcard:hover { transform: translate(-50%, -50%) translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(28,22,18,0.26); }
+.wcard:active { transform: translate(-50%, -50%) translate(1px, 1px); box-shadow: 2px 2px 0 rgba(28,22,18,0.22); }
+.wcard:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.wcard.soon { background: repeating-linear-gradient(135deg, rgba(28,22,18,0.022) 0 6px, transparent 6px 12px), var(--paper-1); }
+.wcard .whead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wcard .wno { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 2px solid var(--red); color: var(--red); font-family: var(--display); font-size: 15px; background: rgba(163,42,34,0.06); }
+.wcard .wtag { font-family: var(--display); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--ink); color: var(--ink); }
+.wcard .wtag.ready { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+.wcard .wtag.soon { color: var(--ink-mute); border-color: var(--paper-3); }
+.wcard h2 { font-family: var(--display); font-size: 18px; margin: 10px 0 4px; color: var(--ink); }
+.wcard p { font-family: var(--serif); font-size: 12.5px; line-height: 1.35; color: var(--ink-mute); margin: 0; }
+.wcard .wex { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 9px; border-top: 1px dashed var(--paper-3); }
+.wcard .wex-label { font-family: var(--display); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute); }
+.wcard .wex-frac { font-family: var(--serif); font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
+
+/* mastery / suggestion tag variants (shared by lesson cards and shelves). These
+   were referenced but unstyled before — they fell back to the plain bordered
+   tag; giving them colour makes status legible at a glance. */
+.wtag.suggested { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+.wtag.mastered { background: rgba(60,120,60,0.16); color: #2f5d2f; border-color: #2f5d2f; }
+.wtag.in-progress { background: rgba(163,42,34,0.10); color: var(--red); border-color: var(--red); }
+/* U7: warm-toned "Cook again" — a demoted (lapsed) skill reads as an invitation
+   back to the kitchen, not a red failure stamp. */
+.wtag.needs-review { background: rgba(196,140,46,0.16); color: #8a5a16; border-color: #b8862f; }
+
+/* U8: "Mixed Basket" entry — interleaved practice across introduced recipes. */
+.mixbasket-btn {
+  margin-top: 8px;
+  background: var(--paper-2, #f3e7cf);
+  border: 2px solid var(--red-deep, #6e1c16);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font: 600 15px/1 var(--serif, Georgia, serif);
+  color: var(--red-deep, #6e1c16);
+  cursor: pointer;
+}
+.mixbasket-btn:hover { background: var(--red-deep, #6e1c16); color: var(--paper-1, #f7efdd); }
+.wcard--suggested { box-shadow: 4px 4px 0 rgba(28,22,18,0.22), 0 0 0 2px var(--red) inset; }
+
+/* shelf nodes — the map's top level (one per strand). Centre-anchored like the
+   lesson cards, a touch wider, with a strand summary + progress count. */
+.shelf {
+  all: unset; position: absolute; transform: translate(-50%, -50%); width: 296px; box-sizing: border-box;
+  cursor: pointer; border: 2px solid var(--ink); background: var(--paper-1); padding: 15px 18px 14px; z-index: 3;
+  box-shadow: 5px 5px 0 rgba(28,22,18,0.24); transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.shelf:hover { transform: translate(-50%, -50%) translate(-2px, -2px); box-shadow: 7px 7px 0 rgba(28,22,18,0.28); }
+.shelf:active { transform: translate(-50%, -50%) translate(1px, 1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.24); }
+.shelf:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.shelf--suggested { box-shadow: 5px 5px 0 rgba(28,22,18,0.24), 0 0 0 2px var(--red) inset; }
+.shelf-head { display: flex; align-items: center; gap: 8px; }
+.shelf-range { font-family: var(--display); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); border: 1.5px solid var(--red); padding: 3px 9px; background: rgba(163,42,34,0.06); }
+.shelf-head .wtag { font-family: var(--display); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--ink); }
+.shelf-title { font-family: var(--display); font-size: 21px; margin: 11px 0 5px; color: var(--ink); }
+.shelf-blurb { font-family: var(--serif); font-size: 13px; line-height: 1.4; color: var(--ink-mute); margin: 0; }
+.shelf-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 13px; padding-top: 10px; border-top: 1px dashed var(--paper-3); }
+.shelf-count { font-family: var(--display); font-size: 10.5px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-mute); }
+.shelf-open { font-family: var(--display); font-size: 11px; letter-spacing: 0.05em; color: var(--paper-1); background: var(--red); border: 1.5px solid var(--red-deep); padding: 5px 11px; box-shadow: 2px 2px 0 rgba(110,28,22,0.3); }
+.shelf:hover .shelf-open { box-shadow: 2px 2px 0 rgba(110,28,22,0.3), 0 0 12px rgba(163,42,34,0.4); }
+
+/* back-to-shelves button (submenu view) — sits top-left, matching the FAB look */
+.world-back {
+  all: unset; position: absolute; top: 22px; left: 22px; z-index: 6; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px; box-sizing: border-box;
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink); background: rgba(237,226,200,0.92); border: 1.5px solid var(--ink);
+  padding: 9px 14px; box-shadow: 2px 2px 0 rgba(28,22,18,0.30);
+  transition: transform .12s ease, box-shadow .12s ease, color .12s ease, background .12s ease;
+}
+.world-back:hover { background: rgba(163,42,34,0.12); color: var(--red); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.30); }
+.world-back:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
+.world-back:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.world-back span { font-size: 15px; line-height: 1; }
+
+.world-foot { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--ink-mute); z-index: 5; }
+
+/* empty (unbuilt) room */
+.emptyroom {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; text-align: center; padding: 40px; box-sizing: border-box;
+  background-color: var(--paper-1);
+  background-image: radial-gradient(ellipse at 50% 32%, rgba(255,245,220,0.5), transparent 70%);
+  border: 1px solid rgba(28,22,18,0.20);
+  box-shadow: 0 2px 0 rgba(255,240,210,0.5) inset, 0 30px 70px rgba(20,12,6,0.5);
+}
+.emptyroom .er-no { width: 66px; height: 66px; display: grid; place-items: center; border: 3px solid var(--red); color: var(--red); font-family: var(--display); font-size: 27px; background: rgba(163,42,34,0.06); }
+.emptyroom .er-tag { font-family: var(--display); letter-spacing: 0.28em; text-transform: uppercase; color: var(--red); font-size: 11px; margin-top: 4px; }
+.emptyroom h1 { font-family: var(--display); font-size: 32px; margin: 2px 0 0; color: var(--ink); }
+.emptyroom .er-note { font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--ink-mute); max-width: 470px; line-height: 1.45; }
+
+.backbtn {
+  all: unset; cursor: pointer; box-sizing: border-box; display: inline-flex; align-items: center; gap: 9px; margin-top: 6px;
+  font-family: var(--display); font-size: 15px; letter-spacing: 0.04em; color: var(--paper-1); background: var(--ink);
+  border: 2px solid var(--ink); padding: 13px 22px; box-shadow: 4px 4px 0 rgba(28,22,18,0.28);
+}
+.backbtn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 rgba(28,22,18,0.3); }
+.backbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(28,22,18,0.28); }
+.backbtn:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+/* room intro "video" player (first entry) */
+.intro { position: absolute; inset: 0; overflow: hidden; background: #faf9f5; border: 1px solid rgba(28,22,18,0.20); display: flex; }
+.intro-main { position: relative; flex: 1 1 auto; min-width: 0; }
+.intro-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #faf9f5; }
+
+/* live transcript rail (rooms with narration) */
+.intro-transcript { flex: 0 0 300px; width: 300px; height: 100%; display: flex; flex-direction: column;
+  background: var(--paper-2); border-left: 1.5px solid var(--ink); }
+.tr-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px;
+  background: var(--paper-1); border-bottom: 1.5px solid var(--ink); }
+.tr-head span { font-family: var(--display); font-size: 11px; letter-spacing: 0.20em; text-transform: uppercase; color: var(--red); }
+.tr-mute { all: unset; cursor: pointer; display: inline-flex; align-items: center; padding: 5px; color: var(--ink);
+  border: 1px solid rgba(28,22,18,0.25); background: rgba(237,226,200,0.7); }
+.tr-mute:hover { background: rgba(163,42,34,0.10); color: var(--red); }
+.tr-mute[aria-pressed="true"] { color: var(--red); border-color: var(--red); }
+.tr-list { list-style: none; margin: 0; padding: 8px 0; flex: 1 1 auto; overflow-y: auto; }
+.tr-line { font-family: var(--serif); font-size: 15px; line-height: 1.35; color: var(--ink-mute);
+  padding: 9px 16px 9px 13px; cursor: pointer; border-left: 3px solid transparent; transition: background 120ms, color 120ms; }
+.tr-line:hover { background: rgba(28,22,18,0.045); color: var(--ink); }
+.tr-line.active { color: var(--ink); background: rgba(163,42,34,0.12); border-left-color: var(--red); }
+.tr-start { font-family: var(--display); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-mute); border-bottom: 1px dashed var(--paper-3); }
+.tr-foot { padding: 10px 16px; border-top: 1px solid var(--paper-3); font-family: var(--serif); font-style: italic;
+  font-size: 11px; color: var(--ink-mute); }
+
+.intro-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 14px 22px; background: linear-gradient(transparent, rgba(28,22,18,0.62));
+}
+.intro-bar .intro-back, .intro-bar .intro-pause { background: rgba(237,226,200,0.92); }
+/* label fills the middle so back+pause sit left, Skip stays right, label centered */
+.intro-label { flex: 1 1 auto; text-align: center; font-family: var(--display); font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--paper-1); text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.intro-continue {
+  all: unset; cursor: pointer; font-family: var(--display); font-size: 16px; letter-spacing: 0.04em;
+  color: var(--paper-1); background: var(--red); border: 2px solid var(--red-deep); padding: 12px 20px;
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.45);
+}
+.intro-continue:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(28,22,18,0.5); }
+.intro-continue:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.45); }
+.intro-continue:focus-visible { outline: 3px solid var(--paper-1); outline-offset: 2px; }
+
+/* End card — shown when the intro finishes (timer) or is skipped. */
+.intro-endcard { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center;
+  background: radial-gradient(ellipse at 50% 38%, rgba(255,245,220,0.55), transparent 70%), var(--paper-1); }
+.intro-endcard-back { position: absolute; top: 16px; left: 16px; background: rgba(237,226,200,0.92); }
+.intro-endcard-card { text-align: center; border: 2px solid var(--ink); background: var(--paper-2);
+  padding: 30px 40px 34px; box-shadow: 6px 6px 0 rgba(28,22,18,0.28); max-width: 560px; }
+.intro-endcard-tag { font-family: var(--display); font-size: 10.5px; letter-spacing: 0.30em; text-transform: uppercase; color: var(--red); }
+.intro-endcard-title { font-family: var(--display); font-size: 28px; color: var(--ink); margin-top: 6px; }
+.intro-endcard-q { font-family: var(--serif); font-size: 18px; color: var(--ink-soft); margin-top: 12px; }
+.intro-endcard-btns { display: flex; gap: 14px; justify-content: center; margin-top: 24px; }
+.intro-again {
+  all: unset; cursor: pointer; font-family: var(--display); font-size: 16px; letter-spacing: 0.04em;
+  color: var(--ink); background: var(--paper-1); border: 2px solid var(--ink); padding: 12px 20px;
+  box-shadow: 3px 3px 0 rgba(28,22,18,0.28);
+}
+.intro-again:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(28,22,18,0.32); }
+.intro-again:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.28); }
+.intro-again:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* global Settings button — fixed in the viewport corner, outside the scaled
+   #stage, so it sits in the same spot on every screen it appears on. It replaces
+   the old inline music control: volume + mute (now also input mode) live on the
+   Settings screen it opens. Shell renders it only on the title/world screens. */
+/* Both top-corner FABs live in one fixed flex bar so they share a baseline and a
+   consistent gap — no hand-tuned `right:` offsets that drift when label widths
+   change. Concepts sits left of Settings (DOM order). */
+.fab-bar {
+  position: fixed; top: 14px; right: 14px; z-index: 9000;
+  display: flex; align-items: stretch; gap: 10px;
+}
+.settings-fab {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  appearance: none; padding: 8px 13px; border: 1.5px solid var(--ink);
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink); background: rgba(237,226,200,0.92); box-shadow: 2px 2px 0 rgba(28,22,18,0.30);
+  transition: transform .12s ease, box-shadow .12s ease, color .12s ease, background .12s ease;
+}
+/* fixed-size icon slot so a 20px img and an 18px svg occupy identical space and
+   centre identically — the buttons line up regardless of icon dimensions. */
+.settings-fab-icon { display: inline-grid; place-items: center; width: 20px; height: 20px; }
+.settings-fab-icon svg, .settings-fab-icon img { display: block; }
+.settings-fab:hover { background: rgba(163,42,34,0.12); color: var(--red); transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.30); }
+.settings-fab:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(28,22,18,0.30); }
+.settings-fab:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.settings-fab-label { line-height: 1; }

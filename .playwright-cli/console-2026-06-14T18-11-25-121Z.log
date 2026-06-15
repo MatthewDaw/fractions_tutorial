@@ -1,0 +1,53 @@
+[     450ms] [WARNING] Statsig initialized without an user. Feature flag might be incorrect= use_tutor_tts_cache @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:51
+[     450ms] [WARNING] Statsig initialized without an user. Feature flag might be incorrect= use_tutor_tts_staging_server @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:51
+[     450ms] [WARNING] Statsig initialized without an user. Feature flag might be incorrect= lazily_cache_jessica_elevenlabs @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:51
+[     450ms] [WARNING] Statsig initialized without an user. Feature flag might be incorrect= tutor_voice_input @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:51
+[     565ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://tutor.synthesis.com/_vercel/insights/script.js:0
+[     565ms] [LOG] [Vercel Web Analytics] Failed to load script from /_vercel/insights/script.js. Be sure to enable Web Analytics for your project and deploy again. See https://vercel.com/docs/analytics/quickstart for more information. @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:239
+[     829ms] [INFO] [Speech] Active transcription provider {provider: web-speech, source: default} @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:0
+[     833ms] [INFO] Triggering guard: NOT_LOGGED_IN {pathname: /, payload: undefined, searchParams: n} @ https://tutor.synthesis.com/_next/static/chunks/63222-26f51ea14a6b1eba.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:0
+[     834ms] [LOG] setting beautiful prompt @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:0
+[     916ms] [INFO] [Speech] Active transcription provider {provider: web-speech, source: default} @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:0
+[    1340ms] [LOG] FullStory initialized! @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[    2142ms] [LOG] MNTN Conv init... @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[    2142ms] [LOG] MNTN tracking url  null @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[    2142ms] [LOG] NO MNTM track script @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  162533ms] [INFO] Triggering guard: ALREADY_LOGGED_IN {pathname: /login, payload: undefined, searchParams: n} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  162538ms] [INFO] Triggering guard: ALREADY_LOGGED_IN {pathname: /login, payload: undefined, searchParams: n} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  162544ms] [INFO] MOBILE  false @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  162552ms] [INFO] MOBILE  false @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  162627ms] [INFO] {category: userAnalysis.updateUserLocation} Updated user location @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:231
+[  162647ms] [INFO] [Speech] Active transcription provider {provider: web-speech, source: default} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  162648ms] [INFO] MOBILE  false @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  162736ms] [INFO] [Speech] Active transcription provider {provider: web-speech, source: default} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  358974ms] [LOG] [startExplorationAccessCheck] pathname: /, sessionUser: [object Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  359286ms] [LOG] [rootStore] Running lesson entry for content @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  359287ms] [LOG] [rootStore] created the store and set the api. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  359287ms] [LOG] starting @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  359722ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  360110ms] [INFO] {checkpointData: null} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  360185ms] [INFO] {checkpointData: null} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  360187ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  462881ms] [INFO] MOBILE  false @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  462889ms] [INFO] MOBILE  false @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  463038ms] [INFO] [Speech] Active transcription provider {provider: web-speech, source: default} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  463039ms] [INFO] MOBILE  false @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1307677ms] [LOG] trip ended @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1307835ms] [LOG] [rootStore] cleaning up @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1307838ms] [LOG] [rootStore] stopping all sounds @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1307838ms] [LOG] [rootStore] Lesson ended with reason: {
+  "name": "SwitchToExploration",
+  "lessonUrlName": "multiplication_assessment",
+  "launchContext": {
+    "source": "lesson-recommender"
+  }
+} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1307840ms] [LOG] [startExplorationAccessCheck] pathname: /exploration/multiplication_assessment, sessionUser: [object Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1308296ms] [LOG] [rootStore] Running lesson entry for Multiplication Assessment @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1308297ms] [LOG] [rootStore] created the store and set the api. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1308297ms] [LOG] starting @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1308619ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1308857ms] [INFO] {checkpointData: null} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1308857ms] [INFO] Progress saved. {lessonData: Object, node: multiplicationConceptualOne} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1308859ms] [INFO] Starting assessment ass_jIfhUZdd4h4HNvplAsTvx @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1308860ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3

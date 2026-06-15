@@ -1,0 +1,40 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e45]:
+          - generic [ref=e374]:
+            - paragraph [ref=e375]: Share 5 cookies equally.
+            - button "🖐️" [ref=e377] [cursor=pointer]:
+              - generic [ref=e378]: 🖐️
+          - generic [ref=e398]:
+            - paragraph [ref=e400]: If you need help, just click the hand.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e54]:
+        - generic [ref=e348]:
+          - generic [ref=e350]:
+            - button [ref=e351] [cursor=pointer]:
+              - img [ref=e352]
+            - button "🔪" [ref=e354] [cursor=pointer]:
+              - generic [ref=e355]: 🔪
+          - generic [ref=e384]:
+            - generic [ref=e387]:
+              - button [active] [ref=e388] [cursor=pointer]
+              - button [ref=e389] [cursor=pointer]
+              - button [ref=e390] [cursor=pointer]
+              - button [ref=e391] [cursor=pointer]
+              - button [ref=e392] [cursor=pointer]
+            - generic [ref=e393]:
+              - generic:
+                - img "Character 1" [ref=e358] [cursor=pointer]
+                - img "Character 2" [ref=e361] [cursor=pointer]
+                - img "Character 3" [ref=e364] [cursor=pointer]
+                - img "Character 4" [ref=e367] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

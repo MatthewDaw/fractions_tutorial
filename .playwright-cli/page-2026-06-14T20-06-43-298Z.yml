@@ -1,0 +1,43 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - generic [ref=e1208]:
+        - navigation [ref=e1209]:
+          - button [ref=e1212] [cursor=pointer]:
+            - img [ref=e1213]
+        - generic [ref=e1533]:
+          - paragraph [ref=e1535]:
+            - generic [ref=e1536]:
+              - text: Now we've got
+              - generic [ref=e1537]: 5 cookies
+              - text: and
+              - generic [ref=e1538]: 4 people
+              - text: .
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e1220]:
+        - generic [ref=e1539]:
+          - generic [ref=e1541]:
+            - button [ref=e1542] [cursor=pointer]:
+              - img [ref=e1543]
+            - button "🔪" [ref=e1545] [cursor=pointer]:
+              - generic [ref=e1546]: 🔪
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - button
+                  - button
+                  - button
+                  - button
+                  - button
+            - generic:
+              - generic:
+                - img "Character 1" [ref=e1549] [cursor=pointer]
+                - img "Character 2" [ref=e1552] [cursor=pointer]
+                - img "Character 3" [ref=e1555] [cursor=pointer]
+                - img "Character 4" [ref=e1558] [cursor=pointer]
+        - status [ref=e1240]
+  - alert [ref=e11]

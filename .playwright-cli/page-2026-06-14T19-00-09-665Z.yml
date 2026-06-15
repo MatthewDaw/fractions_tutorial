@@ -1,0 +1,27 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e88]:
+          - paragraph [ref=e90]: Excellent.
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e54]:
+        - generic [ref=e64]:
+          - generic:
+            - img "Character 1" [ref=e67] [cursor=pointer]
+            - img "Character 2" [ref=e70] [cursor=pointer]
+          - generic [ref=e73]:
+            - generic [ref=e82]:
+              - button [disabled] [ref=e83] [cursor=pointer]
+              - button [disabled] [ref=e84] [cursor=pointer]
+            - generic [ref=e85]:
+              - button [disabled] [ref=e86] [cursor=pointer]
+              - button [disabled] [ref=e91] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

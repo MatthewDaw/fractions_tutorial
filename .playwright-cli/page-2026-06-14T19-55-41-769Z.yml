@@ -1,0 +1,87 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e266]:
+      - generic [ref=e878]:
+        - button [ref=e880] [cursor=pointer]:
+          - img [ref=e881]
+        - button "M Matthew" [ref=e884] [cursor=pointer]:
+          - generic [ref=e886]: M
+          - generic [ref=e887]: Matthew
+        - generic [ref=e889]:
+          - generic [ref=e890]:
+            - button "Report a Problem" [ref=e891] [cursor=pointer]:
+              - img [ref=e892]
+              - generic [ref=e894]: Report a Problem
+            - button "End Lesson" [ref=e895] [cursor=pointer]:
+              - img [ref=e896]
+              - generic [ref=e899]: End Lesson
+            - button "Manage Account" [ref=e900] [cursor=pointer]:
+              - img [ref=e901]
+              - generic [ref=e904]: Manage Account
+          - generic [ref=e905]:
+            - generic [ref=e906]: Language
+            - generic [ref=e907]:
+              - button "English" [ref=e908] [cursor=pointer]
+              - button "Español" [ref=e909] [cursor=pointer]
+          - generic [ref=e910]:
+            - generic [ref=e911]:
+              - generic [ref=e912]: Read Answer Choices
+              - switch "Read Answer Choices" [ref=e913] [cursor=pointer]
+            - generic [ref=e916]:
+              - generic [ref=e917]:
+                - generic [ref=e918]: Voice Input
+                - generic [ref=e919]: BETA
+              - switch "Voice Input" [ref=e920] [cursor=pointer]
+          - generic [ref=e922]:
+            - heading "Voice Speed" [level=3] [ref=e923]
+            - generic [ref=e924]:
+              - button "Slow" [ref=e925] [cursor=pointer]
+              - button "Normal" [ref=e926] [cursor=pointer]
+              - button "Fast" [ref=e927] [cursor=pointer]
+              - button "Speedy" [ref=e928] [cursor=pointer]
+          - generic [ref=e929]:
+            - generic [ref=e930]:
+              - generic [ref=e931]: Dyslexic Font
+              - switch "Dyslexic Font" [ref=e932] [cursor=pointer]
+            - generic [ref=e934]:
+              - generic [ref=e935]: On-Screen Keyboard
+              - switch "On-Screen Keyboard" [ref=e936] [cursor=pointer]
+      - generic [ref=e267]:
+        - generic [ref=e268]:
+          - navigation [ref=e269]:
+            - button [ref=e272] [cursor=pointer]:
+              - img [ref=e938]
+          - generic [ref=e864]:
+            - paragraph [ref=e866]:
+              - generic [ref=e867]: You already cut the final cookie into 4 pieces. So just give each person a piece.
+            - generic:
+              - button [disabled]:
+                - img
+        - generic [ref=e280]:
+          - generic [ref=e800]:
+            - generic [ref=e802]:
+              - button [ref=e803] [cursor=pointer]:
+                - img [ref=e804]
+              - button "🔪" [ref=e955] [cursor=pointer]:
+                - generic [ref=e807]: 🔪
+            - generic [ref=e817]:
+              - generic:
+                - img "Character 1" [ref=e956] [cursor=pointer]
+                - img "Character 2" [ref=e957] [cursor=pointer]
+                - img "Character 3" [ref=e958] [cursor=pointer]
+                - img "Character 4" [ref=e959] [cursor=pointer]
+              - generic [ref=e832]:
+                - generic [ref=e839]:
+                  - button [ref=e840] [cursor=pointer]
+                  - button [ref=e868] [cursor=pointer]
+                - generic [ref=e841]:
+                  - button [ref=e871] [cursor=pointer]
+                  - button [ref=e842] [cursor=pointer]
+                  - button [ref=e869] [cursor=pointer]
+                - generic [ref=e847]:
+                  - button [ref=e848] [cursor=pointer]
+                  - button [ref=e876] [cursor=pointer]
+                  - button [ref=e870] [cursor=pointer]
+          - status [ref=e300]: Draggable item whole-0-1781464999410-0.926525223452933 was dropped.
+  - alert [ref=e11]

@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e273]
+        - generic [ref=e392]:
+          - paragraph [ref=e394]: What should we do with the extra cookie?
+          - generic [ref=e395]:
+            - button "Cut it in half" [ref=e396] [cursor=pointer]:
+              - generic [ref=e397]: Cut it in half
+              - img [ref=e398]
+            - button "Give it to the dog" [ref=e400] [cursor=pointer]:
+              - generic [ref=e401]: Give it to the dog
+              - img [ref=e402]
+      - generic [ref=e280]:
+        - generic [ref=e355]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - button
+            - generic:
+              - generic:
+                - img "Character 1" [ref=e368] [cursor=pointer]
+                - img "Character 2" [ref=e371] [cursor=pointer]
+              - generic:
+                - generic:
+                  - button
+                  - button
+                - generic:
+                  - button
+                  - button
+        - status [ref=e300]
+  - alert [ref=e11]

@@ -1,0 +1,68 @@
+{
+  "runId": "rp-260608-2215",
+  "goal": "Reverse-prompt the entire repo into a complete, rebuildable specification: full documentation of every feature plus a complete wireframe, written under docs/fractions_tutorial-rebuild-spec/. Coverage must be 100% of routes/endpoints/models with no duplication, proven by the _coverage/ audit.",
+  "specFolder": "docs/fractions_tutorial-rebuild-spec",
+  "agents": {
+    "supervisor": "docs-supervisor",
+    "assigner": "task-to-tickets",
+    "worker": "codebase-reverse-prompt"
+  },
+  "model": "opus",
+  "parallelismCap": 6,
+  "createdAt": "2026-06-08T22:15:00Z",
+  "phase": "complete",
+  "completion": {
+    "auditVerdict": "PASS",
+    "auditDoc": "docs/fractions_tutorial-rebuild-spec/_coverage/audit.md",
+    "specHeadCommit": "af896e7",
+    "branchPushed": "work/rp-260608-2215-spec",
+    "prUrl": "https://github.com/MatthewDaw/fractions_tutorial/pull/new/work/rp-260608-2215-spec",
+    "prNote": "gh CLI not installed — branch pushed; user opens the PR via the link",
+    "cronDeleted": "6a26b807",
+    "ticketsInReview": ["MAT-126","MAT-127","MAT-128","MAT-129","MAT-130","MAT-131","MAT-132","MAT-133","MAT-134","MAT-135","MAT-136"]
+  },
+  "cronId": "6a26b807",
+  "censusLandedCommit": "f7c5b82",
+  "done": {
+    "engine-core":    { "linear": "MAT-127", "worktree": ".claude/worktrees/agent-ae6eb84a40d5765b7", "openItems": 1, "note": "1 checklist item still [ ] — re-check at audit" },
+    "generators":     { "linear": "MAT-128", "worktree": ".claude/worktrees/agent-a5a853f165941c19d", "openItems": 0 },
+    "runtime-affect": { "linear": "MAT-129", "worktree": ".claude/worktrees/agent-a55dae64a271a03ac", "openItems": 0 },
+    "shell-nav":      { "linear": "MAT-131", "worktree": ".claude/worktrees/agent-a3354e928932de6c3", "openItems": 0 },
+    "harness":        { "linear": "MAT-132", "worktree": ".claude/worktrees/agent-a6195308d6970437e", "openItems": 0 },
+    "lessons-rooms":  { "linear": "MAT-130", "worktree": ".claude/worktrees/agent-a46c7f670389f05c3", "openItems": 0 },
+    "leftovers":      { "linear": "MAT-135", "worktree": ".claude/worktrees/agent-ad362fee39413b669", "openItems": 0 },
+    "ui-surfaces":    { "linear": "MAT-133", "worktree": ".claude/worktrees/agent-a9d944cb346cd8915", "openItems": 0 },
+    "ink-recognition":{ "linear": "MAT-134", "worktree": ".claude/worktrees/agent-a7f4e19df13c9db16", "openItems": 0 }
+  },
+  "allSlicesDone": true,
+  "specBranch": "work/rp-260608-2215-spec",
+  "fragmentsGatheredCommit": "2a8f0e7",
+  "synthesis": {
+    "linear": "MAT-136",
+    "status": "remainder-in-progress",
+    "firstWorker": { "agentId": "a0689a2279f1d91e6", "outcome": "STALLED at 600s (context bloat) after assembling 7 of 12 canonical docs" },
+    "salvagedCommit": "717db7b",
+    "salvaged": ["design.md","data-model.md","requirements.md","api-contracts.md","env-and-config.md","ui-wireframes.md","gotchas.md"],
+    "remainderWorker": { "agentId": "a6267b0bb3820b98d", "doing": ["tasks.md","glossary.md","README.md","adrs/ (8 copy + 5 spanning)","diagrams/ (3 mmd)"], "note": "v1 a4b16ec stopped (branched off wrong base, no merge instr); v2 merges work/rp-260608-2215-spec first. leftovers has no tasks.md fragment (8-slice assembly)." }
+  },
+  "inflight": {},
+  "queued": [],
+  "fragmentGathering": "At synthesis: each done slice's fragments live in its worktree at <worktree>/docs/fractions_tutorial-rebuild-spec/_coverage/fragments/<slice>/ (untracked there). Gather all into the spec branch, assemble into canonical section files, then audit vs census.",
+  "fragmentsRule": "Each slice worker writes ONLY under docs/fractions_tutorial-rebuild-spec/_coverage/fragments/<slice-id>/ — its per-section fragment files (design.md, data-model.md, requirements.md, api-contracts.md, env-and-config.md, ui-wireframes.md, gotchas.md, tasks.md, adrs/*.md) AND its own checklist.md. Disjoint paths => no cross-worktree merge conflicts. The SYNTHESIS step assembles fragments into the canonical top-level section files and writes the synthesis-owned cross-cutting docs. The AUDIT runs after synthesis.",
+  "supervision": "Runs AS catalog agent docs-supervisor (opus): idempotent one-cycle-per-tick; reconstruct state from marker+git+TaskList+_coverage; verify-don't-trust (ac-verify-claims + verification-before-completion) — a slice is done only when its fragments/<slice>/checklist.md is fully [x] and the fragment sections exist; gate = spec-coverage-map Phase D + spec-rebuild-test (NOT code QA/deploy); land = one reviewable PR, not a merge to main.",
+  "notes": "DAG: census(done) -> [9 slices, cap 6 parallel] -> synthesis(assemble fragments + cross-cutting) -> audit -> PR. All 9 slices depend only on census. Foundational slices spawned first.",
+  "tickets": [
+    { "id": "census", "title": "Census + MECE partition + spec scaffold", "status": "done", "dependsOn": [], "linear": "MAT-126", "landedCommit": "f7c5b82" },
+    { "id": "engine-core", "title": "Mastery/measurement engine (pure TS)", "status": "spawning", "dependsOn": ["census"], "globs": ["web/src/engine/**/*.ts","web/tests/engine/**"], "linear": null },
+    { "id": "generators", "title": "Problem generators, grading, hints", "status": "spawning", "dependsOn": ["census"], "globs": ["web/src/generators/**","web/tests/generators/**"], "linear": null },
+    { "id": "runtime-affect", "title": "React runtime hooks + advisory affect layer", "status": "spawning", "dependsOn": ["census"], "globs": ["web/src/runtime/**","web/tests/runtime/affect/**","selected web/tests/runtime/*"], "linear": null },
+    { "id": "lessons-rooms", "title": "Lesson screens, room components, configs, kitchen", "status": "spawning", "dependsOn": ["census"], "globs": ["room App*/Lesson*/Moms/MixedReview","web/src/components/**","web/src/lessons/**","web/tests/e2e/**"], "linear": null },
+    { "id": "shell-nav", "title": "App shell, router, map, settings, audio/voice/intros", "status": "spawning", "dependsOn": ["census"], "globs": ["web/src/Shell.jsx + chrome screens","rooms.js/ccss/conceptTree","intro*.js","web/public/intros|music|voice"], "linear": null },
+    { "id": "harness", "title": "Synthetic-learner red-team harness + dashboard", "status": "spawning", "dependsOn": ["census"], "globs": ["web/src/harness/**","web/tests/harness/**","web/tests/proof/**"], "linear": null },
+    { "id": "ui-surfaces", "title": "Engine model surfaces (banner/inspector/nudge/probe)", "status": "todo", "dependsOn": ["census"], "globs": ["web/src/ui/**","engine-surfaces.css","affectprobe.css"], "linear": null },
+    { "id": "ink-recognition", "title": "On-device handwriting digit recognition + training", "status": "todo", "dependsOn": ["census"], "globs": ["web/src/ink/**","web/tools/train_mnist.py","mnist-12.onnx"], "linear": null },
+    { "id": "leftovers", "title": "Root config, docs, scripts, assets, generated artifacts", "status": "todo", "dependsOn": ["census"], "globs": ["root config","web/vite.config.js","web/scripts/**",".claude/**"], "linear": null },
+    { "id": "synthesis", "title": "Assemble fragments + cross-cutting docs (architecture, glossary, ADRs, nav graph, data-flow)", "status": "blocked", "dependsOn": ["engine-core","generators","runtime-affect","lessons-rooms","shell-nav","harness","ui-surfaces","ink-recognition","leftovers"], "linear": null },
+    { "id": "audit", "title": "Coverage diff + dedup + rebuild test -> verdict -> PR", "status": "blocked", "dependsOn": ["synthesis"], "linear": null }
+  ]
+}

@@ -1,0 +1,30 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e273]
+        - generic [ref=e308]:
+          - paragraph [ref=e422]: Now divvy up that final cookie.
+          - button "🖐️" [ref=e424] [cursor=pointer]:
+            - generic [ref=e425]: 🖐️
+      - generic [ref=e280]:
+        - generic [ref=e356]:
+          - generic [ref=e359]:
+            - button [active] [ref=e417] [cursor=pointer]
+            - button [ref=e418] [cursor=pointer]
+          - generic [ref=e365]:
+            - generic:
+              - img "Character 1" [ref=e368] [cursor=pointer]
+              - img "Character 2" [ref=e371] [cursor=pointer]
+            - generic [ref=e374]:
+              - generic [ref=e381]:
+                - button [ref=e412] [cursor=pointer]
+                - button [ref=e382] [cursor=pointer]
+              - generic [ref=e383]:
+                - button [ref=e384] [cursor=pointer]
+                - button [ref=e385] [cursor=pointer]
+        - status [ref=e300]
+  - alert [ref=e11]

@@ -1,0 +1,84 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1206]:
+      - generic [ref=e1695]:
+        - button [ref=e1697] [cursor=pointer]:
+          - img [ref=e1698]
+        - button "M Matthew" [ref=e1701] [cursor=pointer]:
+          - generic [ref=e1703]: M
+          - generic [ref=e1704]: Matthew
+        - generic [ref=e1706]:
+          - generic [ref=e1707]:
+            - button "Report a Problem" [ref=e1708] [cursor=pointer]:
+              - img [ref=e1709]
+              - generic [ref=e1711]: Report a Problem
+            - button "End Lesson" [ref=e1712] [cursor=pointer]:
+              - img [ref=e1713]
+              - generic [ref=e1716]: End Lesson
+            - button "Manage Account" [ref=e1717] [cursor=pointer]:
+              - img [ref=e1718]
+              - generic [ref=e1721]: Manage Account
+          - generic [ref=e1722]:
+            - generic [ref=e1723]: Language
+            - generic [ref=e1724]:
+              - button "English" [ref=e1725] [cursor=pointer]
+              - button "Español" [ref=e1726] [cursor=pointer]
+          - generic [ref=e1727]:
+            - generic [ref=e1728]:
+              - generic [ref=e1729]: Read Answer Choices
+              - switch "Read Answer Choices" [ref=e1730] [cursor=pointer]
+            - generic [ref=e1733]:
+              - generic [ref=e1734]:
+                - generic [ref=e1735]: Voice Input
+                - generic [ref=e1736]: BETA
+              - switch "Voice Input" [ref=e1737] [cursor=pointer]
+          - generic [ref=e1739]:
+            - heading "Voice Speed" [level=3] [ref=e1740]
+            - generic [ref=e1741]:
+              - button "Slow" [ref=e1742] [cursor=pointer]
+              - button "Normal" [ref=e1743] [cursor=pointer]
+              - button "Fast" [ref=e1744] [cursor=pointer]
+              - button "Speedy" [ref=e1745] [cursor=pointer]
+          - generic [ref=e1746]:
+            - generic [ref=e1747]:
+              - generic [ref=e1748]: Dyslexic Font
+              - switch "Dyslexic Font" [ref=e1749] [cursor=pointer]
+            - generic [ref=e1751]:
+              - generic [ref=e1752]: On-Screen Keyboard
+              - switch "On-Screen Keyboard" [ref=e1753] [cursor=pointer]
+      - generic [ref=e1207]:
+        - generic [ref=e1208]:
+          - navigation [ref=e1209]:
+            - button [active] [ref=e1212] [cursor=pointer]:
+              - img [ref=e1755]
+          - paragraph [ref=e1680]: Slice the last cookie into 4 pieces and give each person a piece.
+        - generic [ref=e1220]:
+          - generic [ref=e1620]:
+            - generic [ref=e1622]:
+              - button [ref=e1623] [cursor=pointer]:
+                - img [ref=e1624]
+              - button "🔪" [ref=e1626] [cursor=pointer]:
+                - generic [ref=e1627]: 🔪
+            - generic [ref=e1628]:
+              - generic [ref=e1631]:
+                - button [ref=e1693] [cursor=pointer]
+                - button [ref=e1685] [cursor=pointer]
+                - button [ref=e1686] [cursor=pointer]
+                - button [ref=e1687] [cursor=pointer]
+                - button [ref=e1688] [cursor=pointer]
+                - button [ref=e1689] [cursor=pointer]
+                - button [ref=e1690] [cursor=pointer]
+                - button [ref=e1691] [cursor=pointer]
+                - button [ref=e1692] [cursor=pointer]
+              - generic [ref=e1637]:
+                - generic:
+                  - img "Character 1" [ref=e1640] [cursor=pointer]
+                  - img "Character 2" [ref=e1643] [cursor=pointer]
+                  - img "Character 3" [ref=e1646] [cursor=pointer]
+                  - img "Character 4" [ref=e1649] [cursor=pointer]
+                - generic [ref=e1652]:
+                  - button [ref=e1660] [cursor=pointer]
+                  - button [ref=e1662] [cursor=pointer]
+          - status [ref=e1240]
+  - alert [ref=e11]

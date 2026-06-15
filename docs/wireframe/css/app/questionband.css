@@ -1,0 +1,81 @@
+/* questionband.css — the shared QuestionBand. A FULL-WIDTH band that mounts
+   directly under the stage-selector tabs, holding the bare equation the child must
+   answer. The single most readable thing on the page. Reuses tokens.css only
+   (no lesson-specific classes), so it sits identically in every room. */
+
+.question-band {
+  flex: 0 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* the paper chip — house ink-border treatment (1.5px ink + hard offset shadow),
+   on the warm paper accent so it reads as a stamped card the eye lands on first */
+.qb-chip {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 22px;
+  background: var(--paper-2);
+  border: 1.5px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shade);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* the small uppercase lead label */
+.qb-lead {
+  font-family: var(--display);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  align-self: center;
+  flex: 0 0 auto;
+}
+
+/* the equation itself — big, bold, display ink, single line */
+.qb-expr {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 14px;
+  white-space: nowrap;
+}
+
+/* the bare terms (the left/main side of the equation) */
+.qb-terms {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+/* operator and the answer/"?" carry the Soviet red for high contrast */
+.qb-op {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1;
+  color: var(--red);
+}
+.qb-answer {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1;
+  color: var(--red);
+}
+
+/* lets a lesson tint an inline operator inside `expr` (e.g. the × in 7 × 8) red
+   without changing the term color — pass <span className="qb-op">…</span> in expr */
+.qb-terms .qb-op {
+  font-size: inherit;
+}

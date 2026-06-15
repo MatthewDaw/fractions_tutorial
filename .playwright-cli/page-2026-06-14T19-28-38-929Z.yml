@@ -1,0 +1,27 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e376]
+        - generic [ref=e384]:
+          - paragraph [ref=e386]: Excellent.
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e280]:
+        - generic [ref=e290]:
+          - generic:
+            - img "Character 1" [ref=e293] [cursor=pointer]
+            - img "Character 2" [ref=e296] [cursor=pointer]
+          - generic [ref=e299]:
+            - generic [ref=e378]:
+              - button [disabled] [ref=e379] [cursor=pointer]
+              - button [disabled] [ref=e380] [cursor=pointer]
+            - generic [ref=e381]:
+              - button [disabled] [ref=e382] [cursor=pointer]
+              - button [disabled] [ref=e387] [cursor=pointer]
+        - status [ref=e300]: Draggable item whole-0-1781464999410-0.926525223452933 was dropped.
+  - alert [ref=e11]

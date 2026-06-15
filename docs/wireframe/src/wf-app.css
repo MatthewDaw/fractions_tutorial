@@ -1,0 +1,6 @@
+/* wf-app.css — SPA-level tweaks for the React wireframe shell.
+   Loaded last, after every app sheet + wf-shell.css. Keep this tiny; real
+   design tokens live in wf-shell.css. */
+
+/* The navigator scrolls; lesson/raw screens are fixed-fit and shouldn't. */
+body { min-height: 100vh; }

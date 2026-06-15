@@ -1,0 +1,43 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - generic [ref=e1208]:
+        - navigation [ref=e1209]:
+          - button [ref=e1212] [cursor=pointer]:
+            - img [ref=e1213]
+        - generic [ref=e1330]:
+          - generic [ref=e1453]:
+            - paragraph [ref=e1455]:
+              - generic [ref=e1456]:
+                - text: Go for it. What's
+                - generic [ref=e1457]: one half
+                - text: written as a fraction?
+            - generic [ref=e1459]:
+              - generic [ref=e1460]:
+                - textbox [active] [ref=e1461]
+                - textbox [ref=e1463]
+              - button [disabled] [ref=e1465]:
+                - img [ref=e1466]
+          - button "🖐️" [ref=e1469] [cursor=pointer]:
+            - generic [ref=e1470]: 🖐️
+      - generic [ref=e1220]:
+        - generic [ref=e1296]:
+          - generic:
+            - generic:
+              - generic: "2"
+          - generic [ref=e1305]:
+            - generic:
+              - img "Character 1" [ref=e1308] [cursor=pointer]
+              - img "Character 2" [ref=e1311] [cursor=pointer]
+            - generic [ref=e1314]:
+              - generic [ref=e1321]:
+                - button [disabled] [ref=e1381] [cursor=pointer]
+                - button [disabled] [ref=e1382] [cursor=pointer]
+                - button [disabled] [ref=e1392] [cursor=pointer]
+              - generic [ref=e1324]:
+                - button [disabled] [ref=e1383] [cursor=pointer]
+                - button [disabled] [ref=e1391] [cursor=pointer]
+                - button [disabled] [ref=e1398] [cursor=pointer]
+        - status [ref=e1240]
+  - alert [ref=e11]

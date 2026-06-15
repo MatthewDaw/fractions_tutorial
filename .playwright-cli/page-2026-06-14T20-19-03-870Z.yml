@@ -1,0 +1,7 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - navigation [ref=e1775]:
+      - button [ref=e1778] [cursor=pointer]:
+        - img [ref=e1779]
+  - alert [ref=e11]

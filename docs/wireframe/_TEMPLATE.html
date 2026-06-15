@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!--
+  TEMPLATE — copy this skeleton for every screen page under screens/.
+  Rules for agents:
+   • Keep the <head> link to ../css/wireframe.css and the .wf-toolbar EXACTLY as-is,
+     changing only the screen title + WF-badge text.
+   • All real in-app navigation must be real <a href="..."> links to other screen
+     files, so the prototype clicks through like the app. Functionality (state,
+     validation, animation) is NOT needed — show the structure and the links.
+   • Put the ASCII layout + Wireloom block in the leading HTML comment of <body>
+     so the file is self-documenting and rebuildable.
+   • Use only the .wf-* primitives from wireframe.css. No colors/inline styling
+     beyond absolute positioning on map-style screens.
+   • End the .wf-stage with a <div class="wf-srcref"> naming the source component.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wireframe · SCREEN NAME</title>
+  <link rel="stylesheet" href="../css/wireframe.css" />
+</head>
+<body>
+  <!-- prototype-only chrome; not part of the real app -->
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">SCREEN NAME <small>· #/route</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div class="wf-stagewrap">
+    <div class="wf-stage">
+
+      <!--
+        ASCII LAYOUT
+        ┌──────────────────────────────────────────┐
+        │ ...                                        │
+        └──────────────────────────────────────────┘
+
+        WIRELOOM
+        window "Screen Name":
+          ...
+      -->
+
+      <!-- screen body goes here using .wf-* primitives + real <a> nav links -->
+
+      <div class="wf-srcref">src: web/src/SourceComponent.jsx</div>
+    </div>
+  </div>
+</body>
+</html>

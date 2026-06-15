@@ -1,0 +1,135 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e976]:
+      - generic [ref=e977]:
+        - navigation [ref=e978]:
+          - button [ref=e981] [cursor=pointer]:
+            - img [ref=e982]
+        - generic [ref=e1082]:
+          - paragraph [ref=e1084]: Let's pick a lesson.
+          - button "Go Back" [ref=e1086] [cursor=pointer]:
+            - generic [ref=e1087]: Go Back
+            - img [ref=e1088]
+      - generic [ref=e1090]:
+        - heading "Fractions" [level=1] [ref=e1094]
+        - generic [ref=e1098]:
+          - button "Share the Cookies Share the Cookies" [ref=e1099] [cursor=pointer]:
+            - generic [ref=e1100]:
+              - img "Share the Cookies"
+            - generic [ref=e1102]: Share the Cookies
+          - button "Same Amount of Cookie Same Amount of Cookie" [ref=e1103] [cursor=pointer]:
+            - generic [ref=e1104]:
+              - img "Same Amount of Cookie"
+            - generic [ref=e1106]: Same Amount of Cookie
+          - button "Slicker Slicing Slicker Slicing" [ref=e1107] [cursor=pointer]:
+            - generic [ref=e1108]:
+              - img "Slicker Slicing"
+            - generic [ref=e1110]: Slicker Slicing
+          - button "Cookies and Crumbs Cookies and Crumbs" [ref=e1111] [cursor=pointer]:
+            - generic [ref=e1112]:
+              - img "Cookies and Crumbs"
+            - generic [ref=e1114]: Cookies and Crumbs
+          - button "Whole Lot of Pieces Whole Lot of Pieces" [ref=e1115] [cursor=pointer]:
+            - generic [ref=e1116]:
+              - img "Whole Lot of Pieces"
+            - generic [ref=e1118]: Whole Lot of Pieces
+          - button "Fractions out of Line Fractions out of Line" [ref=e1119] [cursor=pointer]:
+            - generic [ref=e1120]:
+              - img "Fractions out of Line"
+            - generic [ref=e1122]: Fractions out of Line
+          - button "Fractions Intro Fractions Intro" [ref=e1123] [cursor=pointer]:
+            - generic [ref=e1124]:
+              - img "Fractions Intro"
+            - generic [ref=e1126]: Fractions Intro
+          - button "We Need Fractions We Need Fractions" [ref=e1127] [cursor=pointer]:
+            - generic [ref=e1128]:
+              - img "We Need Fractions"
+            - generic [ref=e1130]: We Need Fractions
+          - button "The Bottom Number The Bottom Number" [ref=e1131] [cursor=pointer]:
+            - generic [ref=e1132]:
+              - img "The Bottom Number"
+            - generic [ref=e1134]: The Bottom Number
+          - button "The Top Number The Top Number" [ref=e1135] [cursor=pointer]:
+            - generic [ref=e1136]:
+              - img "The Top Number"
+            - generic [ref=e1138]: The Top Number
+          - button "Fractions Practice Fractions Practice" [ref=e1139] [cursor=pointer]:
+            - generic [ref=e1140]:
+              - img "Fractions Practice"
+            - generic [ref=e1142]: Fractions Practice
+          - button "Painting Fractions Painting Fractions" [ref=e1143] [cursor=pointer]:
+            - generic [ref=e1144]:
+              - img "Painting Fractions"
+            - generic [ref=e1146]: Painting Fractions
+          - button "Reading Fractions Reading Fractions" [ref=e1147] [cursor=pointer]:
+            - generic [ref=e1148]:
+              - img "Reading Fractions"
+            - generic [ref=e1150]: Reading Fractions
+          - button "Unequal Pieces Unequal Pieces" [ref=e1151] [cursor=pointer]:
+            - generic [ref=e1152]:
+              - img "Unequal Pieces"
+            - generic [ref=e1154]: Unequal Pieces
+          - button "What's Equivalent? What's Equivalent?" [ref=e1155] [cursor=pointer]:
+            - generic [ref=e1156]:
+              - img "What's Equivalent?"
+            - generic [ref=e1158]: What's Equivalent?
+          - button "Intro to Equivalent Fractions Intro to Equivalent Fractions" [ref=e1159] [cursor=pointer]:
+            - generic [ref=e1160]:
+              - img "Intro to Equivalent Fractions"
+            - generic [ref=e1162]: Intro to Equivalent Fractions
+          - button "Like a half Like a half" [ref=e1163] [cursor=pointer]:
+            - generic [ref=e1164]:
+              - img "Like a half"
+            - generic [ref=e1165]: Like a half
+          - button "Halfway Certain Locked Halfway Certain" [ref=e1166] [cursor=pointer]:
+            - generic [ref=e1167]:
+              - img "Halfway Certain"
+              - img "Locked" [ref=e1168]
+            - generic [ref=e1169]: Halfway Certain
+          - button "Like two thirds Locked Like two thirds" [ref=e1170] [cursor=pointer]:
+            - generic [ref=e1171]:
+              - img "Like two thirds"
+              - img "Locked" [ref=e1172]
+            - generic [ref=e1173]: Like two thirds
+          - button "Equivalent Fraction Practice Locked Equivalent Fraction Practice" [ref=e1174] [cursor=pointer]:
+            - generic [ref=e1175]:
+              - img "Equivalent Fraction Practice"
+              - img "Locked" [ref=e1176]
+            - generic [ref=e1177]: Equivalent Fraction Practice
+          - button "Painting Equivalent Fractions Locked Painting Equivalent Fractions" [ref=e1178] [cursor=pointer]:
+            - generic [ref=e1179]:
+              - img "Painting Equivalent Fractions"
+              - img "Locked" [ref=e1180]
+            - generic [ref=e1181]: Painting Equivalent Fractions
+          - button "Split Decisions Locked Split Decisions" [ref=e1182] [cursor=pointer]:
+            - generic [ref=e1183]:
+              - img "Split Decisions"
+              - img "Locked" [ref=e1184]
+            - generic [ref=e1185]: Split Decisions
+          - button "One Third Plus One Third Locked One Third Plus One Third" [ref=e1186] [cursor=pointer]:
+            - generic [ref=e1187]:
+              - img "One Third Plus One Third"
+              - img "Locked" [ref=e1188]
+            - generic [ref=e1189]: One Third Plus One Third
+          - button "A Half and an Eighth Locked A Half and an Eighth" [ref=e1190] [cursor=pointer]:
+            - generic [ref=e1191]:
+              - img "A Half and an Eighth"
+              - img "Locked" [ref=e1192]
+            - generic [ref=e1193]: A Half and an Eighth
+          - button "Adding Fractions Training 2 Locked Adding Fractions Training 2" [ref=e1194] [cursor=pointer]:
+            - generic [ref=e1195]:
+              - img "Adding Fractions Training 2"
+              - img "Locked" [ref=e1196]
+            - generic [ref=e1197]: Adding Fractions Training 2
+          - button "Least Common Multiple Locked Least Common Multiple" [ref=e1198] [cursor=pointer]:
+            - generic [ref=e1199]:
+              - img "Least Common Multiple"
+              - img "Locked" [ref=e1200]
+            - generic [ref=e1201]: Least Common Multiple
+          - button "OneThirdPlusTwoFifths Locked One Third Plus Two Fifths" [ref=e1202] [cursor=pointer]:
+            - generic [ref=e1203]:
+              - img "OneThirdPlusTwoFifths"
+              - img "Locked" [ref=e1204]
+            - generic [ref=e1205]: One Third Plus Two Fifths
+  - alert [ref=e11]

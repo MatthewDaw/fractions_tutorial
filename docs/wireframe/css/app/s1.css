@@ -1,0 +1,146 @@
+/* s1.css — namespaced styles for AppSubtract's 4-stage arc (Taking Away,
+   SUB_SAME_DEN). Shared lesson house classes (.canvas / .lockcard / .mini /
+   .eqstate / .check / .bs-surface …) and the shared <LessonBoard>/<AnswerBar>
+   layout are reused by reference only; everything here is .s1-* so it never
+   collides. Mirrors r1.css's structure (the sibling adding lesson). */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   THE BLOCK CANVAS — fills the (flexible) LessonBoard stage box; its content
+   is laid out with flow (no absolute pixel constants like R1's ruler), so it
+   simply centers in the available height.
+   ════════════════════════════════════════════════════════════════════════════ */
+.s1-canvas {
+  position: relative; width: 760px; max-width: 100%; height: 100%; min-height: 0;
+  margin: 0 auto; flex: 1 1 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px;
+}
+.s1-canvas-center { justify-content: center; gap: 6px; }
+.s1-canvas-takeaway { justify-content: flex-start; padding-top: 30px; gap: 10px; }
+
+/* ── Stage 1 · DECOMPOSE ────────────────────────────────────────────────────── */
+.s1-stagezone {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.s1-bartag, .s1-line-label { font-family: var(--display); }
+
+/* a row of unit pieces. `is-broken` spaces them apart (the decomposition). */
+.s1-row { display: flex; align-items: stretch; transition: gap 0.28s ease; }
+.s1-piece {
+  position: relative; height: 78px;
+  display: flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
+}
+.s1-piece-hatch { position: absolute; inset: 0; opacity: 0.5; pointer-events: none; border-radius: inherit; }
+.s1-piece-lab { position: relative; font-family: var(--display); font-size: 14px; font-weight: 700; }
+.s1-row.is-broken .s1-piece { box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
+
+/* the live decomposition equation under the stack */
+.s1-decomp-eq {
+  font-family: var(--serif); font-size: 17px; color: var(--ink-soft);
+  text-align: center; min-height: 22px;
+}
+.s1-decomp-eq .s1-plus { color: var(--red); font-weight: 700; }
+
+/* the break-apart control rides in the AnswerBar's eq slot */
+.s1-decomp-controls { display: flex; align-items: center; gap: 14px; }
+.s1-bigbtn {
+  font-family: var(--display); font-size: 22px; font-weight: 700;
+  color: var(--paper-1); background: var(--red);
+  border: none; border-radius: 12px; padding: 12px 26px; cursor: pointer;
+  box-shadow: 0 3px 0 var(--red-deep);
+}
+.s1-bigbtn:hover { filter: brightness(1.05); }
+.s1-bigbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--red-deep); }
+.s1-decomp-done {
+  font-family: var(--display); font-size: 22px; color: var(--ink);
+}
+
+/* ── Stage 2 · TAKE AWAY ────────────────────────────────────────────────────── */
+.s1-line-label, .s1-tray-label {
+  font-family: var(--serif); font-size: 13px; color: var(--ink-mute);
+  font-style: italic; align-self: flex-start; margin-left: 4px;
+}
+/* the pieces still "on the line" */
+.s1-takeline { display: flex; align-items: stretch; gap: 0; min-height: 80px; }
+.s1-piece-drag { cursor: grab; border-radius: 6px; touch-action: none; user-select: none; }
+.s1-piece-drag:active, .s1-piece-drag.is-dragging { cursor: grabbing; box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
+/* a slot left behind when a piece is taken — a dashed ghost so the gap reads */
+.s1-piece.is-slot {
+  height: 78px; border: 2px dashed var(--ink-mute); border-radius: 6px;
+  opacity: 0.4; background: transparent;
+}
+.s1-grip {
+  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 3px; opacity: 0.55;
+}
+.s1-grip i { width: 3px; height: 3px; border-radius: 50%; background: rgba(0,0,0,0.4); }
+
+/* the "used" tray below the line where dragged-off pieces land */
+.s1-tray {
+  width: 100%; max-width: 560px; min-height: 96px;
+  border: 2px dashed var(--ink-mute); border-radius: 12px;
+  padding: 8px 12px; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 6px;
+  background: rgba(0,0,0,0.02); transition: background 0.2s ease, border-color 0.2s ease;
+}
+.s1-tray.has-pieces { border-color: var(--red); background: rgba(157, 42, 42, 0.05); }
+.s1-tray-label { align-self: center; }
+.s1-tray-row { display: flex; align-items: stretch; gap: 0; min-height: 56px; }
+.s1-piece.is-used { height: 56px; border-radius: 0; opacity: 0.85; }
+.s1-piece.is-used:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+.s1-piece.is-used:last-child { border-right: none !important; border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+
+.s1-count-cap {
+  font-family: var(--serif); font-size: 14px; color: var(--ink-soft);
+  height: 20px; white-space: nowrap;
+}
+
+/* ── equation-row pieces that ride inside the shared <AnswerBar> (stages 2,3) ── */
+.s1-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
+.s1-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+.s1-slate { display: inline-flex; }
+.s1-slate .slate-fraction { position: relative; }
+.s1-slate .slate-fraction .slate-cell { width: 96px; height: 78px; }
+.s1-slate .slate-fraction .slate-bar { width: 96px; }
+.s1-slate .slate-fraction .slate-fixed { font-size: 42px; }
+.s1-slate .slate-fraction .slate-committed-digit { font-size: 46px; }
+.s1-slate .slate-fraction .slate-ph { font-size: 28px; }
+/* the verifier guess chip floats so it can't change the row's height */
+.s1-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; }
+
+/* ── Stage 3 (Numbers) bare equation — mirrors r1's .r1-bigeq ────────────────── */
+.s1-bigeq { display: flex; align-items: center; gap: 22px; }
+.s1-bigeq .bignum .n, .s1-bigeq .bignum .d { font-size: 56px; }
+.s1-bigeq .bignum .bar { width: 64px; height: 5px; margin: 6px 0; }
+.s1-bigeq-op {
+  font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red);
+}
+.s1-numbers-cap {
+  margin-top: 22px; font-family: var(--serif); font-size: 15px; color: var(--ink-soft);
+  max-width: 520px; text-align: center;
+  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+
+/* ── Stage 4 · WORDS — WordProblem card + Slate sizing (mirrors r1-fz-words) ──── */
+.s1-words .wp { gap: 8px; width: 100%; align-items: center; }
+.s1-words .wp-card { padding: 10px 24px 9px; max-width: 760px; }
+.s1-words .wp-card-head { margin-bottom: 8px; }
+.s1-words .wp-story { font-size: 18px; }
+.s1-words .wp-setup { gap: 4px; }
+.s1-words .wp-answer { gap: 6px; }
+.s1-words .wp-answer .slate-fraction .slate-cell { width: 96px; height: 78px; }
+.s1-words .wp-answer .slate-fraction .slate-bar { width: 96px; }
+.s1-words .wp-answer .slate-fraction .slate-fixed { font-size: 42px; }
+.s1-words .wp-answer .slate-fraction .slate-committed-digit { font-size: 46px; }
+.s1-words .wp-answer .slate-fraction .slate-ph { font-size: 28px; }
+.s1-words .wp-answer .slate-fraction { gap: 4px; }
+
+/* the optional scratch slate — generous, centered, downscaled by FitStage if needed */
+.s1-words-scratch {
+  position: relative; width: 740px; max-width: 100%; height: 300px; margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s1-row { transition: none; }
+}

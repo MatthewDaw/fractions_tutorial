@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<!--
+  settings.html — HIGH-FIDELITY wireframe for the Settings screen (route #/settings).
+  Source: web/src/SettingsScreen.jsx. Real DOM mirrored, real CSS reused, real SVG inlined.
+  Representative state: voice 70%, music Off (0), input mode = stylus (selected).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Settings · #/settings</title>
+
+  <!-- real app fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- real app CSS: tokens FIRST, then this screen's stylesheet(s) -->
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/settings.css" />
+
+  <!-- wireframe shell chrome LAST (desk + toolbar; not part of the app) -->
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">Settings <small>· #/settings</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <div class="scene settings-scene ready" data-vox-speaker="cook">
+      <div class="paper-fill" style="position:absolute; inset:0;"></div>
+      <div class="foxing"></div>
+      <div class="frame"></div>
+      <div class="corner tl">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+          <path d="M2 28 L2 9 Q2 2 9 2 L28 2" fill="none" stroke="#1c1612" stroke-width="1.8" />
+          <path d="M6 28 L6 12 Q6 6 12 6 L28 6" fill="none" stroke="#a32a22" stroke-width="1.2" opacity="0.7" />
+          <circle cx="6" cy="6" r="2.4" fill="#a32a22" />
+        </svg>
+      </div>
+      <div class="corner tr">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+          <path d="M2 28 L2 9 Q2 2 9 2 L28 2" fill="none" stroke="#1c1612" stroke-width="1.8" />
+          <path d="M6 28 L6 12 Q6 6 12 6 L28 6" fill="none" stroke="#a32a22" stroke-width="1.2" opacity="0.7" />
+          <circle cx="6" cy="6" r="2.4" fill="#a32a22" />
+        </svg>
+      </div>
+      <div class="corner bl">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+          <path d="M2 28 L2 9 Q2 2 9 2 L28 2" fill="none" stroke="#1c1612" stroke-width="1.8" />
+          <path d="M6 28 L6 12 Q6 6 12 6 L28 6" fill="none" stroke="#a32a22" stroke-width="1.2" opacity="0.7" />
+          <circle cx="6" cy="6" r="2.4" fill="#a32a22" />
+        </svg>
+      </div>
+      <div class="corner br">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+          <path d="M2 28 L2 9 Q2 2 9 2 L28 2" fill="none" stroke="#1c1612" stroke-width="1.8" />
+          <path d="M6 28 L6 12 Q6 6 12 6 L28 6" fill="none" stroke="#a32a22" stroke-width="1.2" opacity="0.7" />
+          <circle cx="6" cy="6" r="2.4" fill="#a32a22" />
+        </svg>
+      </div>
+
+      <div class="st-inner">
+        <!-- header -->
+        <div class="st-head">
+          <div class="st-head-l">
+            <div class="st-kicker rv d1"><span class="st-k-dot"></span>Babushka&rsquo;s Fractions</div>
+            <h1 class="st-h-title rv d2">Settings</h1>
+            <div class="st-h-sub rv d2"><span class="cyr">Настройки</span><span class="lat">Nastroyki</span></div>
+          </div>
+          <!-- "Done" / back control (onBack) -> world.html -->
+          <a class="st-back rv d1" href="world.html">
+            <span class="ar">&lsaquo;</span> Done
+          </a>
+        </div>
+
+        <!-- section 1: Sound -->
+        <div class="st-section">
+          <div class="st-sec-label rv d2"><span class="st-sl-num">1</span>Sound<span class="st-sl-rule"></span></div>
+
+          <!-- Voice lines volume row (value 70) -->
+          <div class="st-vrow rv d3">
+            <div class="st-vlabel">
+              <div class="st-vicon">
+                <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="M6 6 H26 Q29 6 29 9 V18 Q29 21 26 21 H15 L9 26 V21 H6 Q3 21 3 18 V9 Q3 6 6 6 Z"
+                    fill="#e3d4b1" stroke="#1c1612" stroke-width="2.1" stroke-linejoin="round" />
+                  <g stroke="#a32a22" stroke-width="2" stroke-linecap="round"><path d="M7 11 H25" /><path d="M7 16 H19" /></g>
+                </svg>
+              </div>
+              <div class="st-vtext">
+                <div class="st-vt-name">Voice lines</div>
+                <div class="st-vt-hint">Spoken hints and praise from the characters</div>
+              </div>
+            </div>
+
+            <div class="st-slider" tabindex="0" role="slider"
+              aria-label="Voice lines" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70">
+              <div class="st-track">
+                <div class="st-fill" style="width:70%;"></div>
+                <div class="st-ticks">
+                  <i style="left:0%; height:7px;"></i>
+                  <i style="left:10%; height:4px;"></i>
+                  <i style="left:20%; height:4px;"></i>
+                  <i style="left:30%; height:4px;"></i>
+                  <i style="left:40%; height:4px;"></i>
+                  <i style="left:50%; height:7px;"></i>
+                  <i style="left:60%; height:4px;"></i>
+                  <i style="left:70%; height:4px;"></i>
+                  <i style="left:80%; height:4px;"></i>
+                  <i style="left:90%; height:4px;"></i>
+                  <i style="left:100%; height:7px;"></i>
+                </div>
+              </div>
+              <div class="st-knob" style="left:70%;"></div>
+            </div>
+
+            <div class="st-vval">70<small>%</small></div>
+          </div>
+
+          <!-- Music volume row (value 0 -> Off, muted icon) -->
+          <div class="st-vrow rv d4">
+            <div class="st-vlabel">
+              <div class="st-vicon">
+                <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="M13 22 V8 L25 5 V19" fill="none" stroke="#1c1612" stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round" />
+                  <path d="M13 8 L25 5" stroke="#1c1612" stroke-width="2.1" stroke-linecap="round" />
+                  <ellipse cx="10" cy="23" rx="4" ry="3" fill="#a32a22" stroke="#1c1612" stroke-width="2" transform="rotate(-18 10 23)" />
+                  <ellipse cx="22" cy="20" rx="4" ry="3" fill="#a32a22" stroke="#1c1612" stroke-width="2" transform="rotate(-18 22 20)" />
+                  <path d="M5 6 L29 27" stroke="#6b5a47" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="st-vtext">
+                <div class="st-vt-name">Music</div>
+                <div class="st-vt-hint">Background music throughout the game</div>
+              </div>
+            </div>
+
+            <div class="st-slider" tabindex="0" role="slider"
+              aria-label="Music" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="st-track">
+                <div class="st-fill" style="width:0%;"></div>
+                <div class="st-ticks">
+                  <i style="left:0%; height:7px;"></i>
+                  <i style="left:10%; height:4px;"></i>
+                  <i style="left:20%; height:4px;"></i>
+                  <i style="left:30%; height:4px;"></i>
+                  <i style="left:40%; height:4px;"></i>
+                  <i style="left:50%; height:7px;"></i>
+                  <i style="left:60%; height:4px;"></i>
+                  <i style="left:70%; height:4px;"></i>
+                  <i style="left:80%; height:4px;"></i>
+                  <i style="left:90%; height:4px;"></i>
+                  <i style="left:100%; height:7px;"></i>
+                </div>
+              </div>
+              <div class="st-knob" style="left:0%;"></div>
+            </div>
+
+            <div class="st-vval muted">Off</div>
+          </div>
+        </div>
+
+        <!-- section 2: How you answer (input mode) -->
+        <div class="st-section">
+          <div class="st-sec-label rv d5"><span class="st-sl-num">2</span>How you answer<span class="st-sl-rule"></span></div>
+          <div class="st-modes">
+            <div class="rv d6" style="display:contents;">
+              <!-- input mode: stylus (selected) -->
+              <button class="st-mode on" aria-pressed="true">
+                <div class="st-m-ico">
+                  <svg width="50" height="50" viewBox="0 0 56 56" aria-hidden="true">
+                    <path d="M40 8 L48 16 L24 40 L14 42 L16 32 Z" fill="#e3d4b1" stroke="#1c1612" stroke-width="2.4" stroke-linejoin="round" />
+                    <path d="M40 8 L48 16" stroke="#1c1612" stroke-width="2.4" />
+                    <path d="M16 32 L24 40" stroke="#1c1612" stroke-width="2" />
+                    <path d="M14 42 L16 38 L18 40 Z" fill="#a32a22" stroke="#1c1612" stroke-width="1.3" stroke-linejoin="round" />
+                    <path d="M10 48 Q20 44 30 48 T50 48" fill="none" stroke="#a32a22" stroke-width="2.2" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="st-m-name">Stylus</div>
+                  <div class="st-m-hint">Write the numbers by hand with a pen.</div>
+                </div>
+                <div class="st-m-stamp">
+                  <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6 L4.5 10 L11 1.5" fill="none" stroke="#6e1c16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>Selected
+                </div>
+              </button>
+            </div>
+            <div class="rv d7" style="display:contents;">
+              <!-- input mode: typing (not selected) -->
+              <button class="st-mode" aria-pressed="false">
+                <div class="st-m-ico">
+                  <svg width="50" height="50" viewBox="0 0 56 56" aria-hidden="true">
+                    <rect x="8" y="26" width="40" height="20" rx="3" fill="none" stroke="#1c1612" stroke-width="2.4" />
+                    <rect x="16" y="10" width="24" height="13" rx="2" fill="#e3d4b1" stroke="#1c1612" stroke-width="2.2" />
+                    <line x1="13" y1="23" x2="43" y2="23" stroke="#1c1612" stroke-width="2.2" />
+                    <g fill="#a32a22" stroke="#1c1612" stroke-width="1.4">
+                      <circle cx="16" cy="34" r="2.6" /><circle cx="24" cy="34" r="2.6" /><circle cx="32" cy="34" r="2.6" /><circle cx="40" cy="34" r="2.6" />
+                    </g>
+                    <rect x="20" y="40" width="16" height="3.4" rx="1.7" fill="#1c1612" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="st-m-name">Typing</div>
+                  <div class="st-m-hint">Tap the numbers on the keyboard.</div>
+                </div>
+                <div class="st-m-radio"></div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

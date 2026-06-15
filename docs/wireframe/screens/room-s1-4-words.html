@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<!--
+  room-s1-4-words.html — HIGH-FIDELITY. AppSubtract.jsx STAGE 4 · Words.
+  A plain-language Babushka kitchen story (5/8 loaf, sliced 2/8 off). Read it,
+  find the two fractions, write how much is LEFT. QuestionBand is HIDDEN on this
+  stage (band={null}). LessonBoard variant="wide": WordProblem column (wrapped
+  in FitStage) + a NARROW TutorRibbon. WordProblem carries an optional BlankSlate
+  scratch (setup) + a Slate answer (top + bottom, both editable here).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>№5 Taking Away · Words · 4/s1</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/lesson-board.css" />
+  <link rel="stylesheet" href="../css/app/stagetabs.css" />
+  <link rel="stylesheet" href="../css/app/questionband.css" />
+  <link rel="stylesheet" href="../css/app/slate.css" />
+  <link rel="stylesheet" href="../css/app/gen-practice.css" />
+  <link rel="stylesheet" href="../css/app/sandbox.css" />
+  <link rel="stylesheet" href="../css/app/fitstage.css" />
+  <link rel="stylesheet" href="../css/app/blankslate.css" />
+  <link rel="stylesheet" href="../css/app/engine-surfaces.css" />
+  <link rel="stylesheet" href="../css/app/s1.css" />
+
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">№5 Taking Away · Words <small>· 4/s1</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <div class="page" data-vox-speaker="cook">
+      <div class="foxing"></div>
+
+      <div class="topbar">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="num-mark">№5</span>
+          <div>
+            <div class="puzzle-tag">Lesson 5 · Taking Away</div>
+            <div class="puzzle-title">Taking Away</div>
+          </div>
+        </div>
+        <div aria-hidden="true"></div>
+        <div class="controls">
+          <a class="ctrl-btn" href="world.html" title="Back to the lesson map">←</a>
+          <a class="ctrl-btn" href="intro.html" title="Rewatch the intro video" aria-label="Rewatch the intro video">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
+          </a>
+          <button class="ctrl-btn" title="Settings" aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 3 v3 M12 18 v3 M3 12 h3 M18 12 h3 M5.6 5.6 l2.1 2.1 M16.3 16.3 l2.1 2.1 M18.4 5.6 l-2.1 2.1 M7.7 16.3 l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+          </button>
+          <span class="ctrl-btn" title="Start over" aria-disabled="true">⟲</span>
+        </div>
+      </div>
+
+      <div class="stage-tabs" role="tablist" aria-label="Lesson stages">
+        <a role="tab" class="stage-tab is-done" href="room-s1.html" title="break 5/8 into eighths">
+          <span class="stage-tab-n">1</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Decompose</span><span class="stage-tab-sub">break 5/8 into eighths</span></span>
+        </a>
+        <a role="tab" class="stage-tab is-done" href="room-s1-2-takeaway.html" title="drag 2 pieces off">
+          <span class="stage-tab-n">2</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Take Away</span><span class="stage-tab-sub">drag 2 pieces off</span></span>
+        </a>
+        <a role="tab" class="stage-tab is-done" href="room-s1-3-numbers.html" title="bare 7/8 − 3/8 = ?">
+          <span class="stage-tab-n">3</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Numbers</span><span class="stage-tab-sub">bare 7/8 − 3/8 = ?</span></span>
+        </a>
+        <button type="button" role="tab" aria-selected="true" class="stage-tab is-active" title="story problem">
+          <span class="stage-tab-n">4</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Words</span><span class="stage-tab-sub">story problem</span></span>
+        </button>
+        <a role="tab" class="stage-tab" href="room-s1-practice.html" title="Fresh problems — paced to your mastery">
+          <span class="stage-tab-n">★</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Practice</span><span class="stage-tab-sub">Fresh problems — paced to your mastery</span></span>
+        </a>
+      </div>
+
+      <!-- QuestionBand HIDDEN on the Words stage (band={null}) -->
+
+      <div class="goal">
+        <button class="speaker">
+          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none" /></svg>
+          Read aloud
+        </button>
+        <div class="goal-text" data-vox="s1Goal" data-vox-speaker="mom">
+          Babushka had <b>5/8</b> of a loaf and used <b>2/8</b> — the pieces are the same size, so take the tops apart and keep the bottom.
+        </div>
+      </div>
+
+      <!-- LessonBoard variant="wide" + s1-words; tutorWidth 220 -->
+      <div class="lboard is-wide s1-words" style="--lboard-tutor-w:220px;">
+
+        <!-- WP column (FitStage axis=y wrapping WordProblem) -->
+        <div class="lboard-wp">
+          <div class="fit-stage" style="width:100%; height:100%;">
+            <div class="fit-stage-content" style="transform:scale(1)">
+              <div class="wp">
+                <div class="wp-card">
+                  <div class="wp-card-head">
+                    <span class="wp-tag">Babushka's Bread</span>
+                    <button type="button" class="wp-readaloud" aria-label="Read the recipe aloud">
+                      <svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none" /></svg>
+                      Read aloud
+                    </button>
+                  </div>
+                  <p class="wp-story">
+                    Babushka had <b>five eighths</b> of a loaf of black bread. She sliced off
+                    <b>two eighths</b> for the soup. The pieces are the same size — eighths.
+                    How much of the loaf is <b>left</b>?
+                  </p>
+                </div>
+
+                <!-- optional scratch (BlankSlate) -->
+                <div class="wp-setup">
+                  <span class="wp-setup-lead">Optional — show your work here</span>
+                  <div class="wp-setup-row">
+                    <div class="bs-surface s1-words-scratch">
+                      <canvas class="bs-canvas" aria-label="blank space to show your work"></canvas>
+                      <div class="bs-tools">
+                        <button type="button" class="bs-tool on" title="Pencil" aria-pressed="true"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15 L4 11 L12 3 L15 6 L7 14 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><line x1="11" y1="4" x2="14" y2="7" stroke="currentColor" stroke-width="1.6" /></svg></button>
+                        <button type="button" class="bs-tool" title="Red pen" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15 L4 11 L12 3 L15 6 L7 14 Z" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linejoin="round" /></svg></button>
+                        <button type="button" class="bs-tool" title="Eraser" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 18 18"><rect x="3" y="9" width="9" height="6" rx="1.5" transform="rotate(-32 7 12)" fill="none" stroke="currentColor" stroke-width="1.6" /></svg></button>
+                        <span class="bs-tool-sep"></span>
+                        <button type="button" class="bs-tool" title="Undo"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M6 5 L3 8 L6 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" /><path d="M3 8 H11 a4 4 0 0 1 0 8 H7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg></button>
+                        <button type="button" class="bs-tool bs-tool-clear" title="Clear all">clear</button>
+                      </div>
+                      <div class="bs-hint">optional — show your work here ✎</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- the answer Slate (top + bottom, both editable) + Check -->
+                <div class="wp-answer">
+                  <span class="wp-answer-lead">Write how much is left</span>
+                  <div class="wp-answer-row">
+                    <div class="slate slate-fraction" role="group" aria-label="write the total">
+                      <div class="slate-slot">
+                        <div class="slate-cell">
+                          <canvas class="slate-canvas" role="img" aria-label="write the top digit"></canvas>
+                          <span class="slate-ph" aria-hidden="true">✎</span>
+                        </div>
+                      </div>
+                      <span class="slate-bar" style="background:#d1495b" aria-hidden="true"></span>
+                      <div class="slate-slot">
+                        <div class="slate-cell">
+                          <canvas class="slate-canvas" role="img" aria-label="write the bottom digit"></canvas>
+                          <span class="slate-ph" aria-hidden="true"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <button type="button" class="wp-check">Check</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NARROW TutorRibbon -->
+        <div class="lboard-tutor">
+          <div class="ltutor is-narrow">
+            <div class="cook-stage">
+              <svg width="118" height="156" viewBox="0 0 196 260" style="display:block; overflow:visible" aria-hidden="true">
+                <defs>
+                  <pattern id="ck-hatch" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.7" opacity="0.5" /></pattern>
+                  <pattern id="ck-hatch-r" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--red-deep)" stroke-width="0.8" opacity="0.45" /></pattern>
+                </defs>
+                <g stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+                  <path d="M44 258 Q40 188 58 168 Q72 154 98 154 Q124 154 138 168 Q156 188 152 258 Z" fill="var(--paper-1)" />
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="var(--red)" />
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="url(#ck-hatch-r)" stroke="none" />
+                  <path d="M98 156 L98 258" stroke="var(--ink)" stroke-width="1.4" opacity="0.5" fill="none" />
+                  <path d="M44 258 Q40 200 54 176 L70 258 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.7" />
+                  <path d="M58 172 Q34 186 30 214" fill="none" />
+                  <path d="M138 172 Q162 186 166 214" fill="none" />
+                </g>
+                <circle cx="98" cy="182" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="98" cy="200" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <g transform="rotate(6 168 218)">
+                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                </g>
+                <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />
+                <g fill="var(--red-deep)" stroke="var(--ink)" stroke-width="2">
+                  <path d="M58 92 Q50 104 56 116 Q62 108 66 110 Z" />
+                  <path d="M138 92 Q146 104 140 116 Q134 108 130 110 Z" />
+                </g>
+                <circle cx="98" cy="92" r="40" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6" />
+                <path d="M122 78 A40 40 0 0 1 124 116 Q112 120 110 96 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.55" />
+                <circle cx="74" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+                <circle cx="122" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+                <g><circle cx="83" cy="87" r="3.6" fill="var(--ink)" /><circle cx="113" cy="87" r="3.6" fill="var(--ink)" /></g>
+                <path d="M98 92 Q102 99 97 101" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M84 108 Q98 120 112 108" stroke="var(--ink)" stroke-width="2.6" fill="none" stroke-linecap="round" />
+                <g stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round">
+                  <rect x="64" y="52" width="68" height="16" rx="3" fill="var(--paper-2)" />
+                  <path d="M64 56 Q50 52 52 36 Q40 30 50 18 Q58 6 76 12 Q86 0 104 8 Q124 2 130 18 Q150 22 144 38 Q152 52 132 56 Q132 40 120 44 Q120 30 104 34 Q104 22 88 28 Q84 40 72 38 Q74 52 64 56 Z" fill="var(--paper-1)" />
+                </g>
+                <path d="M120 44 Q132 40 132 56 L120 56 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.5" />
+              </svg>
+            </div>
+            <div class="ribbon">A story this time — read it, find the two fractions, and write how much is left.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

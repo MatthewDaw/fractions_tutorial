@@ -1,0 +1,33 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - generic [ref=e1208]:
+        - navigation [ref=e1209]:
+          - button [ref=e1212] [cursor=pointer]:
+            - img [ref=e1213]
+        - generic [ref=e1327]:
+          - paragraph [ref=e1329]: Nice. But there's one left-over.
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e1220]:
+        - generic [ref=e1295]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - button
+            - generic:
+              - generic:
+                - img "Character 1" [ref=e1308] [cursor=pointer]
+                - img "Character 2" [ref=e1311] [cursor=pointer]
+              - generic:
+                - generic:
+                  - button
+                  - button
+                - generic:
+                  - button
+                  - button
+        - status [ref=e1240]
+  - alert [ref=e11]

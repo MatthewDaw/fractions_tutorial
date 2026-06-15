@@ -1,0 +1,40 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e376]
+        - generic [ref=e276]:
+          - generic [ref=e441]:
+            - paragraph [ref=e442]: Share 5 cookies equally.
+            - button "🖐️" [ref=e444] [cursor=pointer]:
+              - generic [ref=e445]: 🖐️
+          - generic [ref=e427]:
+            - paragraph [ref=e429]:
+              - generic [ref=e430]: But how about 5 cookies
+              - generic [ref=e432]:
+                - math [ref=e434]:
+                  - generic [ref=e437]: ÷
+                - generic [ref=e439]: ÷
+              - text: 2 people? Try giving each person the same amount.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e280]:
+        - generic [ref=e407]:
+          - generic [ref=e410]:
+            - button [ref=e414] [cursor=pointer]
+            - button [ref=e415] [cursor=pointer]
+          - generic [ref=e416]:
+            - generic:
+              - img "Character 1" [ref=e419] [cursor=pointer]
+              - img "Character 2" [ref=e422] [cursor=pointer]
+            - generic [ref=e425]:
+              - generic [ref=e446]:
+                - button [ref=e447] [cursor=pointer]
+                - button [ref=e448] [cursor=pointer]
+              - button [ref=e450] [cursor=pointer]
+        - status [ref=e300]: Draggable item whole-0-1781464999410-0.926525223452933 was dropped.
+  - alert [ref=e11]

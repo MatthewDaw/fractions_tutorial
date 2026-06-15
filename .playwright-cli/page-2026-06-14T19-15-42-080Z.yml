@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e46]:
+          - generic [ref=e483]:
+            - paragraph [ref=e485]: Now see if you can divide up that last cookie.
+            - generic:
+              - button [disabled]:
+                - img
+          - button "🖐️" [ref=e487] [cursor=pointer]:
+            - generic [ref=e488]: 🖐️
+      - generic [ref=e54]:
+        - generic [ref=e433]:
+          - generic [ref=e435]:
+            - button [ref=e436] [cursor=pointer]:
+              - img [ref=e437]
+            - button "🔪" [ref=e439] [cursor=pointer]:
+              - generic [ref=e440]: 🔪
+          - generic [ref=e441]:
+            - generic [ref=e444]:
+              - button [ref=e495] [cursor=pointer]
+              - button [ref=e491] [cursor=pointer]
+              - button [ref=e494] [cursor=pointer]
+            - generic [ref=e450]:
+              - generic:
+                - img "Character 1" [ref=e453] [cursor=pointer]
+                - img "Character 2" [ref=e456] [cursor=pointer]
+                - img "Character 3" [ref=e459] [cursor=pointer]
+                - img "Character 4" [ref=e462] [cursor=pointer]
+              - generic [ref=e465]:
+                - generic [ref=e472]:
+                  - button [ref=e473] [cursor=pointer]
+                  - button [ref=e496] [cursor=pointer]
+                - generic [ref=e474]:
+                  - button [ref=e475] [cursor=pointer]
+                  - button [ref=e497] [cursor=pointer]
+                - button [ref=e481] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

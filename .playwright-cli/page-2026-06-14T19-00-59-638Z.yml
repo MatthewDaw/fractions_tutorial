@@ -1,0 +1,39 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e45]:
+          - generic [ref=e145]:
+            - paragraph [ref=e146]: Share 5 cookies equally.
+            - button "🖐️" [ref=e148] [cursor=pointer]:
+              - generic [ref=e149]: 🖐️
+          - generic [ref=e111]:
+            - paragraph [ref=e113]:
+              - generic [ref=e114]: But how about 5 cookies
+              - generic [ref=e116]:
+                - math [ref=e118]:
+                  - generic [ref=e121]: ÷
+                - generic [ref=e123]: ÷
+              - text: 2 people? Try giving each person the same amount.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e54]:
+        - generic [ref=e125]:
+          - generic [ref=e128]:
+            - button [active] [ref=e131] [cursor=pointer]
+            - button [ref=e132] [cursor=pointer]
+            - button [ref=e133] [cursor=pointer]
+          - generic [ref=e134]:
+            - generic:
+              - img "Character 1" [ref=e137] [cursor=pointer]
+              - img "Character 2" [ref=e140] [cursor=pointer]
+            - generic [ref=e150]:
+              - button [ref=e151] [cursor=pointer]
+              - button [ref=e152] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

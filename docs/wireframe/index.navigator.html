@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Babushka's Fractions — UI Wireframe</title>
+  <link rel="stylesheet" href="css/wireframe.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <span class="wf-tb-title">Babushka's Fractions <small>· wireframe navigator</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div class="wf-index-wrap">
+    <h1>Babushka's Fractions — UI Wireframe</h1>
+    <p>A low-fidelity, fully clickable wireframe of the existing tutor app, separate
+       from <code>web/</code> so you can edit the flow without touching the real app.
+       Click any screen, or <a href="screens/title.html"><b>start the flow at the Title screen ▸</b></a></p>
+
+    <div class="wf-index-section">
+      <h2>Navigation map</h2>
+      <pre style="font-family:var(--wf-mono); font-size:12px; color:#cfd3d8; line-height:1.5; overflow:auto;">
+  title ──START──▶ world (3 shelves + kitchen)
+                    │
+       ┌────────────┼───────────────┬──────────────┬─────────────┐
+       ▼            ▼               ▼              ▼             ▼
+   shelf-found  shelf-build   shelf-combine     kitchen        review
+   (m1,m3)      (nl,r1,s1,cmp) (r3,r2,r4,r5)   (Babushka)    (mixed basket)
+       │            │               │              │
+       └─────┬──────┴───────┬───────┘              │
+             ▼              ▼  (open a lesson card) ▼
+        [intro] ─continue─▶ room-XX  ◀──open room── kitchen
+                              │  ↻ rewatch → intro
+                              │  ⟲ return → kitchen
+                              ▼  ← back
+                            world
+
+   world & title also expose:  ⚙ settings   ▦ concepts (Concept Mastery Map)
+   any unbuilt id → empty-room
+      </pre>
+    </div>
+
+    <div class="wf-index-section">
+      <h2>Shell & navigation screens</h2>
+      <div class="wf-index-grid">
+        <a class="wf-index-link" href="screens/title.html">Title screen<span class="il-route">#/ (TitleScreen)</span></a>
+        <a class="wf-index-link" href="screens/world.html">World map — shelves<span class="il-route">#/world (WorldMap)</span></a>
+        <a class="wf-index-link" href="screens/shelf-found.html">Shelf · Counting &amp; Times<span class="il-route">#/world ▸ found</span></a>
+        <a class="wf-index-link" href="screens/shelf-build.html">Shelf · Building Fractions<span class="il-route">#/world ▸ build</span></a>
+        <a class="wf-index-link" href="screens/shelf-combine.html">Shelf · Combining &amp; Renaming<span class="il-route">#/world ▸ combine</span></a>
+        <a class="wf-index-link" href="screens/kitchen.html">Babushka's Kitchen<span class="il-route">#/mom (MomsRoom)</span></a>
+        <a class="wf-index-link" href="screens/review.html">Mixed Basket review<span class="il-route">#/review (MixedReview)</span></a>
+        <a class="wf-index-link" href="screens/settings.html">Settings<span class="il-route">#/settings (SettingsScreen)</span></a>
+        <a class="wf-index-link" href="screens/concepts.html">Concept Mastery Map<span class="il-route">#/concepts (ConceptMap)</span></a>
+        <a class="wf-index-link" href="screens/intro.html">Room intro (video)<span class="il-route">RoomIntro</span></a>
+        <a class="wf-index-link" href="screens/empty-room.html">Empty room (fallback)<span class="il-route">EmptyRoom</span></a>
+      </div>
+    </div>
+
+    <div class="wf-index-section">
+      <h2>Babushka's Kitchen — states (9)</h2>
+      <p style="margin-top:0;">The kitchen is an adaptive, engine-driven assessor, so it has no fixed tab strip — these are its distinct states, each a hi-fi snapshot of a <code>MomsRoom.jsx</code> render branch.</p>
+      <div class="wf-index-grid">
+        <a class="wf-index-link" href="screens/kitchen.html">Problem (unsolved)<span class="il-route">default · Babushka poses</span></a>
+        <a class="wf-index-link" href="screens/kitchen-solved.html">Solved / celebration<span class="il-route">solved === true</span></a>
+        <a class="wf-index-link" href="screens/kitchen-wrong.html">Wrong / try again<span class="il-route">bad answer + nudge</span></a>
+        <a class="wf-index-link" href="screens/kitchen-wall.html">The wall (go learn)<span class="il-route">RouteToRoom</span></a>
+        <a class="wf-index-link" href="screens/kitchen-lookahead.html">Lookahead probe<span class="il-route">stage = lookahead</span></a>
+        <a class="wf-index-link" href="screens/kitchen-done.html">All done / finale<span class="il-route">done === true</span></a>
+        <a class="wf-index-link" href="screens/kitchen-grandpa.html">Cast · Grandpa<span class="il-route">who = grandpa</span></a>
+        <a class="wf-index-link" href="screens/kitchen-kid.html">Cast · Kid<span class="il-route">who = kid</span></a>
+        <a class="wf-index-link" href="screens/kitchen-cat.html">Cast · Cat (meow)<span class="il-route">who = cat</span></a>
+      </div>
+    </div>
+
+    <div class="wf-index-section">
+      <h2>Lesson rooms (10)</h2>
+      <div class="wf-index-grid">
+        <a class="wf-index-link" href="screens/room-m1.html">№1 Equal Groups<span class="il-route">#/m1 (AppM1)</span></a>
+        <a class="wf-index-link" href="screens/room-m3.html">№2 Times Facts<span class="il-route">#/m3 (AppM3)</span></a>
+        <a class="wf-index-link" href="screens/room-nl.html">№3 On the Number Line<span class="il-route">#/nl (AppNumberLine)</span></a>
+        <a class="wf-index-link" href="screens/room-r1.html">№4 Same Denominators<span class="il-route">#/r1 (AppR1)</span></a>
+        <a class="wf-index-link" href="screens/room-s1.html">№5 Taking Away<span class="il-route">#/s1 (AppSubtract)</span></a>
+        <a class="wf-index-link" href="screens/room-cmp.html">№6 Compare &amp; Check<span class="il-route">#/cmp (AppCompare)</span></a>
+        <a class="wf-index-link" href="screens/room-r3.html">№7 Scale One<span class="il-route">#/r3 (LessonUnlikeDen)</span></a>
+        <a class="wf-index-link" href="screens/room-r2.html">№8 Cross-Multiply<span class="il-route">#/r2 (LessonUnlikeDen)</span></a>
+        <a class="wf-index-link" href="screens/room-r4.html">№9 Simplify<span class="il-route">#/r4 (AppR4)</span></a>
+        <a class="wf-index-link" href="screens/room-r5.html">№10 Mixed Numbers<span class="il-route">#/r5 (AppR5)</span></a>
+      </div>
+      <p class="wf-muted" style="margin-top:10px;">Each lesson room opens on its first step; every step is reachable by clicking the <b>stage-tab strip</b> at the top of the room. All 77 steps are also linked directly below.</p>
+    </div>
+
+    <div class="wf-index-section">
+      <h2>All lesson steps (77 screens)</h2>
+      <p style="margin-top:0;">Every stage of every lesson, as its own wireframe. The stage tabs inside each room link these together so you can click step → step like the app.</p>
+
+      <p><b>№1 Equal Groups (m1)</b><br>
+        <a href="screens/room-m1.html">1 Manipulate</a> ·
+        <a href="screens/room-m1-2-bind.html">2 Bind</a> ·
+        <a href="screens/room-m1-3-fade.html">3 Fade</a> ·
+        <a href="screens/room-m1-4-workbench.html">4 Workbench</a> ·
+        <a href="screens/room-m1-5-numbers.html">5 Numbers</a> ·
+        <a href="screens/room-m1-6-applied.html">6 Applied</a> ·
+        <a href="screens/room-m1-sw-showwork.html">Show Work</a> ·
+        <a href="screens/room-m1-7-words.html">7 Words</a> ·
+        <a href="screens/room-m1-practice.html">★ Practice</a></p>
+
+      <p><b>№2 Times Facts (m3)</b><br>
+        <a href="screens/room-m3.html">1 Manipulate</a> ·
+        <a href="screens/room-m3-2-bind.html">2 Bind</a> ·
+        <a href="screens/room-m3-3-fade.html">3 Fade</a> ·
+        <a href="screens/room-m3-4-workbench.html">4 Workbench</a> ·
+        <a href="screens/room-m3-5-numbers.html">5 Numbers</a> ·
+        <a href="screens/room-m3-6-applied.html">6 Applied</a> ·
+        <a href="screens/room-m3-sw-showwork.html">Show Work</a> ·
+        <a href="screens/room-m3-7-words.html">7 Words</a> ·
+        <a href="screens/room-m3-practice.html">★ Practice</a></p>
+
+      <p><b>№3 On the Number Line (nl)</b><br>
+        <a href="screens/room-nl.html">1 Place</a> ·
+        <a href="screens/room-nl-2-write.html">2 Write</a> ·
+        <a href="screens/room-nl-3-numbers.html">3 Numbers</a> ·
+        <a href="screens/room-nl-practice.html">★ Practice</a></p>
+
+      <p><b>№4 Same Denominators (r1)</b><br>
+        <a href="screens/room-r1.html">1 Manipulate</a> ·
+        <a href="screens/room-r1-2-bind.html">2 Bind</a> ·
+        <a href="screens/room-r1-3-fade.html">3 Fade</a> ·
+        <a href="screens/room-r1-4-workbench.html">4 Workbench</a> ·
+        <a href="screens/room-r1-5-numbers.html">5 Numbers</a> ·
+        <a href="screens/room-r1-6-applied.html">6 Applied</a> ·
+        <a href="screens/room-r1-sw-showwork.html">Show Work</a> ·
+        <a href="screens/room-r1-7-words.html">7 Words</a> ·
+        <a href="screens/room-r1-practice.html">★ Practice</a></p>
+
+      <p><b>№5 Taking Away (s1)</b><br>
+        <a href="screens/room-s1.html">1 Decompose</a> ·
+        <a href="screens/room-s1-2-takeaway.html">2 Take Away</a> ·
+        <a href="screens/room-s1-3-numbers.html">3 Numbers</a> ·
+        <a href="screens/room-s1-4-words.html">4 Words</a> ·
+        <a href="screens/room-s1-practice.html">★ Practice</a></p>
+
+      <p><b>№6 Compare &amp; Check (cmp)</b><br>
+        <a href="screens/room-cmp.html">1 Compare</a> ·
+        <a href="screens/room-cmp-2-benchmark.html">2 Benchmark</a> ·
+        <a href="screens/room-cmp-3-reason.html">3 Reason</a> ·
+        <a href="screens/room-cmp-practice.html">★ Practice</a></p>
+
+      <p><b>№7 Scale One (r3)</b><br>
+        <a href="screens/room-r3.html">1 Manipulate</a> ·
+        <a href="screens/room-r3-2-bind.html">2 Bind</a> ·
+        <a href="screens/room-r3-3-fade.html">3 Fade</a> ·
+        <a href="screens/room-r3-w-workbench.html">W Workbench</a> ·
+        <a href="screens/room-r3-5-ghost.html">Ghost</a> ·
+        <a href="screens/room-r3-6-numbers.html">Numbers</a> ·
+        <a href="screens/room-r3-a-applied.html">Applied</a> ·
+        <a href="screens/room-r3-sw-showwork.html">Show Work</a> ·
+        <a href="screens/room-r3-7-words.html">Words</a> ·
+        <a href="screens/room-r3-practice.html">★ Practice</a></p>
+
+      <p><b>№8 Cross-Multiply (r2)</b><br>
+        <a href="screens/room-r2.html">1 Manipulate</a> ·
+        <a href="screens/room-r2-2-bind.html">2 Bind</a> ·
+        <a href="screens/room-r2-3-fade.html">3 Fade</a> ·
+        <a href="screens/room-r2-w-workbench.html">W Workbench</a> ·
+        <a href="screens/room-r2-5-ghost.html">Ghost</a> ·
+        <a href="screens/room-r2-6-numbers.html">Numbers</a> ·
+        <a href="screens/room-r2-a-applied.html">Applied</a> ·
+        <a href="screens/room-r2-sw-showwork.html">Show Work</a> ·
+        <a href="screens/room-r2-7-words.html">Words</a> ·
+        <a href="screens/room-r2-practice.html">★ Practice</a></p>
+
+      <p><b>№9 Simplify (r4)</b><br>
+        <a href="screens/room-r4.html">1 Group</a> ·
+        <a href="screens/room-r4-2-bind.html">2 Bind</a> ·
+        <a href="screens/room-r4-3-fade.html">3 Fade</a> ·
+        <a href="screens/room-r4-4-numbers.html">4 Numbers</a> ·
+        <a href="screens/room-r4-5-applied.html">5 Applied</a> ·
+        <a href="screens/room-r4-sw-showwork.html">Show Work</a> ·
+        <a href="screens/room-r4-6-words.html">6 Words</a> ·
+        <a href="screens/room-r4-practice.html">★ Practice</a></p>
+
+      <p><b>№10 Mixed Numbers (r5)</b><br>
+        <a href="screens/room-r5.html">1 Manipulate</a> ·
+        <a href="screens/room-r5-2-bind.html">2 Bind</a> ·
+        <a href="screens/room-r5-3-fade.html">3 Fade</a> ·
+        <a href="screens/room-r5-workbench.html">W Workbench</a> ·
+        <a href="screens/room-r5-4-numbers.html">4 Numbers</a> ·
+        <a href="screens/room-r5-applied.html">Applied</a> ·
+        <a href="screens/room-r5-sw-showwork.html">Show Work</a> ·
+        <a href="screens/room-r5-5-words.html">5 Words</a> ·
+        <a href="screens/room-r5-practice.html">★ Practice</a></p>
+    </div>
+  </div>
+</body>
+</html>

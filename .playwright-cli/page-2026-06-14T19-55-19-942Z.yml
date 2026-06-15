@@ -1,0 +1,119 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - text: ctrl −
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - generic:
+                              - generic: M
+                            - generic: Matthew
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button:
+                                - img
+                                - generic: Report a Problem
+                              - button:
+                                - img
+                                - generic: End Lesson
+                              - button:
+                                - img
+                                - generic: Manage Account
+                            - generic:
+                              - generic: Language
+                              - generic:
+                                - button: English
+                                - button: Español
+                            - generic:
+                              - generic:
+                                - generic: Read Answer Choices
+                                - switch
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Voice Input
+                                    - generic: BETA
+                                  - switch
+                            - generic:
+                              - heading [level=3]: Voice Speed
+                              - generic:
+                                - button: Slow
+                                - button: Normal
+                                - button: Fast
+                                - button: Speedy
+                            - generic:
+                              - generic:
+                                - generic: Dyslexic Font
+                                - switch
+                              - generic:
+                                - generic: On-Screen Keyboard
+                                - switch
+                    - generic:
+                      - generic:
+                        - navigation:
+                          - generic:
+                            - generic:
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - paragraph:
+                                      - generic: You already cut the final cookie into 4 pieces. So just give each person a piece.
+                                  - generic:
+                                    - button [disabled]:
+                                      - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic [ref=e802]:
+                                - button [ref=e803] [cursor=pointer]:
+                                  - img [ref=e804]
+                                - button [ref=e940] [cursor=pointer]:
+                                  - generic [ref=e807]: 🔪
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - img [ref=e941] [cursor=pointer]
+                                    - img [ref=e942] [cursor=pointer]
+                                    - img [ref=e943] [cursor=pointer]
+                                    - img [ref=e944] [cursor=pointer]
+                                  - generic:
+                                    - generic:
+                                      - button
+                                      - button
+                                    - generic:
+                                      - button
+                                      - button
+                                      - button
+                                    - generic:
+                                      - button
+                                      - button
+                                      - button
+                            - status: Draggable item whole-0-1781464999410-0.926525223452933 was dropped.
+  - generic:
+    - alert
+  - dialog "Exit Lesson?" [ref=e946]:
+    - heading "Exit Lesson?" [level=2] [ref=e947]
+    - paragraph [ref=e948]: Are you sure you want to leave this lesson? All of your progress might not be saved.
+    - generic [ref=e949]:
+      - button "Keep Learning" [active] [ref=e950] [cursor=pointer]
+      - button "Exit" [ref=e951] [cursor=pointer]
+    - button "Close" [ref=e952] [cursor=pointer]:
+      - img [ref=e953]

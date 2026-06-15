@@ -1,0 +1,32 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e45]:
+          - generic [ref=e77]:
+            - paragraph [ref=e78]: Share 4 cookies.
+            - button "🖐️" [ref=e80] [cursor=pointer]:
+              - generic [ref=e81]: 🖐️
+          - generic [ref=e48]:
+            - paragraph [ref=e50]: See if you can divide these cookies evenly.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e54]:
+        - generic [ref=e56]:
+          - button [ref=e63] [cursor=pointer]
+          - generic [ref=e64]:
+            - generic:
+              - img "Character 1" [ref=e67] [cursor=pointer]
+              - img "Character 2" [ref=e70] [cursor=pointer]
+            - generic [ref=e73]:
+              - generic [ref=e82]:
+                - button [ref=e83] [cursor=pointer]
+                - button [ref=e84] [cursor=pointer]
+              - button [ref=e86] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

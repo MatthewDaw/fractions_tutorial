@@ -1,0 +1,43 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e342]:
+          - paragraph [ref=e344]:
+            - generic [ref=e345]:
+              - text: Now we've got
+              - generic [ref=e346]: 5 cookies
+              - text: and
+              - generic [ref=e347]: 4 people
+              - text: .
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e54]:
+        - generic [ref=e348]:
+          - generic [ref=e350]:
+            - button [ref=e351] [cursor=pointer]:
+              - img [ref=e352]
+            - button "🔪" [ref=e354] [cursor=pointer]:
+              - generic [ref=e355]: 🔪
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - button
+                  - button
+                  - button
+                  - button
+                  - button
+            - generic:
+              - generic:
+                - img "Character 1" [ref=e358] [cursor=pointer]
+                - img "Character 2" [ref=e361] [cursor=pointer]
+                - img "Character 3" [ref=e364] [cursor=pointer]
+                - img "Character 4" [ref=e367] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

@@ -1,0 +1,43 @@
+[   39513ms] [LOG] setting beautiful prompt @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   50945ms] [LOG] setting beautiful prompt @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   50945ms] [LOG] [ContentAPIRecommenderNav] Nav button clicked. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   50945ms] [LOG] Parent aborted, reason: The parent content was aborted. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   50945ms] [LOG] trip ended @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51054ms] [LOG] [rootStore] cleaning up @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51056ms] [LOG] [rootStore] stopping all sounds @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51056ms] [LOG] [rootStore] Lesson ended with reason: {
+  "name": "SwitchToExploration",
+  "lessonUrlName": "content",
+  "launchContext": null
+} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51059ms] [LOG] [startExplorationAccessCheck] pathname: /, sessionUser: [object Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51416ms] [LOG] [rootStore] Running lesson entry for content @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51417ms] [LOG] [rootStore] created the store and set the api. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51417ms] [LOG] starting @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51553ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51865ms] [INFO] {checkpointData: null} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51985ms] [INFO] {checkpointData: null} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   51986ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   80954ms] [LOG] trip ended @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81153ms] [LOG] [rootStore] cleaning up @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81156ms] [LOG] [rootStore] stopping all sounds @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81156ms] [LOG] [rootStore] Lesson ended with reason: {
+  "name": "SwitchToExploration",
+  "lessonUrlName": "share_the_cookies",
+  "launchContext": null
+} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81157ms] [LOG] [startExplorationAccessCheck] pathname: /exploration/share_the_cookies, sessionUser: [object Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81478ms] [LOG] [rootStore] Running lesson entry for Share the Cookies @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81479ms] [LOG] [rootStore] created the store and set the api. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81479ms] [LOG] starting @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81622ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   81623ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  262746ms] [LOG] === Cookie Debug === @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  262747ms] [LOG] Pieces: [Object, Object, Object, Object, Object, Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  262747ms] [LOG] People totals: [Object, Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  262747ms] [LOG] Y_THRESHOLD: 150, spread: 150 @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  335604ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  714790ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  752337ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  925219ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1204183ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3

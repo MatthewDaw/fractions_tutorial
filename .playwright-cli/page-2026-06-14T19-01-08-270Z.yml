@@ -1,0 +1,33 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e156]:
+          - paragraph [ref=e158]: Nice. But there's one left-over.
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e54]:
+        - generic [ref=e124]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - button
+            - generic:
+              - generic:
+                - img "Character 1" [ref=e137] [cursor=pointer]
+                - img "Character 2" [ref=e140] [cursor=pointer]
+              - generic:
+                - generic:
+                  - button
+                  - button
+                - generic:
+                  - button
+                  - button
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

@@ -1,0 +1,245 @@
+/* slate.css — the stylus WRITING surface (Slate.jsx) and the Stage-5 word problem
+   (WordProblem.jsx). Owned solely by the Foundations worker. Uses the shared
+   design tokens (tokens.css): paper/ink/red palette + Russo One (--display) and
+   Old Standard TT (--serif). All motion is gated by prefers-reduced-motion at the
+   bottom. NO classes here are edited elsewhere — these are scoped to .slate* and
+   .wp* so they never collide with lesson.css. */
+
+/* ============================================================ */
+/* Slate — handwriting cells                                     */
+/* ============================================================ */
+
+.slate { display: inline-flex; box-sizing: border-box; }
+.slate.slate-row { flex-direction: row; align-items: flex-start; gap: 18px; }
+.slate.slate-fraction { flex-direction: column; align-items: center; gap: 6px; }
+
+/* the denominator-colored bar between a fraction's two cells */
+.slate-bar { width: 132px; height: 4px; background: var(--ink); border-radius: 2px; }
+
+.slate-slot { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+
+/* the writable cell — white "draw here" paper with a heavy ink border */
+.slate-cell {
+  position: relative; box-sizing: border-box;
+  width: 132px; height: 124px;
+  background: #ffffff;
+  border: 3px solid var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(28,22,18,0.06), 2px 3px 0 rgba(28,22,18,0.12);
+}
+.slate-cell.committed { background: #fff8ea; border-color: var(--red); }
+
+/* HEIGHT/WIDTH CAP for the STACKED fraction layout (Issue 1). In .slate-fraction
+   the two cells stack vertically (top cell + bar + bottom cell + guess chips), so
+   the full 124px cells make the Slate ~253-308px tall — too tall for the fixed
+   800px stage's HUD/rail band, pushing into or off the diagram. Cap each stacked
+   cell to ~90px tall (≈ the 94px InkPad cap) and trim width to ~114px so it fits
+   the band. The side-by-side "row" layout stays at full size (cells don't stack),
+   so this scope leaves whole-number row cells comfortable. */
+.slate-fraction .slate-cell { width: 114px; height: 90px; }
+.slate-fraction .slate-bar { width: 114px; }
+/* shrink the painted digits to match the shorter fraction cell so nothing crops */
+.slate-fraction .slate-fixed { font-size: 48px; }
+.slate-fraction .slate-committed-digit { font-size: 52px; }
+.slate-fraction .slate-ph { font-size: 30px; }
+
+/* locked / fixed slot — hatched, padlock-feel, unenterable (e.g. a fixed bottom) */
+.slate-slot.is-locked .slate-cell {
+  background: repeating-linear-gradient(45deg, rgba(28,22,18,0.05) 0 3px, transparent 3px 8px), var(--paper-2);
+  border: 3px solid var(--ink-mute);
+}
+.slate-fixed {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--display); font-size: 64px; color: var(--ink-mute);
+}
+
+.slate-canvas {
+  display: block; width: 100%; height: 100%;
+  touch-action: none; cursor: crosshair;
+  background: transparent;
+}
+.slate-slot.is-disabled .slate-cell { opacity: 0.45; background: var(--paper-2); }
+.slate-slot.is-disabled .slate-canvas { cursor: not-allowed; }
+
+/* faint write-here cue */
+.slate-ph {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--display); font-size: 40px; color: var(--ink-soft);
+  opacity: 0.28; pointer-events: none;
+}
+
+/* TYPING mode — a numeric input filling the cell, styled to read like a written
+   digit. Same footprint as .slate-canvas so row/fraction layouts are unchanged. */
+.slate-input {
+  all: unset; box-sizing: border-box;
+  width: 100%; height: 100%;
+  display: block; text-align: center;
+  font-family: var(--display); font-size: 64px; color: var(--ink);
+  caret-color: var(--red); cursor: text;
+}
+.slate-fraction .slate-input { font-size: 48px; }
+.expr-slate .slate-input { font-size: 46px; }
+.slate-input::placeholder { color: var(--ink-soft); opacity: 0.3; }
+.slate-input:focus { background: rgba(163, 42, 34, 0.04); }
+.slate-slot.is-typed.is-disabled .slate-input { cursor: not-allowed; }
+
+/* the committed digit — large, sits over the cell; tap to rewrite */
+.slate-committed-digit {
+  all: unset; cursor: pointer; box-sizing: border-box;
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--display); font-size: 70px; color: var(--ink);
+  caret-color: transparent;
+}
+.slate-committed-digit:hover { color: var(--red-deep); }
+.slate-committed-digit:disabled { cursor: default; color: var(--ink); }
+
+/* erase-and-rewrite corner button */
+.slate-clear {
+  all: unset; cursor: pointer; position: absolute; top: -11px; right: -11px;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--ink); background: var(--paper-1); color: var(--ink);
+  font-size: 13px; line-height: 1; display: grid; place-items: center; z-index: 3;
+}
+.slate-clear:hover { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+
+/* verifier-assisted guess chip — "I read N  ✓  ↺" */
+.slate-guess {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 8px; border: 1.5px solid var(--ink); background: var(--paper-1);
+  box-shadow: 2px 2px 0 rgba(28,22,18,0.14);
+  animation: slateGuessIn 0.2s ease-out;
+}
+.slate-guess.unsure { border-color: var(--ink-mute); border-style: dashed; }
+.slate-guess-read { font-family: var(--serif); font-size: 13px; color: var(--ink); }
+.slate-guess-read b {
+  font-family: var(--display); font-size: 17px; color: var(--red);
+  margin: 0 1px; vertical-align: -1px;
+}
+.slate-guess-yes, .slate-guess-no {
+  all: unset; cursor: pointer; box-sizing: border-box;
+  width: 30px; height: 30px; display: grid; place-items: center;
+  font-size: 16px; line-height: 1; border: 1.5px solid var(--ink);
+}
+.slate-guess-yes { color: var(--paper-1); background: var(--red); border-color: var(--red-deep); }
+.slate-guess-yes:hover { background: var(--red-deep); }
+.slate-guess-no { color: var(--ink); background: var(--paper-1); }
+.slate-guess-no:hover { background: var(--paper-2); }
+@keyframes slateGuessIn { 0% { transform: translateY(-4px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+
+/* always-present tap-digit fallback */
+.slate-tap-wrap { display: inline-flex; }
+.slate-tap-toggle {
+  all: unset; cursor: pointer; box-sizing: border-box;
+  font-family: var(--serif); font-style: italic; font-size: 12px;
+  color: var(--ink-mute); text-decoration: underline; text-underline-offset: 2px;
+  padding: 2px 4px;
+}
+.slate-tap-toggle:hover { color: var(--red); }
+.slate-tap-toggle:disabled { opacity: 0.4; cursor: default; text-decoration: none; }
+.slate-tap-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
+  padding: 6px; border: 1.5px solid var(--ink); background: var(--paper-1);
+  box-shadow: 2px 2px 0 rgba(28,22,18,0.14);
+}
+.slate-tap-digit {
+  all: unset; cursor: pointer; box-sizing: border-box;
+  width: 36px; height: 40px; display: grid; place-items: center;
+  font-family: var(--display); font-size: 20px; color: var(--ink);
+  border: 1.5px solid var(--ink); background: var(--paper-1);
+}
+.slate-tap-digit:hover { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+.slate-tap-digit:active { transform: translateY(1px); }
+
+/* ============================================================ */
+/* WordProblem — the Stage-5 recipe-card beat                    */
+/* ============================================================ */
+
+.wp { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+/* the recipe card — Babushka's story in prose, on aged paper with a printed edge */
+.wp-card {
+  position: relative; box-sizing: border-box;
+  width: min(640px, 92%); padding: 26px 30px 24px;
+  background: var(--paper-1);
+  border: 2px solid var(--ink);
+  box-shadow: 5px 6px 0 rgba(28,22,18,0.16), inset 0 0 0 5px var(--paper-2);
+}
+.wp-card-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.wp-tag {
+  font-family: var(--display); font-size: 11px; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--red);
+}
+
+/* Read-aloud affordance — mirrors lesson.css .speaker so it reads as the same UI */
+.wp-readaloud {
+  all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--display); font-size: 10px; letter-spacing: 0.18em;
+  color: var(--red); text-transform: uppercase;
+  border: 1px solid var(--red); padding: 8px 11px; background: rgba(163,42,34,0.05);
+}
+.wp-readaloud:hover { background: rgba(163,42,34,0.12); }
+.wp-readaloud.speaking svg { animation: wpSpk 0.7s ease-in-out infinite; }
+@keyframes wpSpk { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.wp-story {
+  font-family: var(--serif); font-size: 25px; line-height: 1.44; color: var(--ink); margin: 0;
+}
+.wp-story b { color: var(--red-deep); }
+
+/* the answer block: prompt + the Slate the child writes into */
+.wp-answer { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.wp-answer-lead {
+  font-family: var(--display); font-size: 16px; letter-spacing: 0.04em;
+  color: var(--ink); text-transform: uppercase;
+}
+.wp-answer-row { display: inline-flex; align-items: center; gap: 16px; }
+
+.wp-check {
+  all: unset; cursor: pointer; box-sizing: border-box;
+  min-width: 168px; height: 60px; padding: 0 22px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: var(--display); font-size: 18px; letter-spacing: 0.05em;
+  color: var(--paper-1); background: var(--ink); border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.28);
+}
+.wp-check:hover { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 rgba(28,22,18,0.30); }
+.wp-check:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 rgba(28,22,18,0.28); }
+.wp-check:disabled { opacity: 0.4; cursor: default; box-shadow: none; transform: none; }
+
+/* ============================================================ */
+/* ExpressionSlate — two fraction Slates joined by an operator   */
+/* ([_/_] + [_/_]); the WORD→MATH translation surface.           */
+/* ============================================================ */
+.expr-slate { display: inline-flex; align-items: center; gap: 16px; }
+.expr-slate.is-disabled { opacity: 0.55; }
+.expr-op {
+  font-family: var(--display); font-size: 38px; color: var(--ink-mute);
+  align-self: center; padding-bottom: 6px;
+}
+/* the two fractions sit a touch smaller than a sole answer Slate, so the whole
+   expression fits comfortably beside the story card. */
+.expr-slate .slate-cell { width: 96px; height: 92px; }
+.expr-slate .slate-bar { width: 96px; }
+
+/* ============================================================ */
+/* WordProblem — optional setup region (the scratch expression)  */
+/* ============================================================ */
+.wp-setup {
+  display: flex; flex-direction: column; gap: 6px;
+  margin: 4px 0 14px; padding: 12px 14px;
+  border: 1.5px dashed var(--paper-3); background: rgba(255,248,234,0.5);
+}
+.wp-setup-lead {
+  font-family: var(--display); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+.wp-setup-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+/* ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .slate *, .slate *::before, .slate *::after,
+  .wp *, .wp *::before, .wp *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.05ms !important;
+  }
+}

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<!--
+  HIGH-FIDELITY rebuild of AppM1.jsx (node MULT_EQUAL_GROUPS), STAGE 4 · Workbench.
+  Representative UNSOLVED snapshot of the worked example 3 × 4 = ?:
+    · BlockSandbox mode="number" bin=[4,5,3] targetValue=12 targetLabel="3 groups of 4"
+    · pieces = []  → empty work strip; status "Drag a block from the bin onto the line."
+    · ruler spans 0→12 (UNIT = 600/12 = 50px); target flag at x = 8 + 12×50 = 608
+    · bin chips proportional: 4→93px, 5→116px (max), 3→70px; seg-lines per size
+    · solved = false → hud Check disabled, label "Build it ▸", no Rosette
+  NOTE: this stage does NOT use LessonBoard — it renders BlockSandbox + a .hud
+  (cook-zone + marks), exactly like AppM1's stage-4 branch.
+  Real SVG inlined from Cook.jsx (idle). Sandbox is markup only (no drag JS).
+  Nav: ← world.html · ↻ intro.html · ▸ kitchen.html · tabs link to siblings.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>№1 Equal Groups · Workbench · #/m1</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/lesson-board.css" />
+  <link rel="stylesheet" href="../css/app/stagetabs.css" />
+  <link rel="stylesheet" href="../css/app/questionband.css" />
+  <link rel="stylesheet" href="../css/app/slate.css" />
+  <link rel="stylesheet" href="../css/app/gen-practice.css" />
+  <link rel="stylesheet" href="../css/app/sandbox.css" />
+  <link rel="stylesheet" href="../css/app/fitstage.css" />
+  <link rel="stylesheet" href="../css/app/blankslate.css" />
+  <link rel="stylesheet" href="../css/app/engine-surfaces.css" />
+  <link rel="stylesheet" href="../css/app/m1.css" />
+
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">№1 Equal Groups · Workbench <small>· #/m1</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <div class="page" data-vox-speaker="cook">
+      <div class="foxing"></div>
+
+      <div class="topbar">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="num-mark">№1</span>
+          <div>
+            <div class="puzzle-tag">Lesson 1 · Equal Groups</div>
+            <div class="puzzle-title">Equal Groups</div>
+          </div>
+        </div>
+        <div aria-hidden="true"></div>
+        <div class="controls">
+          <a class="ctrl-btn" href="world.html" title="Back to the lesson map">←</a>
+          <a class="ctrl-btn" href="intro.html" title="Rewatch the intro video" aria-label="Rewatch the intro video">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
+          </a>
+          <span class="ctrl-btn" title="Settings" aria-label="Settings">⚙</span>
+          <span class="ctrl-btn" title="Start over">⟲</span>
+        </div>
+      </div>
+
+      <div class="stage-tabs" role="tablist" aria-label="Lesson stages">
+        <a role="tab" class="stage-tab is-done" href="room-m1.html" title="fill the plates">
+          <span class="stage-tab-n">1</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Manipulate</span><span class="stage-tab-sub">fill the plates</span></span>
+        </a>
+        <a role="tab" class="stage-tab is-done" href="room-m1-2-bind.html" title="4 + 4 + 4, write 12">
+          <span class="stage-tab-n">2</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Bind</span><span class="stage-tab-sub">4 + 4 + 4, write 12</span></span>
+        </a>
+        <a role="tab" class="stage-tab is-done" href="room-m1-3-fade.html" title="collapse to 3 × 4">
+          <span class="stage-tab-n">3</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Fade</span><span class="stage-tab-sub">collapse to 3 × 4</span></span>
+        </a>
+        <button type="button" role="tab" aria-selected="true" class="stage-tab is-active" title="build it in bowls">
+          <span class="stage-tab-n">4</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Workbench</span><span class="stage-tab-sub">build it in bowls</span></span>
+        </button>
+        <a role="tab" class="stage-tab" href="room-m1-5-numbers.html" title="bare 3 × 4 = ?">
+          <span class="stage-tab-n">5</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Numbers</span><span class="stage-tab-sub">bare 3 × 4 = ?</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m1-6-applied.html" title="write the setup, then total">
+          <span class="stage-tab-n">6</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Applied</span><span class="stage-tab-sub">write the setup, then total</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m1-sw-showwork.html" title="show your work">
+          <span class="stage-tab-n">sw</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Show Work</span><span class="stage-tab-sub">show your work</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m1-7-words.html" title="story problem">
+          <span class="stage-tab-n">7</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Words</span><span class="stage-tab-sub">story problem</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m1-practice.html" title="Fresh problems — paced to your mastery">
+          <span class="stage-tab-n">★</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Practice</span><span class="stage-tab-sub">Fresh problems — paced to your mastery</span></span>
+        </a>
+      </div>
+
+      <div class="goal">
+        <button class="speaker">
+          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none" /></svg>
+          Read aloud
+        </button>
+        <div class="goal-text m1-goal-text" data-vox="mr_mom_goal_1" data-vox-speaker="mom">
+          Babushka has <b>3 plates</b>, and she wants the <b>same 4 pelmeni</b> on every plate — add the group again and again, or multiply.
+        </div>
+      </div>
+
+      <!-- ══ STAGE 4 body: BlockSandbox (number mode) ════════════════════════ -->
+      <div class="play sandbox-play">
+        <div class="diagram">
+          <div class="canvas sandbox-canvas">
+            <div class="sandbox-status">Drag a block from the bin onto the line.</div>
+
+            <!-- the work strip — empty (no pieces placed yet) -->
+            <div class="sandbox-row" style="left:8px; top:70px; width:600px; height:64px;"></div>
+
+            <!-- the ruler 0 → 12 with a target flag at "3 groups of 4" -->
+            <div class="sandbox-line" style="left:8px; top:150px; width:600px;"></div>
+            <span class="sandbox-tick" style="left:8px; top:150px;"></span>
+            <span class="sandbox-tick-lab" style="left:8px; top:160px;">0</span>
+            <span class="sandbox-tick" style="left:58px; top:150px;"></span><span class="sandbox-tick-lab" style="left:58px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:108px; top:150px;"></span><span class="sandbox-tick-lab" style="left:108px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:158px; top:150px;"></span><span class="sandbox-tick-lab" style="left:158px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:208px; top:150px;"></span><span class="sandbox-tick-lab" style="left:208px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:258px; top:150px;"></span><span class="sandbox-tick-lab" style="left:258px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:308px; top:150px;"></span><span class="sandbox-tick-lab" style="left:308px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:358px; top:150px;"></span><span class="sandbox-tick-lab" style="left:358px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:408px; top:150px;"></span><span class="sandbox-tick-lab" style="left:408px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:458px; top:150px;"></span><span class="sandbox-tick-lab" style="left:458px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:508px; top:150px;"></span><span class="sandbox-tick-lab" style="left:508px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:558px; top:150px;"></span><span class="sandbox-tick-lab" style="left:558px; top:160px;"></span>
+            <span class="sandbox-tick" style="left:608px; top:150px;"></span>
+            <span class="sandbox-tick-lab" style="left:608px; top:160px;">12</span>
+            <div class="sandbox-flag" style="left:608px; top:54px; height:112px;">
+              <span class="sandbox-flag-lab">3 groups of 4</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- the rail: the bin of group-scoops + a live count + clear -->
+        <div class="rail">
+          <div class="panel">
+            <h3>Workbench</h3>
+            <div class="hint">Build 3 equal groups out of 4-piece scoops, all the same size, until the row reaches the flag.</div>
+            <div class="sandbox-bin" role="group" aria-label="block bin">
+              <button type="button" class="sandbox-bin-btn" style="width:93px; touch-action:none;" title="drag a group of 4 onto the line" aria-label="add one group of 4 — drag onto the line, or press to place">
+                <span class="sandbox-bin-chip" style="background:#0a9396; color:#ede2c8;">
+                  <span class="sandbox-bin-hatch" style="background-image:repeating-linear-gradient(0deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px), repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px);"></span>
+                  <span class="sandbox-seg" style="background-image:repeating-linear-gradient(90deg, transparent 0, transparent calc(100% / 4 - 1.5px), rgba(20,14,10,0.5) calc(100% / 4 - 1.5px), rgba(20,14,10,0.5) calc(100% / 4));"></span>
+                  4
+                </span>
+                <span class="sandbox-bin-name">group of 4</span>
+              </button>
+              <button type="button" class="sandbox-bin-btn" style="width:116px; touch-action:none;" title="drag a group of 5 onto the line" aria-label="add one group of 5 — drag onto the line, or press to place">
+                <span class="sandbox-bin-chip" style="background:#b5179e; color:#ede2c8;">
+                  <span class="sandbox-bin-hatch" style="background-image:radial-gradient(rgba(237,226,200,0.34) 1.3px, transparent 1.7px); background-size:7px 7px;"></span>
+                  <span class="sandbox-seg" style="background-image:repeating-linear-gradient(90deg, transparent 0, transparent calc(100% / 5 - 1.5px), rgba(20,14,10,0.5) calc(100% / 5 - 1.5px), rgba(20,14,10,0.5) calc(100% / 5));"></span>
+                  5
+                </span>
+                <span class="sandbox-bin-name">group of 5</span>
+              </button>
+              <button type="button" class="sandbox-bin-btn" style="width:70px; touch-action:none;" title="drag a group of 3 onto the line" aria-label="add one group of 3 — drag onto the line, or press to place">
+                <span class="sandbox-bin-chip" style="background:#e07b00; color:#1c1612;">
+                  <span class="sandbox-bin-hatch" style="background-image:repeating-linear-gradient(45deg, rgba(20,14,10,0.34) 0 1px, transparent 1px 6px);"></span>
+                  <span class="sandbox-seg" style="background-image:repeating-linear-gradient(90deg, transparent 0, transparent calc(100% / 3 - 1.5px), rgba(20,14,10,0.5) calc(100% / 3 - 1.5px), rgba(20,14,10,0.5) calc(100% / 3));"></span>
+                  3
+                </span>
+                <span class="sandbox-bin-name">group of 3</span>
+              </button>
+            </div>
+
+            <div class="sandbox-readout">
+              <div class="sandbox-readout-row">
+                <span class="sandbox-readout-lab">on the line</span>
+                <span class="sandbox-readout-val"><em>0 blocks, mixed sizes</em></span>
+              </div>
+              <button type="button" class="sandbox-clear" disabled>↺ Clear the line</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ STAGE 4 hud: cook-zone + Check ══════════════════════════════════ -->
+      <div class="hud">
+        <div class="cook-zone">
+          <div class="cook-stage">
+            <svg width="118" height="156" viewBox="0 0 196 260" style="display:block; overflow:visible;" aria-hidden="true">
+              <defs>
+                <pattern id="ck-hatch" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.7" opacity="0.5" /></pattern>
+                <pattern id="ck-hatch-r" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--red-deep)" stroke-width="0.8" opacity="0.45" /></pattern>
+              </defs>
+              <g stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M44 258 Q40 188 58 168 Q72 154 98 154 Q124 154 138 168 Q156 188 152 258 Z" fill="var(--paper-1)" />
+                <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="var(--red)" />
+                <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="url(#ck-hatch-r)" stroke="none" />
+                <path d="M98 156 L98 258" stroke="var(--ink)" stroke-width="1.4" opacity="0.5" fill="none" />
+                <path d="M44 258 Q40 200 54 176 L70 258 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.7" />
+                <path d="M58 172 Q34 186 30 214" fill="none" />
+                <path d="M138 172 Q162 186 166 214" fill="none" />
+              </g>
+              <circle cx="98" cy="182" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+              <circle cx="98" cy="200" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+              <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+              <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+              <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+              <g transform="rotate(6 168 218)">
+                <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+              </g>
+              <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+              <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />
+              <g fill="var(--red-deep)" stroke="var(--ink)" stroke-width="2">
+                <path d="M58 92 Q50 104 56 116 Q62 108 66 110 Z" />
+                <path d="M138 92 Q146 104 140 116 Q134 108 130 110 Z" />
+              </g>
+              <circle cx="98" cy="92" r="40" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6" />
+              <path d="M122 78 A40 40 0 0 1 124 116 Q112 120 110 96 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.55" />
+              <circle cx="74" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+              <circle cx="122" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+              <g>
+                <circle cx="83" cy="87" r="3.6" fill="var(--ink)" />
+                <circle cx="113" cy="87" r="3.6" fill="var(--ink)" />
+              </g>
+              <path d="M98 92 Q102 99 97 101" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round" />
+              <path d="M84 108 Q98 120 112 108" stroke="var(--ink)" stroke-width="2.6" fill="none" stroke-linecap="round" />
+              <g stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round">
+                <rect x="64" y="52" width="68" height="16" rx="3" fill="var(--paper-2)" />
+                <path d="M64 56 Q50 52 52 36 Q40 30 50 18 Q58 6 76 12 Q86 0 104 8 Q124 2 130 18 Q150 22 144 38 Q152 52 132 56 Q132 40 120 44 Q120 30 104 34 Q104 22 88 28 Q84 40 72 38 Q74 52 64 56 Z" fill="var(--paper-1)" />
+              </g>
+              <path d="M120 44 Q132 40 132 56 L120 56 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.5" />
+            </svg>
+          </div>
+          <div class="ribbon">The Workbench — build 3 equal groups of 4 from the bin, all the same size, then read the count.</div>
+        </div>
+        <div class="marks">
+          <button class="check" disabled>Build it ▸</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

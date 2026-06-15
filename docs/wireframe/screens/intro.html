@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!--
+  intro.html — HIGH-FIDELITY wireframe for the Room intro player (first entry to a room).
+  Source: web/src/RoomIntro.jsx. Real DOM mirrored, real CSS reused, real SVG inlined.
+  Representative room: Lesson 8 · "Cross-Multiply" (rooms.js id "r2"), which HAS narration
+  (introR2.js cue sheet → .has-transcript). Representative state: the intro is PLAYING
+  (not ended), so the .intro-bar shows and the transcript rail is visible with the first
+  cue line active. The real iframe video surface is rendered as a static representative
+  box (no external iframe src embedded).
+  NAV: back (←) and Skip ▸ → world.html (onBack / onContinue both return to the map).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Room intro · #/room/:id (first entry)</title>
+
+  <!-- real app fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- real app CSS: tokens FIRST, then this screen's stylesheet(s) -->
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+
+  <!-- wireframe shell chrome LAST (desk + toolbar; not part of the app) -->
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">Room intro <small>· RoomIntro</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <!-- RoomIntro.jsx root: .intro (+ .has-transcript because this room has cues) -->
+    <div class="intro has-transcript" data-novox>
+      <div class="intro-main">
+
+        <!-- The real component renders a same-origin <iframe class="intro-frame" src={room.intro}>.
+             For the wireframe we render the player frame statically (a representative box) — no
+             external iframe src is embedded. -->
+        <div class="intro-frame" role="img" aria-label="Lesson 8 — Cross-Multiply intro"
+             style="display:grid; place-items:center; text-align:center; color:var(--ink-mute); font-family:var(--serif);">
+          <div>
+            <div style="font-family:var(--display); letter-spacing:0.18em; text-transform:uppercase; font-size:12px; color:var(--red);">Intro video</div>
+            <div style="font-size:18px; margin-top:10px;">Same-Size Pieces — animated intro</div>
+            <div style="font-size:14px; font-style:italic; margin-top:6px;">silent video · narration gated to its playhead</div>
+          </div>
+        </div>
+
+        <!-- intro-bar: shown while the intro is playing (not ended) -->
+        <div class="intro-bar">
+          <!-- back to the lesson map (onBack → world.html) -->
+          <a class="ctrl-btn intro-back" href="world.html" title="Back to the lesson map">←</a>
+          <!-- pause/play; playing state shows the PAUSE glyph (two bars) -->
+          <a class="ctrl-btn intro-pause" href="#" title="Pause" aria-label="Pause">
+            <svg width="13" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="3" y="2" width="3" height="10" fill="currentColor" /><rect x="8" y="2" width="3" height="10" fill="currentColor" /></svg>
+          </a>
+          <div class="intro-label">Lesson 8 · Cross-Multiply — intro</div>
+          <!-- Skip ▸ (onContinue path) → world.html -->
+          <a class="intro-continue" href="world.html">Skip ▸</a>
+        </div>
+      </div>
+
+      <!-- transcript rail (rendered when the room has narration cues) -->
+      <aside class="intro-transcript">
+        <div class="tr-head">
+          <span>Transcript</span>
+          <!-- SettingsButton renders with class .tr-mute; real glyph is a gear (inlined as SVG) -->
+          <a class="tr-mute" href="../screens/settings.html" title="Settings" aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              <circle cx="9" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="1.5" />
+              <path d="M9 1.5 V3 M9 15 v1.5 M1.5 9 H3 M15 9 h1.5 M3.6 3.6 l1.1 1.1 M13.3 13.3 l1.1 1.1 M14.4 3.6 l-1.1 1.1 M4.7 13.3 l-1.1 1.1" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" />
+            </svg>
+          </a>
+        </div>
+        <ol class="tr-list">
+          <!-- "start" marker — active highlights the start while activeIdx < 0; here the first cue is active -->
+          <li class="tr-line tr-start" title="Start from the beginning">▸ Start of the video</li>
+          <li class="tr-line active" title="Jump to this line">One third of a strip, and one half of a strip.</li>
+          <li class="tr-line" title="Jump to this line">Different sizes — how can we add them?</li>
+          <li class="tr-line" title="Jump to this line">Slice them into matching pieces!</li>
+          <li class="tr-line" title="Jump to this line">Every piece is now one sixth — the same size.</li>
+          <li class="tr-line" title="Jump to this line">So the bottom number is six.</li>
+          <li class="tr-line" title="Jump to this line">Count the pieces…</li>
+          <li class="tr-line" title="Jump to this line">One third plus one half makes five sixths.</li>
+        </ol>
+        <div class="tr-foot">Narrated by the Cook · click a line to jump there</div>
+      </aside>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

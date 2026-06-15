@@ -1,0 +1,78 @@
+/* affectprobe.css — Phase 3 self-report probe (plan 005, S3).
+   A calm, in-fiction overlay shown only at rare T3 pauses. Two big tap targets,
+   reader-safe labels, generous spacing for small hands on a tablet. */
+
+.affect-probe {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(40, 26, 18, 0.45);
+  z-index: 40;
+}
+
+.affect-probe__card {
+  background: #fbf3e6;
+  border: 3px solid #b8865b;
+  border-radius: 18px;
+  padding: 24px 28px 18px;
+  max-width: 560px;
+  box-shadow: 0 14px 40px rgba(40, 26, 18, 0.35);
+  text-align: center;
+}
+
+.affect-probe__prompt {
+  font-size: 1.35rem;
+  color: #4a3526;
+  margin: 0 0 18px;
+}
+
+.affect-probe__faces {
+  display: flex;
+  gap: 22px;
+  justify-content: center;
+}
+
+.affect-probe__face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  min-height: 140px;
+  padding: 18px 16px;
+  border-radius: 16px;
+  border: 2px solid #c9a06a;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.affect-probe__face:hover,
+.affect-probe__face:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(40, 26, 18, 0.22);
+  outline: none;
+}
+
+.affect-probe__face--easy { background: #eef7ec; }
+.affect-probe__face--tricky { background: #fbeeea; }
+
+.affect-probe__emoji { font-size: 3rem; line-height: 1; }
+
+.affect-probe__label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #4a3526;
+}
+
+.affect-probe__skip {
+  margin-top: 16px;
+  background: none;
+  border: none;
+  color: #8a6f57;
+  font-size: 0.95rem;
+  text-decoration: underline;
+  cursor: pointer;
+}

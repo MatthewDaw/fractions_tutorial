@@ -1,0 +1,4 @@
+/* wf-lessons.css — DEPRECATED.
+   The React wireframe imports every app stylesheet directly in src/main.jsx
+   (in the correct cascade order), so this aggregate file is no longer used.
+   Kept as a no-op to avoid breaking any stray reference. */

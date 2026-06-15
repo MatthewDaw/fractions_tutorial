@@ -1,0 +1,246 @@
+/* momsroom.css — Babushka's Room (story / word problems). Layers on top of the shared
+   lesson chrome; only the room-specific bits live here. Includes the prop motion
+   keyframes ported from the design contact sheet (the anim-* classes the SVG
+   props use), so the snap / pop / merge / lid-close beats read on solve. */
+
+.momsroom .mr-heart { color: var(--red); font-size: 22px; line-height: 1; }
+
+/* progress pips in the header centre */
+.mr-progress { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; max-width: 560px; justify-self: center; }
+.mr-pip { width: 9px; height: 9px; border: 1.5px solid var(--ink); background: var(--paper-1); transform: rotate(45deg); opacity: 0.6; }
+.mr-pip.done { background: var(--ink); opacity: 0.5; }
+.mr-pip.on { background: var(--red); border-color: var(--red-deep); opacity: 1; box-shadow: 0 0 0 2px rgba(163,42,34,0.18); }
+
+/* the story prop sits centred over its built-in ruler */
+.mr-stage { flex: 1 1 auto; display: grid; place-items: center; min-height: 0; padding: 6px 0 2px; }
+.mr-stage > svg { width: 100%; max-width: 520px; height: auto; max-height: 280px; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DETERMINISTIC FIXED-ZONE LAYOUT — Babushka's Kitchen (mirrors .r1-s1).
+   Four absolutely-positioned, fixed-size rectangles. The prop/story zone is
+   pinned TOP; the answer card + tutor are pinned BOTTOM with a guaranteed gap
+   between them. No zone's size depends on text content (everything is clamped),
+   so a longer caption / a different character / a different font can never grow
+   a zone into its neighbour (the bug where the prop area covered the answer).
+   ════════════════════════════════════════════════════════════════════════════ */
+.mr-s { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 8px; }
+
+/* PROP / STORY + SCRATCH zone — top-left, fixed; clipped so the prop + scratch ink
+   can NEVER paint past the zone onto the answer card below. This is the child's
+   big "show your work" drawing surface (the ScratchCanvas fills it). */
+.mr-s-stage {
+  position: absolute; left: 0; top: 0;
+  /* generous, full-width scratch slate (the QuestionBand above is gone, so this
+     zone reclaims that vertical room). ~800w × ~344h: well past the M3 ~756×246
+     reference and comfortably tall for a child to show their work with a stylus. */
+  width: 800px; height: 344px;
+  border: 2px solid #1a0f08;
+  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
+  background: radial-gradient(ellipse at 50% 24%, rgba(255,245,220,0.5), transparent 70%), var(--paper-1);
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 8px 18px 6px;
+  display: flex; flex-direction: column;
+}
+/* the prop area fills the zone (its own ruler / motion live inside the SVG) */
+.mr-s-stage .mr-stage { flex: 1 1 auto; min-height: 0; }
+
+/* RAIL — top-right, fixed; two stacked panels (asker + skill). */
+.mr-s-rail {
+  position: absolute; right: 0; top: 0;
+  width: 396px; height: 344px;
+  box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mr-s-rail .panel { box-sizing: border-box; overflow: hidden; }
+.mr-s-rail .mr-asker { flex: 0 0 auto; }
+.mr-s-rail .mr-asker-art { height: 132px; }
+.mr-s-rail .mr-skill-panel { flex: 1 1 auto; min-height: 0; }
+/* clamp the skill blurb so a longer label/blurb can't grow the rail */
+.mr-s-rail .mr-skill-panel .hint {
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ANSWER CARD — write area + Check as ONE bordered unit, pinned to the bottom of
+   the play region, clearly BELOW the prop zone (guaranteed gap). The Slate sits
+   on the left; the Check button is IMMEDIATELY to its right. Fixed height; text
+   is clamped, so a longer caption can never grow the card. */
+.mr-s-answer {
+  position: absolute; left: 0; bottom: 0;
+  width: 800px; height: 226px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  /* the write area + Check read as ONE tight group, left-aligned, so the Check
+     button sits IMMEDIATELY to the right of where the child writes (not spread to
+     the far edge). */
+  display: flex; align-items: center; gap: 28px;
+  padding: 10px 28px;
+}
+.mr-s-write {
+  flex: 0 0 auto; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.mr-s-slate { display: inline-flex; align-items: center; gap: 16px; }
+.mr-s-slate.mr-bad .slate-cell { border-color: var(--red); animation: shakeX .42s ease-in-out; }
+.mr-s-slate .frinput { display: inline-flex; flex-direction: column; align-items: center; }
+/* handwriting cells — GENEROUSLY large now that the card grew and the question
+   moved to the band above (more room, comfortable stylus target for a child). */
+.mr-s-slate .slate-fraction .slate-cell { width: 108px; height: 96px; }
+.mr-s-slate .slate-fraction .slate-bar { width: 108px; }
+.mr-s-slate .slate-fraction .slate-fixed { font-size: 46px; }
+.mr-s-slate .slate-fraction .slate-committed-digit { font-size: 52px; }
+.mr-s-slate .slate-fraction .slate-ph { font-size: 30px; }
+/* the row (whole) cell of a mixed answer */
+.mr-s-slate.is-mixed .slate-row .slate-cell { width: 96px; height: 96px; }
+.mr-s-slate .mr-and { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-mute); }
+/* the recognizer guess chip floats so it can't change the row's height */
+.mr-s-slate .slate-fraction { position: relative; }
+.mr-s-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; z-index: 6; }
+
+.mr-s-cap {
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  /* clamp: a longer ask string can never grow the card */
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 460px;
+}
+.mr-s-marks {
+  flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.mr-s-marks .check { min-width: 168px; height: 60px; }
+.mr-s-marks .mr-wallbtn { height: 56px; }
+
+/* TUTOR zone — speaking character + ribbon, fixed rect bottom-right; ribbon text
+   is clamped so a longer status string can never change the zone height. */
+.mr-s-tutor {
+  position: absolute; right: 0; bottom: 0;
+  width: 396px; height: 226px;
+  box-sizing: border-box;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.mr-s-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.mr-s-tutor .ribbon {
+  margin-left: 0; margin-bottom: 16px; max-width: 196px; flex: 1 1 auto;
+  /* clamp to 5 lines so font/length never reflows the zone */
+  height: 100px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+}
+
+/* rail — who's asking */
+.mr-asker { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.mr-asker-art { height: 150px; display: grid; place-items: end center; overflow: visible; margin: 2px 0 4px; }
+.mr-asker-note { font-family: var(--serif); font-size: 13px; line-height: 1.35; color: var(--ink-soft); }
+.mr-asker-note b { color: var(--red-deep); }
+.mr-recipe-row { display: flex; align-items: baseline; gap: 8px; margin-top: 9px; }
+.mr-recipe-no { font-family: var(--display); font-size: 20px; color: var(--ink); }
+.mr-recipe-of { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
+
+/* the Cat's meows read as a sound, not speech */
+.ribbon.mr-meow { font-style: italic; color: var(--ink-mute); letter-spacing: 0.04em; }
+
+/* ── scratch space: a free-form drawing layer over the prop + ruler ───────── */
+.mr-scratch { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%;
+  touch-action: none; cursor: crosshair; background: transparent; }
+.mr-scratch-hint { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 5;
+  font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); opacity: 0.6; pointer-events: none; }
+
+/* tool strip (top-left of the diagram, above the scratch layer) */
+.mr-tools { position: absolute; left: 8px; top: 8px; z-index: 12; display: flex; align-items: center; gap: 5px;
+  padding: 4px; border: 1.5px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.16); }
+.mr-tool { all: unset; cursor: pointer; box-sizing: border-box; min-width: 30px; height: 30px; padding: 0 7px;
+  display: inline-grid; place-items: center; color: var(--ink); border: 1px solid transparent;
+  font-family: var(--display); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.mr-tool:hover { background: var(--paper-2); }
+.mr-tool.on { background: var(--ink); color: var(--paper-1); }
+.mr-tool.on svg [stroke="currentColor"] { stroke: var(--paper-1); }
+.mr-tool-clear { color: var(--red-deep); }
+.mr-tool-sep { width: 1px; height: 20px; background: var(--paper-3); margin: 0 2px; }
+
+/* the "wall": route into the room that teaches the missed skill */
+.mr-wallbtn { all: unset; cursor: pointer; box-sizing: border-box; height: 64px; padding: 0 16px;
+  display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-size: 13px; letter-spacing: 0.02em;
+  color: var(--paper-1); background: var(--red); border: 2px solid var(--red-deep);
+  box-shadow: 3px 3px 0 rgba(110,28,22,0.32); animation: wallNudge 1.4s ease-in-out infinite; }
+.mr-wallbtn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 rgba(110,28,22,0.34); }
+@keyframes wallNudge { 0%,100% { box-shadow: 3px 3px 0 rgba(110,28,22,0.32); } 50% { box-shadow: 3px 3px 0 rgba(110,28,22,0.32), 0 0 14px rgba(163,42,34,0.5); } }
+
+/* quiet stage tag (top-right of the prop zone) — NOT the question. The question now
+   lives in the full-width QuestionBand up top; this is a small status chip pinned
+   out of the manipulative's way so it can never cover the prop/scratch surface. */
+.mr-stage-tag {
+  /* pinned to the TOP-RIGHT of the prop zone so it clears the BlankSlate tool strip
+     (top-left) and never overlaps the prop/scratch surface in the centre. */
+  position: absolute; right: 8px; top: 8px; z-index: 13;
+  display: inline-flex; align-items: center; gap: 0;
+  padding: 3px 9px; border: 1.5px solid var(--ink); background: var(--paper-2);
+  box-shadow: 2px 2px 0 rgba(28,22,18,0.14);
+}
+.mr-stage-tag .g {
+  font-family: var(--display); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute);
+}
+.mr-stage-tag.mr-peek { background: var(--paper-1); border-color: var(--red); }
+.mr-stage-tag.mr-peek .g { color: var(--red); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   WORDS-ONLY QUESTION PLACEMENT — this room is word-problems throughout, so there
+   is NO bare recipe equation: the prose story IS the question and the child must
+   read it and extract the math. The shared full-width <QuestionBand> (and its
+   .mr-qb-* inline-fraction styling) is no longer rendered. The goal band is now
+   the PRIMARY question — larger, darker, full-bleed serif story copy — and the
+   prop/scratch slate below gives a generous place to work it out.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* goal band — now the PRIMARY question: the full prose story, read first. Taller,
+   darker, larger serif so the words carry the question on their own. */
+.momsroom .goal.mr-goal-primary { height: 72px; gap: 16px; align-items: center; margin-top: 6px; }
+.momsroom .goal.mr-goal-primary .goal-text {
+  font-family: var(--serif); font-weight: 500; font-size: 19px; line-height: 1.3;
+  color: var(--ink); letter-spacing: 0;
+  /* clamp to 2 lines so a long story can never grow the band */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* "Write your answer" eyebrow over the answer boxes. */
+.mr-final-label { font-family: var(--display); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ink-mute); margin-bottom: 2px; }
+
+/* the write column packs the eyebrow + (enlarged) slate + cap into the card. */
+.mr-s-write { gap: 6px; }
+.mr-s-answer { padding-top: 12px; padding-bottom: 12px; }
+
+/* mixed-number answer entry (wholes "and" leftover) */
+.hud-eq .mr-and { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--ink-mute); }
+.hud-eq .mr-whole { gap: 4px; }
+.hud-eq .mr-whole .mr-cap { font-family: var(--display); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mute); }
+
+/* finale card over the diagram */
+.mr-finale { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255,245,220,0.96), rgba(237,226,200,0.96)); text-align: center; padding: 20px; }
+.mr-finale-art { filter: drop-shadow(0 6px 10px rgba(20,12,6,0.25)); }
+.mr-finale-text { font-family: var(--serif); font-size: 19px; line-height: 1.4; color: var(--ink); max-width: 460px; }
+
+/* ── prop motion (ported from the asset contact sheet) ───────────────────── */
+[class*="anim-"] { transform-box: fill-box; transform-origin: center; }
+.anim-pop   { animation: a-pop   2.6s ease-in-out infinite; }
+.anim-pulse { animation: a-pulse 1.7s ease-in-out infinite; }
+.anim-glow  { animation: a-glow  1.7s ease-in-out infinite; }
+.anim-snap  { animation: a-snap  2.4s ease-in-out infinite; }
+.anim-merge { animation: a-merge 2.6s ease-in-out infinite; }
+.anim-bob   { animation: a-bob   2.4s ease-in-out infinite; }
+.anim-lift  { animation: a-lift  2.2s ease-in-out infinite; }
+.anim-lidclose { transform-box: view-box; transform-origin: 70px 108px; animation: a-lid 2.8s ease-in-out infinite; }
+
+@keyframes a-pop   { 0%{transform:scale(.66);opacity:.25} 22%{transform:scale(1.1);opacity:1} 38%{transform:scale(1)} 100%{transform:scale(1);opacity:1} }
+@keyframes a-pulse { 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.02)} }
+@keyframes a-glow  { 0%,100%{filter:drop-shadow(0 0 0 rgba(163,42,34,0))} 50%{filter:drop-shadow(0 0 7px rgba(163,42,34,.6))} }
+@keyframes a-snap  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2.5px)} }
+@keyframes a-merge { 0%,100%{transform:translateX(0)} 50%{transform:translateX(-6px)} }
+@keyframes a-bob   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+@keyframes a-lift  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-11px)} }
+@keyframes a-lid   { 0%{transform:rotate(-15deg)} 45%{transform:rotate(3deg)} 62%{transform:rotate(0)} 100%{transform:rotate(0)} }
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="anim-"] { animation: none !important; }
+  .anim-lidclose { transform: rotate(0deg); }
+}
