@@ -50,3 +50,68 @@
 
 /* FitStage wrapper — let the board breathe and downscale on short viewports */
 .nl-board-fit { width: 100%; }
+
+/* ── Stage 1 "Place" — GROW a bar from stacked 1/den unit pieces ─────────────
+   The bar is a row of identical denominator-colored pieces sitting just above the
+   ruler (0→barK). A ghost slot shows where the next piece lands; a small tray in
+   the rail holds the reusable unit piece the child drags. Mirrors the wireframe's
+   block-stacking paradigm (.nbar/.plank/.piece/.nl-ghost-slot/.nl-drag-source). */
+.nl-bar { position: absolute; height: 56px; }
+.nl-bar-tag {
+  position: absolute; left: 50%; top: -34px; transform: translateX(-50%);
+  display: inline-flex;
+}
+.nl-plank {
+  display: flex; height: 56px; border: 2px solid var(--ink);
+  border-radius: 3px; overflow: hidden; background: var(--paper-1);
+}
+.nl-piece {
+  position: relative; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.nl-piece-lab {
+  font-family: var(--display); font-size: 15px; color: #ede2c8;
+  letter-spacing: .01em; pointer-events: none;
+}
+
+/* the empty drop target for the NEXT piece — a dashed ghost that lights up when
+   the dragged piece hovers over the canvas */
+.nl-ghost-slot {
+  position: absolute; height: 56px;
+  border: 2px dashed var(--ink-soft); border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(28,22,18,0.02);
+  transition: background .12s ease, border-color .12s ease;
+}
+.nl-ghost-slot.is-hot {
+  border-color: var(--red); background: rgba(192,57,43,.10);
+}
+.nl-ghost-lab {
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+}
+
+/* the rail tray: a single reusable 1/den piece the child grabs and drags */
+.nl-drag-source {
+  margin-top: 16px; display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+}
+.nl-src-plank {
+  display: inline-flex; align-items: center; cursor: grab;
+  border: 2px solid var(--ink); border-radius: 3px; overflow: hidden;
+  touch-action: none; user-select: none; height: 56px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.18);
+}
+.nl-src-plank .nl-plank { border: none; box-shadow: none; }
+.nl-src-plank:active, .nl-src-plank.is-dragging { cursor: grabbing; opacity: .5; }
+.nl-src-hint {
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+}
+
+/* the floating drag ghost following the pointer (fixed overlay, click-through) */
+.nl-drag-ghost {
+  position: fixed; z-index: 9999; pointer-events: none;
+  width: 96px; height: 56px; margin-left: -48px; margin-top: -28px;
+  border: 2px solid var(--ink); border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,.34); opacity: .92;
+}
