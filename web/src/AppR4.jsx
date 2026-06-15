@@ -43,6 +43,8 @@ import QuestionBand from "./components/QuestionBand.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, LessonGoal } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
+import { useLessonIdentity } from "./lessons/useLessonIdentity.js";
+import { LESSONS } from "./lessons/index.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 
 import "./styles/r4.css";
@@ -62,16 +64,11 @@ function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, 
 const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 2);
 
 // ── the five stages of the arc ───────────────────────────────────────────────
-const STAGES = [
-  { id: "manipulate", n: 1, tag: "Group",      blurb: "Drag a group size — bundle equal cells" },
-  { id: "bind",       n: 2, tag: "Bind",       blurb: "Group, then write the equivalent name" },
-  { id: "fade",       n: 3, tag: "Fade",       blurb: "Pick the shared factor, then write" },
-  { id: "numbers",    n: 4, tag: "Numbers",    blurb: "Bare 8/12 — write lowest terms" },
-  { id: "applied",    n: 5, tag: "Applied",    blurb: "Write the fraction, then its simplest name" },
-  { id: "showwork",   n: "SW", tag: "Show Work", blurb: "Show your work on a blank slate" },
-  { id: "words",      n: 6, tag: "Words",      blurb: "Read the recipe, write the simplest name" },
-  { id: "practice",   n: "★", tag: "Practice",  blurb: "Fresh problems — paced to your mastery" },
-];
+// Stage ORDER + internal ids are interaction logic (drive the engine: stagesOrder,
+// initialStage, per-stage scaffold keys) and stay in the component. The badge /
+// name / sub COPY for each tab is data and comes from the registry (lessons/r4.js),
+// zipped onto these ids by position.
+const STAGE_IDS = ["manipulate", "bind", "fade", "numbers", "applied", "showwork", "words", "practice"];
 
 // ── the ÷K chips that ride inside the shared BigFrac ─────────────────────────
 function DivChips({ divs }) {
@@ -198,7 +195,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecip
     nodeId: "SIMPLIFY",
     lessonId: "r4",
     initialStage: "manipulate",
-    stagesOrder: STAGES.map((s) => s.id),
+    stagesOrder: STAGE_IDS,
     scaffoldKeyFor: SCAFFOLD_KEY,
     // The final "practice" stage serves auto-generated SIMPLIFY variations, paced
     // by the engine (re-roll on correct, fade on a clean streak, transfer probe).
@@ -221,6 +218,20 @@ export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecip
     solved, setSolved, solvedRef, stars, setStars, cook, setCook, status, setStatus,
     say, speaking, selfCorrectionsRef, stageRef,
   } = sc;
+
+  // ── identity + tab strip from the registry (lessons/r4.js) ───────────────────
+  // № / tag / title and the stage tab copy are DATA. The component supplies only
+  // the ordered stage ids (interaction logic); badge/name/sub are zipped on from
+  // the registry by position so there is no inline STAGES/identity duplication.
+  const ident = useLessonIdentity("r4");
+  const L = LESSONS.r4;
+  const layout = L.layout || { railW: 452, footH: 150 };
+  const tabStages = ident.stages.map((s, i) => ({
+    key: STAGE_IDS[i],   // engine stage id (matches `current`/onSelect)
+    badge: s.badge,
+    title: s.title,
+    sub: s.sub,
+  }));
 
   // Derived view state.
   const UNIT = SPAN;                       // 0→1 ruler fills the whole span
@@ -517,7 +528,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecip
   // ── shared chrome: the goal banner + the question band + the tutor ribbon ────
   const Goal = (
     <LessonGoal say={say} speaking={speaking} voiceKey="r4Goal" voxSpeaker="mom">
-      {stageGoal(stage)}
+      {renderGoal(L.goals?.[stage] || "")}
     </LessonGoal>
   );
 
@@ -570,7 +581,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecip
       <LessonBoard
         variant="split"
         footHeight={132}
-        railWidth={452}
+        railWidth={layout.railW}
         rowGap={12}
         marginTop={8}
         rail={null}
@@ -623,7 +634,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecip
       <LessonBoard
         variant="split"
         footHeight={158}
-        railWidth={452}
+        railWidth={layout.railW}
         rowGap={12}
         marginTop={8}
         rail={null}
@@ -899,7 +910,7 @@ export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecip
       <LessonBoard
         variant="split"
         footHeight={150}
-        railWidth={452}
+        railWidth={layout.railW}
         rowGap={12}
         marginTop={8}
         rail={railNode}
@@ -912,15 +923,15 @@ export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecip
 
   return (
     <LessonShell
-      no={no}
-      tag="Simplifying"
-      title={title}
+      no={ident.no}
+      tag={ident.tag.replace(/^Lesson\s+\d+\s*·\s*/, "")}
+      title={title || ident.title}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={reset}
       resetTitle="Start this stage over"
       tabs={{
-        stages: STAGES.map((s) => ({ key: s.id, badge: s.n, title: s.tag, sub: s.blurb })),
+        stages: tabStages,
         current: stage,
         onSelect: goStage,
       }}
@@ -933,26 +944,24 @@ export default function AppR4({ no, title, onBack, onRewatchIntro, stumpingRecip
   );
 }
 
-// ── per-stage goal copy (captions, since the audience reads) ──────────────────
-function stageGoal(stage) {
-  switch (stage) {
-    case "manipulate":
-      return (<>Babushka's answer came out as <b>8 out of 12</b> pieces. Drag a group size onto the bar to bundle the cells — divide the top <b>and</b> bottom by the same number. The filled edge can't move, so the amount stays the same.</>);
-    case "bind":
-      return (<>Group the bar into bigger cells — and each time, <b>copy the new name</b> onto the Slate. 4 out of 6, then 2 out of 3: all the SAME amount as 8/12.</>);
-    case "fade":
-      return (<>The bar is fading. <b>Pick the number</b> that divides BOTH 8 and 12, then <b>write</b> the equivalent line yourself. Same number top and bottom — that's dividing by 1.</>);
-    case "numbers":
-      return (<>Just the numbers: <b>{START_NUM}/{START_DEN} = ?</b> Write the equivalent fraction in lowest terms — its simplest name. No bar to lean on.</>);
-    case "applied":
-      return (<>A question in words. First <b>write the fraction</b> it describes ({START_NUM}/{START_DEN}); once that's checked, <b>write the same amount with its simplest name</b>.</>);
-    case "showwork":
-      return (<>Now <b>show your work</b> on the blank slate — write anything you like. When you've put something down, tap <b>Next</b>.</>);
-    case "words":
-      return (<>Read Babushka's recipe. The leftover comes out as an unwieldy fraction — <b>write the same amount as its simplest name</b>.</>);
-    default:
-      return "";
-  }
+// ── render a registry goal string into JSX ───────────────────────────────────
+// Goal copy lives in lessons/r4.js as plain strings using two markup tokens:
+//   *emphasis*  → <b>…</b>      {n}/{d} → START_NUM/START_DEN
+// This keeps the COPY in the registry (data) while emphasis/number substitution
+// (presentation logic) stays in the component.
+function renderGoal(src) {
+  if (!src) return "";
+  const filled = src.replace(/\{n\}/g, String(START_NUM)).replace(/\{d\}/g, String(START_DEN));
+  const parts = filled.split(/(\*[^*]+\*)/g).filter(Boolean);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.startsWith("*") && p.endsWith("*")
+          ? <b key={i}>{p.slice(1, -1)}</b>
+          : <React.Fragment key={i}>{p}</React.Fragment>
+      )}
+    </>
+  );
 }
 
 // ── the Applied (Stage 5) sentence. The fraction numerals are SHOWN; the child
