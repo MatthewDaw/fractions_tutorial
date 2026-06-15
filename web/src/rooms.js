@@ -52,6 +52,13 @@ export const ROOMS = [
   // DENOMINATOR node + generator should be added later). `no: 11` is provisional;
   // the whole map is renumbered in one pass later.
   { id: "den", nodeId: "FRACTION_ON_LINE",  no: 11, title: "The Bottom Number",  concept: "The bottom number cuts the whole into equal pieces — a bigger bottom makes each piece smaller.", built: true, pos: { x: 960, y: 80 }, verb: "Splitting", example: "1/4 vs 1/9" },
+  // num — "The Top Number" (NEW lesson, AppNum.jsx, route #/num). The companion to
+  // den: the TOP number COUNTS how many of the equal pieces are shaded; top = bottom
+  // means one whole. Like den, it has NO dedicated engine skill node yet, so it RIDES
+  // the nearest existing node FRACTION_ON_LINE — see AppNum.jsx ENGINE NOTE
+  // (contention: a real NUMERATOR node + generator should be added later). `no: 12`
+  // is provisional; the whole map is renumbered in one pass later.
+  { id: "num", nodeId: "FRACTION_ON_LINE",  no: 12, title: "The Top Number",     concept: "The top number counts how many of the equal pieces are shaded — top equals bottom is one whole.", built: true, pos: { x: 1180, y: 80 }, verb: "Counting", example: "3/8 shaded" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -69,6 +76,6 @@ export const ROOMS = [
 // (640,420): two up top (clearing the title), one centred below.
 export const STRANDS = [
   { id: "found",   title: "Counting & Times",     blurb: "Whole-number groups — the floor every fraction stands on.",         lessons: ["m1", "m3"],              pos: { x: 326, y: 250 } },
-  { id: "build",   title: "Building Fractions",   blurb: "What a fraction is, and adding or taking away same-size pieces.",    lessons: ["nl", "den", "r1", "s1", "cmp"], pos: { x: 954, y: 250 } },
+  { id: "build",   title: "Building Fractions",   blurb: "What a fraction is, and adding or taking away same-size pieces.",    lessons: ["nl", "den", "num", "r1", "s1", "cmp"], pos: { x: 954, y: 250 } },
   { id: "combine", title: "Combining & Renaming", blurb: "Unlike pieces, simplest names, and whole-and-a-bit.",               lessons: ["r3", "r2", "r4", "r5"],  pos: { x: 640, y: 648 } },
 ];

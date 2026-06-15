@@ -11,7 +11,6 @@ export default {
     { n: "1", name: "Manipulate", sub: "the blocks ARE the problem; drag & slice by touch", href: "room-r2.html" },
     { n: "2", name: "Bind", sub: "blocks + the written fraction; copy the numeral", href: "room-r2-2-bind.html" },
     { n: "3", name: "Fade", sub: "blocks dim to a check; the equation leads", href: "room-r2-3-fade.html" },
-    { n: "W", name: "Workbench", sub: "pull blocks from the bin and build the answer", href: "room-r2-w-workbench.html" },
     { n: "3·", name: "Ghost", sub: "blocks a faded ghost behind; write the whole answer", href: "room-r2-5-ghost.html" },
     { n: "4", name: "Numbers", sub: "a bare equation; write the whole solution", href: "room-r2-6-numbers.html" },
     { n: "A", name: "Applied", sub: "a worded question with the fractions shown; write the sum", href: "room-r2-a-applied.html" },

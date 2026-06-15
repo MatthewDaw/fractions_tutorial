@@ -42,7 +42,7 @@ const STEPS = [
   ]],
   ["№7 Cross-Multiply (r2)", [
     ["room-r2", "1 Manipulate"], ["room-r2-2-bind", "2 Bind"], ["room-r2-3-fade", "3 Fade"],
-    ["room-r2-w-workbench", "W Workbench"], ["room-r2-5-ghost", "Ghost"], ["room-r2-6-numbers", "Numbers"],
+    ["room-r2-5-ghost", "Ghost"], ["room-r2-6-numbers", "Numbers"],
     ["room-r2-a-applied", "Applied"], ["room-r2-sw-showwork", "Show Work"], ["room-r2-7-words", "Words"], ["room-r2-practice", "★ Practice"],
   ]],
   ["№8 Simplify (r4)", [

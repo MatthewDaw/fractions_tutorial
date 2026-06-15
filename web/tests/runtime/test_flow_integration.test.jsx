@@ -401,6 +401,9 @@ describe('rooms.js — nodeId field present (additive, R19)', () => {
     // den — NEW lesson with no dedicated skill node; rides FRACTION_ON_LINE
     // (the nearest ruler/unit-fraction node). See AppDen.jsx ENGINE NOTE.
     den: 'FRACTION_ON_LINE',
+    // num — NEW lesson (companion to den); also rides FRACTION_ON_LINE.
+    // See AppNum.jsx ENGINE NOTE.
+    num: 'FRACTION_ON_LINE',
   };
 
   it('every room has a nodeId string field', () => {
@@ -572,9 +575,9 @@ describe('WorldMap — two-level shelf/submenu rendering', () => {
     unmount();
   });
 
-  it('opening every shelf reveals 11 lesson cards in total', async () => {
-    // 11 = 2 multiplication-foundation rooms + 9 fraction rooms (den added to the
-    // "build" shelf), grouped 2 + 5 + 4 across the three shelves.
+  it('opening every shelf reveals 12 lesson cards in total', async () => {
+    // 12 = 2 multiplication-foundation rooms + 10 fraction rooms (den + num added to
+    // the "build" shelf), grouped 2 + 6 + 4 across the three shelves.
     const { default: WorldMap } = await import('../../src/WorldMap.jsx');
     const { unmount } = render(
       React.createElement(WorldMap, { onOpen: () => {}, masteryMap: null })
@@ -585,7 +588,7 @@ describe('WorldMap — two-level shelf/submenu rendering', () => {
       total += document.querySelectorAll('.wcard').length;
       fireEvent.click(document.querySelector('.world-back')); // back to shelves
     }
-    expect(total).toBe(11);
+    expect(total).toBe(12);
     unmount();
   });
 

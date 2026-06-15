@@ -133,10 +133,12 @@ export default {
               <div class="bignum"><span class="n">1</span><span class="bar" style="background:#0a9396;"></span><span class="d">4</span></div>
               <span class="lu-op">=</span>
               <span class="lu-ans-slot">
-                <span class="frinput ink">
-                  <span class="slate-slot"><span class="slate-cell"><span class="slate-ph" aria-hidden="true">✎</span></span></span>
-                  <span class="ln"></span>
-                  <span class="slate-slot"><span class="slate-cell"></span></span>
+                <span class="lu-slate">
+                  <span class="slate slate-fraction" role="group" aria-label="write the total fraction">
+                    <span class="slate-slot is-disabled"><span class="slate-cell"></span></span>
+                    <span class="slate-bar" style="background:#d1495b;" aria-hidden="true"></span>
+                    <span class="slate-slot"><span class="slate-cell"><span class="slate-ph" aria-hidden="true">✎</span></span></span>
+                  </span>
                 </span>
               </span>
             </div>
