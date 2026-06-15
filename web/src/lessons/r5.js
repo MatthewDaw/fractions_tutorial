@@ -2,8 +2,8 @@
    the whole family; every room-r5-*.js page declares only `lesson: "r5"`. */
 export default {
   id: "r5",
-  num: "№9",
-  tag: "Lesson 9 · Mixed Numbers",
+  num: "№10",
+  tag: "Lesson 10 · Mixed Numbers",
   title: "Mixed Numbers",
   route: "#/r5",
   tabs: [

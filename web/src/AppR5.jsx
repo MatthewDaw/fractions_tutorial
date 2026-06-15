@@ -39,6 +39,7 @@ import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, LessonGoal } from "./
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { denomColor, denomTextColor, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
+import { useLessonIdentity } from "./lessons/useLessonIdentity.js";
 import "./styles/r5.css";
 
 // ---- the problem bank -------------------------------------------------------
@@ -82,20 +83,12 @@ function Block({ den, width, label = true, locked = false, grabbing = false, onP
 }
 
 // ---- the STAGE arc ----------------------------------------------------------
-// Each tuple: [key, name, hint, selectorLabel]. The pedagogical Stage 1–5
-// numbering stays legible; the inserted stages read as W (Workbench) and A
-// (Applied) instead of bumping the numbers.
-const STAGES = [
-  ["1-manipulate", "Manipulate", "Group every 7 into a whole — by touch, no writing.", "1"],
-  ["2-bind", "Bind", "Group the whole, then WRITE the mixed number on the Slate.", "2"],
-  ["3-fade", "Fade", "Blocks dim — choose how many wholes fit, then write.", "3"],
-  ["workbench", "Workbench", "Build the improper fraction from the bin, then count it.", "W"],
-  ["4-numbers", "Numbers", "Bare 9/7 = ? — write the whole mixed number.", "4"],
-  ["applied", "Applied", "A worded question — write the improper fraction, then the answer.", "A"],
-  ["showwork", "Show Work", "Show your work on a blank slate.", "✎"],
-  ["5-words", "Words", "A recipe story — read it, write the mixed number.", "5"],
-  ["practice", "Practice", "Fresh problems — paced to your mastery", "★"],
-];
+// The engine stage IDS (interaction logic) in display order. Badge/name/sub copy
+// is DATA — it lives in the registry (lessons/r5.js) and is zipped onto these ids
+// by position at render time, so there is NO inline tab/identity duplication. The
+// pedagogical Stage 1–5 numbering stays legible; the inserted stages read as
+// W (Workbench), A (Applied), ✎ (Show Work), ★ (Practice) via the registry badges.
+const STAGE_IDS = ["1-manipulate", "2-bind", "3-fade", "workbench", "4-numbers", "applied", "showwork", "5-words", "practice"];
 const NEXT_STAGE = { "1-manipulate": "2-bind", "2-bind": "3-fade", "3-fade": "workbench", "workbench": "4-numbers", "4-numbers": "applied", "applied": "showwork", "showwork": "5-words", "5-words": "practice" };
 
 // ---------------- main ----------------
@@ -209,6 +202,18 @@ export default function AppR5({ no, title, onBack, onRewatchIntro, stumpingRecip
     solved, solvedRef, stars, cook, setCook, status, setStatus,
     say, speaking, selfCorrectionsRef, stageRef,
   } = sc;
+
+  // ── identity + tab strip from the registry (lessons/r5.js) ───────────────────
+  // № / tag / title and the stage tab copy are DATA. The component supplies only
+  // the ordered engine stage ids (interaction logic); badge/name/sub are zipped on
+  // from the registry by position so there is no inline STAGES/identity dup.
+  const ident = useLessonIdentity("r5");
+  const tabStages = ident.stages.map((s, i) => ({
+    key: STAGE_IDS[i],   // engine stage id (matches `current`/onSelect)
+    badge: s.badge,
+    title: s.title,
+    sub: s.sub,
+  }));
 
   // ---- stage flavor flags -----------------------------------------------------
   const isManipulate = stage === "1-manipulate";
@@ -947,14 +952,14 @@ export default function AppR5({ no, title, onBack, onRewatchIntro, stumpingRecip
 
   return (
     <LessonShell
-      no={no}
-      tag="Mixed Numbers"
-      title={title}
+      no={ident.no}
+      tag={ident.tag.replace(/^Lesson\s+\d+\s*·\s*/, "")}
+      title={title || ident.title}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={() => resetForStage(stage)}
       tabs={{
-        stages: STAGES.map(([key, title, sub, badge]) => ({ key, badge, title, sub })),
+        stages: tabStages,
         current: stage,
         onSelect: goStage,
       }}
