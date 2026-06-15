@@ -28,6 +28,36 @@ import StageTabs from "../StageTabs.jsx";
 import SettingsButton from "../../SettingsButton.jsx";
 import "../../styles/lesson-board.css";
 
+/**
+ * LessonShell — canonical page chrome contract (Foundation F2).
+ *
+ * Identity (header): `№{no}` badge, "Lesson {no} · {tag}", big {title}. These
+ * come straight from the lesson registry (`web/src/lessons/<id>.js`):
+ *   no = L.num.replace('№','')   tag = L.tag   title = L.title
+ *
+ * Tabs contract (the stage strip — fed to <StageTabs>):
+ *   tabs: {
+ *     stages:  [{ key, badge, title, sub }],   // one item per stage, IN ORDER
+ *     current: <key of the active stage>,
+ *     onSelect: (key) => void,                  // jump to a stage
+ *     label?:  <aria-label for the tablist>
+ *   }
+ *   - key   · stable stage id; compared against `current`, passed back to onSelect
+ *   - badge · the square glyph (number / letter / ★)
+ *   - title · short stage NAME (uppercased by CSS)
+ *   - sub   · one-line description (italic; also the hover tooltip)
+ *   Canonical mapping FROM the registry's tabs (`L.tabs = [{n,name,sub}]`):
+ *     stages = L.tabs.map(t => ({ key:t.n, badge:t.n, title:t.name, sub:t.sub }))
+ *   "done" (stages before `current`) is derived from list order inside StageTabs;
+ *   callers never compute completion themselves.
+ *
+ * band — the <QuestionBand> node, or `null` to omit it (e.g. words-only / practice
+ *        stages where showing the bare equation would give the answer away).
+ * goal — the <LessonGoal> node (per-stage goal/intro copy).
+ *
+ * No signature change was required in F2: the existing props already implement
+ * this contract; this block documents it canonically.
+ */
 export default function LessonShell({
   no, tag, title,
   onBack, onRewatchIntro,
