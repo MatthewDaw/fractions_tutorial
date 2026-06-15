@@ -34,6 +34,7 @@ import MixedReview from "./MixedReview.jsx";
 import BackgroundMusic from "./BackgroundMusic.jsx";
 import TapToRead from "./TapToRead.jsx";
 import EngineSurfaces from "./ui/EngineSurfaces.jsx";
+import FabBar from "./components/scene/FabBar.jsx";
 import r2Unit from "./lessons/r2-unit.js";
 import r3NonUnit from "./lessons/r3-nonunit.js";
 import { ROOMS } from "./rooms.js";
@@ -183,7 +184,9 @@ export default function Shell() {
     screen = <ConceptMap onBack={closeConcepts} />;
   } else if (route === "title") {
     // Title / intro screen — the app's landing. START drops into the world map.
-    screen = <TitleScreen onStart={() => go("world")} />;
+    // The title screen renders its own FabBar (matching the wireframe), so we
+    // pass the same programmatic concept/settings handlers Shell uses elsewhere.
+    screen = <TitleScreen onStart={() => go("world")} onConcepts={openConcepts} onSettings={openSettings} />;
   } else if (route === "mom") {
     // Babushka's Room (the central kitchen): story / word problems. Not a ROOMS
     // entry — it's the hub itself, opened from the kitchen medallion on the map.
@@ -263,26 +266,9 @@ export default function Shell() {
         fallbackMasteryMap={masteryMap}
       />
       <BackgroundMusic scene={sceneFor(route, showingIntro)} />
-      {(route === "title" || route === "world") && (
-        <div className="fab-bar">
-          <button className="settings-fab concepts-fab" onClick={openConcepts} title="Concept Mastery Map" aria-label="Concepts">
-            <span className="settings-fab-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
-                <rect x="2" y="3" width="20" height="6" rx="1" fill="none" stroke="#1c1612" strokeWidth="2" />
-                <rect x="5" y="13" width="14" height="5" rx="1" fill="none" stroke="#a32a22" strokeWidth="2" />
-                <rect x="8" y="20" width="8" height="3" rx="1" fill="#a32a22" />
-              </svg>
-            </span>
-            <span className="settings-fab-label">Concepts</span>
-          </button>
-          <button className="settings-fab" onClick={openSettings} title="Settings" aria-label="Settings">
-            <span className="settings-fab-icon">
-              <img src="/settings-gear.png" width="20" height="20" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
-            </span>
-            <span className="settings-fab-label">Settings</span>
-          </button>
-        </div>
-      )}
+      {/* World map gets the shared FabBar overlaid by Shell; the title screen
+          renders its own FabBar (so the overlay is title-excluded here). */}
+      {route === "world" && <FabBar onConcepts={openConcepts} onSettings={openSettings} />}
     </>
   );
 }

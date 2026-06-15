@@ -4,68 +4,34 @@
 // English-first title with Cyrillic subtext, a hero ½+⅓=? motif, and one big
 // START. Ported from the design handoff (design_handoff_babushkas_fractions_intro).
 //
+// Architecture: this is a standalone scene (no LessonShell). Like the wireframe
+// (docs/wireframe/screens/title.html) it now drives the shared scene chrome —
+// <SceneFrame> (paper/foxing/frame/4 corners), useRevealStagger (the 120ms load
+// reveal), the shared <FStrip> glyph, and the shared <FabBar> (Concepts +
+// Settings) which the title screen renders itself rather than relying on Shell.
+//
 // The Cook (tutor) greets the player aloud on load — "Welcome to Babushka's
 // Fractions!" Browsers gate autoplay behind a user gesture, so we greet on mount
 // and, if that's blocked, retry once on the first tap/key (same trick as
 // BackgroundMusic).
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import Cook from "./components/Cook.jsx";
 import Mom from "./components/Mom.jsx";
 import { Kid, Grandpa, Cat } from "./components/momsroom/cast.jsx";
+import SceneFrame from "./components/scene/SceneFrame.jsx";
+import useRevealStagger from "./components/scene/useRevealStagger.js";
+import FStrip from "./components/scene/FStrip.jsx";
+import FabBar from "./components/scene/FabBar.jsx";
 import { useVoice } from "./voice.js";
 import "./styles/title.css";
-
-/* trigger the load reveal shortly after mount */
-function useReady(delay = 120) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setReady(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
-  return ready;
-}
-
-/* engraved corner filigree for the page frame */
-function Corner({ size = 30 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden="true">
-      <path d="M2 28 L2 9 Q2 2 9 2 L28 2" fill="none" stroke="var(--ink)" strokeWidth="1.8" />
-      <path d="M6 28 L6 12 Q6 6 12 6 L28 6" fill="none" stroke="var(--red)" strokeWidth="1.2" opacity="0.7" />
-      <circle cx="6" cy="6" r="2.4" fill="var(--red)" />
-      <path d="M11 6 q5 0 6 5" fill="none" stroke="var(--ink)" strokeWidth="1" opacity="0.5" />
-    </svg>
-  );
-}
-
-function Corners() {
-  return (
-    <>
-      <div className="corner tl"><Corner /></div>
-      <div className="corner tr"><Corner /></div>
-      <div className="corner bl"><Corner /></div>
-      <div className="corner br"><Corner /></div>
-    </>
-  );
-}
-
-/* sliced dough strip: `den` equal pieces, first `num` filled */
-function FStrip({ num, den, width = 150, height = 48 }) {
-  return (
-    <div className="fstrip" style={{ width, height }}>
-      {Array.from({ length: den }).map((_, i) => (
-        <div key={i} className={"pc " + (i < num ? "on" : "off")} />
-      ))}
-    </div>
-  );
-}
 
 /* absolutely-positioned figure wrapper */
 function Figure({ children, style, cls = "" }) {
   return <div className={"fig " + cls} style={style}>{children}</div>;
 }
 
-export default function TitleScreen({ onStart }) {
-  const ready = useReady(120);
+export default function TitleScreen({ onStart, onConcepts, onSettings }) {
+  const ready = useRevealStagger(120);
   const { say, speaking } = useVoice();
 
   // Greet on load. Track whether the greeting ever actually started so the
@@ -89,12 +55,7 @@ export default function TitleScreen({ onStart }) {
   }, []);
 
   return (
-    <div className={"scene titlescreen" + (ready ? " ready" : "")} data-vox-speaker="cook">
-      <div className="paper-fill" style={{ position: "absolute", inset: 0 }} />
-      <div className="foxing" />
-      <div className="frame" />
-      <Corners />
-
+    <SceneFrame className="titlescreen" ready={ready} data-vox-speaker="cook">
       {/* giant ghosted fraction motif behind everything */}
       <div className="ghost-half rv d3">½</div>
 
@@ -135,6 +96,10 @@ export default function TitleScreen({ onStart }) {
       <Figure cls="rv figIn d6 bob3" style={{ left: 1140, bottom: 92, width: 116, zIndex: 3 }}><Kid expr="happy" width={116} /></Figure>
       <Figure cls="rv figIn d6 bob2" style={{ left: 1064, bottom: 50, width: 130, zIndex: 6 }}><Cat expr="happy" width={130} /></Figure>
       <Figure cls="rv figIn d5 bob" style={{ left: 944, bottom: 66, width: 248, zIndex: 5 }}><Mom expr="cheer" width={248} /></Figure>
-    </div>
+
+      {/* shared chrome — the title screen renders its own FabBar (matches the
+          wireframe), keeping programmatic routing via the host's handlers */}
+      <FabBar onConcepts={onConcepts} onSettings={onSettings} />
+    </SceneFrame>
   );
 }

@@ -55,6 +55,16 @@ export function StylusIcon() {
   );
 }
 
+export function ConceptsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
+      <rect x="2" y="3" width="20" height="6" rx="1" fill="none" stroke="#1c1612" strokeWidth="2" />
+      <rect x="5" y="13" width="14" height="5" rx="1" fill="none" stroke="#a32a22" strokeWidth="2" />
+      <rect x="8" y="20" width="8" height="3" rx="1" fill="#a32a22" />
+    </svg>
+  );
+}
+
 export function Check() {
   return (
     <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
