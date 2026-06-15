@@ -23,6 +23,7 @@ import AppR1 from "./AppR1.jsx";
 import AppR4 from "./AppR4.jsx";
 import AppR5 from "./AppR5.jsx";
 import AppM1 from "./AppM1.jsx";
+import AppDen from "./AppDen.jsx";
 import AppM3 from "./AppM3.jsx";
 import AppNumberLine from "./AppNumberLine.jsx";
 import AppSubtract from "./AppSubtract.jsx";
@@ -240,6 +241,7 @@ export default function Shell() {
     else if (room.id === "nl") screen = <AppNumberLine {...p} />;
     else if (room.id === "s1") screen = <AppSubtract {...p} initialStage={initialBeat} />;
     else if (room.id === "cmp") screen = <AppCompare {...p} />;
+    else if (room.id === "den") screen = <AppDen {...p} />;
     else screen = <EmptyRoom room={room} onBack={toWorld} />;
   }
 

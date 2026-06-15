@@ -44,6 +44,14 @@ export const ROOMS = [
   { id: "r2", nodeId: "ADD_UNLIKE_COPRIME", no: 8,  title: "Cross-Multiply",    concept: "Neither bottom fits — rename both to equivalent fractions over a common bottom, then add.", built: true,  pos: { x: 640, y: 650 }, intro: "/intros/r2-same-size-pieces-v2.html", introDurationMs: 23000, verb: "Adding",      example: "1/2 + 1/3" },
   { id: "r4", nodeId: "SIMPLIFY",           no: 9,  title: "Simplify",          concept: "8/12 and 2/3 are the same amount — divide top and bottom by the same number (that's dividing by 1) to reach its simplest name.",                    built: true,  pos: { x: 180, y: 650 }, intro: "/intros/r4-simplify.html", introDurationMs: 28000, verb: "Simplifying", example: "8/12 → 2/3" },
   { id: "r5", nodeId: "IMPROPER_TO_MIXED",  no: 10, title: "Mixed Numbers",     concept: "Turn an improper fraction into a whole number and a leftover.",           built: true,  pos: { x: 180, y: 420 }, intro: "/intros/r5-mixed-numbers.html", introDurationMs: 22000, verb: "Converting",  example: "9/7 → 1 2/7" },
+  // den — "The Bottom Number" (NEW lesson, AppDen.jsx, route #/den). A foundational
+  // ruler lesson: a bigger bottom number splits the whole into more pieces, so each
+  // piece is smaller. It has NO dedicated engine skill node yet (no DENOMINATOR node
+  // in graph.ts), so it RIDES the nearest existing node, FRACTION_ON_LINE (the
+  // ruler/unit-fraction lesson) — see AppDen.jsx ENGINE NOTE (contention: a real
+  // DENOMINATOR node + generator should be added later). `no: 11` is provisional;
+  // the whole map is renumbered in one pass later.
+  { id: "den", nodeId: "FRACTION_ON_LINE",  no: 11, title: "The Bottom Number",  concept: "The bottom number cuts the whole into equal pieces — a bigger bottom makes each piece smaller.", built: true, pos: { x: 960, y: 80 }, verb: "Splitting", example: "1/4 vs 1/9" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -61,6 +69,6 @@ export const ROOMS = [
 // (640,420): two up top (clearing the title), one centred below.
 export const STRANDS = [
   { id: "found",   title: "Counting & Times",     blurb: "Whole-number groups — the floor every fraction stands on.",         lessons: ["m1", "m3"],              pos: { x: 326, y: 250 } },
-  { id: "build",   title: "Building Fractions",   blurb: "What a fraction is, and adding or taking away same-size pieces.",    lessons: ["nl", "r1", "s1", "cmp"], pos: { x: 954, y: 250 } },
+  { id: "build",   title: "Building Fractions",   blurb: "What a fraction is, and adding or taking away same-size pieces.",    lessons: ["nl", "den", "r1", "s1", "cmp"], pos: { x: 954, y: 250 } },
   { id: "combine", title: "Combining & Renaming", blurb: "Unlike pieces, simplest names, and whole-and-a-bit.",               lessons: ["r3", "r2", "r4", "r5"],  pos: { x: 640, y: 648 } },
 ];
