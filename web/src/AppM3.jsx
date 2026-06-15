@@ -46,9 +46,14 @@ import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal 
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
+import { LESSONS } from "./lessons/index.js";
 import "./styles/m3.css";
 
 const NODE_ID = "MULT_FACTS";
+
+// Identity + tab strip come from the central registry (web/src/lessons/m3.js),
+// not inline copy. This component only owns interactive logic / scaffold wiring.
+const L = LESSONS.m3;
 
 // The single worked example threaded through every stage: 7 × 8 = 56.
 const GROUPS = 7, SIZE = 8, PRODUCT = GROUPS * SIZE; // 7, 8, 56
@@ -57,24 +62,31 @@ const SEQUENCE = Array.from({ length: GROUPS }, (_, i) => (i + 1) * SIZE);
 // Two INTERIOR terms blanked in Fade (24 at idx 2, 40 at idx 4).
 const FADE_BLANKS = [2, 4];
 
-// The seven stages, in order. r1-style numeric-prefixed keys 1-manipulate … 7-words.
-const STAGES = [
-  { n: 1, key: "1-manipulate", tab: "Manipulate", sub: "scoop & read the jar" },
-  { n: 2, key: "2-bind",       tab: "Bind",       sub: "jar + write 56" },
-  { n: 3, key: "3-fade",       tab: "Fade",       sub: "fill the skip-line" },
-  { n: 4, key: "4-workbench",  tab: "Workbench",  sub: "build 7 groups of 8" },
-  { n: 5, key: "5-numbers",    tab: "Numbers",    sub: "bare 7 × 8 = ?" },
-  { n: 6, key: "6-applied",    tab: "Applied",    sub: "write the setup, then total" },
+// The stage model: render-branch value (`n`: numeric 1..7, or string key for the
+// non-numeric steps) + canonical scaffold `key`, paired with the registry strip
+// (order + labels + subs) by badge. Identity/copy live in the registry; only the
+// stage→scaffold mapping (logic) stays here.
+const STAGE_BY_BADGE = {
+  "1": { n: 1, key: "1-manipulate" },
+  "2": { n: 2, key: "2-bind" },
+  "3": { n: 3, key: "3-fade" },
+  "4": { n: 4, key: "4-workbench" },
+  "5": { n: 5, key: "5-numbers" },
+  "6": { n: 6, key: "6-applied" },
   // String-keyed mandatory "show your work" step (between Applied and Words). A
   // non-numeric `n` keeps the numeric stages 1..7 from renumbering; the selector
   // and goStage route by `key`. scaffoldMap returns L3 for "showwork".
-  { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
-  { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
+  "sw": { n: "showwork", key: "showwork" },
+  "7": { n: 7, key: "7-words" },
   // Auto-generated, estimator-paced practice: the engine mints fresh MULT_FACTS
   // variations, re-rolls on a correct answer, fades to harder problems on a clean
   // streak, and probes transfer. Purely additive — no teaching stage is touched.
-  { n: "practice", key: "practice", tab: "Practice", sub: "Fresh problems — paced to your mastery", badge: "★" },
-];
+  "★": { n: "practice", key: "practice" },
+};
+const STAGES = L.tabs.map((t) => {
+  const m = STAGE_BY_BADGE[t.n];
+  return { n: m.n, key: m.key, badge: t.n, tab: t.name, sub: t.sub };
+});
 
 // Numbers-stage micro fluency prompts: the bare fact, then explicit ×1 and ×0.
 // Each is { g, s, p } with product p = g*s. The child clears them in order.
@@ -85,7 +97,10 @@ const FLUENCY_PROMPTS = [
 ];
 
 // ---------------- main ----------------
-export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }) {
+export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
+  // Identity comes from the registry, not props — one source of truth.
+  const no = L.num.replace("№", "");
+  const title = L.title;
   // Which arc stage we're on (1..7). initialBeat lets the orchestrator deep-link
   // by stage key (e.g. "5-numbers") or by number — mirrors AppR1's initialStage.
   // `stage` holds either a numeric stage (1..7) OR the string key "showwork" for
@@ -765,13 +780,13 @@ export default function AppM3({ no, title, onBack, onRewatchIntro, initialBeat }
   return (
     <LessonShell
       no={no}
-      tag="Times Facts"
+      tag={L.tag.replace(/^Lesson \d+ · /, "")}
       title={title}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={reset}
       tabs={{
-        stages: STAGES.map((s) => ({ key: s.key, badge: s.badge ?? s.n, title: s.tab, sub: s.sub })),
+        stages: STAGES.map((s) => ({ key: s.key, badge: s.badge, title: s.tab, sub: s.sub })),
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}
