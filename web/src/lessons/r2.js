@@ -3,8 +3,8 @@
    lessons.js; each step page declares only `lesson: "r2"`. */
 export default {
   id: "r2",
-  num: "№7",
-  tag: "Lesson 7 · Adding Fractions",
+  num: "№8",
+  tag: "Lesson 8 · Adding Fractions",
   title: "Cross-Multiply",
   route: "#/r2",
   tabs: [

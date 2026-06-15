@@ -24,7 +24,31 @@ import { denomColor, denomTextColor, denomTone } from "./denominatorColors.js";
 import { lcd, exactSum, commonDenChoices, multipliersFor, verify, generateProblem, crossMultiply } from "./unlikeDenMath.js";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
+import { LESSONS } from "./lessons/index.js";
 import "./styles/lesson-unlike.css";
+
+// ---------------------------------------------------------------------------
+// Beat → tab-strip wiring (DATA-vs-LOGIC split, PLAN §F)
+// ---------------------------------------------------------------------------
+// The beat KEYS + the `writes` flag are COMPONENT-OWNED interaction logic (they
+// drive NEXT_BEAT, the render branches, and the ✎ stylus marker). The display
+// chrome for each tab (badge glyph, title, tooltip `sub`) is DATA and lives in
+// the registry (web/src/lessons/<id>.js `tabs`). This table maps the registry's
+// ordered tabs onto the component's beat keys (1:1, same order) and records
+// which beats use the WRITE channel. The badge/title/sub are filled from the
+// registry at render time so the strip stays single-sourced.
+const BEAT_WIRING = [
+  { key: "L0", writes: false },
+  { key: "L2", writes: true },
+  { key: "L4", writes: true },
+  { key: "LW", writes: false },
+  { key: "L5", writes: true },
+  { key: "L6", writes: true },
+  { key: "LA", writes: true },
+  { key: "SW", writes: false },
+  { key: "L7", writes: true },
+  { key: "practice", writes: true },
+];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -164,6 +188,12 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   // Derive stable ids so the hook receives consistent values on every render.
   const engineNodeId  = nodeIdFromLesson(lesson);
   const engineLessonId = lessonIdFromLesson(lesson);
+  // Identity + tab-strip DATA come from the central registry (web/src/lessons/<id>.js).
+  // The component no longer hardcodes its tag/title/tab chrome — only the beat
+  // navigation LOGIC stays here. `no`/`title` from props (rooms.js) win when set,
+  // so the in-room header keeps matching the world map; registry is the fallback +
+  // the source for tag + the ordered tab strip.
+  const L = LESSONS[engineLessonId];
   // PARTIAL adoption of the shared controller backbone: LessonUnlikeDen keeps its
   // OWN bespoke beat navigation (clearForBeat / setBeatLevel / NEXT_BEAT / reset /
   // lastDecisionRef + the deferred-on-"Next" RaiseScaffold semantics) and its OWN
@@ -782,27 +812,24 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     else setSetupB((s) => ({ ...s, [key]: v }));
   }
 
-  // ---- shared <StageTabs> config (replaces the old inline .beat-select) -------
-  // Same beat keys, glyph badges and ✎-on-write-stage marker as before; the
-  // tooltip copy moves into `sub`. ✎ renders via the existing .lu-stylus class.
+  // ---- shared <StageTabs> config (DATA from the registry) ---------------------
+  // The tab strip's display chrome (badge glyph, title, tooltip `sub`) comes from
+  // the per-family registry (LESSONS[r2/r3].tabs), zipped onto the component-owned
+  // beat KEYS + `writes` flags in BEAT_WIRING. Beat-transition LOGIC (NEXT_BEAT,
+  // setBeatLevel, the render branches) stays component-owned. The ✎ stylus marker
+  // renders via the existing .lu-stylus class on write beats when handwriting is on.
   const stylusMark = <span className="lu-stylus" aria-hidden="true">✎</span>;
-  const BEATS = [
-    { key: "L0", badge: "1",  title: "Manipulate", sub: "the blocks ARE the problem; drag & slice by touch",       writes: false },
-    { key: "L2", badge: "2",  title: "Bind",       sub: "blocks + the written fraction; copy the numeral",         writes: true  },
-    { key: "L4", badge: "3",  title: "Fade",       sub: "blocks dim to a check; the equation leads",               writes: true  },
-    { key: "LW", badge: "W",  title: "Workbench",  sub: "pull blocks from the bin and build the answer",           writes: false },
-    { key: "L5", badge: "3·", title: "Ghost",      sub: "blocks a faded ghost behind; write the whole answer",     writes: true  },
-    { key: "L6", badge: "4",  title: "Numbers",    sub: "a bare equation; write the whole solution",               writes: true  },
-    { key: "LA", badge: "A",  title: "Applied",    sub: "a worded question with the fractions shown; write the sum", writes: true },
-    { key: "SW", badge: "✎",  title: "Show Work",  sub: "write out how you'd solve it on a blank slate",           writes: false },
-    { key: "L7", badge: "5",  title: "Words",      sub: "a plain-language word problem; read it and solve",        writes: true  },
-    { key: "practice", badge: "★", title: "Practice", sub: "fresh problems — paced to your mastery",               writes: true  },
-  ];
   const tabs = {
-    stages: BEATS.map((s) => ({
-      key: s.key, badge: s.badge, title: s.title, sub: s.sub,
-      suffix: s.writes && lesson.handwriting ? stylusMark : null,
-    })),
+    stages: BEAT_WIRING.map((w, i) => {
+      const t = (L && L.tabs && L.tabs[i]) || {};
+      return {
+        key: w.key,
+        badge: t.n,
+        title: t.name,
+        sub: t.sub,
+        suffix: w.writes && lesson.handwriting ? stylusMark : null,
+      };
+    }),
     current: beat,
     onSelect: (b) => setBeatLevel(b),
     label: "interaction-arc stage",
@@ -839,9 +866,9 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
 
   return (
     <LessonShell
-      no={no}
-      tag="Adding Fractions"
-      title={title}
+      no={no != null ? no : String((L && L.num) || "").replace("№", "")}
+      tag={(L && L.tag) || "Adding Fractions"}
+      title={title != null ? title : (L && L.title)}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={() => { setProbIndex(0); clearForBeat(beat); }}
