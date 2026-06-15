@@ -28,8 +28,9 @@ import cmp from "./cmp.js";
 import den from "./den.js";
 import num from "./num.js";
 import mom from "./mom.js";
+import review from "./review.js";
 
-const DEFS = [m1, m3, nl, r1, r2, r3, r4, r5, s1, cmp, den, num, mom];
+const DEFS = [m1, m3, nl, r1, r2, r3, r4, r5, s1, cmp, den, num, mom, review];
 
 export const LESSONS = {};
 for (const def of DEFS) {
