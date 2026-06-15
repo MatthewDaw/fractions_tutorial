@@ -41,33 +41,43 @@ import BlankSlate from "./components/BlankSlate.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
+import { LESSONS } from "./lessons/index.js";
 import "./styles/m1.css";
+
+// Identity + tab strip are DATA — sourced from the central registry, not inlined.
+const L = LESSONS.m1;
 
 // The single worked example threaded through every stage: 3 groups of 4 = 12.
 const GROUPS = 3;          // N plates
 const SIZE = 4;            // M pelmeni per plate
 const PRODUCT = GROUPS * SIZE; // 12
 
-// The seven stages, in order. `key` matches the orchestrator's stage ids
-// (r1-style numeric-prefixed keys so scaffoldMap's parseStageN works).
-const STAGES = [
-  { n: 1, key: "1-manipulate", tab: "Manipulate", sub: "fill the plates" },
-  { n: 2, key: "2-bind",       tab: "Bind",       sub: "4 + 4 + 4, write 12" },
-  { n: 3, key: "3-fade",       tab: "Fade",       sub: "collapse to 3 × 4" },
-  { n: 4, key: "4-workbench",  tab: "Workbench",  sub: "build it in bowls" },
-  { n: 5, key: "5-numbers",    tab: "Numbers",    sub: "bare 3 × 4 = ?" },
-  { n: 6, key: "6-applied",    tab: "Applied",    sub: "write the setup, then total" },
-  // String-keyed mandatory "show your work" step (between Applied and Words). A
-  // non-numeric `n` keeps the numeric stages 1..7 from renumbering; the selector
-  // and goStage route by `key`. scaffoldMap returns L3 for "showwork".
-  { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
-  { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
-  // Auto-generated, estimator-paced practice: the engine mints fresh
-  // MULT_EQUAL_GROUPS variations, re-rolls on a correct answer, fades to harder
-  // problems on a clean streak, and probes transfer. Purely additive — no
-  // teaching stage is touched. The "★" badge marks it as the open-ended coda.
-  { n: "★", key: "practice",   tab: "Practice",   sub: "Fresh problems — paced to your mastery" },
-];
+// The scaffold stage MODEL (logic, not chrome). The canonical `key` strings are
+// r1-style numeric-prefixed ids so scaffoldMap's parseStageN works, plus the two
+// string-keyed steps "showwork" (between Applied and Words) and "practice" (the
+// generated coda). The orchestrator routes by these keys. We keep them HERE (they
+// are interactive wiring, not copy) and pull the TAB LABELS / SUBS / badges / order
+// from the registry (L.tabs) so identity + copy live in one place.
+//
+// `n` is the render-branch stage value (numeric 1..7, or the string key for the
+// non-numeric steps). The map below pairs each registry tab (keyed by its badge
+// `t.n`) with its canonical scaffold key + render value.
+const STAGE_BY_BADGE = {
+  "1": { n: 1, key: "1-manipulate" },
+  "2": { n: 2, key: "2-bind" },
+  "3": { n: 3, key: "3-fade" },
+  "4": { n: 4, key: "4-workbench" },
+  "5": { n: 5, key: "5-numbers" },
+  "6": { n: 6, key: "6-applied" },
+  "sw": { n: "showwork", key: "showwork" },
+  "7": { n: 7, key: "7-words" },
+  "★": { n: "practice", key: "practice" },
+};
+// Zip the registry strip (order + labels + subs) with the scaffold model above.
+const STAGES = L.tabs.map((t) => {
+  const m = STAGE_BY_BADGE[t.n];
+  return { n: m.n, key: m.key, badge: t.n, tab: t.name, sub: t.sub };
+});
 
 const NODE = "MULT_EQUAL_GROUPS";
 
@@ -86,13 +96,16 @@ const WORD_BANK = [
     say: "Grandpa loaded six skewers with three sausages each. He will guard all eighteen with his life. How many sausages is that?" },
 ];
 
-export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }) {
+export default function AppM1({ onBack, onRewatchIntro, initialBeat }) {
+  // Identity comes from the registry, not props — one source of truth.
+  const no = L.num.replace("№", "");
+  const title = L.title;
   // Find the starting stage from the beat key (consume initialBeat like AppR1).
   // `stage` holds either a numeric stage (1..7) OR the string key "showwork" for
   // the inserted mandatory step — so the numeric stages never renumber.
   const startN = (() => {
     const b = initialBeat;
-    const f = STAGES.find((s) => s.key === b || s.n === b || String(s.n) === String(b));
+    const f = STAGES.find((s) => s.key === b || s.n === b || String(s.n) === String(b) || s.badge === String(b));
     // Normalize the string-keyed steps (showwork, practice) to their canonical key.
     return f ? (f.key === "showwork" || f.key === "practice" ? f.key : f.n) : 1;
   })();
@@ -775,13 +788,13 @@ export default function AppM1({ no, title, onBack, onRewatchIntro, initialBeat }
   return (
     <LessonShell
       no={no}
-      tag="Equal Groups"
+      tag={L.tag.replace(/^Lesson \d+ · /, "")}
       title={title}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={reset}
       tabs={{
-        stages: STAGES.map((s) => ({ key: s.key, badge: s.n, title: s.tab, sub: s.sub })),
+        stages: STAGES.map((s) => ({ key: s.key, badge: s.badge, title: s.tab, sub: s.sub })),
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}
