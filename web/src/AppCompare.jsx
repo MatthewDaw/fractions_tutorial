@@ -1,4 +1,4 @@
-// AppCompare.jsx — Lesson No.7 "Compare & Check" (room cmp, COMPARE_BENCHMARK).
+// AppCompare.jsx — Lesson №6 "Compare & Check" (room cmp, COMPARE_BENCHMARK).
 // CCSS 3.NF.A.3d (compare two fractions) · 4.NF.A.2 (compare with benchmarks) ·
 // 5.NF.A.2 (estimate a sum for reasonableness, WITHOUT computing).
 //
@@ -31,19 +31,29 @@ import QuestionBand from "./components/QuestionBand.jsx";
 import { LessonShell, LessonBoard, TutorRibbon, LessonGoal } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
+import { LESSONS } from "./lessons/index.js";
 
 import "./styles/cmp.css";
 
-// ── the three stages of the arc ──────────────────────────────────────────────
-const STAGES = [
-  { id: "1-compare",   n: 1, tag: "Compare",   blurb: "Which is bigger? Pick < = or >" },
-  { id: "2-benchmark", n: 2, tag: "Benchmark", blurb: "Nearest of 0, one-half, or 1?" },
-  { id: "3-reason",    n: 3, tag: "Reason",    blurb: "Is the sum less, about, or more than 1?" },
-  // Auto-generated, estimator-paced practice: the engine mints fresh
-  // COMPARE_BENCHMARK variations, re-rolls on a correct answer, fades to harder
-  // problems on a clean streak, and probes transfer. Purely additive.
-  { id: "practice",    n: "★", tag: "Practice",  blurb: "Fresh problems — paced to your mastery" },
-];
+// Identity + tab strip are DATA — sourced from the central registry, not inlined.
+const L = LESSONS.cmp;
+
+// ── the four stages of the arc ───────────────────────────────────────────────
+// The tab LABELS / SUBS / order / badges come from the registry (L.tabs); the
+// interactive scaffold KEY for each stage (the render-branch + stagesOrder value)
+// is wiring and stays here, paired with each registry tab by its badge `t.n`.
+const STAGE_KEY_BY_BADGE = {
+  "1": "1-compare",
+  "2": "2-benchmark",
+  "3": "3-reason",
+  "★": "practice",
+};
+const STAGES = L.tabs.map((t) => ({
+  id: STAGE_KEY_BY_BADGE[t.n],
+  n: t.n,
+  tag: t.name,
+  blurb: t.sub,
+}));
 
 // ── Stage-1 comparison items (in-grade denominators only) ────────────────────
 // item 1: SAME DENOMINATOR — more pieces of the SAME size is more (3/8 < 5/8).
@@ -370,7 +380,7 @@ export default function AppCompare({ no, title, onBack, onRewatchIntro }) {
   return (
     <LessonShell
       no={no}
-      tag="Compare & Check"
+      tag={L.tag.replace(/^Lesson \d+ · /, "")}
       title={title}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
