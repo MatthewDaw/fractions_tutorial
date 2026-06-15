@@ -46,25 +46,23 @@ import {
 } from "./momsProblems.js";
 import { loadMastered, saveMastered, resetProgress } from "./kitchenProgress.js";
 import { useLessonEngine } from "./runtime/useLessonEngine.js";
+import LessonBoard from "./components/lesson/LessonBoard.jsx";
+import { LESSONS } from "./lessons/index.js";
 import "./styles/momsroom.css";
 
 // ---------------------------------------------------------------------------
-// Room id → engine node id mapping (mirrors graph.ts, kept in sync by contract)
+// Identity + engine-graph bindings come from the central lesson registry
+// (web/src/lessons/mom.js). The room→node maps are DATA (config), so they live
+// in the registry; the adaptive flow logic that consumes them stays here.
 // ---------------------------------------------------------------------------
 
-/** Map from rooms.js roomId → engine SkillNode id. */
-export const ROOM_TO_NODE = {
-  r1: "ADD_SAME_DEN",
-  r3: "ADD_UNLIKE_NESTED",
-  r2: "ADD_UNLIKE_COPRIME",
-  r4: "SIMPLIFY",
-  r5: "IMPROPER_TO_MIXED",
-};
+const MOM = LESSONS.mom;
+
+/** Map from rooms.js roomId → engine SkillNode id (re-exported for back-compat). */
+export const ROOM_TO_NODE = MOM.roomToNode;
 
 /** Map from engine SkillNode id → rooms.js roomId. */
-export const NODE_TO_ROOM = Object.fromEntries(
-  Object.entries(ROOM_TO_NODE).map(([room, node]) => [node, room])
-);
+export const NODE_TO_ROOM = MOM.nodeToRoom;
 
 // ---------------------------------------------------------------------------
 // Error signature: map momsProblems slip codes → engine ErrorSignature type
@@ -407,10 +405,10 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
 
       <div className="topbar">
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <span className="num-mark mr-heart">★</span>
+          <span className="num-mark mr-heart">{MOM.badge}</span>
           <div>
-            <div className="puzzle-tag">Babushka's Kitchen · Story Problems</div>
-            <div className="puzzle-title">Show Babushka What You Know</div>
+            <div className="puzzle-tag">{MOM.tag}</div>
+            <div className="puzzle-title">{MOM.title}</div>
           </div>
         </div>
         <div className="mr-progress" aria-label={`${masteredCount} of ${CURRICULUM.length} skills mastered`}>
@@ -444,22 +442,21 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════
-          DETERMINISTIC FIXED-ZONE LAYOUT (mirrors AppR1 stage 1 / .r1-s1).
-          Every region is an absolutely-positioned, fixed-size rectangle inside
-          the 1280×800 stage, so a longer problem string / a different character
-          / a different font (Safari vs Chromium) can NEVER reflow one zone onto
-          another (the original bug: the prop area covered the answer fractions):
-            · .mr-s-stage  — prop + scratch space      (top-left, fixed, clipped)
-            · .mr-s-rail   — Today's Cook + The Skill   (top-right, fixed)
-            · .mr-s-answer — answer card: write area + Check as ONE unit,
-                             Check IMMEDIATELY right of the Slate (bottom-left)
-            · .mr-s-tutor  — speaking character + ribbon (bottom-right, clamped)
-          The stage zone is pinned TOP, the answer card + tutor pinned BOTTOM,
-          with a guaranteed gap between them. Heights never depend on text.
+          SHARED PLAY-AREA LAYOUT via <LessonBoard variant="split"> — the kitchen's
+          four zones (prop/scratch · rail · answer · tutor) now ride the ONE shared
+          CSS-grid board (lesson-board.css), which guarantees stage and answer live
+          in SEPARATE grid tracks so the answer card can never overlap the prop /
+          scratch surface (the original bug). The room-specific content keeps its
+          .mr-s-* class hooks for the kitchen's bespoke styling (scratch slate,
+          enlarged Slate cells, skill panel), now layered on top of the board.
           ════════════════════════════════════════════════════════════════════ */}
-      <div className="mr-s">
-        {/* ── PROP / STORY ZONE (fixed rect, top-left) ── */}
-        <div className="mr-s-stage">
+      <LessonBoard
+        className="mr-board"
+        stageClassName="mr-s-stage"
+        footHeight={226}
+        stage={(
+          <>
+            {/* ── PROP / STORY ZONE (top-left) ── */}
           {/* small, non-overlapping stage tag (the QUESTION itself now lives in the
               full-width band up top; this is only a quiet status, pinned out of the
               prop's way so it never covers the manipulative). */}
@@ -480,10 +477,10 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
               <button className="check" onClick={restart}>▸ Play again</button>
             </div>
           )}
-        </div>
-
-        {/* ── RAIL (fixed rect, top-right) ── */}
-        <div className="mr-s-rail">
+          </>
+        )}
+        rail={(
+          <div className="mr-s-rail">
           <div className="panel mr-asker">
             <h3>Today's Cook</h3>
             <div className="mr-asker-art"><Portrait who={owner} mood={solved ? "happy" : "think"} width={120} /></div>
@@ -502,10 +499,10 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
               <span className="mr-recipe-of">skills mastered</span>
             </div>
           </div>
-        </div>
-
-        {/* ── ANSWER CARD — write area + Check as ONE unit (fixed rect, bottom-left) ── */}
-        <div className="mr-s-answer">
+          </div>
+        )}
+        answer={(
+          <div className="mr-s-answer">
           <div className="mr-s-write">
             <div className="mr-final-label">Write your answer</div>
             <div className={"mr-s-slate" + (bad ? " mr-bad" : "") + (isMixed ? " is-mixed" : "")}>
@@ -571,14 +568,15 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
               </button>
             )}
           </div>
-        </div>
-
-        {/* ── TUTOR ZONE — speaking character + ribbon (fixed rect, bottom-right) ── */}
-        <div className="mr-s-tutor">
+          </div>
+        )}
+        tutor={(
+          <div className="mr-s-tutor">
           <div className="cook-stage"><Portrait who={bubble.who} mood={bubble.mood} width={118} /></div>
           <div className={"ribbon" + (bubble.tone === "warn" ? " warn" : "") + (bubble.meow ? " mr-meow" : "")} data-vox-speaker={bubble.who}>{bubble.text}</div>
         </div>
-      </div>
+        )}
+      />
     </div>
   );
 }

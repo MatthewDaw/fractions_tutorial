@@ -16,65 +16,50 @@
 .mr-stage > svg { width: 100%; max-width: 520px; height: auto; max-height: 280px; }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   DETERMINISTIC FIXED-ZONE LAYOUT — Babushka's Kitchen (mirrors .r1-s1).
-   Four absolutely-positioned, fixed-size rectangles. The prop/story zone is
-   pinned TOP; the answer card + tutor are pinned BOTTOM with a guaranteed gap
-   between them. No zone's size depends on text content (everything is clamped),
-   so a longer caption / a different character / a different font can never grow
-   a zone into its neighbour (the bug where the prop area covered the answer).
+   KITCHEN PLAY-AREA — now layered on the SHARED <LessonBoard variant="split">
+   grid (lesson-board.css). The board owns the deterministic 2×2 layout (stage +
+   rail in row 1, answer + tutor in the fixed foot row, SEPARATE grid tracks so
+   the answer card can never overlap the prop/scratch surface). The rules below
+   only style the kitchen-specific CONTENT inside those zones; no zone is
+   absolutely positioned any more.
    ════════════════════════════════════════════════════════════════════════════ */
-.mr-s { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 8px; }
 
-/* PROP / STORY + SCRATCH zone — top-left, fixed; clipped so the prop + scratch ink
-   can NEVER paint past the zone onto the answer card below. This is the child's
-   big "show your work" drawing surface (the ScratchCanvas fills it). */
-.mr-s-stage {
-  position: absolute; left: 0; top: 0;
-  /* generous, full-width scratch slate (the QuestionBand above is gone, so this
-     zone reclaims that vertical room). ~800w × ~344h: well past the M3 ~756×246
-     reference and comfortably tall for a child to show their work with a stylus. */
-  width: 800px; height: 344px;
-  border: 2px solid #1a0f08;
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
-  background: radial-gradient(ellipse at 50% 24%, rgba(255,245,220,0.5), transparent 70%), var(--paper-1);
-  overflow: hidden;
-  box-sizing: border-box;
+/* PROP / STORY + SCRATCH zone === the board's .lboard-stage (we passed
+   stageClassName="mr-s-stage"). The board already gives it the border / paper /
+   clip; we only need the inner column layout + padding for the scratch slate. */
+.mr-board .mr-s-stage {
   padding: 8px 18px 6px;
   display: flex; flex-direction: column;
 }
 /* the prop area fills the zone (its own ruler / motion live inside the SVG) */
-.mr-s-stage .mr-stage { flex: 1 1 auto; min-height: 0; }
+.mr-board .mr-s-stage .mr-stage { flex: 1 1 auto; min-height: 0; }
 
-/* RAIL — top-right, fixed; two stacked panels (asker + skill). */
-.mr-s-rail {
-  position: absolute; right: 0; top: 0;
-  width: 396px; height: 344px;
+/* RAIL — two stacked panels (asker + skill) inside the board's .lboard-rail. */
+.mr-board .mr-s-rail {
+  height: 100%;
   box-sizing: border-box;
   display: flex; flex-direction: column; gap: 12px;
 }
-.mr-s-rail .panel { box-sizing: border-box; overflow: hidden; }
-.mr-s-rail .mr-asker { flex: 0 0 auto; }
-.mr-s-rail .mr-asker-art { height: 132px; }
-.mr-s-rail .mr-skill-panel { flex: 1 1 auto; min-height: 0; }
+.mr-board .mr-s-rail .panel { box-sizing: border-box; overflow: hidden; }
+.mr-board .mr-s-rail .mr-asker { flex: 0 0 auto; }
+.mr-board .mr-s-rail .mr-asker-art { height: 132px; }
+.mr-board .mr-s-rail .mr-skill-panel { flex: 1 1 auto; min-height: 0; }
 /* clamp the skill blurb so a longer label/blurb can't grow the rail */
-.mr-s-rail .mr-skill-panel .hint {
+.mr-board .mr-s-rail .mr-skill-panel .hint {
   display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* ANSWER CARD — write area + Check as ONE bordered unit, pinned to the bottom of
-   the play region, clearly BELOW the prop zone (guaranteed gap). The Slate sits
-   on the left; the Check button is IMMEDIATELY to its right. Fixed height; text
-   is clamped, so a longer caption can never grow the card. */
-.mr-s-answer {
-  position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 226px;
+/* ANSWER CARD — write area + Check as ONE bordered unit, filling the board's
+   .lboard-answer foot zone. The Slate sits on the left; the Check button is
+   IMMEDIATELY to its right. Text is clamped so a longer caption can't grow it. */
+.mr-board .mr-s-answer {
+  height: 100%;
   box-sizing: border-box;
   border: 2px solid var(--ink);
   background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
   box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
   /* the write area + Check read as ONE tight group, left-aligned, so the Check
-     button sits IMMEDIATELY to the right of where the child writes (not spread to
-     the far edge). */
+     button sits IMMEDIATELY to the right of where the child writes. */
   display: flex; align-items: center; gap: 28px;
   padding: 10px 28px;
 }
@@ -111,16 +96,15 @@
 .mr-s-marks .check { min-width: 168px; height: 60px; }
 .mr-s-marks .mr-wallbtn { height: 56px; }
 
-/* TUTOR zone — speaking character + ribbon, fixed rect bottom-right; ribbon text
-   is clamped so a longer status string can never change the zone height. */
-.mr-s-tutor {
-  position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 226px;
+/* TUTOR zone — speaking character + ribbon inside the board's .lboard-tutor foot
+   zone; ribbon text is clamped so a longer status string can't change the height. */
+.mr-board .mr-s-tutor {
+  height: 100%;
   box-sizing: border-box;
   display: flex; align-items: flex-end; gap: 10px;
 }
-.mr-s-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
-.mr-s-tutor .ribbon {
+.mr-board .mr-s-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
+.mr-board .mr-s-tutor .ribbon {
   margin-left: 0; margin-bottom: 16px; max-width: 196px; flex: 1 1 auto;
   /* clamp to 5 lines so font/length never reflows the zone */
   height: 100px; overflow: hidden;
