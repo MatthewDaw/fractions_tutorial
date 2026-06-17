@@ -4,8 +4,8 @@
 export default {
   id: "r3",
   backHref: "shelf-combine.html",
-  num: "№10",
-  tag: "Lesson 10 · Scale One",
+  num: "№9",
+  tag: "Lesson 9 · Scale One",
   title: "Scale One",
   route: "#/r3",
   tabs: [

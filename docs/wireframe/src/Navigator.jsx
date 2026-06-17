@@ -47,22 +47,22 @@ const STEPS = [
     ["room-r4-4-numbers", "3 Raise"], ["room-r4-5-applied", "4 Find · Pick"], ["room-r4-6-words", "5 Find · All"],
     ["room-r4-7-sort", "6 Sort"], ["room-r4-practice", "★ Practice"],
   ]],
-  ["№9 Simplify (simp)", [
+  ["№8 Simplify (simp)", [
     ["room-simp", "1 Identify"], ["room-simp-2-bundle", "2 Bundle"], ["room-simp-3-lowest", "3 Lowest Terms"],
     ["room-simp-4-gcf", "4 Big Bundle"], ["room-simp-5-pick", "5 Pick"], ["room-simp-6-numbers", "6 Numbers"],
     ["room-simp-practice", "★ Practice"],
   ]],
-  ["№10 Scale One (r3)", [
+  ["№9 Scale One (r3)", [
     ["room-r3", "1 Manipulate"], ["room-r3-2-bind", "2 Bind"], ["room-r3-3-fade", "3 Fade"],
     ["room-r3-5-ghost", "4 Ghost"], ["room-r3-6-numbers", "5 Numbers"], ["room-r3-8-simplify", "6 Simplify"],
     ["room-r3-a-applied", "7 Applied"], ["room-r3-sw-showwork", "8 Show Work"], ["room-r3-7-words", "9 Words"], ["room-r3-practice", "★ Practice"],
   ]],
-  ["№11 Cross-Multiply (r2)", [
+  ["№10 Cross-Multiply (r2)", [
     ["room-r2", "1 Manipulate"], ["room-r2-2-bind", "2 Bind"], ["room-r2-3-fade", "3 Fade"],
     ["room-r2-5-ghost", "4 Ghost"], ["room-r2-6-numbers", "5 Numbers"], ["room-r2-8-simplify", "6 Simplify"],
     ["room-r2-a-applied", "7 Applied"], ["room-r2-sw-showwork", "8 Show Work"], ["room-r2-7-words", "9 Words"], ["room-r2-practice", "★ Practice"],
   ]],
-  ["№5 Compare & Check (cmp)", [
+  ["№11 Compare & Check (cmp)", [
     ["room-cmp", "1 Boxes"], ["room-cmp-4-diff", "2 Rulers · Different"], ["room-cmp-scale", "3 Scale Up"],
     ["room-cmp-5-numbers", "4 Numbers"], ["room-cmp-practice", "★ Practice"],
   ]],
@@ -112,10 +112,10 @@ export default function Navigator({ screens = {} }) {
           <L to="kitchen-nl" route="№5 · room-nl">Same Denominators</L>
           <L to="kitchen-s1" route="№6 · room-s1">Taking Away</L>
           <L to="kitchen-r4" route="№7 · room-r4-2-bind">Equivalent Fractions</L>
-          <L to="kitchen-simp" route="№9 · room-simp">Simplify</L>
+          <L to="kitchen-simp" route="№8 · room-simp">Simplify</L>
           <L to="kitchen-r3" route="№9 · room-r3">Scale One</L>
-          <L to="kitchen-r2" route="№11 · room-r2">Cross-Multiply</L>
-          <L to="kitchen-cmp" route="№5 · room-cmp">Compare &amp; Check</L>
+          <L to="kitchen-r2" route="№10 · room-r2">Cross-Multiply</L>
+          <L to="kitchen-cmp" route="№11 · room-cmp">Compare &amp; Check</L>
           <L to="kitchen-r5" route="№12 · room-r5">Mixed Numbers</L>
         </div>
       </div>

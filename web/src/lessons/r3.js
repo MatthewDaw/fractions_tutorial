@@ -3,8 +3,8 @@
    and pulls № / tag / title / route + this tab strip from here. */
 export default {
   id: "r3",
-  num: "№10",
-  tag: "Lesson 10 · Adding Fractions",
+  num: "№9",
+  tag: "Lesson 9 · Adding Fractions",
   title: "Scale One",
   route: "#/r3",
   tabs: [

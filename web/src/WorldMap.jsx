@@ -41,10 +41,22 @@ function strandRooms(strand) {
 // Lay a strand's N cards out as one centred horizontal row in the 1280×800 stage.
 // Cards are 250px wide and centre-anchored, so we return centre points.
 function submenuPositions(n) {
-  const CARD_W = 250, GAP = 42, Y = 438;
-  const total = n * CARD_W + (n - 1) * GAP;
-  const startCx = (1280 - total) / 2 + CARD_W / 2;
-  return Array.from({ length: n }, (_, i) => ({ x: startCx + i * (CARD_W + GAP), y: Y }));
+  const CARD_W = 250, GAP = 42;
+  // x-centre of card `i` within a centred row of `count` cards.
+  const rowX = (count, i) => {
+    const total = count * CARD_W + (count - 1) * GAP;
+    const startCx = (1280 - total) / 2 + CARD_W / 2;
+    return startCx + i * (CARD_W + GAP);
+  };
+  // Up to five lessons fit one centred row; six or more split into two rows
+  // (top then bottom) so the cards never overflow the 1280-wide stage.
+  if (n <= 5) {
+    return Array.from({ length: n }, (_, i) => ({ x: rowX(n, i), y: 438 }));
+  }
+  const top = Math.ceil(n / 2);
+  return Array.from({ length: n }, (_, i) =>
+    i < top ? { x: rowX(top, i), y: 300 } : { x: rowX(n - top, i - top), y: 576 }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -172,7 +184,7 @@ export default function WorldMap({ onOpen, onConcepts, onSettings, masteryMap = 
         );
       })}
 
-      <div className="world-foot">Three shelves, ten lessons, in order — start at the kitchen, or open any shelf.</div>
+      <div className="world-foot">Three shelves, twelve lessons, in order — start at the kitchen, or open any shelf.</div>
 
       {fab}
     </div>

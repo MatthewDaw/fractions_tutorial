@@ -9,8 +9,8 @@
    pulls № / tag / title / route + this tab strip from here. */
 export default {
   id: "nl",
-  num: "№6",
-  tag: "Lesson 6 · On the Number Line",
+  num: "№5",
+  tag: "Lesson 5 · On the Number Line",
   title: "Same Denominators",
   route: "#/nl",
   tabs: [

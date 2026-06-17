@@ -7,8 +7,8 @@
 export default {
   id: "r4",
   backHref: "shelf-combine.html",
-  num: "№8",
-  tag: "Lesson 8 · Equivalent Fractions",
+  num: "№7",
+  tag: "Lesson 7 · Equivalent Fractions",
   title: "Equivalent Fractions",
   route: "#/r4-2-bind",
   tabs: [

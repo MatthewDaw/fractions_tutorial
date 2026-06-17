@@ -3,8 +3,8 @@
    and pulls № / tag / title / route + this tab strip from here. */
 export default {
   id: "s1",
-  num: "№7",
-  tag: "Lesson 7 · Taking Away",
+  num: "№6",
+  tag: "Lesson 6 · Taking Away",
   title: "Taking Away",
   route: "#/s1",
   tabs: [

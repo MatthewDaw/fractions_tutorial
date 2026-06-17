@@ -13,8 +13,8 @@
 const nl = {
   id: "nl",
   backHref: "shelf-build.html",
-  num: "№6",
-  tag: "Lesson 6 · Same Denominators",
+  num: "№5",
+  tag: "Lesson 5 · Same Denominators",
   title: "Same Denominators",
   route: "#/nl",
   tabs: [

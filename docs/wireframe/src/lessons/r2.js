@@ -4,8 +4,8 @@
 export default {
   id: "r2",
   backHref: "shelf-combine.html",
-  num: "№11",
-  tag: "Lesson 11 · Cross-Multiply",
+  num: "№10",
+  tag: "Lesson 10 · Cross-Multiply",
   title: "Cross-Multiply",
   route: "#/r2",
   tabs: [

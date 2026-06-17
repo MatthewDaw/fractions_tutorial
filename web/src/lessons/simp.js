@@ -5,8 +5,8 @@
    bundling, or straight there with one big bundle (÷ the GCF). */
 export default {
   id: "simp",
-  num: "№9",
-  tag: "Lesson 9 · Simplify",
+  num: "№8",
+  tag: "Lesson 8 · Simplify",
   title: "Simplify",
   route: "#/simp",
   tabs: [

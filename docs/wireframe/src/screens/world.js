@@ -156,12 +156,12 @@ export default {
       <!-- shelf node: build @ (954,250) -> shelf-build.html -->
       <a class="shelf" href="shelf-build.html" style="left:74.53%;top:31.25%" title="Open Building Fractions">
         <div class="shelf-head">
-          <span class="shelf-range">№3–7</span>
+          <span class="shelf-range">№3–6</span>
         </div>
         <h2 class="shelf-title">Building Fractions</h2>
         <p class="shelf-blurb">What the two numbers in a fraction mean, then adding or taking away same-size pieces.</p>
         <div class="shelf-foot">
-          <span class="shelf-count">0 / 5 mastered</span>
+          <span class="shelf-count">0 / 4 mastered</span>
           <span class="shelf-open">Open shelf ▸</span>
         </div>
       </a>
@@ -169,17 +169,17 @@ export default {
       <!-- shelf node: combine @ (640,648) -> shelf-combine.html -->
       <a class="shelf" href="shelf-combine.html" style="left:50%;top:81%" title="Open Combining & Renaming">
         <div class="shelf-head">
-          <span class="shelf-range">№8–12</span>
+          <span class="shelf-range">№7–12</span>
         </div>
         <h2 class="shelf-title">Combining &amp; Renaming</h2>
         <p class="shelf-blurb">Unlike pieces, equivalent names, and whole-and-a-bit.</p>
         <div class="shelf-foot">
-          <span class="shelf-count">0 / 5 mastered</span>
+          <span class="shelf-count">0 / 6 mastered</span>
           <span class="shelf-open">Open shelf ▸</span>
         </div>
       </a>
 
-      <div class="world-foot">Three shelves, ten lessons, in order — start at the kitchen, or open any shelf.</div>
+      <div class="world-foot">Three shelves, twelve lessons, in order — start at the kitchen, or open any shelf.</div>
     </div>
 
     <!-- Shell .fab-bar (rendered on title/world routes) -->

@@ -7,8 +7,8 @@
 export default {
   id: "simp",
   backHref: "shelf-combine.html",
-  num: "№9",
-  tag: "Lesson 9 · Simplify",
+  num: "№8",
+  tag: "Lesson 8 · Simplify",
   title: "Simplify",
   route: "#/simp",
   tabs: [

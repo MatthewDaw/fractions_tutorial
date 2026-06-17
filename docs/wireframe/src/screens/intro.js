@@ -30,7 +30,7 @@ export default {
           <a class="ctrl-btn intro-pause" href="#" title="Pause" aria-label="Pause">
             <svg width="13" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="3" y="2" width="3" height="10" fill="currentColor" /><rect x="8" y="2" width="3" height="10" fill="currentColor" /></svg>
           </a>
-          <div class="intro-label">Lesson 11 · Cross-Multiply — intro</div>
+          <div class="intro-label">Lesson 10 · Cross-Multiply — intro</div>
           <!-- Skip ▸ (onContinue path) → world.html -->
           <a class="intro-continue" href="world.html">Skip ▸</a>
         </div>

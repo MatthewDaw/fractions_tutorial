@@ -6,9 +6,9 @@
    Each step page declares only `lesson: "cmp"`. */
 export default {
   id: "cmp",
-  backHref: "shelf-build.html",
-  num: "№5",
-  tag: "Lesson 5 · Compare & Check",
+  backHref: "shelf-combine.html",
+  num: "№11",
+  tag: "Lesson 11 · Compare & Check",
   title: "Compare & Check",
   route: "#/cmp",
   tabs: [
