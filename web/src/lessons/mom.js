@@ -1,19 +1,20 @@
-/* lessons/mom.js — identity + engine-graph bindings for Babushka's Kitchen,
-   route #/mom.
+/* lessons/mom.js — identity for Babushka's Kitchen, route #/mom.
 
-   The kitchen is the word-problem transfer layer over the fraction-arithmetic
-   strand, NOT a staged lesson: its "stages" (mirror / combine / look-ahead) are
-   state-driven and invisible, so it has no StageTabs strip (`tabs: []`). It
-   therefore does NOT use the № / "Lesson n · tag" header identity — it keeps its
-   bespoke topbar (★ heart + mastery pips). The identity fields below are the
-   single source of truth for the kitchen's tag/title chrome.
+   The kitchen is now a PURE wireframe screen (see MomsRoom.jsx): a strip of
+   story-problem rooms (kitchen/rooms.js, KITCHEN_ORDER) graded LOCALLY
+   (kitchen/grade.js). The adaptive/mastery ENGINE was dropped, so the kitchen no
+   longer consumes any room→node bindings. The fields below are the single source
+   of truth for the kitchen's bespoke tag/title chrome (★ heart, not the №
+   "Lesson n" header pattern).
 
-   What moves here (data only — per the "data vs logic" rule): the room→engine
-   SkillNode bindings (`roomToNode`). The engine wiring, grading, Slate refs, and
-   adaptive flow stay in MomsRoom.jsx. The skill labels/curriculum order remain in
-   momsProblems.js (they are coupled to the BANK question data there). */
+   `tabs: []` because the kitchen builds its own per-room strip from KITCHEN_ORDER
+   (it is not a staged single lesson).
 
-/** Room id (rooms.js / BANK) → engine SkillNode id. Mirrors graph.ts. */
+   LEGACY (harmless, unused by the kitchen): the roomToNode/nodeToRoom maps below
+   remain only so a few old runtime tests that import them still resolve. They are
+   not read by any live code path. */
+
+/** LEGACY/UNUSED: room id → former engine SkillNode id. Kept harmless for tests. */
 export const roomToNode = {
   r1: "ADD_SAME_DEN",
   r3: "ADD_UNLIKE_NESTED",

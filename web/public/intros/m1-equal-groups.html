@@ -9,9 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 <style>
   :root{
+    /* palette mirrors docs/wireframe tokens.css so the intro matches the lesson */
     --paper-1:#ede2c8; --paper-2:#e3d4b1;
-    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
-    --food:#c9a36b; --food-edge:#9a7740; --ok:#2a9d8f;
+    --ink:#1c1612; --ink-soft:#3a2e24; --ink-mute:#6b5a47;
+    --red:#a32a22; --red-deep:#6e1c16; --red-soft:#c46a5f; --ok:#2a9d8f;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;}
@@ -36,46 +37,54 @@
   }
   #kicker.on{opacity:.95; transform:none;}
 
-  /* ── the board: a row of three plates (NEVER rotated — commutativity deferred) ── */
+  /* ── the board: a row of three jars (NEVER rotated — commutativity deferred) ── */
   #board{ position:relative; width:680px; max-width:94vw;
-    display:flex; align-items:flex-end; justify-content:center; gap:46px; min-height:300px; }
-  .plate{
-    position:relative; width:150px; height:124px;
-    border:4px solid #b09a6e; border-radius:50% / 46%;
-    background:radial-gradient(ellipse at 50% 38%, #fffdf6 0%, #efe3c6 78%, #e3d2ab 100%);
-    display:flex; align-items:center; justify-content:center; padding:14px;
-    opacity:0; transform:translateY(12px) scale(.9);
-    transition:opacity .55s ease, transform .55s cubic-bezier(.34,1.56,.64,1), border-color .4s ease;
+    display:flex; align-items:flex-end; justify-content:center; gap:64px; min-height:300px; }
+  .jar{
+    position:relative;
+    opacity:0; transform:translateY(14px) scale(.9);
+    transition:opacity .55s ease, transform .55s cubic-bezier(.34,1.56,.64,1), filter .4s ease;
   }
-  .plate.in{ opacity:1; transform:none; }
-  .plate.equal{ border-color:var(--ok); }
-  /* when the equation strip / collapsed line is shown, recede the plates so the
-     centered equation reads clearly over them (matches the sibling intros) */
-  #board:has(#addstrip.on) .plate,
-  #board:has(#times.on) .plate{ opacity:.16; }
-  /* pelmeni laid in a tidy 2-col grid, exactly like the lesson PlateGroup */
-  .plate .pieces{ display:grid; grid-template-columns:repeat(2,auto); gap:3px 5px;
-    align-items:center; justify-items:center; }
-  /* each pelmeni is the SAME pinched-dough SVG glyph the lesson uses (PlateGroup
-     .mg-pelmeni): golden #c9a36b dough, darker #9a7740 crimp edge + crease line —
-     not a flat circle. */
-  .pc{
-    display:inline-flex; line-height:0;
-    opacity:0; transform:scale(.4);
-    transition:opacity .35s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+  .jar.in{ opacity:1; transform:none; }
+  /* the jar SVG — ported from docs/wireframe manip.js jar(): cream body, ink rim,
+     red plums dropped into clustered slots. Scaled up for the video. */
+  .jar svg{ display:block; width:118px; height:auto; overflow:visible; }
+  .jar .glass{ fill:var(--paper-1); stroke:var(--ink); stroke-width:2.4; }
+  .jar .lid{ fill:var(--paper-2); stroke:var(--ink); stroke-width:2.2; }
+  /* a plum sits in a clustered slot; revealed one at a time (drop-in) */
+  .plum{
+    opacity:0; transform-box:fill-box; transform-origin:center;
+    transform:translateY(-26px) scale(.4);
+    transition:opacity .3s ease, transform .42s cubic-bezier(.34,1.56,.64,1);
   }
-  .pc svg{ display:block; }
-  .pc.on{ opacity:1; transform:none; }
-  .plate-lab{ position:absolute; bottom:-26px; left:0; right:0; text-align:center;
-    font-family:"Russo One",sans-serif; font-size:20px; color:var(--ink-soft); opacity:0; transition:opacity .4s ease; }
-  .plate.in .plate-lab{ opacity:.9; }
+  .plum.on{ opacity:1; transform:none; }
+  /* when every jar holds its full equal group, give the rim a green "matched" tint */
+  .jar.equal .glass{ stroke:var(--ok); }
+  .jar.equal .lid{ stroke:var(--ok); }
+  /* The jars stay FULLY solid while the equation reads beneath them (the equation
+     sits low on the board, not over the jars) — no faint translucent ghost. The
+     final frame is three full jars of four with 3 × 4 = 12 below them. */
 
-  /* the repeated-addition strip, fades in under the plates */
+  .jar-lab{ position:absolute; bottom:-30px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; font-size:20px; color:var(--ink-soft);
+    opacity:0; transition:opacity .4s ease; }
+  .jar.in .jar-lab{ opacity:.9; }
+  /* a tiny running total that climbs 4 → 8 → 12 as each jar fills */
+  #tally{
+    position:absolute; top:64px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; font-size:22px; color:var(--red-deep);
+    opacity:0; transform:translateY(-4px); transition:opacity .4s ease, transform .4s ease;
+  }
+  #tally.on{ opacity:.9; transform:none; }
+
+  /* the repeated-addition strip, fades in above the jars */
   #addstrip{
-    position:absolute; left:50%; bottom:54px; transform:translateX(-50%);
+    position:absolute; left:50%; top:-72px; transform:translateX(-50%);
     display:flex; align-items:center; gap:14px;
     font-family:"Russo One",sans-serif; font-size:40px; color:var(--ink);
     opacity:0; transition:opacity .6s ease, transform .6s ease;
+    background:rgba(237,226,200,.92); padding:6px 22px; border-radius:14px;
+    box-shadow:0 3px 14px rgba(60,40,20,.20); z-index:7;
   }
   #addstrip.on{ opacity:1; }
   #addstrip .op{ color:var(--red); font-size:32px; }
@@ -83,9 +92,11 @@
 
   /* the collapsed 3 × 4 = 12 line */
   #times{
-    position:absolute; left:50%; bottom:54px; transform:translateX(-50%) translateY(10px);
+    position:absolute; left:50%; top:-72px; transform:translateX(-50%) translateY(10px);
     font-family:"Russo One",sans-serif; font-size:48px; color:var(--ink);
     opacity:0; transition:opacity .55s ease, transform .55s ease; z-index:7;
+    background:rgba(237,226,200,.92); padding:6px 26px; border-radius:14px;
+    box-shadow:0 3px 14px rgba(60,40,20,.20);
   }
   #times.on{ opacity:1; transform:translateX(-50%); }
   #times .op{ color:var(--red); } #times .res{ color:var(--ok); }
@@ -97,7 +108,7 @@
   #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
     transition:opacity .55s ease, transform .55s ease; }
   #caption .cap.on{ opacity:1; transform:none; }
-  .f{color:var(--food-edge);font-weight:700;} .r{color:var(--red);font-weight:700;} .g{color:var(--ok);font-weight:700;}
+  .f{color:var(--red-deep);font-weight:700;} .r{color:var(--red);font-weight:700;} .g{color:var(--ok);font-weight:700;}
 
   #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
     background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
@@ -107,10 +118,12 @@
   <div id="stage">
     <div id="kicker">Equal Groups</div>
 
+    <div id="tally">4 plums so far</div>
+
     <div id="board">
-      <div class="plate" id="p0"><div class="pieces"></div><div class="plate-lab">4</div></div>
-      <div class="plate" id="p1"><div class="pieces"></div><div class="plate-lab">4</div></div>
-      <div class="plate" id="p2"><div class="pieces"></div><div class="plate-lab">4</div></div>
+      <div class="jar" id="j0"><div class="jar-lab">4</div></div>
+      <div class="jar" id="j1"><div class="jar-lab">4</div></div>
+      <div class="jar" id="j2"><div class="jar-lab">4</div></div>
 
       <div id="addstrip">
         <span class="t">4</span><span class="op">+</span>
@@ -122,10 +135,10 @@
     </div>
 
     <div id="caption">
-      <div class="cap" data-i="0">Babushka sets out <b>three plates</b>.</div>
-      <div class="cap" data-i="1"><span class="f">Four pelmeni</span> on the first plate.</div>
-      <div class="cap" data-i="2">The <b>same four</b> on the next plate — <span class="g">every plate gets the same</span>.</div>
-      <div class="cap" data-i="3">And the <b>same four</b> again. Three equal plates of four.</div>
+      <div class="cap" data-i="0">Babushka sets out <b>three jars</b>.</div>
+      <div class="cap" data-i="1"><span class="f">Four plums</span> in the first jar.</div>
+      <div class="cap" data-i="2">The <b>same four</b> in the next jar — <span class="g">every jar gets the same</span>.</div>
+      <div class="cap" data-i="3">And the <b>same four</b> again. Three equal jars of four.</div>
       <div class="cap" data-i="4"><span class="r">Four, plus four, plus four</span> — add the group again and again.</div>
       <div class="cap" data-i="5">Three groups of four is <span class="g">three times four — twelve</span>. Count the groups, not the numbers.</div>
     </div>
@@ -138,26 +151,33 @@
 (function(){
   "use strict";
   var PERSIST = "equalgroups.v1";
-  var DURATION = 22;            // seconds — matches introM1.js INTRO_DURATION
+  var DURATION = 32;            // seconds — matches introM1.js INTRO_DURATION
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
   var SIZE = 4, GROUPS = 3;
 
   function el(id){ return document.getElementById(id); }
 
-  // build SIZE empty pelmeni into each plate (hidden until .on is added)
-  // the lesson's pelmeni glyph (PlateGroup.Pelmeni) as inline SVG markup
-  var PELMENI_SVG =
-    '<svg width="28" height="28" viewBox="0 0 26 26" aria-hidden="true">' +
-      '<path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" ' +
-        'fill="#c9a36b" stroke="#9a7740" stroke-width="1.6"/>' +
-      '<path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7"/>' +
-    '</svg>';
-  function buildPlate(id){
-    var holder = el(id).querySelector(".pieces");
-    for (var i=0;i<SIZE;i++){
-      var d=document.createElement("div"); d.className="pc"; d.innerHTML=PELMENI_SVG; holder.appendChild(d);
-    }
+  // Plum slot coordinates for a jar of 4 — ported from manip.js JARPLUMS[4]
+  // (the four-plum cluster), expressed in the jar's 56×76 viewBox.
+  var SLOTS = [[20,40],[36,40],[20,56],[36,56]];
+
+  // Build a jar as inline SVG — same shape as the wireframe manip.js jar():
+  // a lid rect, a tapered glass body, then SIZE plums (hidden until .on). The
+  // plums are red filled circles (the .kq-plum look) dropped into the cluster.
+  function buildJar(id){
+    var plums = SLOTS.slice(0, SIZE).map(function(p){
+      return '<circle class="plum" cx="'+p[0]+'" cy="'+p[1]+'" r="6" '+
+             'fill="var(--red)" stroke="var(--red-deep)" stroke-width="1.6" />';
+    }).join("");
+    var svg =
+      '<svg viewBox="0 0 56 76" aria-hidden="true">' +
+        '<rect class="lid" x="9" y="13" width="38" height="9" rx="2" />' +
+        '<path class="glass" d="M11 22 H45 V66 a8 8 0 0 1 -8 8 H19 a8 8 0 0 1 -8 -8 Z" />' +
+        plums +
+      '</svg>';
+    el(id).insertAdjacentHTML("afterbegin", svg);
   }
-  buildPlate("p0"); buildPlate("p1"); buildPlate("p2");
+  buildJar("j0"); buildJar("j1"); buildJar("j2");
 
   var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
   function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
@@ -165,15 +185,25 @@
   function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.18)";
     setTimeout(function(){ node.style.transform=""; }, 260); }
 
-  // drop the plate in, then reveal its SIZE pelmeni one at a time
-  function fillPlate(id, baseDelay, markEqual){
-    var plate = el(id);
-    plate.classList.add("in");
-    var pcs = plate.querySelectorAll(".pc");
+  // climb the running total and flash it (4 → 8 → 12 as each jar fills)
+  function setTally(n){
+    var t = el("tally");
+    t.textContent = n + " plums so far";
+    t.classList.add("on"); pulse(t);
+  }
+
+  // reveal SIZE plums in a jar one at a time, then optionally mark it "equal"
+  function fillJar(id, baseDelay, total, markEqual){
+    var jar = el(id);
+    jar.classList.add("in");
+    var pcs = jar.querySelectorAll(".plum");
     for (var i=0;i<pcs.length;i++){ (function(p,k){
       setTimeout(function(){ p.classList.add("on"); }, baseDelay + k*180);
     })(pcs[i], i); }
-    if (markEqual){ setTimeout(function(){ plate.classList.add("equal"); }, baseDelay + pcs.length*180); }
+    setTimeout(function(){
+      if (typeof total === "number") setTally(total);
+      if (markEqual) jar.classList.add("equal");
+    }, baseDelay + pcs.length*180);
   }
 
   var beatsDone = [];
@@ -181,30 +211,31 @@
   var BEATS = [
     [0.3, function(){ el("kicker").classList.add("on"); }],
 
-    // Beat 1 — three empty plates appear (the row of groups)
+    // Beat 1 (gate 1.2) — three empty jars appear (the row of groups)
     [1.2, function(){
       showCap(0);
-      el("p0").classList.add("in"); el("p1").classList.add("in"); el("p2").classList.add("in");
+      el("j0").classList.add("in"); el("j1").classList.add("in"); el("j2").classList.add("in");
     }],
 
-    // Beat 2 — four pelmeni on the FIRST plate
-    [4.0, function(){ showCap(1); fillPlate("p0", 200, false); }],
+    // Beat 2 (gate 4.0) — four plums into the FIRST jar; total → 4
+    [4.0, function(){ showCap(1); fillJar("j0", 200, 4, false); }],
 
-    // Beat 3 — the SAME four on the next plate (the equal-group invariant — both go green)
+    // Beat 3 (gate 7.5) — the SAME four into the next jar (the equal-group
+    // invariant — both jars go green); total → 8
     [7.5, function(){
       showCap(2);
-      fillPlate("p1", 200, true);
-      setTimeout(function(){ el("p0").classList.add("equal"); }, 200 + SIZE*180);
+      fillJar("j1", 200, 8, true);
+      setTimeout(function(){ el("j0").classList.add("equal"); }, 200 + SIZE*180);
     }],
 
-    // Beat 4 — and the same four AGAIN (third plate) — three equal plates of four
-    [11.0, function(){ showCap(3); fillPlate("p2", 200, true); }],
+    // Beat 4 (gate 12.0) — and the same four AGAIN (third jar); total → 12
+    [12.0, function(){ showCap(3); fillJar("j2", 200, 12, true); }],
 
-    // Beat 5 — 4 + 4 + 4 fades in under the plates (binds repeated addition)
-    [14.0, function(){ showCap(4); el("addstrip").classList.add("on"); pulse(el("addstrip")); }],
+    // Beat 5 (gate 15.8) — 4 + 4 + 4 fades in under the jars (repeated addition)
+    [15.8, function(){ showCap(4); el("tally").classList.remove("on"); el("addstrip").classList.add("on"); pulse(el("addstrip")); }],
 
-    // Beat 6 — collapse to 3 × 4 = 12 (NEVER rotate the plates)
-    [18.0, function(){
+    // Beat 6 (gate 20.5) — collapse to 3 × 4 = 12 (NEVER rotate the jars)
+    [20.5, function(){
       showCap(5);
       el("addstrip").classList.remove("on");
       el("times").classList.add("on");
@@ -221,7 +252,7 @@
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
-    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
     lastWall=now;
     var t=elapsed; if (t>DURATION) t=DURATION;
     try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}

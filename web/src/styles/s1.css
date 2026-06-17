@@ -91,11 +91,6 @@
 .s1-piece.is-used:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
 .s1-piece.is-used:last-child { border-right: none !important; border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
 
-.s1-count-cap {
-  font-family: var(--serif); font-size: 14px; color: var(--ink-soft);
-  height: 20px; white-space: nowrap;
-}
-
 /* ── equation-row pieces that ride inside the shared <AnswerBar> (stages 2,3) ── */
 .s1-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
 .s1-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
@@ -116,17 +111,12 @@
 .s1-bigeq-op {
   font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--red);
 }
-.s1-numbers-cap {
-  margin-top: 22px; font-family: var(--serif); font-size: 15px; color: var(--ink-soft);
-  max-width: 520px; text-align: center;
-  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-}
 
 /* ── Stage 4 · WORDS — WordProblem card + Slate sizing (mirrors r1-fz-words) ──── */
 .s1-words .wp { gap: 8px; width: 100%; align-items: center; }
 .s1-words .wp-card { padding: 10px 24px 9px; max-width: 760px; }
 .s1-words .wp-card-head { margin-bottom: 8px; }
-.s1-words .wp-story { font-size: 18px; }
+.s1-words .wp-story { font-size: 20px; }
 .s1-words .wp-setup { gap: 4px; }
 .s1-words .wp-answer { gap: 6px; }
 .s1-words .wp-answer .slate-fraction .slate-cell { width: 96px; height: 78px; }

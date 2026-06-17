@@ -63,6 +63,15 @@
 }
 .m3-jarwrap.is-ghost { opacity: 0.32; filter: grayscale(0.5); }
 
+/* BIG scoop count to the LEFT of the jar — the primary "how many scoops in" readout */
+.m3-jar-scoopnum { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; }
+.m3-jar-scoopnum-n {
+  font-family: var(--display); font-size: 88px; line-height: 0.9; color: var(--red);
+}
+.m3-jar-scoopnum-lab {
+  font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink-mute);
+}
+
 .m3-jar { position: relative; width: 214px; display: flex; flex-direction: column; align-items: center; }
 .m3-jar-neck { width: 108px; height: 18px; margin: 0 auto; border: 2.5px solid #6b5a3c; border-bottom: none; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.35); }
 .m3-jar-body {
@@ -79,7 +88,10 @@
   /* each scoop is ONE ROW of cubes; rows stack (bottom-up) into a 2-D array — the
      area model of the multiplication. More scoops → more rows → a filled rectangle. */
   display: flex; flex-direction: column-reverse; flex-wrap: nowrap;
-  align-items: center; justify-content: center;
+  /* gravity: the poured cubes settle on the JAR FLOOR, not floating mid-jar.
+     In column-reverse the main-start is the bottom, so flex-start packs the
+     rows down onto the floor and new scoops stack upward from there. */
+  align-items: center; justify-content: flex-start;
   gap: 3px; padding: 10px 10px 12px;
   box-sizing: border-box; overflow: hidden;
 }
@@ -96,6 +108,8 @@
   border: 1.5px solid; border-radius: 3px; overflow: hidden;
 }
 .m3-cube-hatch { position: absolute; inset: 0; opacity: 0.5; }
+/* pebble circles fill each grid cell — width:100% lets the 1fr columns dictate the size */
+.m3-jar-cubes .kq-pebble { width: 100%; height: auto; display: block; }
 @keyframes m3-drop {
   from { transform: translateY(-26px); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
@@ -103,14 +117,20 @@
 
 .m3-jar-tally { display: flex; flex-direction: column; align-items: center; margin-top: 6px; }
 .m3-jar-tally-n { font-family: var(--display); font-size: 36px; color: var(--ink); line-height: 1; }
-.m3-jar-tally-cap { font-family: var(--serif); font-size: 12px; color: var(--ink-soft); }
+.m3-jar-tally-label { font-family: var(--serif); font-size: 12px; color: var(--ink-soft); }
 
 .m3-scale {
   width: 104px; max-height: 320px; overflow: hidden;
   display: flex; flex-direction: column-reverse; gap: 4px;
 }
 .m3-scale-empty { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
-.m3-scale-step { display: flex; align-items: baseline; gap: 7px; padding: 2px 8px; border-left: 3px solid var(--red-soft); }
+.m3-scale-step { display: flex; align-items: center; gap: 7px; padding: 2px 8px; border-left: 3px solid var(--red-soft); }
+.m3-scale-step-num {
+  font-family: var(--serif); font-size: 14px; font-weight: 700; color: var(--ink);
+  width: 24px; height: 24px; flex: 0 0 auto;
+  border: 1.5px solid rgba(60, 40, 20, .55); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
 .m3-scale-step-add { font-family: var(--serif); font-size: 12px; color: var(--ink-mute); }
 .m3-scale-step-tot { font-family: var(--display); font-size: 23px; color: var(--ink); }
 
@@ -130,7 +150,7 @@
   border: 2px solid #8a6a2e; border-radius: 0 0 16px 16px;
   background: rgba(202,163,90,0.28);
 }
-.m3-scoop-cube { width: 9px; height: 9px; border: 1px solid; border-radius: 2px; }
+.m3-scoop-cube { width: 9px; height: 9px; border: 1px solid; border-radius: 50%; }
 .m3-scoop-lab { font-size: 14px; font-weight: 600; color: var(--ink); }
 .m3-scoop-count { font-family: var(--serif); font-size: 13px; color: var(--ink-mute); }
 .m3-scoop { cursor: grab; }
@@ -285,12 +305,21 @@
   box-shadow: 3px 4px 0 rgba(28,22,18,0.3);
 }
 
-/* ── Stage 4 (workbench): the BlockSandbox stage. The four-zone layout is now the
-   shared <LessonBoard variant="split" rail={null} stageClassName="bare">, which
-   gives the sandbox a full-width top track and the shared <AnswerBar> + tutor in
-   the foot row — so the old bespoke .m3-workbench grid is gone. The sandbox's
-   .play just needs to fill the (bare) stage box. */
-.lboard-stage.bare .play { flex: 1 1 auto; margin-top: 0; height: 100%; }
+/* ── Stage 4 (workbench): the BlockSandbox stage. The four-zone layout is the
+   shared <LessonBoard variant="split"> — stage = the sandbox, rail = the shared
+   <RailInstruction>, with the <AnswerBar> + tutor in the foot row. The sandbox is
+   wrapped in .m3-workbench so the m3-only count overlay (below) is scoped to this
+   stage and never leaks to other rooms. The wrapper just stretches to fill the
+   stage cell; the sandbox stack handles its own internal layout. */
+.lboard-stage .m3-workbench { flex: 1 1 auto; display: flex; min-height: 0; min-width: 0; height: 100%; }
+
+/* (#16) RUNNING COUNT — the cumulative total the row reaches (8, 16, 24, … 56) is
+   read straight off the NUMBER LINE: the ruler labels each placed block's running
+   total as a tick number as blocks are added. The earlier per-block count badge
+   (a pill printed directly UNDER each block) duplicated those ruler numbers, so it
+   was removed — the line is now the single source of the running count. The
+   sandbox's side "on the line  N × 8 = …" equation stays hidden for the same reason. */
+.m3-workbench .sandbox-readout-row { display: none; }
 
 /* ── Stage 5 (numbers): the bare fact equation ──────────────────────────────
    The stage box is wide and tall here (FitStage downscales if it ever overflows),
@@ -300,10 +329,8 @@
 .m3-bigeq-term { font-family: var(--display); font-size: 132px; line-height: 1; color: var(--ink); }
 .m3-bigeq-op { font-family: var(--serif); font-size: 92px; font-weight: 700; color: var(--red); }
 .m3-bigeq-q { font-family: var(--display); font-size: 132px; line-height: 1; color: var(--red); min-width: 132px; text-align: center; border-bottom: 7px dashed var(--red-soft); }
-.m3-numbers-cap {
-  font-family: var(--serif); font-size: 22px; color: var(--ink-soft); max-width: 760px; text-align: center;
-  height: 28px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-}
+/* (.m3-numbers-cap removed — Wave-F hides .lboard-stage [class*="-cap"]; the
+   recall cue moved into the rail instruction, so the in-stage caption is gone.) */
 .m3-prompt-dots { display: flex; gap: 12px; }
 .m3-prompt-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink-mute); background: transparent; }
 .m3-prompt-dot.is-active { border-color: var(--red); background: var(--red-soft); }
@@ -320,7 +347,7 @@
 .m3-fz-words .wp { gap: 18px; width: 100%; align-items: center; }
 .m3-fz-words .wp-card { padding: 18px 32px 16px; max-width: 860px; }
 .m3-fz-words .wp-card-head { margin-bottom: 12px; }
-.m3-fz-words .wp-story { font-size: 23px; line-height: 1.45; }
+.m3-fz-words .wp-story { font-size: 20px; line-height: 1.45; }
 .m3-fz-words .wp-setup { gap: 8px; }
 .m3-fz-words .wp-answer { gap: 10px; }
 .m3-fz-words .wp-answer .slate-row .slate-cell { width: 104px; height: 80px; }
@@ -346,6 +373,17 @@
 .m3-sw-panel { width: 920px; max-width: 100%; box-sizing: border-box; margin-bottom: 0; }
 .m3-sw-surface { position: relative; width: 920px; max-width: 100%; height: 380px; }
 .m3-sw-marks { margin-top: 0; }
+
+/* Applied (Stage 6) — the groups × size setup gate fills the stage, centered on
+   the page both axes (the "7 × 8" equation lives HERE once filled; the answer bar
+   carries only the product box). Mirrors m1's .m1-applied-setup. */
+.m3-applied-setup {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; width: 100%; height: 100%; min-height: 0; box-sizing: border-box;
+  /* override the default .wp-setup framing so the centered form isn't a stuck
+     top-left dashed card */
+  margin: 0; border: none; background: none; padding: 0;
+}
 
 /* the Applied setup gate (groups × size) — two single-slot Slates with an × */
 .m3-setup-row { display: inline-flex; align-items: center; gap: 18px; }

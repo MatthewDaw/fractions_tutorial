@@ -118,7 +118,7 @@ body {
 .canvas { position: relative; width: 720px; height: 346px; margin: 6px auto 0; }
 .nline { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px solid var(--ink); }
 .ntick { position: absolute; width: 1px; background: var(--ink); }
-.nlab { position: absolute; transform: translateX(-50%); font-family: var(--serif); font-style: italic; font-size: 11px; color: var(--ink-mute); white-space: nowrap; }
+.nlab { position: absolute; transform: translateX(-50%); font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-soft); white-space: nowrap; }
 .nlab.ng { font-family: var(--display); font-style: normal; font-size: 10px; color: var(--red); letter-spacing: .04em; }
 
 .nbar { position: absolute; touch-action: none; cursor: grab; }
@@ -127,11 +127,28 @@ body {
 .grip { position: absolute; left: 0; right: 0; top: -7px; height: 7px; display: flex; gap: 5px; align-items: center; justify-content: center; opacity: .5; pointer-events: none; }
 .grip i { width: 4px; height: 4px; border-radius: 50%; background: var(--ink); }
 
-.btag { position: absolute; left: 0; top: -58px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; white-space: nowrap; }
+/* "undo" pill — sits inline in the fraction tag, right beside the ×N times-box, so
+   the child can put a sliced strip back together straight from where they cut it. */
+.btag .undo-pill {
+  all: unset; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 6px;
+  border: 1.5px solid var(--ink); color: var(--ink);
+  font-family: var(--display); font-size: 12px; font-weight: 700; letter-spacing: .04em;
+  background: var(--paper-1); box-shadow: 0 2px 0 var(--shade);
+}
+.btag .undo-pill:hover { background: var(--paper-2); }
+
+.btag { position: absolute; left: 0; top: -54px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; white-space: nowrap; }
 .bignum { display: inline-flex; flex-direction: column; align-items: center; line-height: 0.85; }
 .bignum .n, .bignum .d { font-family: var(--display); font-size: 22px; color: var(--ink); }
 .bignum .bar { width: 27px; height: 3px; background: var(--ink); margin: 3px 0; }
-.btag .xchip { font-family: var(--stencil); font-weight: 700; font-size: 14px; color: var(--red); border: 1.5px solid var(--red); padding: 2px 7px; background: rgba(163,42,34,0.07); }
+.btag .xchip {
+  font-family: var(--display); font-weight: 700; font-size: 16px;
+  color: var(--paper-1); background: var(--red);
+  border: 2px solid var(--red-deep); border-radius: 6px;
+  padding: 3px 10px; box-shadow: 0 2px 0 var(--red-deep);
+}
 .btag .xchip.pop { animation: stampIn .45s cubic-bezier(.34,1.56,.64,1); }
 @keyframes stampIn { 0%{ transform: scale(1.7) rotate(-10deg); opacity: 0 } 55%{ opacity: 1 } 100%{ transform: scale(1) rotate(0); opacity: 1 } }
 .btag .mini { all: unset; cursor: pointer; width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--ink); color: var(--ink); font-size: 13px; background: var(--paper-1); }
@@ -157,14 +174,21 @@ body {
 .plank.is-matched .plank-body, .plank.lit .plank-body { filter: saturate(1.1) brightness(1.04); }
 .piece { position: relative; height: 100%; display: grid; place-items: center; }
 .piece-hatch { position: absolute; inset: 0; }
-.piece-lab { position: relative; z-index: 2; font-family: var(--display); letter-spacing: .01em; pointer-events: none; text-shadow: 0 1px 0 rgba(255,250,235,.25); }
+/* The numeral sits ON the hatched fill — give it a small chip of the SOLID fill
+   color (set inline in Plank) so the cross-hatch lines stop cutting through the
+   glyphs and "1/6" stays legible even in the narrow cells. */
+.piece-lab { position: relative; z-index: 2; font-family: var(--display); letter-spacing: .01em; pointer-events: none; padding: 1px 4px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(20,14,10,.10); }
 .cut-tick { position: absolute; right: -1px; width: 2px; height: 7px; z-index: 2; }
 .cut-tick.top { top: -2px; } .cut-tick.bot { bottom: -2px; }
 .plank.is-matched .plank-body { animation: matchPulse 1.5s ease-in-out infinite; }
 @keyframes matchPulse { 0%,100%{ box-shadow: inset 0 3px 0 rgba(255,255,255,0.18), 0 0 0 3px var(--red), 0 0 12px rgba(163,42,34,.3); } 50%{ box-shadow: inset 0 3px 0 rgba(255,255,255,0.18), 0 0 0 4px var(--red), 0 0 26px rgba(163,42,34,.55); } }
 .nbar.is-shake { animation: shakeX 0.42s ease-in-out; }
 @keyframes shakeX { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(3px)} }
-.sweep { position: absolute; top: -4px; bottom: -4px; width: 46px; pointer-events: none; z-index: 4; background: linear-gradient(90deg, transparent, rgba(255,252,240,0.95), transparent); animation: sweepMove 0.44s ease-out; }
+/* The slice "glare" sweep is removed: it had no animation-fill-mode, so after the
+   0.44s sweep it reverted to its base state — a bright gradient band parked at the
+   strip's left edge — leaving a persistent glare on every cut strip (lessons AND
+   kitchen). The knife slice-blade animation already shows the cut; no glare. */
+.sweep { display: none; }
 @keyframes sweepMove { 0%{ transform: translateX(-46px); opacity: 0 } 18%{ opacity: 1 } 100%{ transform: translateX(calc(100% + 46px)); opacity: 0 } }
 /* the knife that drags across the strip to cut it — sits over the plank, blade
    skimming the top; --plankW (set inline) is the exact strip width so the sweep
@@ -191,11 +215,20 @@ body {
 /* Issue 1b (R4): three stacked panels including the now-capped Slate. min-height:0
    + max-height:100% keep the column inside its .play track so the lower panels +
    bottom write cell can't spill below the 800px stage. With the Slate capped in
-   slate.css this fits without scrollbars (none in a kids' game). */
-.rail { display: flex; flex-direction: column; gap: 13px; min-height: 0; max-height: 100%; }
+   slate.css this fits without scrollbars (none in a kids' game). overflow:hidden
+   is the documented belt-and-suspenders: if any rail content ever exceeds 100%
+   it CLIPS at the track edge rather than painting outside the stage (default
+   overflow:visible). The Slate cap is the real mitigation, so nothing is actually
+   clipped — this just guarantees the three-panel column can never spill visibly. */
+.rail { display: flex; flex-direction: column; gap: 13px; min-height: 0; max-height: 100%; overflow: hidden; }
 .panel { border: 1.5px solid var(--ink); background: var(--paper-1); padding: 10px 13px 12px; }
 .panel h3 { margin: 0; font-family: var(--display); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
-.panel .hint { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--ink-mute); line-height: 1.35; margin-top: 5px; }
+/* QUESTION / INSTRUCTION TEXT — the ONE canonical, readable treatment for every
+   learner-facing question/instruction (the rail instruction copy). Uniform serif,
+   upright (not italic), medium weight, full-ink contrast, 15px. This is the single
+   source of truth: per-lesson stylesheets must NOT re-shrink, re-italicise, or
+   mute it — they inherit this so the question reads the same everywhere. */
+.panel .hint, .hint { font-family: var(--serif); font-style: normal; font-weight: 500; font-size: 15px; color: var(--ink); line-height: 1.4; margin-top: 5px; }
 .knife-slot { height: 88px; position: relative; margin-top: 8px; border: 1.5px dashed var(--paper-3); display: grid; place-items: center; }
 .knife-slot .lbl { font-family: var(--serif); font-style: italic; font-size: 11px; color: var(--ink-mute); }
 
@@ -227,6 +260,21 @@ body {
    and grow the zone so the figure is fully contained and never touches Check. */
 .cook-zone { position: relative; display: flex; align-items: flex-end; height: 110px; }
 .cook-stage { position: absolute; left: -8px; bottom: 0; width: 122px; pointer-events: none; }
+
+/* COOK-ALIGNMENT FIX (Wave F). The tutor figure (Cook in lessons, Babushka in the
+   kitchen — both render their SVG inside .cook-stage) floated with a gap below it:
+   the Cook/Mom SVG draws on a 196×260 viewBox but the figure's feet end at y≈258,
+   so the SVG element's box has empty slack below the drawn feet. Inside a
+   bottom-aligned box that slack reads as the character hovering off the bottom
+   border. Bottom-anchor the SVG and pull the viewBox slack off the bottom so the
+   drawn feet sit FLUSH on the box's bottom edge. Shared rule → fixes every
+   .cook-stage at once (lesson tutor zone, m1/r1 HUD, AND Babushka in the kitchen).
+   The slack below the feet is 2 viewBox units of 196 wide == 1.02% of the SVG
+   width; a negative bottom margin (resolved against the box WIDTH, which equals
+   the SVG width) pulls exactly that slack off. Keeps overflow visible so the
+   raised spoon/sparkles above the head are never clipped. */
+.cook-stage { display: flex; align-items: flex-end; }
+.cook-stage > svg { display: block; vertical-align: bottom; margin-bottom: -1.02%; }
 .ribbon { position: relative; margin-left: 126px; max-width: 178px; font-family: var(--serif); font-size: 13px; line-height: 1.3; color: var(--ink); background: var(--paper-1); border: 1.5px solid var(--ink); padding: 8px 11px; }
 .ribbon::before { content: ""; position: absolute; left: -9px; top: 16px; width: 14px; height: 14px; background: var(--paper-1); border-left: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(45deg); }
 .ribbon.warn { color: var(--red-deep); }
@@ -264,6 +312,38 @@ body {
 @keyframes stampSlam { 0%{ transform: rotate(-7deg) scale(2.2); opacity: 0 } 60%{ opacity: 1 } 100%{ transform: rotate(-7deg) scale(1); opacity: 1 } }
 
 .foxing { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; background-image: radial-gradient(circle at 10% 84%, rgba(110,80,40,0.16) 0, transparent 4%), radial-gradient(circle at 90% 12%, rgba(110,80,40,0.14) 0, transparent 3%), radial-gradient(circle at 70% 94%, rgba(110,80,40,0.10) 0, transparent 2.5%); mix-blend-mode: multiply; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   WAVE-F SHARED CHROME DECISIONS — port of the wireframe's three chrome choices
+   (wf-shell.css:156, 240, 247-257). One owner: the lesson library. Every lesson
+   inherits these once.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* (A) NO goal banner. The wireframe deleted the persistent top banner and moved
+   the instructions into the rail. If an un-migrated room still renders a
+   <LessonGoal> (.goal), keep it working — but migrated rooms simply stop passing
+   it. (We do NOT hide .goal here so the transition period stays graceful.) */
+
+/* (A) Read-aloud relocated to the rail: keep the rail's Read-aloud a compact pill
+   at the top-left of the panel column (mirror wf-shell.css:251-257). */
+.lboard-rail .wf-rail-speaker { align-self: flex-start; margin-bottom: 2px; }
+
+/* (B) ONE voice — the tutor ribbon is CORRECTIVE-ONLY. The Cook stands silent by
+   default; his speech ribbon appears only for a corrective/feedback hint. The
+   resting instruction lives in the rail. <TutorRibbon> adds `.is-idle` to the
+   ribbon whenever it is NOT a corrective/forced state; hide it then. Mirrors
+   wf-shell.css:247-249 (#stage .lboard-tutor .ribbon { display:none }) but keyed
+   on state so the corrective ribbon still shows. The Cook himself stays visible. */
+.ltutor .ribbon.is-idle { display: none; }
+
+/* (C) Drop the in-canvas caption lines site-wide (the rail now carries the task).
+   Scoped to the play area so answer/rail labels are untouched. Mirror
+   wf-shell.css:240. */
+.lboard-stage [class*="-cap"] { display: none; }
+
+/* Drop the redundant answer-card caption site-wide (it restated the task and ate
+   the vertical room the answer slate needs). Mirror wf-shell.css:156. */
+.lbar-cap { display: none; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.05ms !important; } }
 
@@ -331,10 +411,6 @@ body {
   border: 2px solid var(--ink-soft); box-shadow: none; }
 .plank.is-faded.is-matched .plank-body { animation: none; opacity: 0.85; border-color: var(--red); box-shadow: 0 0 0 2px rgba(163,42,34,.35); }
 
-/* ×N also under the strip — top & bottom together = multiply both the same */
-.xchip-bot { position: absolute; left: 50%; transform: translateX(-50%); top: 76px; z-index: 6;
-  font-family: var(--stencil); font-weight: 700; font-size: 13px; color: var(--red);
-  border: 1.5px solid var(--red); padding: 1px 7px; background: rgba(163,42,34,0.07); white-space: nowrap; pointer-events: none; }
 
 /* picker panel */
 .panel h3.pick-title { color: var(--red); }

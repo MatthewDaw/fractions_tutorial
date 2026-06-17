@@ -1,0 +1,78 @@
+/* compare.css — the shared CompareInput ("< = >" drag-into-slot) look.
+ *
+ * Adapted from the older .cmp-symbin / .cmp-sym / .cmp-compare / .cmp-drop styles
+ * in assets.css. The big change is that the symbol TILES are real draggable HTML
+ * wrappers (cursor: grab) and the "?" SLOT is a live drop target that lights up
+ * (.is-armed / .is-over) while a tile is being dragged, and shows a filled state
+ * (.is-filled) once a symbol has landed — but stays re-droppable. */
+
+/* a centered host for CompareInput when it is the whole stage body (AppDen) */
+.den-cmp { display: flex; align-items: center; justify-content: center; min-height: 220px; }
+
+.cmp-input { display: inline-flex; align-items: center; gap: 28px; }
+.cmp-input.is-disabled { opacity: 0.6; pointer-events: none; }
+
+.cmp-symbin {
+  display: inline-flex; gap: 8px; padding: 8px;
+  border: 1.5px dashed var(--ink);
+}
+
+.cmp-sym {
+  box-sizing: border-box; cursor: grab; user-select: none;
+  min-width: 46px; min-height: 46px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 26px; color: var(--ink);
+  border: 2px solid var(--ink); background: var(--paper-1);
+  box-shadow: 2px 2px 0 rgba(28, 22, 18, 0.16);
+  transition: transform 0.08s ease, background 0.12s ease;
+}
+.cmp-sym:hover { background: var(--paper-2); transform: translate(-1px, -1px); }
+.cmp-sym:active { cursor: grabbing; }
+.cmp-sym.is-armed {
+  border-color: var(--red); background: var(--paper-2);
+  box-shadow: 0 0 0 3px rgba(157, 42, 42, 0.18), 2px 2px 0 rgba(28, 22, 18, 0.16);
+}
+.cmp-sym.is-picked { border-color: var(--red-deep); background: var(--red); color: var(--paper-1); }
+.cmp-sym:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+/* the source tile fades while its drag-ghost is in flight */
+.cmp-sym.is-dragging { opacity: 0.35; }
+/* the floating ghost that follows the pointer (portaled to <body>; positioned by
+   inline left/top in fixed coords, centred on the cursor here) */
+.cmp-sym-ghost {
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%, -50%) scale(1.06);
+  background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
+  box-shadow: 3px 4px 0 rgba(28, 22, 18, 0.28);
+}
+
+.cmp-compare { display: inline-flex; align-items: center; gap: 18px; }
+
+/* operands */
+.cmp-num {
+  font-family: var(--display); line-height: 1; color: var(--ink);
+}
+.cmp-frac {
+  display: inline-flex; flex-direction: column; align-items: center;
+  font-family: var(--display); line-height: 1;
+}
+.cmp-frac-n { color: var(--red); }
+.cmp-frac-d { color: var(--ink); }
+.cmp-frac-bar {
+  width: 1.1em; height: 2px; margin: 0.08em 0; background: var(--ink);
+}
+
+/* the "?" drop slot */
+.cmp-drop {
+  width: 54px; height: 54px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px dashed var(--red); border-radius: 6px;
+  background: rgba(157, 42, 42, 0.06);
+  font-family: var(--display); font-size: 26px; color: var(--red);
+  cursor: default; transition: transform 0.08s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+.cmp-drop.is-armed { background: rgba(157, 42, 42, 0.12); box-shadow: 0 0 0 3px rgba(157, 42, 42, 0.18); }
+.cmp-drop.is-over { transform: scale(1.06); background: rgba(157, 42, 42, 0.2); }
+.cmp-drop.is-filled {
+  border-style: solid; background: var(--red); color: var(--paper-1);
+}
+.cmp-drop:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }

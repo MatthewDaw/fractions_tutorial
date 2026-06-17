@@ -1,111 +1,54 @@
 // AppSimp.jsx — Lesson №9 "Simplify" (#/simp). The child learns to BUNDLE cells
 // (÷) to reach the simplest name — the inverse of Equivalent Fractions. Same
-// GroupBar visual as AppR4; same engine node (SIMPLIFY); fresh 7-stage arc that
-// matches the wireframe's simp tab strip exactly.
+// equal-area SQUARE visual as AppR4 (the shared EqBox); same engine node
+// (SIMPLIFY); 7-stage arc that matches the wireframe's simp tab strip exactly.
 //
 // STAGES (wireframe order):
 //   1 · identify   — MC chip: which fraction is shown? (8/12 pre-correct)
 //   2 · bundle     — drag ÷2, go from 8/12 to 4/6 (one step only)
 //   3 · lowest     — keep bundling until gcd=1 (reaches 2/3)
 //   4 · bigbundle  — drag ÷4 (GCF), 8/12 → 2/3 in one move
-//   5 · pick       — MC chips: pick simplest top then bottom from lists
-//   6 · numbers    — bare Slate: write 8/12 in lowest terms
-//   7 · practice   — GenPracticeBoard (auto-generated SIMPLIFY)
+//   5 · pick       — drag-to-place top & bottom; build the simplest name
+//   6 · practice   — GenPracticeBoard (auto-generated SIMPLIFY)
 //
-// The GroupBar + drag mechanic are lifted verbatim from AppR4 — bundling is
-// fuseing in reverse. `lessonId:"simp"` routes engine events to the right
-// scaffold; `nodeId:"SIMPLIFY"` keeps mastery on the shared skill node.
+// Wave-F re-skin: the bundle stages draw the shared EqBox (cols=3, rows shrink
+// as cells merge) with an EqTools(÷k, divide) rack — a faithful match to the
+// wireframe simp screens (room-simp-*.js use eqBox() + eqTools({divide:true})).
+// `lessonId:"simp"` routes engine events to the right scaffold; `nodeId:"SIMPLIFY"`
+// keeps mastery on the shared skill node. The fuse() engine logic is unchanged —
+// only the visual markup moved onto the shared asset library.
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Rosette from "./components/Rosette.jsx";
-import BigFrac from "./components/BigFrac.jsx";
-import Slate from "./components/Slate.jsx";
-import QuestionBand from "./components/QuestionBand.jsx";
-import { LessonShell, LessonBoard, TutorRibbon, LessonGoal } from "./components/lesson";
+import { LessonShell, LessonBoard, TutorRibbon, RailInstruction } from "./components/lesson";
+import { EqBox, EqFrac, EqTools, BigFrac, DigitGrid, DigitSlot } from "./components/assets";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { useLessonIdentity } from "./lessons/useLessonIdentity.js";
-import { LESSONS } from "./lessons/index.js";
-import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 
-import "./styles/r4.css";   // GroupBar + shared grouping styles already exist
+import "./styles/r4.css";   // shared .eq-stage / answer-row layout (eq.css family)
 import "./styles/simp.css"; // simp-specific overrides
 
-// ── geometry (mirrors AppR4) ────────────────────────────────────────────────
-const ORIGIN = 90, SPAN = 660, LINE_Y = 198, BAR_Y = 64;
+// ── geometry ─────────────────────────────────────────────────────────────────
+// The simplify box mirrors the equivalence box: 3 columns, the left 2 columns
+// shaded (8/12 → 2 of 3 columns). Bundling (÷k) MERGES rows, so `rows = den/3`
+// shrinks (4 → 2 → 1) while the shaded columns (and red edge) stay put.
+const COLS = 3;
 const START_NUM = 8, START_DEN = 12;
-const VALUE = START_NUM / START_DEN;
 const LOW_NUM = 2, LOW_DEN = 3;
 
 function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
-const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 2);
+
+// How many of the 3 columns are inked for a given num/den (8/12→2, 4/6→2, 2/3→2).
+const shadedCols = (n, d) => Math.round(n / (d / COLS));
 
 // Stage ids in wireframe order.
-const STAGE_IDS = ["identify", "bundle", "lowest", "bigbundle", "pick", "numbers", "practice"];
+const STAGE_IDS = ["identify", "bundle", "lowest", "bigbundle", "pick", "practice"];
 
-// ── DivChips: the ÷K chips stacked beside the fraction (same as r4) ─────────
-function DivChips({ divs }) {
-  if (!divs.length) return null;
-  return (
-    <div className="r4-divrow">
-      {divs.map((k, i) => (
-        <span key={i} className={"r4-divchip" + (i === divs.length - 1 ? " pop" : "")}>÷{k}</span>
-      ))}
-    </div>
-  );
-}
-
-// ── GroupBar: identical to AppR4's GroupBar ──────────────────────────────────
-function GroupBar({ num, den, unit, animKey, dim, lastK }) {
-  const cellW = unit / den;
-  const fill = denomColor(den);
-  const cut = denomTone(den, 0.55);
-  const labColor = denomTextColor(den);
-  const hatch = denomHatch(den), hatchSize = denomHatchSize(den);
-  const edgeX = num * cellW;
-  const labSize = cellW < 40 ? 11 : cellW < 58 ? 13 : 15;
-  return (
-    <div className={"r4-groupbar" + (animKey ? " r4-fuse-anim" : "") + (dim ? " is-ghost" : "")}>
-      <div className="r4-gb-track" style={{ width: unit }}>
-        {Array.from({ length: den }).map((_, i) => {
-          const filled = i < num;
-          return (
-            <div
-              key={i}
-              className={"r4-gb-cell " + (filled ? "is-filled" : "is-empty")}
-              style={{
-                width: cellW,
-                background: filled ? fill : "transparent",
-                borderRight: i < den - 1 ? `1.5px solid ${cut}` : "none",
-              }}
-            >
-              {filled && <div className="piece-hatch" style={{ backgroundImage: hatch, backgroundSize: hatchSize }} />}
-              <span className="r4-gb-cut" />
-              <span className="piece-lab" style={{ color: filled ? labColor : cut, fontSize: labSize }}>1/{den}</span>
-            </div>
-          );
-        })}
-        <span className="r4-gb-filledge" style={{ left: edgeX }}>
-          <span className="r4-gb-edgecap">same amount</span>
-        </span>
-        <span className="r4-gb-counttag" style={{ left: edgeX / 2 }}>{num} of {den}</span>
-      </div>
-      {lastK > 1 && (
-        <div className="r4-gb-divrow">
-          <span className="r4-gb-div">÷{lastK}</span>
-          <span className="r4-gb-div">÷{lastK}</span>
-          <span className="r4-gb-divone">÷{lastK}/{lastK} = ÷1</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── MC chip lists for identify + pick ───────────────────────────────────────
+// ── MC chip list for identify ────────────────────────────────────────────────
 const IDENTIFY_CHOICES = ["8/12", "8/4", "4/8", "12/8"];
-// Pick stage: the child selects from a short list of equivalent / wrong pairs.
-const PICK_TOP_CHOICES    = [2, 4, 8, 3];   // 2 is correct; 4 = 4/6; 8 = 8/12; 3 wrong
-const PICK_BOTTOM_CHOICES = [3, 6, 12, 4];  // 3 is correct; 6 = 4/6; 12 = 8/12; 4 wrong
+// (The pick stage no longer uses fixed MC lists — it uses the shared
+// DigitGrid drag-to-place number picker, building any top/bottom from 0–9.)
 
 export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRecipe = null, onReturnToKitchen }) {
   // ── bar state (bundle / lowest / bigbundle) ───────────────────────────────
@@ -114,16 +57,27 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
   const [divs, setDivs] = useState([]);
   const [fuseTick, setFuseTick] = useState(0);
   const [bounceK, setBounceK] = useState(0);
+  // True once the child has performed at least one bundle action this stage —
+  // gates the answer-bar Check button (the grading is no longer auto-run).
+  const [bundled, setBundled] = useState(false);
 
-  // ── slate answer (numbers stage) ─────────────────────────────────────────
-  const [slate, setSlate] = useState({ n: "", d: "" });
 
   // ── identify MC answer ────────────────────────────────────────────────────
   const [identPick, setIdentPick] = useState(null);
 
-  // ── pick MC answer (top + bottom) ────────────────────────────────────────
+  // ── pick answer (top + bottom) — the shared drag-to-place number model ────
+  // pickTop/pickBottom hold the committed slot values; `picked` is the armed
+  // digit (chosen in the grid, not yet dropped). Same pattern as AppDen/AppNum:
+  // tap a digit to arm it, then drag it onto a slot (or tap an armed slot).
   const [pickTop, setPickTop] = useState(null);
   const [pickBottom, setPickBottom] = useState(null);
+  const [picked, setPicked] = useState(null);
+  const togglePicked = (k) => setPicked((c) => (c === k ? null : k));
+  // numerator accepts any digit; denominator refuses 0 (can't divide by zero).
+  const numArmed = picked != null;
+  const denArmed = picked != null && picked >= 1;
+  const placeTop = (k) => { if (solvedRef.current) return; const v = k ?? picked; if (v == null) return; setPickTop(v); setPicked(null); };
+  const placeBottom = (k) => { if (solvedRef.current) return; const v = k ?? picked; if (v == null || v < 1) return; setPickBottom(v); setPicked(null); };
 
   // ── drag state (bundle / lowest / bigbundle) ─────────────────────────────
   const [drag, setDrag] = useState(null);
@@ -144,9 +98,9 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     introFor: (s) => initialStatus(s),
     resetStage: () => {
       setNum(START_NUM); setDen(START_DEN); setDivs([]); setFuseTick(0); setBounceK(0);
-      setSlate({ n: "", d: "" });
+      setBundled(false);
       setIdentPick(null);
-      setPickTop(null); setPickBottom(null);
+      setPickTop(null); setPickBottom(null); setPicked(null);
     },
     stumpingRecipe,
     inKitchen: false,
@@ -155,15 +109,16 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
 
   const {
     stage, goStage, nextStage,
-    emit, reportAttempt, applyEngineDecision,
+    emit, reportAttempt, flashBad,
     solved, setSolved, solvedRef, stars, setStars, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef, stageRef,
+    sayPhase, speaking, selfCorrectionsRef, stageRef,
   } = sc;
 
   // ── identity from registry ────────────────────────────────────────────────
   const ident = useLessonIdentity("simp");
-  const L = LESSONS.simp;
-  const layout = L?.layout || { railW: 452, footH: 150 };
+  // Wireframe sizing: no per-room railW/footH declared → shell defaults
+  // (railW 396, footH floored to 196 per the Wave-F contract §5).
+  const RAIL_W = 396, FOOT_H = 196;
   const tabStages = ident.stages.map((s, i) => ({
     key: STAGE_IDS[i],
     badge: s.badge,
@@ -172,19 +127,16 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
   }));
 
   // ── derived ───────────────────────────────────────────────────────────────
-  const UNIT = SPAN;
   const isFewest = gcd(num, den) === 1;
-  const barRightX = ORIGIN + VALUE * UNIT;
   const lastK = divs.length ? divs[divs.length - 1] : 0;
 
   function initialStatus(s) {
     switch (s) {
       case "identify":   return { tone: "normal", text: "Twelve cells, eight shaded — count them up and name the fraction. Which choice shows how many are shaded out of how many total?" };
-      case "bundle":     return { tone: "normal", text: "Drag the ÷2 bundle tool onto the bar. Every two cells merge into one — 12 becomes 6, 8 becomes 4. The red edge does not move: 8/12 and 4/6 are the same amount." };
+      case "bundle":     return { tone: "normal", text: "Drag the ÷2 bundle tool onto the box. Every two cells merge into one — 12 becomes 6, 8 becomes 4. The red edge does not move: 8/12 and 4/6 are the same amount." };
       case "lowest":     return { tone: "normal", text: "Keep bundling until no group fits anymore. When nothing divides both top and bottom evenly, you're at the simplest name — the fewest possible pieces." };
       case "bigbundle":  return { tone: "normal", text: "One big bundle jumps straight to simplest. The biggest number that divides both 8 and 12 is 4 — drag ÷4 to reach 2/3 in a single move." };
-      case "pick":       return { tone: "normal", text: "Pick the top and bottom that keep the same amount as 8/12 but use the fewest pieces. 4/6 matches too — but 2/3 is as low as it goes." };
-      case "numbers":    return { tone: "normal", text: "No picture — just the numbers. Write 8/12 in lowest terms: divide top and bottom by their greatest common factor." };
+      case "pick":       return { tone: "normal", text: "Pick the top and bottom that keep the same amount as 8/12 but use the fewest pieces. Reduce it as far as it will go." };
       default:           return { tone: "normal", text: "" };
     }
   }
@@ -193,60 +145,114 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
   // For "bundle" stage: only ÷2, expected to reach 4/6 (one step).
   // For "lowest" stage: ÷2 or ÷3, expected to reach lowest terms.
   // For "bigbundle" stage: only ÷4 (GCF), should reach lowest in one move.
+  // fuse() ONLY records the bundled fraction now — it no longer grades. The
+  // child manipulates the box freely, then presses Check (submitBundle) to be
+  // graded. This keeps the explicit Check gate consistent with the MC stages.
   function fuse(k) {
     if (solvedRef.current) return;
+    // Big Bundle (step 4): reach simplest in ONE move with the GREATEST common
+    // factor. Any other tool is REJECTED on the first move — even one that divides
+    // evenly (e.g. ÷2 on 8/12) — and the child is pushed toward the GCF. (The
+    // bundle/lowest stages still accept any even divisor, one step at a time.)
+    if (stageRef.current === "bigbundle" && divs.length === 0 && k !== gcd(num, den)) {
+      const g = gcd(num, den);
+      const even = num % k === 0 && den % k === 0;
+      setBounceK(k); setCook("think");
+      setTimeout(() => setBounceK(0), 460);
+      setStatus({ tone: "warn", text: even
+        ? `÷${k} would work, but Big Bundle reaches the simplest name in ONE move — use the BIGGEST factor. The greatest common factor of ${num} and ${den} is ${g}, so drag ÷${g}.`
+        : `÷${k} doesn't come out even. The greatest common factor of ${num} and ${den} is ${g} — drag ÷${g} to bundle it all at once.` });
+      return;
+    }
     if (num % k === 0 && den % k === 0) {
       const nn = num / k, nd = den / k;
       setNum(nn); setDen(nd);
       setDivs((d) => [...d, k]);
       setFuseTick((t) => t + 1);
+      setBundled(true);
       setCook("idle");
-      const isLowest = gcd(nn, nd) === 1;
       selfCorrectionsRef.current += 1;
       emit({ type: "place_block", payload: { node_id: "SIMPLIFY", k } });
-
-      if (stageRef.current === "bundle") {
-        // Bundle stage: ONE step of ÷2. Reach 4/6 → done.
-        if (nd === 6 && nn === 4) {
-          setSolved(true); setStars(3); setCook("cheer");
-          setStatus({ tone: "ok", text: "8/12 = 4/6 — the ÷2 bundle merged every two cells into one. Same red amount, fewer pieces. Next stage!" });
-          say("r4Bigger");
-          const dec = reportAttempt({ correct: true, answerValue: [nn, nd], errorSignature: null, stars: 3 });
-          setTimeout(() => applyEngineDecision(dec, true), 1500);
-        } else {
-          setStatus({ tone: "ok", text: `Grouped! ${nn}/${nd} — keep going if you need, or move on.` });
-        }
-      } else if (stageRef.current === "lowest") {
-        if (isLowest) {
-          setSolved(true); setStars(3); setCook("cheer");
-          setStatus({ tone: "ok", text: `Lowest terms! ${nn}/${nd} — no group divides both evenly anymore. That's the simplest name for the same amount. Next stage!` });
-          say("r4Fewest");
-          const dec = reportAttempt({ correct: true, answerValue: [nn, nd], errorSignature: null, stars: 3 });
-          setTimeout(() => applyEngineDecision(dec, true), 1500);
-        } else {
-          setStatus({ tone: "ok", text: `Bigger cells — ${nn} out of ${nd}, still the same amount. Keep bundling until no group fits.` });
-          say("r4Bigger");
-        }
-      } else if (stageRef.current === "bigbundle") {
-        if (isLowest) {
-          setSolved(true); setStars(3); setCook("cheer");
-          setStatus({ tone: "ok", text: `One big bundle — ÷${k} took 8/12 straight to ${nn}/${nd}! That's the GCF shortcut: the biggest shared factor in a single move. Next stage!` });
-          say("r4Fewest");
-          const dec = reportAttempt({ correct: true, answerValue: [nn, nd], errorSignature: null, stars: 3 });
-          setTimeout(() => applyEngineDecision(dec, true), 1500);
-        } else {
-          setStatus({ tone: "ok", text: `Grouped to ${nn}/${nd}. For the big bundle, try a factor that divides BOTH 8 and 12 all the way to lowest terms in one move.` });
-        }
-      }
+      setStatus({ tone: "normal", text: `Bundled by ÷${k} — ${nn}/${nd}. Keep bundling or press Check when you're ready.` });
     } else {
       setBounceK(k); setCook("think");
       setTimeout(() => setBounceK(0), 460);
       setStatus({ tone: "warn", text: `÷${k} doesn't come out even — ${num} and ${den} can't both split into ${k}s. Pick a number that divides both evenly.` });
-      say("r4Uneven");
     }
   }
 
-  // ── drag-to-place (same pattern as AppR4) ────────────────────────────────
+  // ── undo a bundle (bundle / lowest / bigbundle) ───────────────────────────
+  // Reverses the LAST ÷k by multiplying both top and bottom back by k and
+  // popping it off the history. The cells un-merge (rows grow back) and the red
+  // guide edge stays put — same amount, more pieces again. Once nothing is left
+  // to undo, the answer-bar Check gate (bundled) closes again.
+  function unfuse() {
+    if (solvedRef.current) return;
+    if (!divs.length) return;
+    const k = divs[divs.length - 1];
+    const nn = num * k, nd = den * k;
+    setNum(nn); setDen(nd);
+    setDivs((d) => d.slice(0, -1));
+    setFuseTick((t) => t + 1);
+    setBounceK(0);
+    setCook("idle");
+    setBundled(divs.length > 1);
+    setStatus({ tone: "normal", text: `Undid ÷${k} — back to ${nn}/${nd}. Same red amount, more pieces. Bundle again or press Check when you're ready.` });
+  }
+
+  // ── bundle submit (bundle / lowest / bigbundle) ──────────────────────────
+  // Grades the CURRENT bundled fraction on an explicit Check click.
+  function submitBundle() {
+    if (solvedRef.current) return;
+    if (!bundled) {
+      setCook("think");
+      setStatus({ tone: "warn", text: "Bundle the cells first — drag a ÷ tool onto the box (or tap it)." });
+      return;
+    }
+    const nn = num, nd = den;
+    const isLowest = gcd(nn, nd) === 1;
+    const lastDiv = divs.length ? divs[divs.length - 1] : 0;
+
+    if (stageRef.current === "bundle") {
+      // Bundle stage: ONE step of ÷2. Reach 4/6 → correct.
+      if (nn === 4 && nd === 6) {
+        setSolved(true); setStars(3); setCook("cheer");
+        setStatus({ tone: "ok", text: "8/12 = 4/6 — the ÷2 bundle merged every two cells into one. Same red amount, fewer pieces. Next stage!" });
+        reportAttempt({ correct: true, answerValue: [nn, nd], errorSignature: null, stars: 3 });
+      } else {
+        flashBad();
+        setStatus({ tone: "warn", text: `Not 4/6 yet — ${nn}/${nd}. This stage wants a single ÷2 bundle: 8/12 → 4/6.` });
+        reportAttempt({ correct: false, answerValue: [nn, nd], errorSignature: "wrong_bundle", stars: 0 });
+      }
+    } else if (stageRef.current === "lowest") {
+      if (isLowest) {
+        setSolved(true); setStars(3); setCook("cheer");
+        setStatus({ tone: "ok", text: `Lowest terms! ${nn}/${nd} — no group divides both evenly anymore. That's the simplest name for the same amount. Next stage!` });
+        reportAttempt({ correct: true, answerValue: [nn, nd], errorSignature: null, stars: 3 });
+      } else {
+        flashBad();
+        setStatus({ tone: "warn", text: `Not lowest yet — ${nn}/${nd} still has a common factor. Keep bundling until no group fits, then Check.` });
+        reportAttempt({ correct: false, answerValue: [nn, nd], errorSignature: "not_simplified", stars: 0 });
+      }
+    } else if (stageRef.current === "bigbundle") {
+      if (isLowest && lastDiv === 4) {
+        setSolved(true); setStars(3); setCook("cheer");
+        setStatus({ tone: "ok", text: `One big bundle — ÷${lastDiv} took 8/12 straight to ${nn}/${nd}! That's the GCF shortcut: the biggest shared factor in a single move. Next stage!` });
+        reportAttempt({ correct: true, answerValue: [nn, nd], errorSignature: null, stars: 3 });
+      } else if (isLowest) {
+        // Reached lowest terms, but not via the single ÷4 GCF move.
+        setSolved(true); setStars(2); setCook("cheer");
+        setStatus({ tone: "ok", text: `${nn}/${nd} is lowest terms — but the big bundle is one ÷4 move. Try ÷4 next time to jump straight there.` });
+        reportAttempt({ correct: true, answerValue: [nn, nd], errorSignature: "not_one_move", stars: 2 });
+      } else {
+        flashBad();
+        setStatus({ tone: "warn", text: `Not simplest yet — ${nn}/${nd}. For the big bundle, use ÷4 (the GCF) to divide BOTH 8 and 12 all the way down in one move.` });
+        reportAttempt({ correct: false, answerValue: [nn, nd], errorSignature: "wrong_amount", stars: 0 });
+      }
+    }
+  }
+
+  // ── drag-to-place (same pattern as AppR4's knife drop) ───────────────────
   function overDrop(ev) {
     const r = barDropRef.current ? barDropRef.current.getBoundingClientRect() : null;
     if (!r) return false;
@@ -256,7 +262,9 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
   }
   function grabChip(e, k) {
     if (solvedRef.current) return;
-    if (num % k !== 0 || den % k !== 0) return;
+    // Every ÷ tool is draggable — even ones that won't divide evenly. The child
+    // can attempt any; on release fuse(k) applies it ONLY if it comes out even,
+    // otherwise nothing changes (a gentle bounce + nudge). No grab-time blocking.
     if (e && e.preventDefault) e.preventDefault();
     if (!e || e.clientX == null) return;
     const startX = e.clientX, startY = e.clientY;
@@ -290,9 +298,7 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     if (identPick === "8/12") {
       setSolved(true); setStars(3); setCook("cheer");
       setStatus({ tone: "ok", text: "8 out of 12 — that's 8/12. Lots of little pieces for this amount; next we'll bundle them down to the simplest name." });
-      say("r4Fewest");
-      const dec = reportAttempt({ correct: true, answerValue: identPick, errorSignature: null, stars: 3 });
-      setTimeout(() => applyEngineDecision(dec, true), 1500);
+      reportAttempt({ correct: true, answerValue: identPick, errorSignature: null, stars: 3 });
     } else {
       setCook("think");
       setStatus({ tone: "warn", text: `${identPick} is not right — count the shaded cells (top) and the total cells (bottom). How many shaded? How many total?` });
@@ -313,9 +319,7 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     if (fully) {
       setSolved(true); setStars(3); setCook("cheer");
       setStatus({ tone: "ok", text: `${tn}/${td} — same red amount as 8/12 and the fewest possible pieces. That's the simplest name! Next stage.` });
-      say("r4Fewest");
-      const dec = reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: null, stars: 3 });
-      setTimeout(() => applyEngineDecision(dec, true), 1500);
+      reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: null, stars: 3 });
     } else if (sameValue) {
       setCook("think");
       setStatus({ tone: "warn", text: `${tn}/${td} has the right amount — but it's not the simplest. Can you find a pair with even fewer pieces?` });
@@ -327,81 +331,39 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     }
   }
 
-  // ── numbers submit ────────────────────────────────────────────────────────
-  function submitNumbers() {
-    if (solvedRef.current) return;
-    const tn = parseInt(slate.n, 10), td = parseInt(slate.d, 10);
-    if (!(tn > 0) || !(td > 0)) {
-      setCook("think");
-      setStatus({ tone: "warn", text: "Write the equivalent fraction — a top number and a bottom number." });
-      return;
-    }
-    const sameValue = tn * START_DEN === td * START_NUM;
-    if (!sameValue) {
-      setCook("think");
-      setStatus({ tone: "warn", text: `${tn}/${td} is not the same amount as 8/12. Divide the top and bottom by the same number — that's dividing by 1, so the value can't change.` });
-      say("r4KeepSame");
-      reportAttempt({ correct: false, answerValue: [tn, td], errorSignature: null, stars: 0 });
-      return;
-    }
-    const fully = gcd(tn, td) === 1;
-    const st = fully ? 3 : 2;
-    setSolved(true); solvedRef.current = true; setStars(st); setCook("cheer");
-    setStatus({ tone: "ok", text: fully
-      ? `Yes! ${START_NUM}/${START_DEN} = ${tn}/${td} — the same amount, its simplest name!`
-      : `Right — ${tn}/${td} is the same amount as ${START_NUM}/${START_DEN}, but it can simplify further. Divide top and bottom once more to reach the smallest pair.` });
-    say(fully ? "r3FullMarks" : "r4Bigger");
-    const dec = reportAttempt({ correct: fully, answerValue: [tn, td], errorSignature: fully ? null : "not_simplified", stars: st });
-    setTimeout(() => applyEngineDecision(dec, true), 1500);
-  }
-
   function reset() { goStage(stageRef.current); }
-
-  const RLAB = [[0, "0"], [den, "1"]];
 
   // Bundle stage only offers ÷2; lowest stage offers ÷2 and ÷3 (step-by-step);
   // bigbundle stage offers ÷2, ÷3, ÷4 (decoy included so ÷4 is the GCF pick).
   const FUSE_CHOICES =
     stage === "bundle"    ? [2] :
     stage === "lowest"    ? [2, 3] :
-    stage === "bigbundle" ? [2, 3, 4] :
+    stage === "bigbundle" ? [4] :
     [];
 
   // "Ready to check" per stage.
-  const slateFilled = slate.n !== "" && slate.d !== "";
   const answerReady = !solved && (
     stage === "identify"  ? !!identPick :
-    stage === "bundle" || stage === "lowest" || stage === "bigbundle" ? isFewest :
+    stage === "bundle" || stage === "lowest" || stage === "bigbundle" ? bundled :
     stage === "pick"   ? (pickTop !== null && pickBottom !== null) :
-    stage === "numbers" ? slateFilled :
     false
   );
 
   // ── shared chrome ─────────────────────────────────────────────────────────
-  const Goal = (
-    <LessonGoal say={say} speaking={speaking} voiceKey="simpGoal" voxSpeaker="mom">
-      {renderGoal(L?.goals?.[stage] || "")}
-    </LessonGoal>
-  );
-
-  const Band = (
-    <QuestionBand
-      lead="the question"
-      expr={<BigFrac num={START_NUM} den={START_DEN} />}
-      answer={solved ? <BigFrac num={LOW_NUM} den={LOW_DEN} /> : "?"}
-    />
-  );
-
+  // Wave-F: no goal banner, no QuestionBand. The instruction copy lives in
+  // <RailInstruction> (the first rail card) per stage below. Tutor ribbon is
+  // corrective-only. The Read-aloud pill speaks the stage's narration.
   const Tutor = <TutorRibbon cook={cook} status={status} />;
 
+  // The in-flight ÷k bundle tool following the cursor (drag ghost).
   const Ghost = drag && createPortal(
     <div
-      className={"r4-drag-ghost r4-drag-ghost-fuse" + (hotDrop ? " is-hot" : "")}
-      style={{ left: drag.x, top: drag.y, position: "fixed" }}
+      className={"eq-tool eq-knife-ghost" + (hotDrop ? " is-hot" : "")}
+      style={{ left: drag.x, top: drag.y, position: "fixed", transform: "translate(-50%,-50%)", zIndex: 9999, pointerEvents: "none" }}
       aria-hidden="true"
     >
-      <span className="r4-fuse-k">{drag.k}</span>
-      <span className="r4-drag-ghost-lab">Bundle by {drag.k}</span>
+      <span className="eq-tool-x">÷{drag.k}</span>
+      <span className="eq-tool-lab">bundle every {drag.k} cells</span>
     </div>,
     document.body
   );
@@ -413,31 +375,32 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     body = <GenPracticeBoard skill="SIMPLIFY" scaffold={sc} />;
 
   } else if (stage === "identify") {
-    // Stage 1: MC chips — pick the fraction name.
+    // Stage 1: MC chips — pick the fraction name. The box is the shared EqBox
+    // (3 cols × 4 rows, 2 columns shaded → 8/12), matching room-simp.js.
     body = (
       <LessonBoard
         variant="split"
-        footHeight={layout.footH}
-        railWidth={layout.railW}
+        footHeight={FOOT_H}
+        railWidth={RAIL_W}
         rowGap={12}
         marginTop={8}
         rail={
-          <div className="panel">
-            <h3 className="pick-title">Name the Shaded Part</h3>
-            <div className="hint">
-              The box has <b>12</b> equal cells and <b>8</b> are shaded — count the top
-              (shaded) and the bottom (total) to name the fraction.
-            </div>
-          </div>
+          <RailInstruction
+            say={sayPhase} speaking={speaking} voxSpeaker="cook"
+            heading="Name the Shaded Part"
+          >
+            The box has <b>12</b> equal cells and <b>8</b> are shaded — count the top
+            (shaded) and the bottom (total) to name the fraction.
+          </RailInstruction>
         }
         stage={
-          <div className="canvas simp-identify-canvas">
-            <div className="simp-id-box-wrap">
+          <div className="eq-stage simp-identify-canvas">
+            <div className="eq-col">
               <span className="eq-lab">the box</span>
-              <SimpBox cols={3} rows={4} shadedCols={2} />
+              <EqBox cols={COLS} rows={4} shaded={2} guide />
             </div>
-            <div className="simp-id-choices">
-              <span className="simp-id-label">Which fraction?</span>
+            <div className="eq-col simp-id-choices">
+              <span className="eq-lab">Which fraction?</span>
               <div className="den-choices simp-mc-row">
                 {IDENTIFY_CHOICES.map((ch) => (
                   <button
@@ -463,7 +426,6 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
                 >{solved ? "Next →" : "Check"}</button>
               </div>
             </div>
-            <div className="r4-s-cap">{solved ? "8 shaded of 12 equal cells → 8/12" : "count the shaded cells (top) and the total cells (bottom)"}</div>
           </div>
         }
         tutor={Tutor}
@@ -475,61 +437,47 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     body = (
       <LessonBoard
         variant="split"
-        footHeight={layout.footH}
-        railWidth={layout.railW}
+        footHeight={FOOT_H}
+        railWidth={RAIL_W}
         rowGap={12}
         marginTop={8}
         rail={
-          <div className="panel">
-            <h3 className="pick-title">Pick the Simplest Name</h3>
-            <div className="hint">
-              The target is <b>8/12</b>. Choose a top and bottom that keep the
-              <b> same red amount</b> but use the <b>fewest pieces</b>. 4/6 matches
-              too — but <b>2/3</b> is as low as it goes.
-            </div>
-          </div>
+          <RailInstruction
+            say={sayPhase} speaking={speaking} voxSpeaker="cook"
+            heading="Pick the Simplest Name"
+          >
+            The target is <b>8/12</b>. <b>Pick a number</b>, then <b>drop it</b> on
+            the top or bottom to build a fraction with the <b>same red amount</b>
+            but the <b>fewest pieces</b>. Reduce it as far as it will go.
+          </RailInstruction>
         }
         stage={
-          <div className="canvas simp-pick-canvas">
-            <div className="simp-pick-cols">
-              <div className="simp-pick-group">
-                <span className="simp-pick-label">Top number</span>
-                <div className="simp-mc-col">
-                  {PICK_TOP_CHOICES.map((v) => (
-                    <button
-                      key={v}
-                      className={"simp-pick-chip" + (pickTop === v ? " is-on" : "") + (solved && v === LOW_NUM ? " is-correct" : "")}
-                      disabled={solved}
-                      onClick={() => { if (!solved) setPickTop(v); }}
-                    >{v}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="simp-pick-frac-preview">
-                <BigFrac
-                  num={pickTop !== null ? pickTop : "?"}
-                  den={pickBottom !== null ? pickBottom : "?"}
+          <div className="eq-stage simp-pick-canvas">
+            <DigitGrid mode="drag" selected={picked} onSelect={togglePicked} disabled={solved} />
+            <div className="simp-pick-build">
+              <div className="simp-pick-frac">
+                <DigitSlot
+                  className="simp-slot"
+                  value={pickTop}
+                  armed={numArmed && !solved}
+                  disabled={solved}
+                  onPlace={placeTop}
+                  aria-label="top number — drop a number here"
+                />
+                <span className="simp-pick-bar" />
+                <DigitSlot
+                  className="simp-slot"
+                  value={pickBottom}
+                  armed={denArmed && !solved}
+                  disabled={solved}
+                  onPlace={placeBottom}
+                  aria-label="bottom number — drop a number here"
                 />
               </div>
-              <div className="simp-pick-group">
-                <span className="simp-pick-label">Bottom number</span>
-                <div className="simp-mc-col">
-                  {PICK_BOTTOM_CHOICES.map((v) => (
-                    <button
-                      key={v}
-                      className={"simp-pick-chip" + (pickBottom === v ? " is-on" : "") + (solved && v === LOW_DEN ? " is-correct" : "")}
-                      disabled={solved}
-                      onClick={() => { if (!solved) setPickBottom(v); }}
-                    >{v}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="simp-pick-eq">
-                <span>=</span>
-              </div>
+              <div className="simp-pick-eq"><span>=</span></div>
               <div className="simp-pick-target">
                 <span className="simp-pick-label">target</span>
-                <BigFrac num={START_NUM} den={START_DEN} />
+                <BigFrac n={START_NUM} d={START_DEN} />
               </div>
             </div>
           </div>
@@ -546,71 +494,6 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
                 >{solved ? "Next →" : "Check"}</button>
               </div>
             </div>
-            <div className="r4-s-cap">{solved ? `${LOW_NUM}/${LOW_DEN} — same amount, fewest pieces — simplest` : "pick the top and bottom that match 8/12 with the fewest pieces"}</div>
-          </div>
-        }
-        tutor={Tutor}
-      />
-    );
-
-  } else if (stage === "numbers") {
-    // Stage 6: bare Slate.
-    const slateDen = LOW_DEN;
-    body = (
-      <LessonBoard
-        variant="split"
-        footHeight={layout.footH}
-        railWidth={layout.railW}
-        rowGap={12}
-        marginTop={8}
-        rail={
-          <div className="panel">
-            <h3 className="pick-title">Lowest Terms</h3>
-            <div className="hint">No tools — just the numbers. Divide the top and bottom by their largest shared factor (dividing by 1), then write the equivalent fraction in lowest terms on the Slate.</div>
-            <div className="r4-card">
-              <BigFrac num={START_NUM} den={START_DEN} />
-              <div className="r4-card-note">write this in<br /><b>lowest terms</b></div>
-            </div>
-          </div>
-        }
-        stage={
-          <div className="canvas r4-s-canvas">
-            <div className="r4-bare-eq">
-              <BigFrac num={START_NUM} den={START_DEN} />
-              <span className="r4-bigeq-op">=</span>
-              <span className="r4-bigeq-q">{solved ? <BigFrac num={LOW_NUM} den={LOW_DEN} /> : "?"}</span>
-            </div>
-          </div>
-        }
-        answer={
-          <div className="lbar r4-s-answer">
-            <div className="r4-s-eqrow">
-              <span className="r4-s-frac"><BigFrac num={START_NUM} den={START_DEN} /></span>
-              <span className="r4-s-eq">=</span>
-              <span className="r4-s-slate">
-                <Slate
-                  slots={[{ key: "n", label: "top" }, { key: "d", label: "bottom" }]}
-                  values={slate}
-                  onChange={(k, v) => setSlate((s) => ({ ...s, [k]: onlyDigits(v) }))}
-                  onSubmit={submitNumbers}
-                  layout="fraction"
-                  den={slateDen}
-                  disabled={solved}
-                  autoFocusKey={solved ? undefined : "n"}
-                  ariaLabel="write the simplest fraction"
-                />
-              </span>
-              <div className="r4-s-marks">
-                {solved && <Rosette count={stars} />}
-                <button
-                  className={"check" + (solved ? " done" : answerReady ? " ready" : "")}
-                  onClick={solved ? nextStage : submitNumbers}
-                >{solved ? "Done" : "Check"}</button>
-              </div>
-            </div>
-            <div className="r4-s-cap">{solved
-              ? (stars === 3 ? `simplest name — ${START_NUM}/${START_DEN} = ${slate.n}/${slate.d}` : "same amount, but it can simplify further")
-              : "write the equivalent fraction on the Slate, then Check"}</div>
           </div>
         }
         tutor={Tutor}
@@ -618,80 +501,83 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     );
 
   } else {
-    // bundle / lowest / bigbundle — bar with drag-to-place group tool.
+    // bundle / lowest / bigbundle — the shared EqBox with a drag-to-place ÷k
+    // bundle rack. Bundling MERGES cells: rows shrink (4 → 2 → 1) while the
+    // shaded columns and the fixed red guide edge never move.
+    const rows = den / COLS;
+    const shaded = shadedCols(num, den);
     const railNode = (
-      <div className="panel">
-        <h3 className="pick-title">
-          {stage === "bundle" ? "Bundle Every Two Cells" :
-           stage === "lowest" ? "Keep Bundling" :
-           "One Big Bundle"}
-        </h3>
-        <div className="hint">
-          {stage === "bundle" && <>Drag the <b>÷2</b> tool onto the bar. Every two cells merge into one — 12 becomes 6, 8 becomes 4. The red edge does not move: <b>8/12 = 4/6</b>, the same amount with fewer pieces.</>}
-          {stage === "lowest" && <>Bundle again and again until <b>no tool</b> divides both top and bottom evenly. When nothing fits, you're at the <b>simplest name</b>.</>}
-          {stage === "bigbundle" && <>One big bundle jumps straight to simplest. Drag the <b>÷4</b> tool — the greatest common factor of 8 and 12 — to reach 2/3 in a single move.</>}
-        </div>
-        <div className="r4-fuse-tray">
-          {FUSE_CHOICES.map((k) => {
-            const even = num % k === 0 && den % k === 0;
-            return (
-              <button key={k}
-                className={"r4-fuse-btn" + (bounceK === k ? " bounce" : "") + (drag && drag.k === k ? " is-dragging" : "")}
-                style={{ touchAction: "none" }}
-                disabled={solved || !even}
-                onPointerDown={(e) => grabChip(e, k)}
-                onClick={(e) => { if (suppressClickRef.current) { suppressClickRef.current = false; return; } if (e.detail !== 0) return; fuse(k); }}
-                title={`Drag onto the bar to bundle cells by ${k}`}
-              >
-                <span className="r4-fuse-k">{k}</span>
-                <span className="r4-fuse-txt">
-                  <span className="r4-fuse-title">Bundle by {k}</span>
-                  <span className="r4-fuse-sub">{even ? `÷${k} top & bottom` : "won't come out even"}</span>
-                </span>
+      <RailInstruction
+        say={sayPhase} speaking={speaking} voxSpeaker="cook"
+        heading={
+          stage === "bundle" ? "Bundle Every Two Cells" :
+          stage === "lowest" ? "Keep Bundling" :
+          "One Big Bundle"
+        }
+        extra={
+          <>
+            <EqTools
+              sizes={FUSE_CHOICES}
+              on={null}
+              divide
+              renderTool={(k) => {
+                const even = num % k === 0 && den % k === 0;
+                return (
+                  <div
+                    className={"eq-tool is-draggable" + (bounceK === k ? " bounce" : "") + (drag && drag.k === k ? " is-dragging" : "") + (solved ? " is-frozen" : "")}
+                    style={{ touchAction: "none" }}
+                    role="button"
+                    tabIndex={solved ? -1 : 0}
+                    onPointerDown={solved ? undefined : (e) => grabChip(e, k)}
+                    onClick={solved ? undefined : (e) => {
+                      if (suppressClickRef.current) { suppressClickRef.current = false; return; }
+                      if (e.detail !== 0) return;
+                      fuse(k);
+                    }}
+                    onKeyDown={solved ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fuse(k); } }}
+                    title={`Drag onto the box to bundle cells by ${k}`}
+                  >
+                    <span className="eq-tool-x">÷{k}</span>
+                    <span className="eq-tool-lab">{even ? `bundle every ${k} cells` : "won't come out even"}</span>
+                  </div>
+                );
+              }}
+            />
+            <div className="eq-tool-hint">
+              {isFewest ? "simplest name — nothing bundles anymore" : "drag a tool onto the box (or tap)"}
+            </div>
+            {divs.length > 0 && !solved && (
+              <button type="button" className="eq-undo" onClick={unfuse}
+                      title="Undo the last bundle">
+                <span className="eq-undo-icon" aria-hidden="true">↺</span> undo bundle
               </button>
-            );
-          })}
-        </div>
-        <div className="r4-meter">
-          <div className="r4-meter-row">
-            <span className="r4-meter-lab">filled cells</span>
-            <span className={"r4-meter-val" + (isFewest ? " fewest" : "")}>{num}</span>
-          </div>
-          <div className="r4-dots">
-            {Array.from({ length: START_NUM }).map((_, i) => (
-              <span key={i} className={"r4-dot" + (i < num ? (isFewest ? " fewest" : "") : " gone")} />
-            ))}
-          </div>
-          <div className="r4-meter-note">{isFewest ? "Lowest terms — simplest name. Same amount as 8/12." : "Bundle to reach the simplest name."}</div>
-        </div>
-      </div>
+            )}
+          </>
+        }
+      >
+        {stage === "bundle" && <>Drag the <b>÷2</b> tool onto the box. Every two cells merge into one — 12 becomes 6, 8 becomes 4. The red edge does not move: <b>8/12 = 4/6</b>, the same amount with fewer pieces.</>}
+        {stage === "lowest" && <>Bundle again and again until <b>no tool</b> divides both top and bottom evenly. When nothing fits, you're at the <b>simplest name</b>.</>}
+        {stage === "bigbundle" && <>One big bundle jumps straight to simplest. Drag the <b>÷4</b> tool — the greatest common factor of 8 and 12 — to reach 2/3 in a single move.</>}
+      </RailInstruction>
     );
 
     const canvas = (
-      <div
-        ref={barDropRef}
-        className={"canvas r4-s-canvas" + (drag ? " r4-droptarget" : "") + (drag && hotDrop ? " is-hot" : "")}
-        id="simpcanvas"
-      >
-        <div className={"eqstate eqfloat r4-simplestflag" + (isFewest ? " ok" : "")}>
-          {isFewest ? "✓ simplest name" : "bundle it down"}
-        </div>
-        <div className="r4-guide" style={{ left: barRightX, top: BAR_Y - 26, height: (LINE_Y - BAR_Y) + 26 + 6 }}>
-          <span className="r4-guide-cap">same amount</span>
-        </div>
-        <div className="nline" style={{ top: LINE_Y, left: ORIGIN, right: "auto", width: UNIT }} />
-        {Array.from({ length: den + 1 }).map((_, k) => (
-          <span key={k} className="ntick" style={{ left: ORIGIN + (k / den) * UNIT, top: LINE_Y, height: (k === 0 || k === den) ? 14 : 8 }} />
-        ))}
-        {RLAB.map(([k, lab]) => (
-          <span key={k} className="nlab ng" style={{ left: ORIGIN + (k / den) * UNIT, top: LINE_Y + 12 }}>{lab}</span>
-        ))}
-        <div className="r4-bar" style={{ left: ORIGIN, top: BAR_Y }}>
-          <div className="btag">
-            <BigFrac num={num} den={den}><DivChips divs={divs} /></BigFrac>
+      <div className="eq-stage simp-bundle-stage">
+        <div className="eq-col">
+          <span className="eq-lab">{isFewest ? "simplest name" : "bundle it down"}</span>
+          <div
+            ref={barDropRef}
+            className={"eq-cut-target" + (drag ? "" : " is-cut") + (drag && hotDrop ? " is-hot" : "")}
+          >
+            <EqBox cols={COLS} rows={rows} shaded={shaded} guide />
           </div>
-          <GroupBar num={num} den={den} unit={UNIT} animKey={fuseTick} dim={false} lastK={lastK} />
-          <div className="r4-valnote">same amount: {START_NUM}/{START_DEN} of a tray</div>
+          <EqFrac n={num} d={den} />
+        </div>
+        <div className="eq-eq">{lastK > 0 ? `÷${lastK}` : "="}</div>
+        <div className="eq-col">
+          <span className="eq-lab">start — {START_NUM}/{START_DEN}</span>
+          <EqBox cols={COLS} rows={4} shaded={2} guide />
+          <EqFrac n={START_NUM} d={START_DEN} />
         </div>
       </div>
     );
@@ -699,24 +585,18 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     const answerNode = (
       <div className="lbar r4-s-answer">
         <div className="r4-s-eqrow">
-          <span className="r4-s-frac"><BigFrac num={num} den={den} /></span>
+          <span className="r4-s-frac"><BigFrac n={num} d={den} /></span>
           <span className="r4-s-eq">=</span>
-          <span className="r4-s-amt">{START_NUM}/{START_DEN} of a tray</span>
+          <span className="r4-s-frac"><BigFrac n={START_NUM} d={START_DEN} /></span>
+          <span className="r4-s-amt">{lastK > 1 ? `same amount — top ÷${lastK}, bottom ÷${lastK}` : "same amount"}</span>
           <div className="r4-s-marks">
             {solved && <Rosette count={stars} />}
             <button
-              className={"check" + (solved ? " done" : "")}
-              onClick={solved ? nextStage : undefined}
-              disabled={!solved}
-            >{solved ? "Next →" : stage === "bundle" ? "Bundle to 4/6" : stage === "bigbundle" ? "One big bundle" : "Bundle to simplest"}</button>
+              className={"check" + (solved ? " done" : answerReady ? " ready" : "")}
+              onClick={solved ? nextStage : submitBundle}
+              disabled={!solved && !answerReady}
+            >{solved ? "Next →" : "Check"}</button>
           </div>
-        </div>
-        <div className="r4-s-cap">
-          {solved
-            ? (stage === "bundle" ? "8/12 = 4/6 — same amount, fewer pieces"
-               : stage === "bigbundle" ? `÷4 straight to ${num}/${den} — the GCF shortcut`
-               : `lowest terms — ${num}/${den} is the simplest name for 8/12`)
-            : "drag a bundle tool onto the bar — the filled edge can't move"}
         </div>
       </div>
     );
@@ -724,8 +604,8 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
     body = (
       <LessonBoard
         variant="split"
-        footHeight={layout.footH}
-        railWidth={layout.railW}
+        footHeight={FOOT_H}
+        railWidth={RAIL_W}
         rowGap={12}
         marginTop={8}
         rail={railNode}
@@ -750,45 +630,9 @@ export default function AppSimp({ no, title, onBack, onRewatchIntro, stumpingRec
         current: stage,
         onSelect: goStage,
       }}
-      band={stage !== "identify" && stage !== "practice" ? Band : null}
-      goal={Goal}
       extra={Ghost}
     >
       {body}
     </LessonShell>
-  );
-}
-
-// ── SimpBox: a simple CSS grid of cells mirroring the wireframe's eqBox ─────
-// cols × rows cells, shadedCols columns filled. Kept local — it's only used
-// in the identify stage. The real manipulative is the GroupBar (AppR4).
-function SimpBox({ cols, rows, shadedCols }) {
-  const total = cols * rows;
-  const cells = Array.from({ length: total }, (_, i) => {
-    const col = i % cols;
-    return col < shadedCols;
-  });
-  return (
-    <div className="simp-box" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}>
-      {cells.map((filled, i) => (
-        <div key={i} className={"simp-box-cell" + (filled ? " is-filled" : "")} />
-      ))}
-    </div>
-  );
-}
-
-// ── render registry goal string into JSX ─────────────────────────────────────
-function renderGoal(src) {
-  if (!src) return "";
-  const filled = src.replace(/\{n\}/g, String(START_NUM)).replace(/\{d\}/g, String(START_DEN));
-  const parts = filled.split(/(\*[^*]+\*)/g).filter(Boolean);
-  return (
-    <>
-      {parts.map((p, i) =>
-        p.startsWith("*") && p.endsWith("*")
-          ? <b key={i}>{p.slice(1, -1)}</b>
-          : <React.Fragment key={i}>{p}</React.Fragment>
-      )}
-    </>
   );
 }

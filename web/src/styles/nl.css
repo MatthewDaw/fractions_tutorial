@@ -19,23 +19,6 @@
 }
 .nl-line-wrap { position: relative; width: 720px; height: 220px; }
 
-/* the small italic caption under the ruler — echoes the .r4-s-cap / .r5 hint tone */
-.nl-cap {
-  font-family: var(--serif); font-style: italic; font-size: 14px;
-  color: var(--ink-mute); text-align: center;
-}
-
-/* ── the hint-rail mini fraction card (mirrors .r4-card / .r5-card spacing) ── */
-.nl-mini {
-  margin-top: 14px; display: flex; align-items: center; gap: 14px;
-  padding: 12px 14px; border: 1.5px solid var(--ink-soft);
-  background: rgba(28,22,18,0.02); border-radius: 2px;
-}
-.nl-mini-frac { display: inline-flex; }
-.nl-mini-note {
-  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
-}
-
 /* ── the answer row (inside the shared <AnswerBar>'s .lbar-eq) ──────────────── */
 .nl-ans-eqrow { display: flex; align-items: center; gap: 14px; min-height: 64px; }
 .nl-ans-lead {
@@ -57,10 +40,16 @@
    the rail holds the reusable unit piece the child drags. Mirrors the wireframe's
    block-stacking paradigm (.nbar/.plank/.piece/.nl-ghost-slot/.nl-drag-source). */
 .nl-bar { position: absolute; height: 56px; }
+/* the running total floats fully ABOVE the bar (bottom-anchored so it clears the
+   blocks no matter how tall the fraction renders — never overlapping the pieces) */
 .nl-bar-tag {
-  position: absolute; left: 50%; top: -34px; transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%);
   display: inline-flex;
 }
+/* once a piece is on the line the bar is tappable — tap to take the last one off */
+.nl-bar.is-editable { cursor: pointer; }
+.nl-bar.is-editable .nl-plank { transition: box-shadow .12s ease; }
+.nl-bar.is-editable:hover .nl-plank { box-shadow: 0 0 0 2px var(--red); }
 .nl-plank {
   display: flex; height: 56px; border: 2px solid var(--ink);
   border-radius: 3px; overflow: hidden; background: var(--paper-1);
@@ -105,14 +94,6 @@
 .nl-src-plank:active, .nl-src-plank.is-dragging { cursor: grabbing; opacity: .5; }
 .nl-src-hint {
   font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
-}
-
-/* bridge panel shown when a merged r1 tab is selected in AppNumberLine */
-.nl-r1-bridge {
-  display: flex; align-items: center; justify-content: center;
-  height: 100%; padding: 48px 24px;
-  font-family: var(--serif); font-size: 18px; color: var(--ink-mute);
-  text-align: center;
 }
 
 /* the floating drag ghost following the pointer (fixed overlay, click-through) */

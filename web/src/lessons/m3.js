@@ -10,12 +10,10 @@ export default {
   tabs: [
     { n: "1", name: "Manipulate", sub: "scoop & read the jar", href: "room-m3.html", title: "scoop & read the jar" },
     { n: "2", name: "Bind", sub: "jar + write 56", href: "room-m3-2-bind.html", title: "jar + write 56" },
-    { n: "3", name: "Fade", sub: "fill the skip-line", href: "room-m3-3-fade.html", title: "fill the skip-line" },
-    { n: "4", name: "Workbench", sub: "build 7 groups of 8", href: "room-m3-4-workbench.html", title: "build 7 groups of 8" },
-    { n: "5", name: "Numbers", sub: "bare 7 × 8 = ?", href: "room-m3-5-numbers.html", title: "bare 7 × 8 = ?" },
-    { n: "6", name: "Applied", sub: "write the setup, then total", href: "room-m3-6-applied.html", title: "write the setup, then total" },
-    { n: "7", name: "Show Work", sub: "show your work", href: "room-m3-sw-showwork.html", title: "show your work" },
-    { n: "8", name: "Words", sub: "story problem", href: "room-m3-7-words.html", title: "story problem" },
+    { n: "3", name: "Workbench", sub: "build 7 groups of 8", href: "room-m3-4-workbench.html", title: "build 7 groups of 8" },
+    { n: "4", name: "Numbers", sub: "bare 7 × 8 = ?", href: "room-m3-5-numbers.html", title: "bare 7 × 8 = ?" },
+    { n: "5", name: "Applied", sub: "write the setup, then total", href: "room-m3-6-applied.html", title: "write the setup, then total" },
+    { n: "6", name: "Words", sub: "story problem", href: "room-m3-7-words.html", title: "story problem" },
     { n: "★", name: "Practice", sub: "Fresh problems — paced to your mastery", href: "room-m3-practice.html", title: "Fresh problems — paced to your mastery" },
   ],
 };

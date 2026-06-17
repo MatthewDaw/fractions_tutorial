@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Lesson 7 — Simplify intro</title>
+<title>Lesson 7 — Equivalent Fractions intro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
@@ -11,9 +11,9 @@
   :root{
     --paper-1:#ede2c8; --paper-2:#e3d4b1;
     --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
-    --thirds:#e07b00;   /* 3 = orange */
-    --sixths:#caa300;   /* 6 = gold   */
-    --neutral:#386641;  /* twelfths = forest green (denomColor 12) */
+    --thirds:#e07b00;
+    --thirds-tone:rgba(20,14,10,.34);
+    --cut:rgba(20,14,10,.45);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;}
@@ -40,161 +40,95 @@
   }
   #kicker.on{opacity:.95; transform:none;}
 
-  /* ── the board: one GroupBar (fixed-width whole) + a stacked fraction label ── */
-  #board{ position:relative; width:600px; max-width:94vw; transition:opacity .6s ease; }
+  #board{ position:relative; width:600px; max-width:94vw; }
 
-  .barrow{ display:flex; align-items:center; gap:24px; margin:30px 0; transition:opacity .6s ease; }
+  .barrow{ display:flex; align-items:center; gap:24px; margin:30px 0; }
 
-  /* the stacked fraction label to the left of the bar */
-  .flab{ display:flex; flex-direction:column; align-items:center; width:54px; flex:0 0 auto;
-    font-family:"Russo One",sans-serif; line-height:1; color:var(--neutral); transition:color .7s ease; }
-  .flab .n,.flab .d{ font-size:34px; transition:color .7s ease; }
-  .flab .bar{ width:34px; height:4px; border-radius:2px; margin:6px 0; background:currentColor; }
-  /* the fraction colors shift as we simplify: neutral → gold → orange */
-  #board.toSix .flab{ color:var(--sixths); }
-  #board.toThirds .flab{ color:var(--thirds); }
+  .flab{ display:flex; flex-direction:column; align-items:center; width:60px; flex:0 0 auto;
+    font-family:"Russo One",sans-serif; line-height:1; color:var(--thirds); }
+  .flab .n,.flab .d{ font-size:36px; }
+  .flab .bar{ width:36px; height:4px; border-radius:2px; margin:6px 0; background:currentColor; }
 
-  /* ── GroupBar ──────────────────────────────────────────────────────────────
-     ONE fixed-width whole (the track). Its width = SPAN and is CONSTANT for
-     every grouping — that constancy is what makes the amount visibly invariant.
-     The track holds `den` equal cells; the first `num` are .is-filled, the rest
-     are .is-empty (outlined) so "8 OUT OF 12" is literally visible.            */
-  .r4-groupbar{ position:relative; transition:opacity .6s ease; }
-  .r4-groupbar.is-ghost{ opacity:.14; }
-
-  /* the track outline matches the lesson .plank-body: a 2px ink frame */
-  .r4-gb-track{ display:flex; gap:0; height:58px; align-items:stretch; position:relative;
+  .strip{ position:relative; }
+  .strip-track{ display:flex; gap:0; height:64px; align-items:stretch; position:relative;
     border:2px solid var(--ink); border-radius:3px; overflow:hidden;
     box-shadow:inset 0 3px 0 rgba(255,255,255,.14), inset 0 -4px 8px rgba(20,12,6,.16); }
-  .r4-gb-cell{
+  .cell{
     height:100%; position:relative;
-    border-right:1px solid var(--cut, rgba(20,14,10,.45));
+    border-right:1px solid var(--cut);
     display:flex; align-items:center; justify-content:center;
     font-family:"Russo One",sans-serif; font-size:13px;
     text-shadow:0 1px 0 rgba(255,250,235,.25);
-    transition:background .6s ease, border-color .6s ease, color .6s ease;
+    transition:background .5s ease, border-color .5s ease, color .5s ease;
   }
-  .r4-gb-cell:last-child{ border-right:none; }
-  /* the 1/den label inside every cell — sits over the hatch */
-  .r4-gb-cell .clab{ position:relative; z-index:2; }
-  /* per-denominator hatch overlay (denomHatch) on the FILLED cells */
-  .r4-gb-cell.is-filled::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:1; }
-
-  /* twelfths (12) — forest green, GRID hatch 0/90 (paper tone), paper divider+label */
-  .r4-gb-cell.is-filled{ background:var(--neutral); color:#ede2c8; border-right-color:rgba(237,226,200,.55); }
-  .r4-gb-cell.is-filled::after{
-    background-image:
-      repeating-linear-gradient(0deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px),
-      repeating-linear-gradient(90deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px); }
-  .r4-gb-cell.is-empty{ background:transparent; color:rgba(20,14,10,.45);
+  .cell:last-child{ border-right:none; }
+  .cell .clab{ position:relative; z-index:2; }
+  .cell.is-filled{ background:var(--thirds); color:#1c1612; border-right-color:rgba(20,14,10,.55); }
+  .cell.is-filled::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+    background-image:repeating-linear-gradient(45deg, var(--thirds-tone) 0 1px, transparent 1px 6px); }
+  .cell.is-empty{ background:transparent; color:rgba(20,14,10,.45);
     background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.07) 0 6px, transparent 6px 12px); }
 
-  /* sixths (6) — gold, CROSS-HATCH 45/-45 (ink tone), ink divider+label */
-  #board.toSix .r4-gb-cell.is-filled{ background:var(--sixths); color:#1c1612; border-right-color:rgba(20,14,10,.55); }
-  #board.toSix .r4-gb-cell.is-filled::after{
-    background-image:
-      repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
-      repeating-linear-gradient(-45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
-  /* thirds (3) — orange, DIAGONAL hatch 45deg (ink tone), ink divider+label */
-  #board.toThirds .r4-gb-cell.is-filled{ background:var(--thirds); color:#1c1612; border-right-color:rgba(20,14,10,.55); }
-  #board.toThirds .r4-gb-cell.is-filled::after{
-    background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
-
-  /* internal cut line (drawn as the cell's right border above; kept for spec parity) */
-  .r4-gb-cut{ position:absolute; top:0; bottom:0; width:1px; background:rgba(20,14,10,.45); }
-
-  /* grouping overlay: a bracket/tie under each bundle of k cells */
-  .r4-gb-group{ position:absolute; top:100%; height:14px; pointer-events:none; }
-  .r4-gb-grouptie{ position:absolute; left:6%; right:6%; top:6px; height:8px;
-    border:2px solid var(--red); border-top:none; border-radius:0 0 6px 6px; opacity:0;
-    transition:opacity .45s ease; }
-  .r4-gb-grouptie.on{ opacity:.7; }
-
-  /* the held fill-edge: x = num*(SPAN/den) = VALUE*SPAN — IDENTICAL for 8/12,4/6,2/3 */
-  .r4-gb-filledge{
+  .filledge{
     position:absolute; top:-14px; bottom:-14px; width:3px; background:var(--red);
     opacity:0; transition:opacity .6s ease; z-index:4;
   }
-  .r4-gb-filledge.on{ opacity:.9; }
-  .r4-gb-edgecap{
+  .filledge.on{ opacity:.9; }
+  .edgecap{
     position:absolute; top:-40px; left:50%; transform:translateX(-50%);
     font-family:"Russo One",sans-serif; font-size:11px; letter-spacing:.12em;
     text-transform:uppercase; color:var(--red); white-space:nowrap;
     opacity:0; transition:opacity .6s ease;
   }
-  .r4-gb-edgecap.on{ opacity:.92; }
+  .edgecap.on{ opacity:.92; }
 
-  /* count chip above the filled run: "<num> of <den>" */
-  .r4-gb-counttag{
+  .counttag{
     position:absolute; top:-30px; left:0; transform:translateX(-50%);
     font-family:"Russo One",sans-serif; font-size:14px; color:var(--ink-soft);
     white-space:nowrap; opacity:0; transition:opacity .5s ease, left .6s ease;
   }
-  .r4-gb-counttag.on{ opacity:.95; }
-  .r4-gb-counttag b{ color:var(--neutral); }
-  #board.toSix .r4-gb-counttag b{ color:var(--sixths); }
-  #board.toThirds .r4-gb-counttag b{ color:var(--thirds); }
+  .counttag.on{ opacity:.95; }
+  .counttag b{ color:var(--thirds); }
 
-  /* division-legality annotations */
-  .r4-gb-divrow{ position:absolute; left:0; right:0; pointer-events:none; }
-  .r4-gb-div{
-    position:absolute; transform:translateX(-50%);
-    font-family:"Russo One",sans-serif; font-size:13px; color:var(--red);
-    white-space:nowrap; opacity:0; transition:opacity .45s ease;
-  }
-  .r4-gb-div.on{ opacity:.92; }
-  .r4-gb-div.top{ top:-58px; }
-  .r4-gb-div.bot{ top:calc(100% + 30px); }
-  .r4-gb-divone{
-    position:absolute; left:50%; top:calc(100% + 52px); transform:translateX(-50%);
+  .mulone{
+    position:absolute; left:50%; top:calc(100% + 50px); transform:translateX(-50%);
     font-family:"Russo One",sans-serif; font-size:12px; letter-spacing:.04em;
     color:var(--ink-soft); white-space:nowrap;
     opacity:0; transition:opacity .45s ease;
   }
-  .r4-gb-divone.on{ opacity:.85; }
-  .r4-gb-divone b{ color:var(--red); }
+  .mulone.on{ opacity:.85; }
+  .mulone b{ color:var(--red); }
 
-  /* 0 / 1 ruler ticks (reuse the .nline/.ntick/.nlab idea) */
-  .nline{ position:absolute; left:0; right:0; top:calc(100% + 78px); height:0; }
-  .ntick{ position:absolute; top:-5px; width:2px; height:10px; background:var(--ink-soft); opacity:.55; }
-  .nlab{ position:absolute; top:4px; transform:translateX(-50%); font-family:"Russo One",sans-serif;
-    font-size:12px; color:var(--ink-soft); opacity:.7; }
-
-  /* ── the divide-by-one proof line (beat 5) ───────────────────────────────── */
-  #proof{
-    position:absolute; left:50%; top:46%; transform:translate(-50%,-50%) translateY(14px);
-    display:flex; flex-direction:column; align-items:center; gap:4px; z-index:7;
-    font-family:"Russo One",sans-serif; opacity:0;
-    transition:opacity .6s ease, transform .6s ease;
+  /* ── knives: position:fixed so they truly live in viewport coords ────────── */
+  /* JS sets top/left to align with the strip; transform drives the slide.      */
+  .knife-fixed{
+    position:fixed;
+    pointer-events:none;
+    z-index:20;
+    /* start off-screen right, invisible */
+    transform: translateX(110vw);
+    opacity: 0;
+    /* transitions are set by JS so they can be overridden cleanly */
+    transition: none;
+    /* vertical alignment set by JS */
+    top: 50%;
   }
-  #proof.on{ opacity:1; transform:translate(-50%,-50%); }
-  #proof .prow{ display:flex; align-items:center; gap:14px; }
-  #proof .pf{ display:flex; flex-direction:column; align-items:center; line-height:1; color:var(--neutral); }
-  #proof .pf .n,#proof .pf .d{ font-size:40px; }
-  #proof .pf .bar{ width:42px; height:5px; background:currentColor; border-radius:2px; margin:6px 0; }
-  #proof .pdiv{ display:flex; flex-direction:column; align-items:center; gap:30px; color:var(--red); font-size:16px; }
-  #proof .pbr{ font-size:18px; color:var(--ink-soft); margin-top:10px; }
-  #proof .pbr b{ color:var(--red); }
 
-  /* the final equation, revealed late and centered over a faded board */
+  /* the final equation */
   #result{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(16px);
-    display:flex; flex-direction:column; align-items:center; gap:10px; z-index:7;
+    position:absolute; left:50%; top:calc(100% + 36px); transform:translateX(-50%) translateY(10px);
+    display:flex; flex-direction:column; align-items:center; gap:8px; z-index:7;
     font-family:"Russo One",sans-serif;
     opacity:0; transition:opacity .6s ease, transform .6s ease;
   }
-  #result.on{ opacity:1; transform:translate(-50%,-50%); }
-  #result .eqrow{ display:flex; align-items:center; gap:16px; }
+  #result.on{ opacity:1; transform:translateX(-50%); }
+  #result .eqrow{ display:flex; align-items:center; gap:14px; color:var(--thirds); }
   #result .f{ display:flex; flex-direction:column; align-items:center; line-height:1; }
-  #result .f .n,#result .f .d{ font-size:46px; }
-  #result .f .bar{ width:48px; height:5px; background:currentColor; border-radius:2px; margin:6px 0; }
-  #result .f12{ color:var(--neutral); } #result .f3{ color:var(--thirds); }
-  #result .op{ font-size:34px; color:var(--ink-soft); }
-  #result .simplest{ font-family:"Russo One",sans-serif; font-size:12px; letter-spacing:.14em;
+  #result .f .n,#result .f .d{ font-size:34px; }
+  #result .f .bar{ width:36px; height:5px; background:currentColor; border-radius:2px; margin:5px 0; }
+  #result .op{ font-size:26px; color:var(--ink-soft); }
+  #result .same{ font-family:"Russo One",sans-serif; font-size:12px; letter-spacing:.14em;
     text-transform:uppercase; color:var(--thirds); opacity:.9; }
-
-  /* when the proof/result shows, recede the working bar so nothing collides */
-  #board.faded .barrow{ opacity:.16; }
 
   #caption{
     position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
@@ -203,7 +137,7 @@
   #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
     transition:opacity .55s ease, transform .55s ease; }
   #caption .cap.on{ opacity:1; transform:none; }
-  .nq{color:var(--neutral);font-weight:700;} .g{color:var(--sixths);font-weight:700;} .o{color:var(--thirds);font-weight:700;}
+  .o{color:var(--thirds);font-weight:700;} .r{color:var(--red);font-weight:700;}
 
   #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
     background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
@@ -211,70 +145,88 @@
 </head>
 <body>
   <div id="stage">
-    <div id="kicker">Simplify</div>
+    <div id="kicker">Equivalent Fractions</div>
 
     <div id="board">
       <div class="barrow">
-        <div class="flab"><div class="n" id="fN">8</div><div class="bar"></div><div class="d" id="fD">12</div></div>
+        <div class="flab"><div class="n" id="fN">1</div><div class="bar"></div><div class="d" id="fD">3</div></div>
 
-        <!-- GroupBar: one fixed-width whole -->
-        <div class="r4-groupbar" id="gb">
-          <div class="r4-gb-track" id="gbTrack"></div>
-
-          <!-- grouping ties (one per bundle) live here -->
-          <div class="r4-gb-group" id="gbGroup" style="left:0;right:0;"></div>
-
-          <!-- held fill-edge marker -->
-          <div class="r4-gb-filledge" id="edge"><span class="r4-gb-edgecap" id="edgeCap">same amount</span></div>
-
-          <!-- count chip "<num> of <den>" -->
-          <div class="r4-gb-counttag" id="countTag"><b><span id="ctN">8</span></b> of <span id="ctD">12</span></div>
-
-          <!-- division-legality annotations -->
-          <div class="r4-gb-divrow" id="divRow">
-            <span class="r4-gb-div top" id="divTop">÷&#8202;2</span>
-            <span class="r4-gb-div bot" id="divBot">÷&#8202;2</span>
-            <span class="r4-gb-divone" id="divOne">÷&#8202;2 / 2 = <b>÷&#8202;1</b></span>
-          </div>
-
-          <!-- 0 / 1 ruler -->
-          <div class="nline" id="nline">
-            <span class="ntick" style="left:0;"></span><span class="nlab" style="left:0;">0</span>
-            <span class="ntick" style="right:0;"></span><span class="nlab" id="nlab1">1</span>
+        <div class="strip" id="strip">
+          <div class="strip-track" id="track"></div>
+          <div class="filledge" id="edge"><span class="edgecap" id="edgeCap">same amount</span></div>
+          <div class="counttag" id="countTag"><b><span id="ctN">1</span></b> of <span id="ctD">3</span></div>
+          <span class="mulone" id="mulOne">× k / k = <b>× 1</b> — the amount can't change</span>
+          <div id="result">
+            <div class="eqrow">
+              <span class="f"><span class="n">1</span><span class="bar"></span><span class="d">3</span></span>
+              <span class="op">=</span>
+              <span class="f"><span class="n">2</span><span class="bar"></span><span class="d">6</span></span>
+              <span class="op">=</span>
+              <span class="f"><span class="n">3</span><span class="bar"></span><span class="d">9</span></span>
+            </div>
+            <span class="same">same amount, more pieces</span>
           </div>
         </div>
-      </div>
-
-      <!-- beat 5: divide-by-one proof -->
-      <div id="proof">
-        <div class="prow">
-          <span class="pdiv">÷&#8202;k</span>
-          <span class="pf"><span class="n">8</span><span class="bar"></span><span class="d">12</span></span>
-          <span class="pdiv">÷&#8202;k</span>
-        </div>
-        <div class="pbr">k / k = <b>1</b> &nbsp;·&nbsp; dividing by 1 can't change the amount</div>
-      </div>
-
-      <!-- beat 6: final equation -->
-      <div id="result">
-        <div class="eqrow">
-          <span class="f f12"><span class="n">8</span><span class="bar"></span><span class="d">12</span></span>
-          <span class="op">=</span>
-          <span class="f f3"><span class="n">2</span><span class="bar"></span><span class="d">3</span></span>
-        </div>
-        <span class="simplest">simplest name</span>
       </div>
     </div>
 
     <div id="caption">
-      <div class="cap" data-i="0">Babushka's answer came out as <span class="nq">8 out of 12</span> pieces.</div>
-      <div class="cap" data-i="1">Watch this edge. <span class="o">It never moves.</span></div>
-      <div class="cap" data-i="2">Group by 2: <span class="g">4 out of 6</span> — the edge holds.</div>
-      <div class="cap" data-i="3">Group again: <span class="o">2 out of 3</span> — still the same edge.</div>
-      <div class="cap" data-i="4">Divide top AND bottom by the same number = divide by <span class="o">1</span>. The amount can't change.</div>
-      <div class="cap" data-i="5"><span class="nq">8/12</span> = <span class="o">2/3</span> — the same amount, the simplest name.</div>
+      <div class="cap" data-i="0"><span class="o">One third</span> — one of three equal pieces.</div>
+      <div class="cap" data-i="1">Cut each piece in <span class="r">two.</span></div>
+      <div class="cap" data-i="2">Now <span class="o">six pieces</span>, and two are shaded.</div>
+      <div class="cap" data-i="3">Same amount — <span class="o">two sixths</span> equals one third.</div>
+      <div class="cap" data-i="4">Cut each third into <span class="r">three</span> instead.</div>
+      <div class="cap" data-i="5"><span class="o">Nine pieces</span>, three shaded — three ninths.</div>
+      <div class="cap" data-i="6">Same red strip — <span class="o">one third, two sixths, three ninths.</span></div>
     </div>
   </div>
+
+  <!-- knives live at body level, position:fixed, so no parent clips them -->
+  <svg id="knife2" class="knife-fixed" width="151" height="55" viewBox="0 0 232 84" aria-hidden="true">
+    <defs>
+      <linearGradient id="kb2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f5efdc"/>
+        <stop offset="0.4" stop-color="#ddd0ad"/>
+        <stop offset="1" stop-color="#ab9468"/>
+      </linearGradient>
+      <pattern id="kh2" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="5" stroke="#1c1612" stroke-width="0.6" opacity="0.4"/>
+      </pattern>
+    </defs>
+    <path d="M14 30 L150 18 L150 60 Q80 70 14 30 Z" fill="url(#kb2)" stroke="#1c1612" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M22 30 L150 21" stroke="#1c1612" stroke-width="1.1" opacity="0.4"/>
+    <path d="M26 34 L148 27" stroke="#ffffff" stroke-width="1.6" opacity="0.55"/>
+    <path d="M16 31 Q80 66 150 58" stroke="#fffaf0" stroke-width="1.4" opacity="0.5" fill="none"/>
+    <path d="M126 26 h22 v30 h-22 Z" fill="url(#kh2)" stroke="none" opacity="0.4"/>
+    <rect x="149" y="16" width="12" height="46" rx="3" fill="#ede2c8" stroke="#1c1612" stroke-width="2.6"/>
+    <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="#a32a22" stroke="#1c1612" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="url(#kh2)" stroke="none" opacity="0.28"/>
+    <circle cx="173" cy="39" r="2.8" fill="#ede2c8" stroke="#1c1612" stroke-width="1.3"/>
+    <text x="198" y="46" text-anchor="middle" font-family="'Russo One',sans-serif" font-size="22" font-weight="700" fill="#ede2c8">×2</text>
+  </svg>
+
+  <svg id="knife3" class="knife-fixed" width="151" height="55" viewBox="0 0 232 84" aria-hidden="true">
+    <defs>
+      <linearGradient id="kb3" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f5efdc"/>
+        <stop offset="0.4" stop-color="#ddd0ad"/>
+        <stop offset="1" stop-color="#ab9468"/>
+      </linearGradient>
+      <pattern id="kh3" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="5" stroke="#1c1612" stroke-width="0.6" opacity="0.4"/>
+      </pattern>
+    </defs>
+    <path d="M14 30 L150 18 L150 60 Q80 70 14 30 Z" fill="url(#kb3)" stroke="#1c1612" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M22 30 L150 21" stroke="#1c1612" stroke-width="1.1" opacity="0.4"/>
+    <path d="M26 34 L148 27" stroke="#ffffff" stroke-width="1.6" opacity="0.55"/>
+    <path d="M16 31 Q80 66 150 58" stroke="#fffaf0" stroke-width="1.4" opacity="0.5" fill="none"/>
+    <path d="M126 26 h22 v30 h-22 Z" fill="url(#kh3)" stroke="none" opacity="0.4"/>
+    <rect x="149" y="16" width="12" height="46" rx="3" fill="#ede2c8" stroke="#1c1612" stroke-width="2.6"/>
+    <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="#a32a22" stroke="#1c1612" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="url(#kh3)" stroke="none" opacity="0.28"/>
+    <circle cx="173" cy="39" r="2.8" fill="#ede2c8" stroke="#1c1612" stroke-width="1.3"/>
+    <text x="198" y="46" text-anchor="middle" font-family="'Russo One',sans-serif" font-size="22" font-weight="700" fill="#ede2c8">×3</text>
+  </svg>
 
   <div id="prog"></div>
   <div id="vignette"></div>
@@ -283,27 +235,26 @@
 (function(){
   "use strict";
   var PERSIST  = "simplify.v1";
-  var DURATION = 27;             // seconds — storyboard.introDurationSec
-  var SPAN     = 468;            // px: the whole bar's full length (the AMOUNT) — held fixed
-  var NUM      = 8, FULLDEN = 12;
-  var VALUE    = NUM / FULLDEN;  // 2/3 — the held fill fraction
-  var EDGE_X   = VALUE * SPAN;   // x of the held fill-edge: IDENTICAL for 8/12, 4/6, 2/3
+  var DURATION = 31;
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
+  var SPAN     = 468;
+  var BASE_N   = 1, BASE_D = 3;
+  var VALUE    = BASE_N / BASE_D;
+  var EDGE_X   = VALUE * SPAN;
+
+  // Knife dimensions at the rendered size
+  var KNIFE_W = 151, KNIFE_H = 55;
 
   function el(id){ return document.getElementById(id); }
 
-  // ── GroupBar: render ONE fixed-width whole as `den` equal cells, `num` filled.
-  //    The filled extent (left..EDGE_X) is identical for every (num,den) on the
-  //    same value, because num*(SPAN/den) === VALUE*SPAN === EDGE_X. ────────────
-  function renderGroup(num, den){
-    var track = el("gbTrack"); track.innerHTML = "";
+  function renderStrip(num, den){
+    var track = el("track"); track.innerHTML = "";
     var w = SPAN / den;
-    // match the lesson's label size ramp (denser partitions get a smaller label)
-    var labSize = w < 40 ? 11 : w < 58 ? 13 : 15;
+    var labSize = w < 44 ? 11 : w < 90 ? 13 : 15;
     for (var i=0;i<den;i++){
       var c = document.createElement("div");
-      c.className = "r4-gb-cell " + (i < num ? "is-filled" : "is-empty");
+      c.className = "cell " + (i < num ? "is-filled" : "is-empty");
       c.style.width = w + "px";
-      // every cell reads its UNIT (1/den), exactly like the lesson GroupBar
       var lab = document.createElement("span");
       lab.className = "clab"; lab.style.fontSize = labSize + "px";
       lab.textContent = "1/" + den;
@@ -311,126 +262,166 @@
       track.appendChild(c);
     }
     track.style.width = SPAN + "px";
-    // count chip rides above the middle of the filled run
     el("ctN").textContent = num; el("ctD").textContent = den;
     el("countTag").style.left = (EDGE_X/2) + "px";
   }
 
-  // draw `den/k` grouping ties, each spanning a bundle of k cells (k=2 here)
-  function showTies(den, k){
-    var g = el("gbGroup"); g.innerHTML = "";
-    var groups = den / k, gw = SPAN / groups;
-    for (var i=0;i<groups;i++){
-      var wrap = document.createElement("div");
-      wrap.style.position="absolute"; wrap.style.left=(i*gw)+"px"; wrap.style.width=gw+"px";
-      wrap.style.top="0"; wrap.style.bottom="0";
-      var tie = document.createElement("div");
-      tie.className = "r4-gb-grouptie";
-      wrap.appendChild(tie); g.appendChild(wrap);
-      (function(t,d){ setTimeout(function(){ t.classList.add("on"); }, 80 + d*60); })(tie, i);
-    }
-  }
-  function clearTies(){ el("gbGroup").innerHTML = ""; }
-
-  // position the held fill-edge + ruler "1" tick
   el("edge").style.left = EDGE_X + "px";
-  el("nlab1").style.left = SPAN + "px";
-  el("nline").style.right = "auto"; el("nline").style.width = SPAN + "px";
-
-  // start: 8 out of 12 — many tiny neutral pieces, 8 filled / 4 empty
-  renderGroup(8, 12);
-
-  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
-  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
 
   function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.28)";
     setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
-
   function flashEdge(scale){
     var e=el("edge"); e.style.transition="transform .3s ease, opacity .6s ease";
     e.style.transform="scaleX("+(scale||2.4)+")"; setTimeout(function(){ e.style.transform="scaleX(1)"; }, 320);
   }
 
-  // position a "÷ k" annotation at a given x (over numerator / under denominator)
-  function placeDiv(node, x, text){ node.textContent = text; node.style.left = x + "px"; }
+  // ── Knife helpers (position:fixed, translateX for true off-screen travel) ──
+  //
+  // Vertical placement: align knife center with strip track center.
+  // Horizontal: strip center x as the resting position.
+  // The knife tip is at the LEFT end (x=14 in SVG, ~9px at scale 0.65).
+  // We position the knife so its CENTER sits over the strip.
+
+  function getStripRect(){
+    return el("strip").querySelector(".strip-track").getBoundingClientRect();
+  }
+
+  // Position the knife vertically once and set its horizontal landing x.
+  // Returns the translateX value (in px) where the knife should rest.
+  function positionKnife(id){
+    var k = el(id);
+    var r = getStripRect();
+    // top: align knife center with strip center
+    k.style.top = (r.top + r.height/2 - KNIFE_H/2) + "px";
+    // horizontal landing: knife center over strip center
+    var stripCx = r.left + r.width/2;
+    var landX = stripCx - KNIFE_W/2;
+    k.style.left = "0px";  // use transform only for X
+    return landX;
+  }
+
+  function knifeIn(id){
+    var k = el(id);
+    // snap to off-screen right, no transition
+    k.style.transition = "none";
+    k.style.transform = "translateX(110vw)";
+    k.style.opacity = "0";
+    var landX = positionKnife(id);
+    // force reflow so the "none" transition is committed before we change it
+    void k.offsetWidth;
+    // slide in
+    k.style.transition = "transform 0.85s cubic-bezier(.22,.68,.44,1.05), opacity 0.25s ease";
+    k.style.transform = "translateX(" + landX + "px)";
+    k.style.opacity = "1";
+  }
+
+  function knifeOut(id){
+    var k = el(id);
+    k.style.transition = "transform 0.55s ease-in, opacity 0.2s ease 0.35s";
+    k.style.transform = "translateX(-110vw)";
+    k.style.opacity = "0";
+  }
+
+  function knifeReset(id){
+    var k = el(id);
+    k.style.transition = "none";
+    k.style.transform = "translateX(110vw)";
+    k.style.opacity = "0";
+  }
+
+  renderStrip(1, 3);
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
 
   var beatsDone = [];
 
-  // ── BEATS — keyed by storyboard gates ──────────────────────────────────────
+  // ── BEATS ──────────────────────────────────────────────────────────────────
+  // Gates re-spaced so each narration clip finishes before the next beat fires
+  // (clips run 1.3–3.6s; old spacing let audio drift behind the visuals → rushed).
+  // 0.3   kicker
+  // 1.5   "One third" — strip + edge                       [audio gate 1.5]
+  // 6.0   caption 1 + knife ×2 slides in (0.85s travel)   [audio gate 6.0]
+  // 7.0   knife over strip → cut fires 1/3 → 2/6
+  // 7.7   knife exits (0.55s exit)
+  // 8.5   caption 2 "Now six pieces"                       [audio gate 8.5]
+  // 12.7  caption 3 "Same amount" + mulOne                 [audio gate 12.7]
+  // 17.2  reset + caption 4 + knife ×3 slides in          [audio gate 17.2]
+  // 18.2  knife over strip → cut fires 1/3 → 3/9
+  // 18.9  knife exits
+  // 20.7  caption 5 "Nine pieces"                          [audio gate 20.7]
+  // 25.5  caption 6 + final equation                       [audio gate 25.5]
   var BEATS = [
     [0.3, function(){ el("kicker").classList.add("on"); }],
 
-    // gate 1.5 — "8 out of 12": whole bar, 12 cells, 8 filled / 4 empty; count tag
     [1.5, function(){
       showCap(0);
-      renderGroup(8, 12);
+      renderStrip(1, 3);
+      el("fN").textContent="1"; el("fD").textContent="3";
+      el("edge").classList.add("on"); el("edgeCap").classList.add("on");
       el("countTag").classList.add("on");
-    }],
-
-    // gate 5 — "Watch this edge. It never moves." drop + pulse the fill-edge marker
-    [5, function(){
-      showCap(1);
-      el("edge").classList.add("on");
-      el("edgeCap").classList.add("on");
       flashEdge(2.0);
     }],
 
-    // gate 9 — group by 2 → 4/6 (gold). 12 cells tied into 6, then merge to 6 cells.
-    //          fill-edge holds. annotate ÷2 over top, ÷2 under bottom, ÷2/2=÷1.
-    [9, function(){
+    [6.0, function(){
+      showCap(1);
+      knifeIn("knife2");
+    }],
+
+    [7.0, function(){
+      // knife is over the strip — fire the cut
+      renderStrip(2, 6);
+      el("fN").textContent="2"; el("fD").textContent="6";
+      el("countTag").classList.add("on");
+      flashEdge(1.8);
+    }],
+
+    [7.7, function(){
+      knifeOut("knife2");
+    }],
+
+    [8.5, function(){
       showCap(2);
-      showTies(12, 2);                         // tie 12 cells into 6 bundles
-      setTimeout(function(){
-        clearTies();
-        renderGroup(4, 6);                     // merge to 6 wider cells, 4 filled
-        el("board").classList.add("toSix");
-        el("fN").textContent="4"; el("fD").textContent="6";
-        el("countTag").classList.add("on");
-        pulse(el("fD")); flashEdge(1.8);
-        // div annotations: over the numerator run + under the bar
-        placeDiv(el("divTop"), EDGE_X/2, "÷ 2");
-        placeDiv(el("divBot"), SPAN/2,   "÷ 2");
-        el("divTop").classList.add("on"); el("divBot").classList.add("on"); el("divOne").classList.add("on");
-      }, 620);
+      pulse(el("fD"));
     }],
 
-    // gate 13 — group again by 2 → 2/3 (orange). 6 cells tied into 3, merge to 3.
-    [13, function(){
+    [12.7, function(){
       showCap(3);
-      showTies(6, 2);                          // tie 6 cells into 3 bundles
-      setTimeout(function(){
-        clearTies();
-        renderGroup(2, 3);                     // merge to 3 wide cells, 2 filled
-        el("board").classList.remove("toSix");
-        el("board").classList.add("toThirds");
-        el("fN").textContent="2"; el("fD").textContent="3";
-        el("countTag").classList.add("on");
-        pulse(el("fD")); flashEdge(1.8);
-        placeDiv(el("divTop"), EDGE_X/2, "÷ 2");
-        placeDiv(el("divBot"), SPAN/2,   "÷ 2");
-        el("divTop").classList.add("on"); el("divBot").classList.add("on"); el("divOne").classList.add("on");
-      }, 620);
+      el("mulOne").classList.add("on");
+      flashEdge(2.4);
     }],
 
-    // gate 17.5 — "divide top AND bottom by the same number = divide by 1"
-    //             board fades; clean proof line floats up; fill-edge stays lit.
-    [17.5, function(){
+    [17.2, function(){
       showCap(4);
-      el("divTop").classList.remove("on"); el("divBot").classList.remove("on"); el("divOne").classList.remove("on");
-      el("board").classList.add("faded");
-      el("gb").classList.add("is-ghost");
-      el("edge").classList.add("on");          // keep the edge lit under the proof
-      el("proof").classList.add("on");
-      pulse(el("proof"));
+      el("mulOne").classList.remove("on");
+      renderStrip(1, 3);
+      el("fN").textContent="1"; el("fD").textContent="3";
+      el("countTag").classList.add("on");
+      flashEdge(1.6);
+      knifeIn("knife3");
     }],
 
-    // gate 22 — "8/12 = 2/3 — the same amount, the simplest name." final equation
-    [22, function(){
+    [18.2, function(){
+      renderStrip(3, 9);
+      el("fN").textContent="3"; el("fD").textContent="9";
+      el("countTag").classList.add("on");
+      flashEdge(1.8);
+    }],
+
+    [18.9, function(){
+      knifeOut("knife3");
+    }],
+
+    [20.7, function(){
       showCap(5);
-      el("proof").classList.remove("on");
+      pulse(el("fD"));
+    }],
+
+    [25.5, function(){
+      showCap(6);
       el("result").classList.add("on");
       pulse(el("result"));
-      flashEdge(2.6);                          // final wide flash: same place reached
+      flashEdge(2.6);
     }],
   ];
 
@@ -438,29 +429,25 @@
     for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
   }
 
-  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
   try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
 
-  // reset all beat-driven DOM so seek() can replay cleanly
   function resetVisual(){
     el("kicker").classList.remove("on");
-    el("board").classList.remove("toSix","toThirds","faded");
-    el("gb").classList.remove("is-ghost");
     el("edge").classList.remove("on"); el("edgeCap").classList.remove("on");
     el("edge").style.transform="scaleX(1)";
     el("countTag").classList.remove("on");
-    el("divTop").classList.remove("on"); el("divBot").classList.remove("on"); el("divOne").classList.remove("on");
-    el("proof").classList.remove("on"); el("result").classList.remove("on");
-    el("fN").textContent="8"; el("fD").textContent="12";
-    clearTies();
-    renderGroup(8,12);
+    el("mulOne").classList.remove("on");
+    el("result").classList.remove("on");
+    el("fN").textContent="1"; el("fD").textContent="3";
+    renderStrip(1,3);
     caps.forEach(function(c){ c.classList.remove("on"); });
+    knifeReset("knife2"); knifeReset("knife3");
   }
 
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
-    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
     lastWall=now;
     var t=elapsed; if (t>DURATION) t=DURATION;
     try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
@@ -475,7 +462,6 @@
     pause: function(){ paused=true;  },
     seek:  function(s){
       elapsed=Math.max(0,+s||0); beatsDone=[]; resetVisual();
-      // re-fire any beats at/under the seek target so the frame is consistent
       applyBeats(elapsed);
     }
   };

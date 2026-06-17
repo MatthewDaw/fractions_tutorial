@@ -7,6 +7,9 @@ export default {
   // bar / + / = stay UI-printed — the child draws numerals only.
   handwriting: true,
 
+  // Skip "Bind" (L2), "Fade" (L4), and "Simplify" (SMP) — r2 goes Manipulate → Ghost → Numbers → Applied.
+  skipBeats: ["L2", "L4", "SMP"],
+
   // Framing knobs read by LessonUnlikeDen so the two lessons stay distinct.
   // Cross-Multiply renames BOTH fractions (the bottoms share nothing), so the
   // numbers-lead beats fold in the ×N/×N CROSSING-ARROWS visual (each fraction

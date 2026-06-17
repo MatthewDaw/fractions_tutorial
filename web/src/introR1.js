@@ -15,7 +15,7 @@
 // Keep `gate`s aligned with the html BEATS table if that timeline changes.
 
 export const STAGE_PERSIST_KEY = "samedenom.v1";
-export const INTRO_DURATION = 24;
+export const INTRO_DURATION = 26;
 
 // gates track the video's BEATS table:
 //   two stacks (tops level) 1.5, drop to floor / line up 5.0, push together 8.5,

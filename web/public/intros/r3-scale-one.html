@@ -49,13 +49,11 @@
   .flab .n,.flab .d{ font-size:30px; transition:color .6s ease; }
   .flab .bar{ width:30px; height:4px; border-radius:2px; margin:5px 0; background:currentColor; }
   .rA .flab{ color:var(--eighths); }   /* 3/8 vermilion */
+  .rB{ position:relative; }            /* positioning context for the knife */
   .rB .flab{ color:var(--fourths); }   /* 1/4 teal      */
   .rB.toEighths .flab{ color:var(--eighths); }
 
-  /* a bar = a sequence of equal pieces; total width encodes the amount.
-     Each piece matches the lesson Plank: the denominator hue + that denom's hatch
-     overlay + a 2px ink outline (with inset highlight/shadow like .plank-body) and
-     a divider between pieces in the denominator's own tone (denomTone). */
+  /* a bar = a sequence of equal pieces; total width encodes the amount */
   .bar-track{ display:flex; gap:0; height:52px; }
   .pc{
     position:relative; overflow:hidden;
@@ -67,25 +65,24 @@
     transition:background .6s ease, opacity .45s ease;
   }
   .pc:last-child{ border-right-width:2px; }
-  /* the per-denominator hatch overlay (denomHatch) sits over the hue fill */
   .pc::before{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0; }
   .pc .plab{ position:relative; z-index:1; opacity:0; transition:opacity .4s ease; }
   .show-plab .pc .plab{ opacity:1; }
 
-  /* eighths (8) — vermilion, vertical-stripe hatch 90deg (ink tone), ink label */
+  /* eighths (8) — vermilion, diagonal hatch */
   .rA .pc{ background:var(--eighths); }
-  .rA .pc::before{ background-image:repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
-  /* fourths (4) — teal, grid hatch 0/90 (ink tone), ink label */
+  .rA .pc::before{ background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
+  /* fourths (4) — teal, cross-hatch */
   .rB .pc{ background:var(--fourths); }
   .rB .pc::before{
     background-image:
-      repeating-linear-gradient(0deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
-      repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
-  /* when the quarter is sliced into eighths, the row switches to the eighths v-stripe */
+      repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(-45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
+  /* once the quarter is sliced, switch to vermilion + diagonal */
   .rB.toEighths .pc{ background:var(--eighths); }
-  .rB.toEighths .pc::before{ background-image:repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
+  .rB.toEighths .pc::before{ background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
 
-  /* "a quarter = two eighths" ghost markers: show where the cut will fall */
+  /* ghost cut-line: where the slice will fall (beat 3 preview) */
   .pc.ghost{ position:relative; }
   .pc.ghost::after{
     content:""; position:absolute; top:6px; bottom:6px; left:50%; width:2px;
@@ -93,6 +90,40 @@
     transform-origin:center; transition:transform .5s ease;
   }
   .pc.ghost.cued::after{ transform:translateX(-50%) scaleY(1); }
+
+  /* ── knife animation (beat 4) ──────────────────────────────────────────────
+     The knife is vertical (blade down). It slides in from off-screen right at
+     hover height (above the quarter strip), drops to make the cut, lifts, then
+     slides back out to the right. Only the quarter strip is cut. */
+  .kn{
+    position:absolute; left:0; top:-66px; width:44px; height:96px; z-index:9;
+    pointer-events:none; opacity:0;
+    transform: translate(var(--kx-out), -40px);
+    filter: drop-shadow(0 4px 3px rgba(20,12,6,.35));
+  }
+  .kn svg{ display:block; }
+  .kn .ktag{
+    position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:12px; color:#fff;
+    background:var(--red); padding:2px 8px; border-radius:11px; white-space:nowrap;
+    box-shadow:0 2px 0 rgba(0,0,0,.22);
+  }
+  .kn.go{ animation: kn-from-right 3.5s cubic-bezier(.45,.05,.35,1) forwards; }
+  @keyframes kn-from-right{
+    0%   { opacity:0; transform: translate(var(--kx-out), -40px); }
+    10%  { opacity:1; transform: translate(var(--kx-out), -40px); }
+    38%  { opacity:1; transform: translate(var(--kx-cut), -40px); }
+    54%  { opacity:1; transform: translate(var(--kx-cut),   0px); }
+    70%  { opacity:1; transform: translate(var(--kx-cut), -40px); }
+    88%  { opacity:1; transform: translate(var(--kx-out), -40px); }
+    100% { opacity:0; transform: translate(var(--kx-out), -40px); }
+  }
+  .bar-track.cut{ animation: track-cut .32s ease; }
+  @keyframes track-cut{ 0%{transform:scaleY(1)} 45%{transform:scaleY(1.12)} 100%{transform:scaleY(1)} }
+  @media (prefers-reduced-motion: reduce){
+    .kn.go{ animation-duration:.01s; }
+    .bar-track.cut{ animation:none; }
+  }
 
   /* "keep this one" stamp over the 3/8 row */
   #keep{
@@ -103,7 +134,7 @@
   }
   #keep.on{ opacity:.96; transform:translate(-50%,-120%) rotate(-4deg) scale(1); }
 
-  /* mismatch flag on beat 2 — sizes differ */
+  /* mismatch flag on beat 2 */
   #mismatch{
     position:absolute; right:-4px; top:78px; transform:translateY(-50%) scale(.6);
     font-family:"Russo One",sans-serif; font-size:16px; color:#fff; background:var(--red);
@@ -114,7 +145,7 @@
   .is-shake{ animation:shake .5s ease; }
   @keyframes shake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
 
-  /* the joined result row + equation (revealed late, centered) */
+  /* result row + equation (revealed late) */
   #result{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(14px);
     display:flex; flex-direction:column; align-items:center; gap:18px; z-index:7;
@@ -122,16 +153,15 @@
   }
   #result.on{ opacity:1; transform:translate(-50%,-50%); }
   #joined{ display:flex; gap:0; height:52px; }
-  /* the joined result is five eighths — vermilion + v-stripe + ink label */
+  /* the joined result is five eighths — vermilion + diagonal */
   #joined .pc{ background:var(--eighths); }
-  #joined .pc::before{ background-image:repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
+  #joined .pc::before{ background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
   #eq{ display:flex; align-items:center; gap:14px; font-family:"Russo One",sans-serif; }
   #eq .f{ display:flex; flex-direction:column; align-items:center; line-height:1; }
   #eq .f .n,#eq .f .d{ font-size:40px; } #eq .f .bar{ width:42px; height:4px; background:var(--ink); border-radius:2px; margin:5px 0; }
   #eq .t8{ color:var(--eighths); } #eq .t4{ color:var(--fourths); }
   #eq .op{ font-size:30px; color:var(--ink-soft); }
-  /* when the result is shown, recede the working bars so nothing collides */
-  #board:has(#result.on) .barrow{ opacity:.14; }
+  #board:has(#result.on) .barrow{ opacity:0; visibility:hidden; transition:opacity .5s ease, visibility 0s linear .5s; }
   #board:has(#result.on) #keep{ opacity:0; }
 
   #caption{
@@ -193,11 +223,24 @@
 (function(){
   "use strict";
   var PERSIST = "scaleone.v1";
-  var DURATION = 24;            // seconds — tightened (~0.5s between lines)
-  var PW = 56;                  // pixels per 1/8 piece (an "eighth")
+  var DURATION = 31;
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
+  var PW = 56;  // pixels per 1/8 piece
+
+  // A down-pointing chef's knife with a ×n badge.
+  var KNIFE_SVG =
+    '<svg viewBox="0 0 44 96" width="44" height="96" aria-hidden="true">' +
+      '<rect x="15" y="4" width="14" height="30" rx="6" fill="#3a2e24" stroke="#241b14" stroke-width="1.5"/>' +
+      '<circle cx="22" cy="12" r="1.5" fill="#d8c79f"/><circle cx="22" cy="20" r="1.5" fill="#d8c79f"/>' +
+      '<rect x="13" y="33" width="18" height="7" rx="2" fill="#8a7a55" stroke="#5c4e34" stroke-width="1"/>' +
+      '<path d="M14 40 L30 40 L26 80 Q22 93 18 80 Z" fill="#cfd3da" stroke="#9aa0a8" stroke-width="1"/>' +
+      '<path d="M28 42 L24.5 80" stroke="#aeb3bb" stroke-width="2" opacity=".8"/>' +
+      '<path d="M16.5 42 L19 79" stroke="#ffffff" stroke-width="1.5" opacity=".55"/>' +
+    '</svg>';
+  var knives = [];
 
   function el(id){ return document.getElementById(id); }
-  // build a bar of `n` equal pieces, each PW wide; optional running labels
+
   function buildBar(track, n, labelEach){
     track.innerHTML = "";
     for (var i=0;i<n;i++){
@@ -206,11 +249,12 @@
       d.appendChild(s); track.appendChild(d);
     }
   }
-  // start: 3/8 = THREE vermilion eighth-pieces (each PW wide);
-  //        1/4 = ONE teal piece 2·PW wide (a quarter already fits two eighths).
-  // Their differing piece-sizes are the whole point: the quarter is the bigger piece.
+
+  // Initial bars:
+  //   rA: three vermilion eighth-pieces (3 × PW)
+  //   rB: one teal quarter-piece (1 × 2·PW — a quarter spans two eighths)
   function startBars(){
-    buildBar(el("barA"), 3);                 // three eighths, already eighth-sized
+    buildBar(el("barA"), 3);
     var b=el("barB"); b.innerHTML="";
     var pb=document.createElement("div"); pb.className="pc"; pb.style.width=(2*PW)+"px"; b.appendChild(pb);
   }
@@ -218,19 +262,63 @@
 
   var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
   function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
-
   function pulse(el2){ el2.style.transition="transform .25s ease"; el2.style.transform="scale(1.3)";
     setTimeout(function(){ el2.style.transform="scale(1)"; }, 260); }
+
+  // Slice ONLY strip B (the quarter): the knife enters from off-screen right,
+  // glides to the cut position above the strip, drops onto it (cut fires),
+  // lifts, then slides back out to the right. The three eighths are untouched.
+  //   track left in barrow = flab(46) + gap(22) = 68px
+  //   quarter spans 2·PW; the single cut sits at its centre = 68 + PW from left
+  //   knife centre offset = 22px → kxCut = 68 + PW - 22
+  function sliceStripB(){
+    var row = el("rB"), track = el("barB");
+    // off-screen right: viewport width from the barrow's left edge + buffer
+    var rowRect = row.getBoundingClientRect();
+    var kxOut = Math.round(window.innerWidth - rowRect.left) + 60;
+    var kxCut = 68 + PW - 22;
+    var kn = document.createElement("div"); kn.className = "kn";
+    kn.style.setProperty("--kx-out", kxOut + "px");
+    kn.style.setProperty("--kx-cut", kxCut + "px");
+    kn.innerHTML = '<span class="ktag">×2</span>' + KNIFE_SVG;
+    row.appendChild(kn); knives.push(kn);
+    requestAnimationFrame(function(){ kn.classList.add("go"); });
+    // strip splits mid-animation (54% of 3.5s ≈ 1.89s → 1850ms, at the drop)
+    setTimeout(function(){
+      buildBar(track, 2);
+      row.classList.add("toEighths");
+      track.classList.add("cut");
+      setTimeout(function(){ track.classList.remove("cut"); }, 340);
+      el("bN").textContent="2"; el("bD").textContent="8";
+      pulse(el("bD"));
+    }, 1850);
+    // knife slides out and is removed once the animation completes
+    setTimeout(function(){ if (kn.parentNode) kn.parentNode.removeChild(kn); }, 3500);
+  }
+
+  function resetVisuals(){
+    knives.forEach(function(k){ if (k.parentNode) k.parentNode.removeChild(k); }); knives = [];
+    startBars();
+    el("rA").className = "barrow rA"; el("rB").className = "barrow rB";
+    el("aN").textContent="3"; el("aD").textContent="8";
+    el("bN").textContent="1"; el("bD").textContent="4";
+    el("mismatch").classList.remove("on");
+    el("keep").classList.remove("on");
+    el("rA").classList.remove("is-shake"); el("rB").classList.remove("is-shake");
+    el("result").classList.remove("on"); el("joined").innerHTML="";
+    el("kicker").classList.remove("on");
+    showCap(-1);
+  }
 
   var beatsDone = [];
 
   var BEATS = [
     [0.3, function(){ el("kicker").classList.add("on"); }],
 
-    // Beat 1 — three eighths (vermilion) and one quarter (teal): different sizes
+    // Beat 1 — show the two strips (three eighths + one quarter)
     [1.5, function(){ showCap(0); }],
 
-    // Beat 2 — the quarter is the bigger piece (flag the size difference)
+    // Beat 2 — the quarter piece is visibly bigger; shake + flag it
     [4.4, function(){
       showCap(1);
       el("mismatch").classList.add("on");
@@ -238,7 +326,7 @@
       setTimeout(function(){ el("rB").classList.remove("is-shake"); }, 520);
     }],
 
-    // Beat 3 — a quarter is the same as two eighths (ghost the cut, don't slice yet)
+    // Beat 3 — preview where the cut will fall (ghost line in the quarter)
     [8.7, function(){
       showCap(2);
       el("mismatch").classList.remove("on");
@@ -246,17 +334,16 @@
         setTimeout(function(){ q.classList.add("cued"); }, 220); }
     }],
 
-    // Beat 4 — slice ONLY the quarter; the three eighths stay put ("keep this one")
+    // Beat 4 — SLICE: knife sweeps across only the quarter strip.
+    // The "keep this one" stamp marks the 3/8 row as untouched.
+    // Caption fires simultaneously so voice says "So we slice" as the knife drops.
     [11.5, function(){
       showCap(3);
-      el("keep").classList.add("on");           // stamp the 3/8 row as untouched
-      buildBar(el("barB"), 2);                  // 1/4 → two 1/8 pieces (only this row changes)
-      el("rB").classList.add("toEighths");
-      el("bN").textContent="2"; el("bD").textContent="8";
-      pulse(el("bD"));
+      el("keep").classList.add("on");
+      sliceStripB();
     }],
 
-    // Beat 5 — now every piece is an eighth, the same size
+    // Beat 5 — every piece is now an eighth (after knife clears at ~15.0s)
     [16.7, function(){
       showCap(4);
       el("keep").classList.remove("on");
@@ -268,13 +355,13 @@
     // Beat 6 — three eighths plus two eighths: join + count to five
     [19.2, function(){
       showCap(5);
-      buildBar(el("joined"), 5);                // five vermilion eighths
+      buildBar(el("joined"), 5);
       var pcs=el("joined").children;
       for (var i=0;i<pcs.length;i++){ (function(p,k){
         var s=p.querySelector(".plab"); s.textContent=(k+1); s.style.opacity="0";
-        setTimeout(function(){ s.style.opacity="1"; }, 200 + k*260); // count up 1..5
+        setTimeout(function(){ s.style.opacity="1"; }, 200 + k*260);
       })(pcs[i], i); }
-      el("result").classList.add("on");         // recedes the working bars (via :has)
+      el("result").classList.add("on");
     }],
 
     // Beat 7 — makes five eighths
@@ -285,12 +372,12 @@
     for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
   }
 
-  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  // ── playhead + pause-aware clock ──────────────────────────────────────────
   try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
-    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
     lastWall=now;
     var t=elapsed; if (t>DURATION) t=DURATION;
     try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
@@ -303,7 +390,7 @@
   window.__anim = {
     play:  function(){ paused=false; },
     pause: function(){ paused=true;  },
-    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; }
+    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; resetVisuals(); }
   };
 })();
 </script>

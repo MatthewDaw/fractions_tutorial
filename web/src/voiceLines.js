@@ -323,7 +323,7 @@ export const LINES = {
   // --- m3 in-room goal/award lines (Babushka). The goal caption uses mr_mom_goal;
   // each stage's award reads a per-stage variant. Products spelled in words. ---
   mr_mom_goal:
-    "Babushka has seven jars and scoops eight mushrooms into each — skip-count to the total, then learn the fact by heart: seven times eight.",
+    "Babushka has seven jars and scoops eight sugar plums into each — skip-count to the total, then learn the fact by heart: seven times eight.",
   mr_mom_goal_jar:
     "Yes! Seven eights skip-counted up to fifty-six. Seven times eight is fifty-six.",
   mr_mom_goal_ribbon:

@@ -1,11 +1,13 @@
-// AppNumberLine.jsx — Lesson No.6 "Same Denominators" (room `nl`,
+// AppNumberLine.jsx — Lesson No.5 "Same Denominators" (room `nl`,
 // FRACTION_ON_LINE). CCSS 3.NF.A.2: a fraction is a NUMBER located on the number
 // line, found by cutting 0→1 into `den` equal parts and counting `num` of them
-// from 0. The whole lesson is built on the shared <NumberLine> ruler so the SAME
-// object carries every stage.
+// from 0. nl's own two stages are built on the shared <NumberLine> ruler; the
+// remaining steps (3–7 + ★Practice) are the REAL AppR1 same-denominator-addition
+// stages, folded in inline via <AppR1 mergeHost=…> (the wireframe nl+r1 merge).
 //
-// THE INTERACTION ARC — three focused stages plus paced practice, reachable
-// one-click from the stage selector and advanced one-by-one on a correct answer.
+// THE INTERACTION ARC — two focused number-line stages here, then the merged r1
+// addition stages, reachable one-click from the stage selector and advanced
+// one-by-one on a correct answer.
 //
 //   1 · Place   (Manipulate) — a 0→1 line cut into `den` equal parts and a tray
 //       holding ONE reusable 1/den unit piece. The child DRAGS that piece onto
@@ -14,11 +16,11 @@
 //       block-stacking paradigm: grow a fraction from identical unit pieces.)
 //   2 · Write   (Bind) — the line shows a fixed marked point at a/b (2/3); the
 //       child WRITES that fraction on a Slate (layout="fraction"). Exact a and b.
-//   3 · Numbers (Numbers) — given 5/3, the child DRAGS the point on a 0→2 line
-//       PAST 1, killing the "fractions only live between 0 and 1" misconception.
+//   3–7 · (merged r1) Manipulate · Numbers · Applied · Show Work · Words, plus
+//       ★Practice — same-denominator ADDITION, served by <AppR1 mergeHost>.
 //
 // LAYOUT comes from the shared lesson library (LessonShell + LessonBoard +
-// AnswerBar + TutorRibbon + LessonGoal); identity + the tab strip come from the
+// AnswerBar + TutorRibbon + RailInstruction); identity + the tab strip come from the
 // central registry (web/src/lessons/nl.js) — NOT inlined. The controller backbone
 // (engine wiring, stage nav, outcome state) comes from useLessonScaffold. The
 // number-line is the shared <NumberLine> component. Room-specific content CSS
@@ -28,9 +30,8 @@ import NumberLine from "./components/NumberLine.jsx";
 import Slate from "./components/Slate.jsx";
 import BigFrac from "./components/BigFrac.jsx";
 import FitStage from "./components/FitStage.jsx";
-import QuestionBand from "./components/QuestionBand.jsx";
-import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, LessonGoal } from "./components/lesson";
-import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
+import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, RailInstruction } from "./components/lesson";
+import AppR1 from "./AppR1.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { LESSONS } from "./lessons/index.js";
 import { denomColor } from "./denominatorColors.js";
@@ -48,14 +49,37 @@ const L = LESSONS.nl;
 const STAGE_BY_BADGE = {
   "1": "1-place",
   "2": "2-write",
-  // tabs 3–7 and ★ come from the merged r1 family (wireframe nl+r1 merge);
-  // they are navigated by the shared StageTabs but live in AppR1's route.
+  // tabs 3–7 come from the merged r1 family (wireframe nl+r1 merge). Their content
+  // is the REAL AppR1 interactive stage, rendered inline by delegating to <AppR1>
+  // (see the isR1Stage branch below) — NOT a bridge panel. The nl `r1-*` stage key
+  // maps to AppR1's own stage key via R1_STAGE_KEY.
   "3": "r1-manipulate",
   "4": "r1-numbers",
   "5": "r1-applied",
   "6": "r1-showwork",
   "7": "r1-words",
-  "★": "practice",
+  // ★Practice is the merged lesson's CONSOLIDATION step. Steps 3–7 are all
+  // same-denominator ADDITION, so practice must re-roll ADD_SAME_DEN variations,
+  // not number-line placement. We let the AppR1 mergeHost own this tab (it already
+  // has an estimator-paced ADD_SAME_DEN GenPracticeBoard on its own "practice"
+  // stage, node ADD_SAME_DEN), rather than bouncing to nl's FRACTION_ON_LINE
+  // practice. So ★ maps to an r1-* stage key and renders through <AppR1>.
+  "★": "r1-practice",
+};
+
+// nl r1-stage key → AppR1's own stage key (its STAGES `.key`). nl folds in only
+// the wireframe-listed r1 stages (Manipulate · Numbers · Applied · Show Work ·
+// Words) plus the shared ★Practice (ADD_SAME_DEN); AppR1's Bind/Fade/Workbench
+// are intentionally NOT part of the merged strip, so they are unreachable from nl
+// (matching the wireframe nl lesson).
+const R1_STAGE_KEY = {
+  "r1-manipulate": "1-manipulate",
+  "r1-numbers": "5-numbers",
+  "r1-applied": "6-applied",
+  "r1-showwork": "showwork",
+  "r1-words": "7-words",
+  // ★Practice → AppR1's own generated-practice stage (ADD_SAME_DEN).
+  "r1-practice": "practice",
 };
 const STAGES = L.tabs.map((t) => ({
   key: STAGE_BY_BADGE[t.n],
@@ -69,20 +93,18 @@ const ORIGIN = 60, SPAN = 600, LINE_Y = 150;
 
 const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 2);
 
-// ── the three teaching stages (logic/order, not chrome). The TAB labels/subs/
+// ── nl's two OWN teaching stages (logic/order, not chrome). The TAB labels/subs/
 //   badges come from the registry (L.tabs); these keys carry the per-stage MODEL
-//   the controller routes by. The trailing "practice" stage serves engine-paced
-//   generated FRACTION_ON_LINE variations. ──
+//   the controller routes by. Tabs 3–7 + ★Practice are served by the AppR1
+//   mergeHost (same-denominator addition), not by this component. ──
 //   1-place : 3/4 on a 0→1 line (den 4) — GROW a bar from 1/4 unit pieces.
 //   2-write : 2/3 on a 0→1 line (den 3) — the point is fixed; WRITE the name.
-//   3-numbers: 5/3 on a 0→2 line (den 3) — DRAG the point PAST 1.
 
 // Per-stage problem: the fraction, its ruler width (wholes), and the denominator.
 function probFor(s) {
   switch (s) {
     case "1-place":   return { num: 3, den: 4, wholes: 1 };
     case "2-write":   return { num: 2, den: 3, wholes: 1 };
-    case "3-numbers": return { num: 5, den: 3, wholes: 2 };
     default:          return { num: 3, den: 4, wholes: 1 };
   }
 }
@@ -96,13 +118,10 @@ function fracWords(a, b) {
   return `${top} ${unit}${a === 1 ? "" : "s"}`;
 }
 
-export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
+export default function AppNumberLine({ no, title, onBack, onRewatchIntro, stumpingRecipe = null, onReturnToKitchen }) {
   // DOMAIN STATE the hook does not own.
-  // pointK = the dragged/placed point as a tick index k in [0..wholes*den]
-  //   (Stage 3 — drag the point). barK = how many 1/den unit pieces have been
-  //   stacked onto the line (Stage 1 — grow a bar). slate = Stage 2 written name.
-  const [pointK, setPointK] = useState(0);
-  const [placed, setPlaced] = useState(false);   // Stage 3: committed a drag?
+  // barK = how many 1/den unit pieces have been stacked onto the line (Stage 1 —
+  // grow a bar). slate = Stage 2 written name.
   const [barK, setBarK] = useState(0);           // Stage 1: pieces stacked so far
   const [slate, setSlate] = useState({ n: "", d: "" });
 
@@ -116,21 +135,65 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
     lessonId: "nl",
     initialStage: "1-place",
     stagesOrder: STAGES.map((s) => s.key),
-    // The final "practice" stage serves auto-generated FRACTION_ON_LINE variations,
-    // paced by the engine (re-roll on correct, fade on a clean streak, transfer probe).
-    generatedStages: ["practice"],
-    generatorSkill: "FRACTION_ON_LINE",
+    // The merged lesson's ★Practice consolidates same-denominator ADDITION, so it
+    // is served by the AppR1 mergeHost (its own ADD_SAME_DEN GenPracticeBoard,
+    // node ADD_SAME_DEN) — NOT a FRACTION_ON_LINE placement stage here. nl owns
+    // only its number-line teaching stages (Place / Write), so it declares no
+    // generated stage of its own.
     introFor: (s) => initialStatus(s),
     resetStage: () => {
-      setPointK(0); setPlaced(false); setBarK(0); setSlate({ n: "", d: "" }); setDrag(null);
+      setBarK(0); setSlate({ n: "", d: "" }); setDrag(null);
     },
   });
   const {
     stage, goStage, nextStage,
-    reportAttempt, applyEngineDecision,
+    reportAttempt, award,
     solved, solvedRef, stars, cook, setCook, status, setStatus,
-    say, speaking, stageRef,
+    sayPhase, speaking, stageRef,
   } = sc;
+
+  // ── nl+r1 MERGE: tabs 3–7 AND ★Practice ARE the real AppR1 interactive stages,
+  // rendered inline by delegating the whole page to <AppR1 mergeHost=…>. AppR1
+  // brings its own shell + self-drives its stages, but we hand it the nl 8-tab
+  // strip and the nl-merged stage SUBSET/order (Manipulate · Numbers · Applied ·
+  // Show Work · Words · ★Practice — r1's Bind/Fade/Workbench are excluded, matching
+  // the wireframe nl). ★Practice consolidates same-denominator ADDITION, so it is
+  // AppR1's own ADD_SAME_DEN practice (NOT nl's number-line placement). Backing
+  // before Manipulate hands control back to nl's Write stage. A click on a non-r1
+  // nl tab (Place / Write) routes back here via mergeHost.onNative. The `key` is
+  // stable across the r1 stages so AppR1 keeps its own state while auto-advancing
+  // through them; goStage(R1_STAGE_KEY[stage]) only sets the ENTRY stage on first
+  // mount. ──
+  if (stage && stage.startsWith("r1-")) {
+    const stripStages = STAGES.map((s) => ({ key: s.key, badge: s.badge, title: s.title, sub: s.sub }));
+    // AppR1 stage VALUE `n` (its STAGES.n) ↔ nl strip key, both directions.
+    const N_BY_HOSTKEY = { "r1-manipulate": 1, "r1-numbers": 5, "r1-applied": 6, "r1-showwork": "sw", "r1-words": 7, "r1-practice": "practice" };
+    const HOSTKEY_BY_N = { 1: "r1-manipulate", 5: "r1-numbers", 6: "r1-applied", sw: "r1-showwork", 7: "r1-words", practice: "r1-practice" };
+    return (
+      <AppR1
+        key="nl-r1-merge"
+        initialStage={R1_STAGE_KEY[stage]}
+        onBack={onBack}
+        onRewatchIntro={onRewatchIntro}
+        stumpingRecipe={stumpingRecipe}
+        onReturnToKitchen={onReturnToKitchen}
+        mergeHost={{
+          no: no || String(L.num).replace("№", ""),
+          tag: L.tag,
+          title: title || L.title,
+          label: "Lesson stages",
+          stages: stripStages,
+          order: [1, 5, 6, "sw", 7, "practice"], // nl-merged r1 stage values, in nl order (★Practice last)
+          nFromHostKey: N_BY_HOSTKEY,
+          hostKeyForN: HOSTKEY_BY_N,
+          onNative: (hostKey) => goStage(hostKey), // Place/Write → nl stages
+          // ★Practice now lives inside the merge (AppR1's ADD_SAME_DEN practice),
+          // so there is no forward hand-back; backing before Manipulate → nl Write.
+          onExitBack: () => goStage("2-write"),
+        }}
+      />
+    );
+  }
 
   const P = probFor(stage);                 // this stage's fraction + ruler
   const TARGET_K = P.num;                    // the correct tick index (num/den in wholes)
@@ -146,8 +209,6 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
         return { tone: "normal", text: `Drag the 1/${p.den} block onto the line — 1/${p.den}, 2/${p.den}, 3/${p.den}. Stop when you reach ${fracWords(p.num, p.den)}.` };
       case "2-write":
         return { tone: "normal", text: `Count the 1/${p.den} pieces sitting on the line from 0 — that's the top number; the part size ${p.den} is the bottom. Write it on the Slate.` };
-      case "3-numbers":
-        return { tone: "normal", text: `Fractions don't stop at 1! ${fracWords(p.num, p.den)} is more than one whole. Each whole is cut into ${p.den} parts — drag the point past 1 to the ${ONES[p.num]}th tick.` };
       default:
         return { tone: "normal", text: "" };
     }
@@ -182,53 +243,48 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
     window.addEventListener("pointerup", up);
   }
 
+  // Dragging a piece onto the line only GROWS the bar — it never grades. The child
+  // builds freely and presses "Check" (checkPlace) when they think it's right.
   function addPiece() {
     if (solvedRef.current) return;
     const stg = stageRef.current;
     const p = probFor(stg);
     const next = Math.min(barK + 1, p.wholes * p.den);
     setBarK(next);
-    if (next === p.num) {
-      setCook("cheer");
-      setStatus({ tone: "ok", text: `Right on it! ${fracWords(p.num, p.den)} is ${p.num} pieces of size 1/${p.den} from 0 — that length IS the number. Next stage!` });
-      say("nlWin");
-      const dec = reportAttempt({ correct: true, answerValue: [p.num, p.den], errorSignature: null, stars: 3, modality: "drag" });
-      setTimeout(() => applyEngineDecision(dec, true), 1500);
-    } else if (next > p.num) {
-      setCook("think");
-      setStatus({ tone: "warn", text: `Too many — that's ${next}/${p.den}, past ${fracWords(p.num, p.den)}. Reset and stop at the ${ONES[p.num]}th piece.` });
-      say("nlPlace");
-      reportAttempt({ correct: false, answerValue: [next, p.den], errorSignature: null, stars: 0, modality: "drag" });
+    setCook("idle");
+    setStatus({ tone: "normal", text: `${next}/${p.den} so far — drag 1/${p.den} blocks until the bar reaches ${fracWords(p.num, p.den)}, then press Check.` });
+  }
+
+  // Tapping the bar takes the LAST piece back off — so a child who drags one too
+  // many can correct it without clearing the whole bar (⟲ still resets all).
+  function removePiece() {
+    if (solvedRef.current || stageRef.current !== "1-place") return;
+    if (barK <= 0) return;
+    const p = probFor(stageRef.current);
+    const next = barK - 1;
+    setBarK(next);
+    setCook("idle");
+    setStatus({ tone: "normal", text: next === 0
+      ? `Bar cleared — drag 1/${p.den} blocks onto the line to reach ${fracWords(p.num, p.den)}.`
+      : `${next}/${p.den} now — keep dragging 1/${p.den} blocks (or tap a block to take one off), then press Check.` });
+  }
+
+  // Grade the grown bar against the target on an explicit Check (Stage 1 · Place).
+  function checkPlace() {
+    if (solvedRef.current) { nextStage(); return; }
+    const p = probFor(stageRef.current);
+    if (barK === p.num) {
+      // award sets solved → the Check button flips to "Next ▸"; the child taps it.
+      award(`Right on it! ${fracWords(p.num, p.den)} is ${p.num} pieces of size 1/${p.den} from 0 — that length IS the number. Next stage!`, null, [p.num, p.den], { modality: "drag" });
     } else {
       setCook("think");
-      setStatus({ tone: "normal", text: `${next}/${p.den} so far — keep stacking 1/${p.den} pieces until the bar reaches ${fracWords(p.num, p.den)}.` });
-      say("nlPlace");
+      setStatus({ tone: "warn", text: barK > p.num
+        ? `That's ${barK}/${p.den} — past ${fracWords(p.num, p.den)}. Press ⟲ to clear the bar and stop at the ${ONES[p.num]}th piece.`
+        : `That's ${barK}/${p.den} — not yet ${fracWords(p.num, p.den)}. Keep stacking 1/${p.den} pieces, then Check again.` });
+      reportAttempt({ correct: false, answerValue: [barK, p.den], errorSignature: null, stars: 0, modality: "drag" });
     }
   }
 
-  // ── Stage 3 (Numbers): drag the point. NumberLine hands back a value in WHOLES
-  // snapped to the nearest 1/den on release; convert to a tick index and judge. ──
-  function onPlace(valInWholes, info) {
-    if (solvedRef.current) return;
-    const k = Math.round(valInWholes * P.den);   // snap to nearest tick index
-    setPointK(k); setPlaced(true);
-    if (info && info.live) return;               // gliding under the finger — only judge on release
-    if (k === TARGET_K) {
-      setCook("cheer");
-      setStatus({ tone: "ok", text: `Yes! ${fracWords(P.num, P.den)} sits past 1 — ${P.num} parts of size 1/${P.den}, which is more than one whole. A fraction is just a number on the line. Next stage!` });
-      say("nlWin");
-      const dec = reportAttempt({ correct: true, answerValue: [P.num, P.den], errorSignature: null, stars: 3, modality: "drag" });
-      setTimeout(() => applyEngineDecision(dec, true), 1500);
-    } else {
-      setCook("think");
-      const overOne = k > P.den && P.wholes > 1;
-      setStatus({ tone: "warn", text: k < TARGET_K
-        ? `Not far enough — count ${ONES[P.num]} parts of size 1/${P.den} from 0${overOne ? " (keep going past 1)" : ""}.`
-        : `Too far — that's past ${fracWords(P.num, P.den)}. Each step is 1/${P.den}; land on the ${ONES[P.num]}th tick.` });
-      say("nlPlace");
-      reportAttempt({ correct: false, answerValue: [k, P.den], errorSignature: null, stars: 0, modality: "drag" });
-    }
-  }
 
   // ── Stage 2 (Write): grade the handwritten fraction against the marked point. ──
   function submitWrite() {
@@ -246,15 +302,12 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
       setStatus({ tone: "warn", text: flipped
         ? `Careful — the BOTTOM is how many equal parts the whole is cut into (${P.den}), the TOP is how many you count (${P.num}). You've flipped them.`
         : `Not quite. The line is cut into ${P.den} equal parts and the dot is ${ONES[P.num]} along — write ${P.num} over ${P.den}.` });
-      say("nlPlace");
       reportAttempt({ correct: false, answerValue: [tn, td], errorSignature: tn === P.den && td === P.num ? "flipped" : null, stars: 0 });
       return;
     }
-    setCook("cheer");
-    setStatus({ tone: "ok", text: `Yes! That point is ${fracWords(P.num, P.den)} — ${P.num} parts of size 1/${P.den}. The bottom tells the part size, the top counts them. Next stage!` });
-    say("nlWin");
-    const dec = reportAttempt({ correct: true, answerValue: [tn, td], errorSignature: null, stars: 3 });
-    setTimeout(() => applyEngineDecision(dec, true), 1500);
+    // award sets solved → the Check button flips to "Next ▸"; the child taps it
+    // to advance (no auto-advance; they see the success first).
+    award(`Yes! That point is ${fracWords(P.num, P.den)} — ${P.num} parts of size 1/${P.den}. The bottom tells the part size, the top counts them. Next stage!`, null, [tn, td]);
   }
 
   // Reset the CURRENT stage (toolbar ⟲).
@@ -263,16 +316,14 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
   // ── derived view state ──────────────────────────────────────────────────────
   const isPlace = stage === "1-place";
   const isWrite = stage === "2-write";
-  const isNumbers = stage === "3-numbers";
-  // r1-family stages (Manipulate, Numbers, Applied, Show Work, Words) are part
-  // of the merged nl+r1 wireframe lesson; in the real app they live in AppR1.
-  const isR1Stage = stage && stage.startsWith("r1-");
-  const pointVal = isWrite ? P.num / P.den : pointK / P.den; // Stage 3 marker value in wholes
+  // NB: r1-family stages (Manipulate · Numbers · Applied · Show Work · Words ·
+  // ★Practice) are handled by the early <AppR1 mergeHost> delegation ABOVE —
+  // execution never reaches here on an r1-* stage, so the body below only renders
+  // nl's own stages (Place / Write).
+  const pointVal = P.num / P.den;                // Write: the fixed marked-point value in wholes
   const slateFilled = slate.n !== "" && slate.d !== "";
   const answerReady = !solved && (
-    isPlace ? barK === TARGET_K
-    : isWrite ? slateFilled
-    : (placed && pointK === TARGET_K)
+    isPlace ? barK === TARGET_K : slateFilled
   );
 
   // the labelled ticks the NumberLine paints: 0, every whole, and (on Write) the
@@ -280,25 +331,13 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
   const marks = isWrite ? [{ value: P.num / P.den, label: `${P.num}/${P.den}` }] : [];
 
   // ── shared chrome ─────────────────────────────────────────────────────────
-  const Goal = (
-    <LessonGoal say={say} speaking={speaking} voiceKey="nlGoal" voxSpeaker="mom">
-      {stageGoal(stage, P)}
-    </LessonGoal>
-  );
-
-  const Band = (
-    <QuestionBand
-      lead="where on the line?"
-      expr={<BigFrac num={P.num} den={P.den} />}
-      answer={solved ? "✓ on the line" : "?"}
-    />
-  );
-
+  // Wave-F: the goal banner + QuestionBand are gone. The task copy + Read-aloud
+  // pill live in the rail (<RailInstruction>); the tutor ribbon is corrective-only.
   const Tutor = <TutorRibbon cook={cook} status={status} />;
 
   // ── the number-line canvas (the stage's interaction area) ────────────────────
-  // Stage 1 GROWS a bar of stacked 1/den pieces above the line; Stages 2/3 use the
-  // shared NumberLine (fixed point on Write, draggable point on Numbers).
+  // Stage 1 GROWS a bar of stacked 1/den pieces above the line; Stage 2 (Write)
+  // uses the shared NumberLine with a FIXED marked point to name.
   const Stage = (
     <FitStage className="nl-board-fit" axis="y">
       <div className="nl-canvas" ref={canvasRef}>
@@ -317,8 +356,12 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
               {/* the grown bar: barK stacked 1/den pieces, 0→barK on the line */}
               {barK > 0 && (
                 <div
-                  className="nl-bar"
+                  className={"nl-bar" + (!solved ? " is-editable" : "")}
                   style={{ left: ORIGIN, top: LINE_Y - 64, width: barK * PIECE_PX }}
+                  onClick={solved ? undefined : removePiece}
+                  role={!solved ? "button" : undefined}
+                  title={!solved ? "tap to take the last block off" : undefined}
+                  aria-label={!solved ? `take a 1/${P.den} block off the line` : undefined}
                 >
                   <div className="nl-bar-tag">
                     <BigFrac num={barK} den={P.den} />
@@ -361,66 +404,62 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
               labelParts
               fillToPoint
               point={pointVal}
-              draggablePoint={isNumbers && !solved}
-              onPlace={onPlace}
             />
           )}
-        </div>
-        <div className="nl-cap">
-          {isPlace
-            ? (solved ? `grown to ${fracWords(P.num, P.den)} ✓` : `drag the 1/${P.den} block onto the line — each piece is 1/${P.den}`)
-            : isNumbers
-            ? (solved ? `placed at ${fracWords(P.num, P.den)} ✓` : `drag the point — each tick is 1/${P.den}`)
-            : `the dot is ${ONES[P.num]} of ${P.den} equal parts along — name it`}
         </div>
       </div>
     </FitStage>
   );
 
-  // ── the per-stage hint rail ──────────────────────────────────────────────────
+  // ── the per-stage rail-as-instruction card (Wave-F) ──────────────────────────
+  // The task copy + the Read-aloud pill sit at the TOP of the rail (replacing the
+  // deleted goal banner). On Place, the draggable 1/den unit-piece tray rides as
+  // `extra` below the instruction card (the wireframe's .nl-drag-source).
   const Rail = (
-    <div className="panel">
-      <h3 className="pick-title">{isPlace ? "Build Three Fourths" : "A Fraction Is a Number"}</h3>
-      {isPlace ? (
-        <>
-          <div className="hint">
-            Drag the <b>1/{P.den}</b> block onto the line, again and again. Each drop grows the
-            bar one {DEN_NAME[P.den] || `1/${P.den}`} — <b>1/{P.den}</b>, <b>2/{P.den}</b>, <b>3/{P.den}</b>.
-            Stop when the bar reaches <b>{fracWords(P.num, P.den)}</b>.
-          </div>
-          <div className="nl-drag-source">
-            <div
-              className={"nl-src-plank" + (drag ? " is-dragging" : "")}
-              onPointerDown={startPieceDrag}
-              role="button"
-              tabIndex={0}
-              aria-label={`drag a 1/${P.den} piece onto the line`}
-            >
-              <div className="nl-plank">
-                <div className="nl-piece" style={{ width: 96, background: HUE, borderRight: "none" }}>
-                  <span className="nl-piece-lab">1/{P.den}</span>
-                </div>
+    <RailInstruction
+      say={sayPhase}
+      speaking={speaking}
+      voxSpeaker="cook"
+      heading={isPlace ? "Build Three Fourths" : "A Fraction Is a Number"}
+      extra={isPlace ? (
+        <div className="nl-drag-source">
+          <div
+            className={"nl-src-plank" + (drag ? " is-dragging" : "")}
+            onPointerDown={startPieceDrag}
+            role="button"
+            tabIndex={0}
+            aria-label={`drag a 1/${P.den} piece onto the line`}
+          >
+            <div className="nl-plank">
+              <div className="nl-piece" style={{ width: 96, background: HUE, borderRight: "none" }}>
+                <span className="nl-piece-lab">1/{P.den}</span>
               </div>
             </div>
-            <span className="nl-src-hint">drag onto the line →</span>
           </div>
+          <span className="nl-src-hint">drag onto the line →</span>
+        </div>
+      ) : null}
+    >
+      {isPlace ? (
+        <>
+          Drag the <b>1/{P.den}</b> block onto the line, again and again. Each drop grows the
+          bar one {DEN_NAME[P.den] || `1/${P.den}`} — <b>1/{P.den}</b>, <b>2/{P.den}</b>, <b>3/{P.den}</b>.
+          Stop when the bar reaches <b>{fracWords(P.num, P.den)}</b>. Dragged one too many?
+          <b> Tap the bar</b> to take a block off.
         </>
       ) : (
         <>
-          <div className="hint">
-            Each piece on the line is <b>1/{P.den}</b> — one of the {P.den} equal parts from
-            <b> 0</b> to <b>1</b>. Count the pieces; that count goes on <b>top</b>, the
-            part size <b>{P.den}</b> on the bottom. {P.num} pieces is <b>{P.num}/{P.den}</b>.
-          </div>
+          Each piece on the line is <b>1/{P.den}</b> — one of the {P.den} equal parts from
+          <b> 0</b> to <b>1</b>. Count the pieces; that count goes on <b>top</b>, the
+          part size <b>{P.den}</b> on the bottom. {P.num} pieces is <b>{P.num}/{P.den}</b>.
         </>
       )}
-    </div>
+    </RailInstruction>
   );
 
   // ── the answer card ──────────────────────────────────────────────────────────
   // Place: grow-the-bar — no writing; the bar length IS the answer; Check advances
-  // once it reaches the target. Write: the Slate fraction + Check. Numbers: the
-  // placed point IS the answer; Check advances once it snapped to the target.
+  // once it reaches the target. Write: the Slate fraction + Check.
   let Answer;
   if (isWrite) {
     Answer = (
@@ -443,9 +482,6 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
             </span>
           </div>
         }
-        cap={solved
-          ? `that point is ${fracWords(P.num, P.den)} — a number on the line!`
-          : "write the fraction the point names, then Check"}
         solved={solved}
         ready={answerReady}
         stars={stars}
@@ -463,70 +499,29 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
             <span className="nl-ans-amt">{barK > 0 ? `grow the bar with 1/${P.den} blocks — ${barK}/${P.den} so far` : `drag 1/${P.den} blocks to grow the bar`}</span>
           </div>
         }
-        cap={solved
-          ? `grown to ${fracWords(P.num, P.den)} — that length IS the number`
-          : (barK > P.num)
-          ? `that's ${barK}/${P.den} — too many; reset and stop at ${P.num}/${P.den}`
-          : `drop one more 1/${P.den} to reach ${fracWords(P.num, P.den)}`}
         solved={solved}
         ready={answerReady}
         stars={stars}
-        onCheck={solved ? nextStage : undefined}
-        checkLabel={solved ? "Next ▸" : `Add 1/${P.den}`}
-        checkDisabled={!solved}
-      />
-    );
-  } else {
-    Answer = (
-      <AnswerBar
-        eq={
-          <div className="nl-ans-eqrow">
-            <span className="nl-ans-frac"><BigFrac num={P.num} den={P.den} /></span>
-            <span className="nl-ans-eq">=</span>
-            <span className="nl-ans-amt">{placed ? `${pointK}/${P.den} of the way` : "drag the point to place it"}</span>
-          </div>
-        }
-        cap={solved
-          ? `placed at ${fracWords(P.num, P.den)} — that point IS the number`
-          : (placed && pointK !== TARGET_K)
-          ? `that's ${pointK}/${P.den} — aim for ${P.num}/${P.den}`
-          : `drag the point to ${fracWords(P.num, P.den)} on the line`}
-        solved={solved}
-        ready={answerReady}
-        stars={stars}
-        onCheck={solved ? nextStage : undefined}
-        checkLabel={solved ? "Next ▸" : "Drag to place"}
-        checkDisabled={!solved}
+        onCheck={solved ? nextStage : checkPlace}
+        checkLabel={solved ? "Next ▸" : "Check"}
+        checkDisabled={!solved && barK === 0}
       />
     );
   }
 
-  let body;
-  if (stage === "practice") {
-    // PRACTICE — auto-generated FRACTION_ON_LINE variations, paced by the engine.
-    body = <GenPracticeBoard skill="FRACTION_ON_LINE" scaffold={sc} />;
-  } else if (isR1Stage) {
-    // r1-family stages (Manipulate · Numbers · Applied · Show Work · Words) are
-    // part of the merged nl+r1 wireframe lesson; the real app serves them via the
-    // separate #/r1 route (AppR1). Show a lightweight bridge panel.
-    body = (
-      <div className="nl-r1-bridge">
-        <p>This stage continues in the <b>Adding Fractions</b> lesson.</p>
-      </div>
-    );
-  } else {
-    body = (
-      <LessonBoard
-        variant="split"
-        footHeight={L.footH || 196}
-        railWidth={L.railW || 396}
-        stage={Stage}
-        rail={Rail}
-        answer={Answer}
-        tutor={Tutor}
-      />
-    );
-  }
+  // Only nl's OWN teaching stages (Place / Write) reach here — the r1-family tabs
+  // (3–7 AND ★Practice) are served by the <AppR1 mergeHost> early return above.
+  const body = (
+    <LessonBoard
+      variant="split"
+      footHeight={L.footH || 196}
+      railWidth={L.railW || 396}
+      stage={Stage}
+      rail={Rail}
+      answer={Answer}
+      tutor={Tutor}
+    />
+  );
 
   return (
     <>
@@ -544,8 +539,6 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
           onSelect: goStage,
           label: "Lesson stages",
         }}
-        band={stage !== "practice" ? Band : null}
-        goal={Goal}
       >
         {body}
       </LessonShell>
@@ -563,18 +556,4 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
       )}
     </>
   );
-}
-
-// ── per-stage goal copy (captions, since the audience reads) ──────────────────
-function stageGoal(stage, P) {
-  switch (stage) {
-    case "1-place":
-      return (<>Grow a fraction from unit pieces. <b>Drag the 1/{P.den} block</b> onto the line again and again — the bar grows <b>1/{P.den}</b>, <b>2/{P.den}</b>, <b>3/{P.den}</b> — stop at {fracWords(P.num, P.den)}.</>);
-    case "2-write":
-      return (<>The bar is built from <b>1/{P.den}</b> pieces. Count how many sit on the line from <b>0</b>, and <b>write</b> that fraction — the count on top, the part size ({P.den}) on the bottom.</>);
-    case "3-numbers":
-      return (<>Fractions don't stop at 1! <b>{P.num}/{P.den}</b> is {fracWords(P.num, P.den)} — <b>bigger than one whole</b>. Each whole is still cut into <b>{P.den}</b> parts. <b>Drag the point past 1</b> to place it.</>);
-    default:
-      return "";
-  }
 }

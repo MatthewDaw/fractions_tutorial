@@ -13,7 +13,7 @@
     --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
     --halves:#1f6fd6;   /* 2 = blue   */
     --thirds:#e07b00;   /* 3 = orange */
-    --sixths:#caa300;    /* 6 = gold   */
+    --sixths:#caa300;   /* 6 = gold   */
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;}
@@ -40,23 +40,17 @@
   }
   #kicker.on{opacity:.95; transform:none;}
 
-  /* ── the board: two stacked bars, left-aligned so their lengths compare ── */
   #board{ position:relative; width:520px; max-width:92vw; }
 
-  .barrow{ display:flex; align-items:center; gap:22px; margin:20px 0; transition:opacity .7s ease; }
-  /* the stacked fraction label to the left of each bar */
+  .barrow{ position:relative; display:flex; align-items:center; gap:22px; margin:20px 0; transition:opacity .5s ease; }
   .flab{ display:flex; flex-direction:column; align-items:center; width:46px; flex:0 0 auto;
     font-family:"Russo One",sans-serif; line-height:1; }
   .flab .n,.flab .d{ font-size:30px; transition:color .6s ease; }
   .flab .bar{ width:30px; height:4px; border-radius:2px; margin:5px 0; background:currentColor; }
-  .rA .flab{ color:var(--thirds); }   /* 1/3 orange */
-  .rB .flab{ color:var(--halves); }   /* 1/2 blue   */
+  .rA .flab{ color:var(--thirds); }
+  .rB .flab{ color:var(--halves); }
   .rA.toSix .flab,.rB.toSix .flab{ color:var(--sixths); }
 
-  /* a bar = a sequence of equal pieces; total width encodes the amount.
-     Each piece matches the lesson Plank: the denominator hue + that denom's hatch
-     overlay + a 2px ink outline (with inset highlight/shadow like .plank-body) and
-     a divider between pieces in the denominator's own tone (denomTone). */
   .bar-track{ display:flex; gap:0; height:52px; }
   .pc{
     position:relative; overflow:hidden;
@@ -68,25 +62,24 @@
     transition:background .6s ease, opacity .45s ease;
   }
   .pc:last-child{ border-right-width:2px; }
-  /* the per-denominator hatch overlay (denomHatch) sits over the hue fill */
   .pc::before{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0; }
   .pc .plab{ position:relative; z-index:1; opacity:0; transition:opacity .4s ease; }
   .show-plab .pc .plab{ opacity:1; }
 
-  /* thirds (3) — orange, diagonal 45deg hatch (ink tone), ink label */
+  /* thirds — orange, diagonal */
   .rA .pc{ background:var(--thirds); color:#1c1612; }
   .rA .pc::before{ background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
-  /* halves (2) — blue, horizontal-stripe hatch (paper tone), paper label */
+  /* halves — blue, diagonal (no more 0deg horizontal stripes) */
   .rB .pc{ background:var(--halves); color:#ede2c8; }
-  .rB .pc::before{ background-image:repeating-linear-gradient(0deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px); }
-  /* sixths (6) — gold, cross-hatch 45/-45 (ink tone), ink label */
+  .rB .pc::before{ background-image:repeating-linear-gradient(45deg, rgba(237,226,200,.34) 0 1px, transparent 1px 6px); }
+  /* sixths — gold, cross-hatch */
   .rA.toSix .pc,.rB.toSix .pc{ background:var(--sixths); color:#1c1612; }
   .rA.toSix .pc::before,.rB.toSix .pc::before{
     background-image:
       repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
       repeating-linear-gradient(-45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
 
-  /* mismatch flag on beat 2 */
+  /* mismatch flag */
   #mismatch{
     position:absolute; right:-4px; top:50%; transform:translateY(-50%) scale(.6);
     font-family:"Russo One",sans-serif; font-size:18px; color:#fff; background:var(--red);
@@ -97,27 +90,81 @@
   .is-shake{ animation:shake .5s ease; }
   @keyframes shake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
 
-  /* the joined result row + equation (revealed late, centered) */
+  /* ── knives: enter from right, hover at cut, drop, lift, exit right ─────────
+     The knife is vertical (blade down). It slides in from off-screen right at
+     hover height (above the strip), drops to make the cut, lifts, then exits
+     right. One knife at a time: A first, then B after A has finished. */
+  .kn{
+    position:absolute; left:0; top:-66px; width:44px; height:96px; z-index:9;
+    pointer-events:none; opacity:0;
+    transform: translate(var(--kx-out), -40px);
+    filter: drop-shadow(0 4px 3px rgba(20,12,6,.35));
+  }
+  .kn svg{ display:block; }
+  .kn .ktag{
+    position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:12px; color:#fff;
+    background:var(--red); padding:2px 8px; border-radius:11px; white-space:nowrap;
+    box-shadow:0 2px 0 rgba(0,0,0,.22);
+  }
+  .kn.go{ animation: kn-from-right 3.5s cubic-bezier(.45,.05,.35,1) forwards; }
+  @keyframes kn-from-right{
+    0%   { opacity:0; transform: translate(var(--kx-out), -40px); }
+    10%  { opacity:1; transform: translate(var(--kx-out), -40px); }
+    38%  { opacity:1; transform: translate(var(--kx-cut), -40px); }
+    54%  { opacity:1; transform: translate(var(--kx-cut),   0px); }
+    70%  { opacity:1; transform: translate(var(--kx-cut), -40px); }
+    88%  { opacity:1; transform: translate(var(--kx-out), -40px); }
+    100% { opacity:0; transform: translate(var(--kx-out), -40px); }
+  }
+  .bar-track.cut{ animation: track-cut .32s ease; }
+  @keyframes track-cut{ 0%{transform:scaleY(1)} 45%{transform:scaleY(1.12)} 100%{transform:scaleY(1)} }
+  @media (prefers-reduced-motion: reduce){
+    .kn.go{ animation-duration:.01s; }
+    .bar-track.cut{ animation:none; }
+  }
+
+  /* result: joined bar + two equations stacked */
   #result{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(14px);
-    display:flex; flex-direction:column; align-items:center; gap:18px; z-index:7;
+    display:flex; flex-direction:column; align-items:center; gap:14px; z-index:7;
     opacity:0; transition:opacity .6s ease, transform .6s ease;
   }
   #result.on{ opacity:1; transform:translate(-50%,-50%); }
   #joined{ display:flex; gap:0; height:52px; }
-  /* the joined result is five sixths — gold + cross-hatch + ink label */
   #joined .pc{ background:var(--sixths); color:#1c1612; }
   #joined .pc::before{
     background-image:
       repeating-linear-gradient(45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px),
       repeating-linear-gradient(-45deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px); }
-  #eq{ display:flex; align-items:center; gap:14px; font-family:"Russo One",sans-serif; }
-  #eq .f{ display:flex; flex-direction:column; align-items:center; line-height:1; }
-  #eq .f .n,#eq .f .d{ font-size:40px; } #eq .f .bar{ width:42px; height:4px; background:var(--ink); border-radius:2px; margin:5px 0; }
-  #eq .t3{ color:var(--thirds); } #eq .t2{ color:var(--halves); } #eq .t6{ color:var(--sixths); }
-  #eq .op{ font-size:30px; color:var(--ink-soft); }
-  /* when the result is shown, recede the working bars so nothing collides */
-  #board:has(#result.on) .barrow{ opacity:.14; }
+
+  /* primary equation: 2/6 + 3/6 = 5/6 */
+  #eq-six{ display:flex; align-items:center; gap:14px; font-family:"Russo One",sans-serif; }
+  /* secondary equation: = 1/3 + 1/2, revealed later */
+  #eq-orig{
+    display:flex; align-items:center; gap:10px; font-family:"Russo One",sans-serif;
+    opacity:0; transform:translateY(6px); transition:opacity .55s ease, transform .55s ease;
+  }
+  #eq-orig.on{ opacity:1; transform:none; }
+  #eq-orig .same{
+    font-family:"Old Standard TT",Georgia,serif; font-style:italic;
+    font-size:18px; color:var(--ink-soft); margin-right:4px;
+  }
+
+  .eq .f,#eq-six .f,#eq-orig .f{
+    display:flex; flex-direction:column; align-items:center; line-height:1;
+  }
+  .eq .f .n,.eq .f .d,#eq-six .f .n,#eq-six .f .d,#eq-orig .f .n,#eq-orig .f .d{ font-size:40px; }
+  .eq .f .bar,#eq-six .f .bar,#eq-orig .f .bar{
+    width:42px; height:4px; background:var(--ink); border-radius:2px; margin:5px 0;
+  }
+  #eq-orig .f .n,#eq-orig .f .d{ font-size:32px; }
+  #eq-orig .f .bar{ width:34px; }
+  .t3{ color:var(--thirds); } .t2{ color:var(--halves); } .t6{ color:var(--sixths); }
+  .op{ font-size:30px; color:var(--ink-soft); }
+  #eq-orig .op{ font-size:24px; }
+
+  #board:has(#result.on) .barrow{ opacity:0; visibility:hidden; transition:opacity .5s ease, visibility 0s linear .5s; }
 
   #caption{
     position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
@@ -149,12 +196,20 @@
 
       <div id="result">
         <div id="joined"></div>
-        <div id="eq">
+        <!-- primary: sixths equation shown first -->
+        <div id="eq-six">
+          <span class="f t6"><span class="n">2</span><span class="bar"></span><span class="n">6</span></span>
+          <span class="op">+</span>
+          <span class="f t6"><span class="n">3</span><span class="bar"></span><span class="n">6</span></span>
+          <span class="op">=</span>
+          <span class="f t6"><span class="n">5</span><span class="bar"></span><span class="n">6</span></span>
+        </div>
+        <!-- secondary: original fractions revealed at beat 7 -->
+        <div id="eq-orig">
+          <span class="same">same as</span>
           <span class="f t3"><span class="n">1</span><span class="bar"></span><span class="n">3</span></span>
           <span class="op">+</span>
           <span class="f t2"><span class="n">1</span><span class="bar"></span><span class="n">2</span></span>
-          <span class="op">=</span>
-          <span class="f t6"><span class="n">5</span><span class="bar"></span><span class="n">6</span></span>
         </div>
       </div>
     </div>
@@ -177,11 +232,23 @@
 (function(){
   "use strict";
   var PERSIST = "samesize.v2";
-  var DURATION = 22;            // seconds — tightened (~0.5s between lines)
-  var PW = 56;                  // pixels per 1/6 piece (a "sixth")
+  var DURATION = 32;
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
+  var PW = 56;  // pixels per 1/6 piece
+
+  var KNIFE_SVG =
+    '<svg viewBox="0 0 44 96" width="44" height="96" aria-hidden="true">' +
+      '<rect x="15" y="4" width="14" height="30" rx="6" fill="#3a2e24" stroke="#241b14" stroke-width="1.5"/>' +
+      '<circle cx="22" cy="12" r="1.5" fill="#d8c79f"/><circle cx="22" cy="20" r="1.5" fill="#d8c79f"/>' +
+      '<rect x="13" y="33" width="18" height="7" rx="2" fill="#8a7a55" stroke="#5c4e34" stroke-width="1"/>' +
+      '<path d="M14 40 L30 40 L26 80 Q22 93 18 80 Z" fill="#cfd3da" stroke="#9aa0a8" stroke-width="1"/>' +
+      '<path d="M28 42 L24.5 80" stroke="#aeb3bb" stroke-width="2" opacity=".8"/>' +
+      '<path d="M16.5 42 L19 79" stroke="#ffffff" stroke-width="1.5" opacity=".55"/>' +
+    '</svg>';
+  var knives = [];
 
   function el(id){ return document.getElementById(id); }
-  // build a bar of `n` equal pieces, each PW wide; optional running labels
+
   function buildBar(track, n, labelEach){
     track.innerHTML = "";
     for (var i=0;i<n;i++){
@@ -190,8 +257,7 @@
       d.appendChild(s); track.appendChild(d);
     }
   }
-  // start: 1/3 = ONE orange piece 2·PW wide; 1/2 = ONE blue piece 3·PW wide
-  // (their differing widths are the whole point — different-size pieces)
+
   function startBars(){
     var a=el("barA"); a.innerHTML="";
     var pa=document.createElement("div"); pa.className="pc"; pa.style.width=(2*PW)+"px"; a.appendChild(pa);
@@ -202,19 +268,80 @@
 
   var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
   function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
-
   function pulse(el2){ el2.style.transition="transform .25s ease"; el2.style.transform="scale(1.3)";
     setTimeout(function(){ el2.style.transform="scale(1)"; }, 260); }
 
+  // Slice a strip: knife enters from screen-right, glides to kxCut above the strip,
+  // drops onto it (cut fires), lifts, then exits right. Duration: 3.5s per knife.
+  // kxCut is the translateX that centres the knife blade over the cut position,
+  // measured from the .barrow left edge (same coord system as position:absolute).
+  function sliceStrip(id, knifeN, pieces, kxCut){
+    var row = el("r"+id), track = el("bar"+id);
+    // off-screen right: viewport width from the barrow's left edge + buffer
+    var boardRect = el("board").getBoundingClientRect();
+    var rowRect   = row.getBoundingClientRect();
+    var kxOut = Math.round(window.innerWidth - rowRect.left) + 60;
+    var kn = document.createElement("div"); kn.className = "kn";
+    kn.style.setProperty("--kx-out", kxOut + "px");
+    kn.style.setProperty("--kx-cut", kxCut + "px");
+    kn.innerHTML = '<span class="ktag">×' + knifeN + '</span>' + KNIFE_SVG;
+    row.appendChild(kn); knives.push(kn);
+    requestAnimationFrame(function(){ kn.classList.add("go"); });
+    // strip splits mid-animation (54% of 3.5s ≈ 1.89s → 1850ms)
+    setTimeout(function(){
+      buildBar(track, pieces);
+      row.classList.add("toSix");
+      track.classList.add("cut");
+      setTimeout(function(){ track.classList.remove("cut"); }, 340);
+      if (id === "A"){ el("aN").textContent = "2"; el("aD").textContent = "6"; }
+      else           { el("bN").textContent = "3"; el("bD").textContent = "6"; }
+    }, 1850);
+    // remove node after animation completes
+    setTimeout(function(){ if (kn.parentNode) kn.parentNode.removeChild(kn); }, 3500);
+  }
+
+  // kxCut positions (translateX from barrow left, knife centred over cut):
+  //   Strip A (1/3 → ×2 → 2 sixths): one cut at 1×PW from track left.
+  //     track left in barrow = flab(46) + gap(22) = 68px
+  //     cut at 68 + 56 = 124px; knife centre offset = 22px → kxCut = 102
+  //   Strip B (1/2 → ×3 → 3 sixths): two cuts; aim at mid-track.
+  //     track width = 3×PW = 168px; mid = 84px from track left
+  //     68 + 84 - 22 = 130
+  var KX_CUT_A = 102;
+  var KX_CUT_B = 130;
+
+  function resetVisuals(){
+    knives.forEach(function(k){ if (k.parentNode) k.parentNode.removeChild(k); }); knives = [];
+    startBars();
+    el("rA").className = "barrow rA"; el("rB").className = "barrow rB";
+    el("aN").textContent="1"; el("aD").textContent="3";
+    el("bN").textContent="1"; el("bD").textContent="2";
+    el("mismatch").classList.remove("on");
+    el("rA").classList.remove("is-shake"); el("rB").classList.remove("is-shake");
+    el("result").classList.remove("on");
+    el("eq-orig").classList.remove("on");
+    el("joined").innerHTML="";
+    el("kicker").classList.remove("on");
+    showCap(-1);
+  }
+
   var beatsDone = [];
 
+  // Timeline (seconds):
+  //   0.3  kicker
+  //   1.5  cap 0 — one third and one half
+  //   5.0  cap 1 — different sizes (shake + flag)
+  //   8.0  cap 2 — SLICE! + knife A enters (×2, 1/3 strip)
+  //  11.5  knife B enters (×3, 1/2 strip) — A finishes at 8.0+3.5=11.5
+  //  15.5  cap 3 — every piece is one sixth (B finishes at 11.5+3.5=15.0)
+  //  19.0  cap 4 — bottom number is six
+  //  21.5  cap 5 + result — count the pieces; show joined + 2/6+3/6=5/6
+  //  25.0  cap 6 + eq-orig — one third plus one half; reveal below
   var BEATS = [
     [0.3, function(){ el("kicker").classList.add("on"); }],
 
-    // Beat 1 — the two strips of different sizes
     [1.5, function(){ showCap(0); }],
 
-    // Beat 2 — they don't match (wobble + ≠ flag)
     [5.0, function(){
       showCap(1);
       el("mismatch").classList.add("on");
@@ -222,54 +349,58 @@
       setTimeout(function(){ el("rA").classList.remove("is-shake"); el("rB").classList.remove("is-shake"); }, 520);
     }],
 
-    // Beat 3 — SLICE both into sixth-size pieces (same amount, more cuts → match)
+    // Beat 3 — knife A (×2) slices the 1/3 strip
     [8.0, function(){
       showCap(2);
       el("mismatch").classList.remove("on");
-      buildBar(el("barA"), 2);    // 1/3 → two 1/6 pieces
-      buildBar(el("barB"), 3);    // 1/2 → three 1/6 pieces
-      el("rA").classList.add("toSix"); el("rB").classList.add("toSix");
-      el("aN").textContent="2"; el("aD").textContent="6";
-      el("bN").textContent="3"; el("bD").textContent="6";
+      sliceStrip("A", 2, 2, KX_CUT_A);
     }],
 
-    // Beat 4 — every piece is one sixth, the same size
-    [10.6, function(){
+    // Beat 3b — knife B (×3) slices the 1/2 strip (A finishes at 11.5s)
+    [11.5, function(){
+      sliceStrip("B", 3, 3, KX_CUT_B);
+    }],
+
+    // Beat 4 — every piece is one sixth (B finishes at 15.0s)
+    [15.5, function(){
       showCap(3);
       el("rA").classList.add("show-plab"); el("rB").classList.add("show-plab");
       var pcs=document.querySelectorAll("#barA .plab, #barB .plab");
       pcs.forEach(function(p){ p.textContent="⅙"; });
     }],
 
-    // Beat 5 — so the bottom number is six (pulse the denominators)
-    [14.6, function(){ showCap(4); pulse(el("aD")); pulse(el("bD")); }],
+    // Beat 5 — so the bottom number is six
+    [19.0, function(){ showCap(4); pulse(el("aD")); pulse(el("bD")); }],
 
-    // Beat 6 — join + count the five sixths
-    [16.9, function(){
+    // Beat 6 — count the pieces; joined bar + 2/6+3/6=5/6 appear
+    [21.5, function(){
       showCap(5);
-      buildBar(el("joined"), 5);  // five gold sixths
+      buildBar(el("joined"), 5);
       var pcs=el("joined").children;
       for (var i=0;i<pcs.length;i++){ (function(p,k){
         var s=p.querySelector(".plab"); s.textContent=(k+1); s.style.opacity="0";
-        setTimeout(function(){ s.style.opacity="1"; }, 200 + k*260); // count up 1..5
+        setTimeout(function(){ s.style.opacity="1"; }, 200 + k*260);
       })(pcs[i], i); }
-      el("result").classList.add("on");   // recedes the working bars (via :has)
+      el("result").classList.add("on");
     }],
 
-    // Beat 7 — one third plus one half makes five sixths
-    [18.7, function(){ showCap(6); el("eq").style.transform="scale(1.0)"; pulse(el("eq")); }],
+    // Beat 7 — one third plus one half; reveal original fractions below
+    [25.0, function(){
+      showCap(6);
+      el("eq-orig").classList.add("on");
+      pulse(el("eq-six"));
+    }],
   ];
 
   function applyBeats(t){
     for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
   }
 
-  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
   try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
-    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
     lastWall=now;
     var t=elapsed; if (t>DURATION) t=DURATION;
     try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
@@ -282,7 +413,7 @@
   window.__anim = {
     play:  function(){ paused=false; },
     pause: function(){ paused=true;  },
-    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; }
+    seek:  function(s){ elapsed=Math.max(0,+s||0); beatsDone=[]; resetVisuals(); }
   };
 })();
 </script>

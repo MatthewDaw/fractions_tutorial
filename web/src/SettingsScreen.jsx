@@ -16,7 +16,7 @@
 // INTERACTIVE mechanics (slider pointer/keyboard math, mode-card selection,
 // settings store wiring) stay in React components here; only chrome + copy moved.
 import { useState, useEffect } from "react";
-import { getSettings, setSettings, subscribeSettings } from "./settings.js";
+import { getSettings, setSettings, subscribeSettings, VOICE_RATES } from "./settings.js";
 import SCENES from "./scenes.js";
 import SceneFrame from "./components/scene/SceneFrame.jsx";
 import HeaderLayout from "./components/scene/HeaderLayout.jsx";
@@ -92,6 +92,36 @@ function VolumeRow({ icon, name, hint, value, onChange, cls }) {
   );
 }
 
+/* ── narrator-speed control ─────────────────────────────────────────── */
+/* MECHANIC: pick a playback rate. Pitch is preserved everywhere it's applied,
+   so faster never means squeaky. Drives the in-lesson narration AND intro videos. */
+function SpeedRow({ value, onChange }) {
+  return (
+    <div className="st-vrow rv st-speedrow">
+      <div className="st-vlabel">
+        <div className="st-vicon"><VoiceIcon /></div>
+        <div className="st-vtext">
+          <div className="st-vt-name">Narrator speed</div>
+          <div className="st-vt-hint">How fast the narrator talks — and how fast intro videos play</div>
+        </div>
+      </div>
+      <div className="st-speeds" role="group" aria-label="Narrator speed">
+        {VOICE_RATES.map((r) => (
+          <button
+            key={r}
+            type="button"
+            className={"st-speed" + (value === r ? " on" : "")}
+            aria-pressed={value === r}
+            onClick={() => onChange(r)}
+          >
+            {r}×
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── input-mode card ────────────────────────────────────────────────── */
 /* MECHANIC: select stylus|typing, aria-pressed reflects state. */
 function ModeCard({ icon, name, hint, on, onSelect }) {
@@ -139,6 +169,7 @@ export default function SettingsScreen({ onBack }) {
             value={s.voiceVol} onChange={(v) => set({ voiceVol: v })} />
           <VolumeRow cls="d4" icon={MusicIcon} name="Music" hint="Background music throughout the game"
             value={s.musicVol} onChange={(v) => set({ musicVol: v })} />
+          <SpeedRow value={s.voiceRate} onChange={(r) => set({ voiceRate: r })} />
         </div>
 
         {/* writing */}

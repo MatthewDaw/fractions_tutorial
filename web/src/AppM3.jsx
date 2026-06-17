@@ -2,25 +2,25 @@
 // answer, then know it by heart. The fluency layer: a prereq of r2 (cross-multiply)
 // and r4 (simplify). The worked example threaded through every stage is 7 × 8 = 56.
 //
-// THE FULL 7-STAGE INTERACTION ARC (same scaffold-fade shape as AppR1): the
-// manipulative (jar/scoop) channel shrinks to nothing while the written (Slate)
-// channel grows from "read the tally" to "write the product from recall".
+// THE INTERACTION ARC (same scaffold-fade shape as AppR1): the manipulative
+// (jar/scoop) channel shrinks to nothing while the written (Slate) channel grows
+// from "read the tally" to "write the product from recall". The displayed steps
+// are 1–6 + ★; the INTERNAL stage numbers below (4/5/6/7) keep their original
+// values — the Fade and Show-Work steps were removed without renumbering them.
 //
 //   1 · Manipulate — SkipJar: drag the scoop into the jar N times; each handful
 //        bumps a VISIBLE running tally (8,16,24…) — the anti-drift device. Read the
 //        total into a plain count box. No writing.
 //   2 · Bind       — jar + a printed skip-count ribbon (early terms shown) + the
 //        equation 7 × 8 = __; the child writes the final product 56 on the Slate.
-//   3 · Fade       — the jar dims to a ghost; a SkipLine number-line leads with two
-//        interior terms blank; fill them, then write the product.
-//   4 · Workbench  — the shared <BlockSandbox> styling: build "7 groups of 8" out
-//        of same-size pieces and count to 56 (optional support rung).
-//   5 · Numbers    — a BARE 7 × 8 = __ card; write the product from recall. Adds
-//        explicit ×0 / ×1 micro-prompts (the fluency target).
-//   6 · Applied    — a WordProblem (numerals shown) with a REQUIRED setup gate:
-//        write groups × size first, then the product unlocks.
-//   7 · Words      — a plain-language WORD PROBLEM; an OPTIONAL ungraded scratch;
-//        extract groups & size unaided and write the product.
+//   (display 3) Workbench [internal stage 4] — the shared <BlockSandbox>: build
+//        "7 groups of 8" out of same-size pieces and count to 56 on the line.
+//   (display 4) Numbers   [internal stage 5] — a BARE 7 × 8 = __ card; write the
+//        product from recall. Adds explicit ×0 / ×1 micro-prompts (fluency target).
+//   (display 5) Applied   [internal stage 6] — a WordProblem (numerals shown) with
+//        a REQUIRED setup gate: write groups × size first, then the product unlocks.
+//   (display 6) Words     [internal stage 7] — a plain-language WORD PROBLEM; an
+//        OPTIONAL ungraded scratch; extract groups & size unaided, write the product.
 //
 // Engine: v1 carries the product as [product, 1] (R-B5); the single Slate slot is
 // graded by parseInt; multiplication misconceptions fingerprint as 'other' until
@@ -35,14 +35,10 @@
 // never crashes the room.
 import React, { useState } from "react";
 import Slate from "./components/Slate.jsx";
-import WordProblem from "./components/WordProblem.jsx";
-import QuestionBand from "./components/QuestionBand.jsx";
 import BlockSandbox from "./components/BlockSandbox.jsx";
-import BlankSlate from "./components/BlankSlate.jsx";
 import FitStage from "./components/FitStage.jsx";
 import SkipJar from "./components/SkipJar.jsx";
-import SkipLine from "./components/SkipLine.jsx";
-import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
+import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, RailInstruction, ScratchSurface } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
@@ -57,10 +53,8 @@ const L = LESSONS.m3;
 
 // The single worked example threaded through every stage: 7 × 8 = 56.
 const GROUPS = 7, SIZE = 8, PRODUCT = GROUPS * SIZE; // 7, 8, 56
-// The full skip-count sequence for the SkipLine (8,16,…,56).
+// The full skip-count sequence (8,16,…,56) shown on the Bind stage's ribbon.
 const SEQUENCE = Array.from({ length: GROUPS }, (_, i) => (i + 1) * SIZE);
-// Two INTERIOR terms blanked in Fade (24 at idx 2, 40 at idx 4).
-const FADE_BLANKS = [2, 4];
 
 // The stage model: render-branch value (`n`: numeric 1..7, or string key for the
 // non-numeric steps) + canonical scaffold `key`, paired with the registry strip
@@ -69,15 +63,13 @@ const FADE_BLANKS = [2, 4];
 const STAGE_BY_BADGE = {
   "1": { n: 1, key: "1-manipulate" },
   "2": { n: 2, key: "2-bind" },
-  "3": { n: 3, key: "3-fade" },
-  "4": { n: 4, key: "4-workbench" },
-  "5": { n: 5, key: "5-numbers" },
-  "6": { n: 6, key: "6-applied" },
-  // String-keyed mandatory "show your work" step (between Applied and Words). A
-  // non-numeric `n` keeps the numeric stages 1..7 from renumbering; the selector
-  // and goStage route by `key`. scaffoldMap returns L3 for "showwork".
-  "7": { n: "showwork", key: "showwork" },
-  "8": { n: 7, key: "7-words" },
+  // Fade (the old "3-fade" SkipLine step) was removed; the displayed badges are
+  // resequenced here while the INTERNAL stage numbers (4/5/6/7) stay put, so the
+  // render branches and grader keys never have to renumber.
+  "3": { n: 4, key: "4-workbench" },
+  "4": { n: 5, key: "5-numbers" },
+  "5": { n: 6, key: "6-applied" },
+  "6": { n: 7, key: "7-words" },
   // Auto-generated, estimator-paced practice: the engine mints fresh MULT_FACTS
   // variations, re-rolls on a correct answer, fades to harder problems on a clean
   // streak, and probes transfer. Purely additive — no teaching stage is touched.
@@ -114,8 +106,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
   // --- Stage 1 (manipulate) state: scoops poured into the jar ---
   const [scoops, setScoops] = useState(0);
 
-  // --- Stage 3 (fade) skip-line fills (index → digit string) ---
-  const [lineFills, setLineFills] = useState({});
 
   // --- Stage 5 (numbers) fluency-prompt cursor ---
   const [promptIdx, setPromptIdx] = useState(0);
@@ -129,8 +119,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
   const [setupS, setSetupS] = useState({ product: "" }); // size
   const [setupOk, setSetupOk] = useState(false);
 
-  // --- Show-work step gate: the child must put ink down before advancing ---
-  const [showWorkInked, setShowWorkInked] = useState(false);
 
   // --- Stage 4 (workbench) "built the groups" gate. BlockSandbox's onSolve flips
   // this true (the line is built out of correct same-size groups), which UNLOCKS
@@ -154,12 +142,14 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     nodeId: NODE_ID,
     lessonId: "m3",
     initialStage: startN,
-    // Linear advance, threading the string-keyed "showwork" step between 6 and 7,
-    // and the final string-keyed "practice" stage after Words (7).
-    advance: (cur) => (cur === 6 ? "showwork" : cur === "showwork" ? 7 : cur === 7 ? "practice" : cur === "practice" ? "practice" : Math.min(7, (typeof cur === "number" ? cur : 7) + 1)),
+    // Linear advance. The Fade (numeric 3) and Show-Work steps were removed, so
+    // Bind (2) jumps straight to Workbench (4), Applied (6) goes straight to Words
+    // (7), and Words (7) ends in the generated "practice" stage.
+    advance: (cur) => (cur === 2 ? 4 : cur === 7 ? "practice" : cur === "practice" ? "practice" : Math.min(7, (typeof cur === "number" ? cur : 7) + 1)),
     // RaiseScaffold target — one numeric stage back (showwork is ungraded so it
-    // never reports an attempt; guard the arithmetic anyway).
-    back: (cur) => Math.max(1, (typeof cur === "number" ? cur : 6) - 1),
+    // never reports an attempt; guard the arithmetic anyway). Workbench (4) steps
+    // back to Bind (2), since Fade (3) was removed.
+    back: (cur) => cur === 4 ? 2 : Math.max(1, (typeof cur === "number" ? cur : 6) - 1),
     scaffoldKeyFor: SCAFFOLD_KEY,
     surfaceFormFor: (key) => SURFACE_FORM[key] ?? ("stage-" + key),
     // The final "practice" stage serves auto-generated MULT_FACTS variations,
@@ -168,9 +158,9 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     generatorSkill: "MULT_FACTS",
     introFor: (n) => ({ tone: "normal", text: STAGE_INTRO(n) }),
     resetStage: () => {
-      setScoops(0); setLineFills({}); setPromptIdx(0); setSlate({ product: "" });
+      setScoops(0); setPromptIdx(0); setSlate({ product: "" });
       setSetupG({ product: "" }); setSetupS({ product: "" }); setSetupOk(false);
-      setShowWorkInked(false); setSandboxBuilt(false);
+      setSandboxBuilt(false);
     },
     onEnd: () => setStatus({ tone: "ok", text: "That's the whole arc — from scooping the jar to knowing the fact by heart. Brilliant, povaryonok!" }),
   });
@@ -178,7 +168,7 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     stage, goStage, nextStage,
     emit, reportAttempt, award, flashBad,
     solved, solvedRef, stars, badInput, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef,
+    sayPhase, speaking, selfCorrectionsRef,
   } = sc;
 
   // Selector clicks pass a STAGES `key` string; normalize to the stage VALUE
@@ -205,7 +195,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     if (!(slate.product !== "" && !isNaN(n))) {
       flashBad();
       setStatus({ tone: "warn", text: "Write the product — how many in all?" });
-      say("mr_mom_nudge_write");
       return { ok: false };
     }
     if (n !== targetProduct) {
@@ -215,7 +204,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
       setStatus({ tone: "warn", text: reachedSum
         ? `Careful — that's ${g} plus ${s}. We want ${g} groups of ${s} — skip-count: ${SIZE_HINT(g, s)}`
         : `Not quite — count by ${s}: ${SIZE_HINT(g, s)} How many in all?` });
-      say(reachedSum ? "mr_mom_nudge_addvsmult" : "mr_mom_nudge_skipcount");
       reportAttempt({ correct: false, answerValue: [n, 1], errorSignature: sig, stars: 0 });
       return { ok: false };
     }
@@ -245,7 +233,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     if (scoops < GROUPS) {
       setCook("think");
       setStatus({ tone: "warn", text: `Fill the jar first — ${GROUPS} scoops of ${SIZE}.` });
-      say("mr_mom_nudge_fill");
       return;
     }
     const { ok } = gradeProduct(PRODUCT, GROUPS, SIZE);
@@ -259,38 +246,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     const { ok } = gradeProduct(PRODUCT, GROUPS, SIZE);
     if (!ok) return;
     award(`Yes! The ribbon counts ${SEQUENCE.join(", ")} — ${GROUPS} × ${SIZE} = ${PRODUCT}.`, "mr_mom_goal_ribbon", [PRODUCT, 1]);
-  }
-
-  // ---- Stage 3 (fade) ----
-  // A DROPPED chip is graded here: a correct number SNAPS into the slot and locks
-  // (persisted into lineFills); a wrong number BOUNCES back (not persisted) and
-  // fires the "not quite" nudge — so a wrong drop never leaves a wrong digit stuck
-  // on the line. lineComplete reads only persisted correct values.
-  function onLineFill(index, value) {
-    if (solvedRef.current) return;
-    const correct = parseInt(value, 10) === SEQUENCE[index];
-    if (!correct) {
-      selfCorrectionsRef.current += 1;
-      setCook("think");
-      setStatus({ tone: "warn", text: `Not that one — keep the rhythm. Count on by ${SIZE} from the term before.` });
-      return; // bounce: don't persist a wrong fill
-    }
-    setLineFills((m) => ({ ...m, [index]: value }));
-    setCook("idle");
-    setStatus({ tone: "normal", text: "Good — that's the next hop. Fill the rest, then write the product." });
-  }
-  const lineComplete = FADE_BLANKS.every((i) => parseInt(lineFills[i], 10) === SEQUENCE[i]);
-  function checkStage3() {
-    if (solvedRef.current) { nextStage(); return; }
-    if (!lineComplete) {
-      setCook("think");
-      setStatus({ tone: "warn", text: "Fill the missing hops on the line first — keep counting by " + SIZE + "." });
-      say("mr_mom_nudge_skipline");
-      return;
-    }
-    const { ok } = gradeProduct(PRODUCT, GROUPS, SIZE);
-    if (!ok) return;
-    award(`Yes! The line lands on ${PRODUCT}. ${GROUPS} × ${SIZE} = ${PRODUCT}.`, "mr_mom_goal_line", [PRODUCT, 1]);
   }
 
   // ---- Stage 4 · WORKBENCH — shared <BlockSandbox> in NUMBER mode, "7 groups of 8" ----
@@ -315,7 +270,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     if (!sandboxBuilt) {
       setCook("think");
       setStatus({ tone: "warn", text: `Build the groups first — drop "${SIZE}" blocks onto the line until they reach ${PRODUCT}.` });
-      say("mr_mom_nudge_fill");
       return;
     }
     const { ok } = gradeProduct(PRODUCT, GROUPS, SIZE);
@@ -338,7 +292,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
       // advancing the stage — only the final prompt's award() drives stage flow.
       reportAttempt({ correct: true, answerValue: [prompt.p, 1], errorSignature: null, stars: 3 });
       setStatus({ tone: "ok", text: `${prompt.g} × ${prompt.s} = ${prompt.p}. Now: ${np.g} × ${np.s} = ?` });
-      say(np.s === 0 ? "mr_mom_goal_timeszero" : np.s === 1 ? "mr_mom_goal_timesone" : "mr_mom_goal_bare");
       setSlate({ product: "" });
       setPromptIdx(next);
       selfCorrectionsRef.current = 0;
@@ -389,7 +342,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
   // "Ready to check": the child has committed what the stage needs.
   const answerReady = !solved && (
     stage === 1 ? (scoops >= GROUPS && slate.product !== "")
-    : stage === 3 ? (lineComplete && slate.product !== "")
     : stage === 4 ? (sandboxBuilt && slate.product !== "")
     : stage === 6 ? (setupOk && slate.product !== "")
     : (slate.product !== "")
@@ -399,12 +351,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
   // The current stage is matched by `key` so the string-keyed "showwork" step
   // selects/navigates correctly alongside the numeric stages.
   const curKey = STAGES.find((s) => s.n === stage || s.key === stage)?.key;
-
-  const Goal = (
-    <LessonGoal say={say} speaking={speaking} voiceKey="mr_mom_goal" voxSpeaker="mom">
-      Babushka has <b>{GROUPS}</b> jars and scoops <b>{SIZE}</b> mushrooms into each — skip-count to the total, then learn the fact by heart: <b>{GROUPS} × {SIZE}</b>.
-    </LessonGoal>
-  );
 
   // ---- Per-stage body -------------------------------------------------------
   let body = null;
@@ -422,40 +368,35 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     />
   );
 
-  // The shared QuestionBand mounts ONCE, directly under the stage-selector tabs
-  // (see the return below). It shows THIS lesson's current bare fact with a red "?"
-  // that becomes the solved product. The Numbers stage cycles its factors through
-  // the ×1/×0 micro-prompts, so the band reads the active prompt there.
-  const qbPrompt = stage === 5 ? FLUENCY_PROMPTS[promptIdx] : { g: GROUPS, s: SIZE, p: PRODUCT };
-  const QBand = (
-    <QuestionBand
-      lead="the question"
-      expr={<>{qbPrompt.g} <span className="qb-op">&times;</span> {qbPrompt.s}</>}
-      answer={solved ? qbPrompt.p : "?"}
-    />
-  );
-
   const Tutor = <TutorRibbon cook={cook} status={status} />;
 
   // ---- shared answer bar (the equation row + Slate + Check) for the four-zone
   // write stages (1,2,3,4,5). Returns the <AnswerBar> node for LessonBoard's
-  // `answer` slot; the caller supplies its own onCheck, Slate disabled state, and
-  // caption. ----
-  const writeBar = ({ fact, onCheck, disabled, cap }) => (
+  // `answer` slot; the caller supplies its own onCheck and Slate disabled state.
+  // The answer-bar caption (.lbar-cap) is dropped — lesson.css hides it site-wide
+  // (Wave-F), so it would be dead markup. ----
+  const writeBar = ({ fact, onCheck, disabled, checkDisabled = false, checkLabel, productOnly = false }) => (
     <AnswerBar
       eq={
-        <>
-          <span className="m3-fz-fact">{fact}</span>
-          <span className="m3-fz-op">=</span>
+        // productOnly: just the product box (used by the Applied stage, where the
+        // "7 × 8" equation already lives in the play-area setup gate, so repeating
+        // it in the answer bar would be redundant).
+        productOnly ? (
           <span className="m3-fz-slate">{ProductSlate({ onSubmit: onCheck, disabled })}</span>
-        </>
+        ) : (
+          <>
+            <span className="m3-fz-fact">{fact}</span>
+            <span className="m3-fz-op">=</span>
+            <span className="m3-fz-slate">{ProductSlate({ onSubmit: onCheck, disabled })}</span>
+          </>
+        )
       }
-      cap={cap}
       solved={solved}
       ready={answerReady}
       stars={stars}
       onCheck={onCheck}
-      checkLabel={solved ? "Next stage ▸" : "Check"}
+      checkDisabled={checkDisabled}
+      checkLabel={checkLabel ?? (solved ? "Next stage ▸" : "Check")}
     />
   );
 
@@ -466,7 +407,7 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     // STAGE 1 · MANIPULATE — the SkipJar IS the problem. No writing but the count box.
     body = (
       <LessonBoard
-        footHeight={158}
+        footHeight={196}
         railWidth={360}
         rowGap={10}
         marginTop={6}
@@ -476,18 +417,23 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
           </FitStage>
         }
         rail={
-          <HintRail heading="Count by Eights" hint={<>Each scoop drops a group of <b>{SIZE}</b> distinct cubes into the jar. Watch {GROUPS} groups of {SIZE} pile up — skip-count the running total: {SEQUENCE.slice(0, 3).join(", ")}…</>}>
-            <div className="m3-factcard">
-              <span className="m3-factcard-eq">{GROUPS} × {SIZE}</span>
-              <div className="m3-factcard-note">{GROUPS} scoops<br />of {SIZE} each</div>
-            </div>
-          </HintRail>
+          <RailInstruction
+            say={sayPhase} speaking={speaking} voxSpeaker="mom"
+            heading="Count by Eights"
+            extra={
+              <div className="m3-factcard">
+                <span className="m3-factcard-eq">{GROUPS} × {SIZE}</span>
+                <div className="m3-factcard-note">{GROUPS} scoops<br />of {SIZE} each</div>
+              </div>
+            }
+          >
+            Each scoop drops a group of <b>{SIZE}</b> distinct cubes into the jar. Watch {GROUPS} groups of {SIZE} pile up — skip-count the running total: {SEQUENCE.slice(0, 3).join(", ")}…
+          </RailInstruction>
         }
         answer={writeBar({
           fact: `${GROUPS} × ${SIZE}`,
           onCheck: checkStage1,
           disabled: scoops < GROUPS || solved,
-          cap: solved ? `full marks — ${GROUPS} × ${SIZE} = ${PRODUCT}!` : scoops >= GROUPS ? "read the tally — write the total" : "fill the jar to unlock the answer",
         })}
         tutor={Tutor}
       />
@@ -496,14 +442,16 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     // STAGE 2 · BIND — jar + printed skip-count ribbon (early terms shown) + equation.
     body = (
       <LessonBoard
-        footHeight={158}
+        footHeight={196}
         railWidth={360}
         rowGap={10}
         marginTop={6}
         stage={
           <FitStage className="canvas m3-fz-canvas" id="m3canvas">
             <div className="m3-bind">
-              <div className="m3-bind-jar"><SkipJar groupSize={SIZE} groups={GROUPS} filled={GROUPS} onScoop={() => {}} /></div>
+              {/* Show one row SHORT (6 of 7): the premise is that one more scoop
+                  lands on the answer, so the final row isn't poured in yet. */}
+              <div className="m3-bind-jar"><SkipJar groupSize={SIZE} groups={GROUPS} filled={GROUPS - 1} onScoop={() => {}} showScoop={false} /></div>
               <div className="m3-ribbon" aria-label="skip-count ribbon">
                 <span className="m3-ribbon-lead"><b>rows</b> · count by {SIZE}s</span>
                 {SEQUENCE.map((v, i) => (
@@ -521,51 +469,23 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
           </FitStage>
         }
         rail={
-          <HintRail heading="Write the Product" hint={`The ribbon counts ${SEQUENCE.slice(0, -1).join(", ")}… one more ${SIZE} lands on the answer. Write the final number on the Slate.`}>
-            <div className="m3-factcard">
-              <span className="m3-factcard-eq">{GROUPS} × {SIZE} = ?</span>
-              <div className="m3-factcard-note">count by {SIZE}</div>
-            </div>
-          </HintRail>
+          <RailInstruction
+            say={sayPhase} speaking={speaking} voxSpeaker="mom"
+            heading="Write the Product"
+            extra={
+              <div className="m3-factcard">
+                <span className="m3-factcard-eq">{GROUPS} × {SIZE} = ?</span>
+                <div className="m3-factcard-note">count by {SIZE}</div>
+              </div>
+            }
+          >
+            The ribbon counts {SEQUENCE.slice(0, -1).join(", ")}… one more {SIZE} lands on the answer. Write the final number on the Slate.
+          </RailInstruction>
         }
         answer={writeBar({
           fact: `${GROUPS} × ${SIZE}`,
           onCheck: checkStage2,
           disabled: solved,
-          cap: solved ? `full marks — ${GROUPS} × ${SIZE} = ${PRODUCT}!` : "write the final number on the Slate, then Check",
-        })}
-        tutor={Tutor}
-      />
-    );
-  } else if (stage === 3) {
-    // STAGE 3 · FADE — the jar ghosts; the SkipLine leads with two blank interior terms.
-    body = (
-      <LessonBoard
-        footHeight={158}
-        railWidth={360}
-        rowGap={10}
-        marginTop={6}
-        stage={
-          <FitStage className="canvas m3-fz-canvas" id="m3canvas">
-            <div className="m3-fade">
-              <div className="m3-fade-jar"><SkipJar groupSize={SIZE} groups={GROUPS} filled={GROUPS} onScoop={() => {}} ghost /></div>
-              <SkipLine sequence={SEQUENCE} blanks={FADE_BLANKS} values={lineFills} onFill={onLineFill} />
-            </div>
-          </FitStage>
-        }
-        rail={
-          <HintRail heading="Fill the Line" hint={`The jar just confirms it now — let the number line lead. Two hops are missing; count on by ${SIZE} to fill them, then write the product.`}>
-            <div className="m3-factcard">
-              <span className="m3-factcard-eq">{GROUPS} × {SIZE} = ?</span>
-              <div className="m3-factcard-note">hops of {SIZE}</div>
-            </div>
-          </HintRail>
-        }
-        answer={writeBar({
-          fact: `${GROUPS} × ${SIZE}`,
-          onCheck: checkStage3,
-          disabled: solved,
-          cap: solved ? `full marks — ${GROUPS} × ${SIZE} = ${PRODUCT}!` : lineComplete ? "the line is full — write the product" : "fill the missing hops first",
         })}
         tutor={Tutor}
       />
@@ -579,30 +499,43 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     // child WRITES the product 56 and presses Check to solve + advance.
     body = (
       <LessonBoard
-        rail={null}
-        footHeight={158}
+        footHeight={196}
+        railWidth={360}
         rowGap={10}
         marginTop={6}
-        stageClassName="bare"
         stage={
-          <BlockSandbox
-            mode="number"
-            bin={[SIZE, 5, 6]}
-            targetValue={PRODUCT}
-            targetLabel={`${GROUPS} groups of ${SIZE}`}
-            solved={solved}
-            onSolve={onSandboxSolve}
-            onPlace={() => { selfCorrectionsRef.current += 1; emit({ type: "place_block", payload: { node_id: NODE_ID } }); }}
-            onRemove={() => { selfCorrectionsRef.current += 1; emit({ type: "remove_block", payload: { node_id: NODE_ID } }); }}
-            title="Workbench"
-            hint={`Build ${GROUPS} groups of ${SIZE} — drop "${SIZE}" blocks onto the line until they reach ${PRODUCT}, then write the product below.`}
-          />
+          <div className="m3-workbench">
+            <BlockSandbox
+              mode="number"
+              bin={[SIZE, 5, 6]}
+              targetValue={PRODUCT}
+              targetLabel={`${GROUPS} groups of ${SIZE}`}
+              showPieceLabel={false}
+              solved={solved}
+              onSolve={onSandboxSolve}
+              onPlace={() => { selfCorrectionsRef.current += 1; emit({ type: "place_block", payload: { node_id: NODE_ID } }); }}
+              onRemove={() => { selfCorrectionsRef.current += 1; emit({ type: "remove_block", payload: { node_id: NODE_ID } }); }}
+            />
+          </div>
+        }
+        rail={
+          <RailInstruction
+            say={sayPhase} speaking={speaking} voxSpeaker="mom"
+            heading="Workbench"
+            extra={
+              <div className="m3-factcard">
+                <span className="m3-factcard-eq">{GROUPS} × {SIZE}</span>
+                <div className="m3-factcard-note">{GROUPS} scoops<br />of {SIZE} each</div>
+              </div>
+            }
+          >
+            Build <b>{GROUPS} groups of {SIZE}</b> — drop "{SIZE}" blocks onto the line until they reach {PRODUCT}, then write the running count the number line shows.
+          </RailInstruction>
         }
         answer={writeBar({
           fact: `${GROUPS} × ${SIZE}`,
           onCheck: checkStage4,
           disabled: !sandboxBuilt || solved,
-          cap: solved ? `full marks — ${GROUPS} × ${SIZE} = ${PRODUCT}!` : sandboxBuilt ? "the groups are built — write the product, then Check" : "build the groups first",
         })}
         tutor={Tutor}
       />
@@ -612,7 +545,7 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
     const prompt = FLUENCY_PROMPTS[promptIdx];
     body = (
       <LessonBoard
-        footHeight={158}
+        footHeight={196}
         railWidth={360}
         rowGap={10}
         marginTop={6}
@@ -625,11 +558,8 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
               <span className="m3-bigeq-op">=</span>
               <span className="m3-bigeq-q">{solved ? prompt.p : "?"}</span>
             </div>
-            <div className="m3-numbers-cap">
-              {prompt.s === 0 ? "Times zero is always zero — nothing in any group."
-                : prompt.s === 1 ? "Times one keeps the number — one in each group."
-                : "From memory now — and skip-count by " + prompt.s + " if you need a way back."}
-            </div>
+            {/* The in-stage caption was dropped (Wave-F hides .lboard-stage
+                [class*="-cap"]); the recall cue now lives in the rail copy. */}
             <div className="m3-prompt-dots" aria-hidden="true">
               {FLUENCY_PROMPTS.map((_, i) => (
                 <span key={i} className={"m3-prompt-dot" + (i < promptIdx ? " is-done" : i === promptIdx ? " is-active" : "")} />
@@ -638,142 +568,107 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
           </FitStage>
         }
         rail={
-          <HintRail heading="Know It By Heart" hint={`The fluency target: answer from recall. After ${GROUPS} × ${SIZE}, two quick ones — times-one and times-zero.`}>
-            <div className="m3-factcard">
-              <span className="m3-factcard-eq">{prompt.g} × {prompt.s}</span>
-              <div className="m3-factcard-note">{promptIdx + 1} of {FLUENCY_PROMPTS.length}</div>
-            </div>
-          </HintRail>
+          <RailInstruction
+            say={sayPhase} speaking={speaking} voxSpeaker="mom"
+            heading="Know It By Heart"
+            extra={
+              <div className="m3-factcard">
+                <span className="m3-factcard-eq">{prompt.g} × {prompt.s}</span>
+                <div className="m3-factcard-note">{promptIdx + 1} of {FLUENCY_PROMPTS.length}</div>
+              </div>
+            }
+          >
+            {prompt.s === 0 ? <>Times zero is always zero — nothing in any group.</>
+              : prompt.s === 1 ? <>Times one keeps the number — one in each group.</>
+              : <>The fluency target: answer from recall. After {GROUPS} × {SIZE}, two quick ones — times-one and times-zero.</>}
+          </RailInstruction>
         }
         answer={writeBar({
           fact: `${prompt.g} × ${prompt.s}`,
           onCheck: checkStage5,
           disabled: solved,
-          cap: solved ? "full marks — you know your times facts!" : "write the product from memory, then Check",
         })}
         tutor={Tutor}
       />
     );
   } else if (stage === 6) {
-    // STAGE 6 · APPLIED — WordProblem (numerals shown) + required setup gate.
-    const story = (
-      <>Babushka fills <b>{GROUPS}</b> jars with mushrooms, <b>{SIZE}</b> in each jar — how many mushrooms in all?</>
-    );
+    // STAGE 6 · APPLIED — Wave-F: restructured onto the shared 4-zone <LessonBoard>
+    // per the wireframe room-m3-6-applied.js — rail = <RailInstruction> (the question
+    // story + Read-aloud), stage = the required groups × size setup gate, answer =
+    // the product Slate + Check, tutor = corrective ribbon. The WordProblem column
+    // (the question across the top) is gone.
     body = (
       <LessonBoard
-        variant="wide"
-        className="m3-fz-words"
-        tutorWidth={220}
+        footHeight={196}
+        railWidth={360}
+        rowGap={10}
         marginTop={6}
-        content={
-          <WordProblem
-            story={story}
-            tag="Babushka's kitchen"
-            readAloud={() => say("mr_mom_goal_applied")}
-            speaking={speaking}
-            answerLead="Now write the product"
-            setupLead="First, write it as groups × size"
-            setup={
-              <>
-                <div className={"m3-setup-row" + (badInput && !setupOk ? " is-shake" : "")}>
-                  <Slate slots={[{ key: "product", label: "groups" }]} values={setupG} onChange={(k, v) => setSetupG({ product: onlyDigits(v) })} onSubmit={checkSetup} layout="row" disabled={setupOk || solved} ariaLabel="how many groups" />
-                  <span className="m3-setup-op">×</span>
-                  <Slate slots={[{ key: "product", label: "size" }]} values={setupS} onChange={(k, v) => setSetupS({ product: onlyDigits(v) })} onSubmit={checkSetup} layout="row" disabled={setupOk || solved} ariaLabel="how many in each group" />
-                </div>
-                {setupOk
-                  ? <span className="m3-setup-ok">✓ that's the setup — now solve it</span>
-                  : <button type="button" className="wp-check" onClick={checkSetup}>Check the setup</button>}
-              </>
-            }
-            slots={[{ key: "product", label: "product" }]}
-            values={slate}
-            onChange={(k, v) => setSlate((s) => ({ ...s, [k]: onlyDigits(v) }))}
-            layout="row"
-            disabled={!setupOk || solved}
-            autoFocusKey={setupOk ? "product" : undefined}
-            onCheck={checkStage6}
-            checkLabel={solved ? "Next stage ▸" : "Check"}
-            checkDisabled={!setupOk}
-          />
+        stage={
+          <div className="wp-setup m3-applied-setup">
+            <div className="wp-setup-lead">First, write it as groups × size</div>
+            <div className={"m3-setup-row" + (badInput && !setupOk ? " is-shake" : "")}>
+              <Slate slots={[{ key: "product", label: "groups" }]} values={setupG} onChange={(k, v) => setSetupG({ product: onlyDigits(v) })} onSubmit={checkSetup} layout="row" disabled={setupOk || solved} ariaLabel="how many groups" />
+              <span className="m3-setup-op">×</span>
+              <Slate slots={[{ key: "product", label: "size" }]} values={setupS} onChange={(k, v) => setSetupS({ product: onlyDigits(v) })} onSubmit={checkSetup} layout="row" disabled={setupOk || solved} ariaLabel="how many in each group" />
+              {setupOk
+                ? <span className="m3-setup-ok">✓ that's the setup — now solve it</span>
+                : <button type="button" className="wp-check" onClick={checkSetup}>Check the setup</button>}
+            </div>
+            <div className="wp-answer-lead">Now write the product</div>
+          </div>
         }
-        tutor={<TutorRibbon cook={cook} status={status} narrow />}
-      />
-    );
-  } else if (stage === "showwork") {
-    // SHOW WORK — the mandatory free-form blank slate between Applied and Words.
-    // Ungraded: the child must put ink down (showWorkInked) to unlock "Next".
-    // Never judged/advanced by the engine — Next is a plain goStage hop.
-    body = (
-      <LessonBoard
-        variant="wide"
-        className="m3-fz-words m3-showwork"
-        tutorWidth={220}
-        marginTop={6}
-        content={
-          <>
-            <div className="panel m3-sw-panel">
-              <h3>Show Your Work</h3>
-              <div className="hint">Before the last story problem — show how you'd skip-count {GROUPS} × {SIZE} on a blank slate. Write anything you like; this one isn't graded.</div>
-            </div>
-            <div className="bs-surface m3-sw-surface">
-              <BlankSlate
-                key={`showwork:${stage}`}
-                hint="show your work here — write anything you like ✎"
-                onInkChange={setShowWorkInked}
-                ariaLabel="show your work on a blank slate"
-              />
-            </div>
-            <div className="lbar-marks m3-sw-marks">
-              <button
-                className={"check" + (showWorkInked ? " ready" : "")}
-                disabled={!showWorkInked}
-                onClick={() => nextStage()}
-              >Next ▸</button>
-            </div>
-          </>
+        rail={
+          <RailInstruction
+            say={sayPhase} speaking={speaking}
+            voxSpeaker="mom"
+            heading="Babushka's kitchen"
+          >
+            Babushka fills <b>{GROUPS}</b> jars with sugar plums, <b>{SIZE}</b> in each
+            jar — how many sugar plums in all? Write it as <b>groups × size</b>{" "}
+            ({GROUPS} × {SIZE}) first, then give the product.
+          </RailInstruction>
         }
+        answer={writeBar({
+          productOnly: true,
+          onCheck: checkStage6,
+          disabled: !setupOk || solved,
+          checkDisabled: !setupOk && !solved,
+        })}
         tutor={Tutor}
       />
     );
   } else {
-    // STAGE 7 · WORDS — prose only; optional ungraded blank-slate scratch.
-    const story = (
-      <>
-        Grandpa ties up <b>seven bundles</b> of sausages for the winter, and slips{" "}
-        <b>seven sausages</b> into every bundle. "I will guard them all," he says.{" "}
-        How many sausages did he tie up in all?
-      </>
-    );
+    // STAGE 7 · WORDS — Wave-F: restructured onto the shared 4-zone <LessonBoard> per
+    // the wireframe room-m3-7-words.js — rail = <RailInstruction> (the story + Read-
+    // aloud), stage = the optional ungraded scratch slate, answer = the product Slate
+    // + Check, tutor = corrective ribbon. The story no longer sits in a top column.
     body = (
       <LessonBoard
-        variant="wide"
-        className="m3-fz-words"
-        tutorWidth={220}
+        footHeight={196}
+        railWidth={360}
+        rowGap={10}
         marginTop={6}
-        content={
-          <WordProblem
-            story={story}
-            tag="Grandpa's Pantry"
-            readAloud={() => say("mr_grandpa_bundles_1")}
-            speaking={speaking}
-            answerLead="Write how many in all"
-            setupLead="Optional — show your work here"
-            setup={
-              <div className="bs-surface m3-words-scratch">
-                <BlankSlate key="words-scratch" hint="optional — show your work here ✎" />
-              </div>
-            }
-            slots={[{ key: "product", label: "product" }]}
-            values={slate}
-            onChange={(k, v) => setSlate((s) => ({ ...s, [k]: onlyDigits(v) }))}
-            layout="row"
-            disabled={solved}
-            autoFocusKey="product"
-            onCheck={checkStage7}
-            checkLabel={solved ? "Finish ▸" : "Check"}
-          />
+        stage={
+          <ScratchSurface slateKey="words-scratch" />
         }
-        tutor={<TutorRibbon cook={cook} status={status} narrow />}
+        rail={
+          <RailInstruction
+            say={sayPhase} speaking={speaking}
+            voxSpeaker="mom"
+            heading="Grandpa's Pantry"
+          >
+            Grandpa ties up <b>seven bundles</b> of sausages for the winter, and slips{" "}
+            <b>seven sausages</b> into every bundle. "I will guard them all," he says.{" "}
+            How many sausages did he tie up in all?
+          </RailInstruction>
+        }
+        answer={writeBar({
+          fact: `${GROUPS} × ${SIZE}`,
+          onCheck: checkStage7,
+          disabled: solved,
+          checkLabel: solved ? "Finish ▸" : "Check",
+        })}
+        tutor={Tutor}
       />
     );
   }
@@ -791,8 +686,6 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}
-      band={stage !== 7 && stage !== "practice" ? QBand : null}
-      goal={Goal}
     >
       {body}
     </LessonShell>
@@ -809,9 +702,8 @@ function SIZE_HINT(g, s) {
 
 // Intro line per stage (also the ribbon's initial text).
 function STAGE_INTRO(n) {
-  if (n === "showwork") return `Show your work on a blank slate — skip-count ${GROUPS} × ${SIZE} however you like, then move on.`;
   switch (n) {
-    case 1: return `Babushka scoops ${SIZE} mushrooms into each of ${GROUPS} jars. Drag the scoop into the jar and watch the tally count by ${SIZE}.`;
+    case 1: return `Each scoop drops a group of ${SIZE} distinct cubes into the jar. Watch ${GROUPS} groups of ${SIZE} pile up — skip-count the running total: ${SEQUENCE.slice(0, 3).join(", ")}…`;
     case 2: return `The ribbon already counts ${SEQUENCE.slice(0, -1).join(", ")}… — one more ${SIZE} lands on the answer. Write the product.`;
     case 3: return `The jar just confirms it now — fill the missing hops on the line, then write ${GROUPS} × ${SIZE}.`;
     case 4: return `The Workbench — drop "${SIZE}" blocks onto the line until they reach ${PRODUCT}. That's ${GROUPS} groups of ${SIZE}: ${GROUPS} × ${SIZE} = ${PRODUCT}.`;

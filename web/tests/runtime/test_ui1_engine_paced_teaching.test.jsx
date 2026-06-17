@@ -91,11 +91,17 @@ beforeEach(() => {
   });
 });
 
-describe('UI1 — wrong answer on a TEACHING stage is engine-paced', () => {
-  it('RaiseScaffold from the engine on a stumble steps the teaching stage BACK', () => {
+describe('UI1 — wrong answer on a TEACHING stage HOLDS the step (never moves)', () => {
+  it('a wrong answer HOLDS the teaching stage even when the engine returns RaiseScaffold', () => {
     const { result } = makeScaffold('fade'); // design L2
     expect(result.current.stage).toBe('fade');
 
+    // Even if the engine would RaiseScaffold (≥2 errors), a wrong answer must NEVER
+    // move the lesson — pressing Check on a wrong answer keeps the child on the same
+    // step (work intact) so they can simply try again. Previously this routed the
+    // wrong-answer Decision through applyEngineDecision and stepped the stage BACK
+    // (and resetStage'd it), so repeated Check presses walked backward through the
+    // arc — reading as a jump to a "random" step. The step now holds.
     nextDecisionImpl = () => ({
       kind: 'RaiseScaffold', preserveWork: true, rationale: 'Two errors — adding support.',
     });
@@ -104,8 +110,10 @@ describe('UI1 — wrong answer on a TEACHING stage is engine-paced', () => {
       result.current.reportAttempt({ correct: false, answerValue: [4, 8], errorSignature: 'scaled_bottom_only', stars: 0 });
     });
 
-    // Stepped back one beat (fade → bind), to MORE support.
-    expect(result.current.stage).toBe('bind');
+    // Held exactly where the child was — no retreat.
+    expect(result.current.stage).toBe('fade');
+    // The wrong attempt still reached the engine boundary (decision computed/logged).
+    expect(nextDecision).toHaveBeenCalledTimes(1);
   });
 
   it('the default PresentProblem on a wrong answer HOLDS the stage (work preserved)', () => {

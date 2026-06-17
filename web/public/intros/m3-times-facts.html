@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Lesson 3 — Times Facts intro</title>
+<title>Lesson 2 — Times Facts intro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
@@ -11,10 +11,7 @@
   :root{
     --paper-1:#ede2c8; --paper-2:#e3d4b1;
     --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
-    /* the scoop holds 8 → cubes are colored by group SIZE via the denominator
-       palette: eighths = vermilion (denomColor 8) with the v-stripe hatch, exactly
-       like SkipJar.m3-cube. (was a generic gold "food" tone — corrected to match.) */
-    --eighths:#d1495b; --eighths-edge:rgba(20,14,10,.6); --jar:#6b5a3c;
+    --dot:#d1495b; --dot-edge:#a33040; --jar:#6b5a3c;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;}
@@ -29,8 +26,10 @@
     background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
     background-size:4px 4px; mix-blend-mode:multiply;
   }
-  #stage{ position:relative; width:100%; height:100%;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
   #kicker{
     position:absolute; top:22px; left:0; right:0; text-align:center;
     font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
@@ -39,56 +38,138 @@
   }
   #kicker.on{opacity:.95; transform:none;}
 
-  /* ── the row of jars (each fills with DISTINCT cubes, not a solid bar) ── */
-  #jars{ position:relative; display:flex; align-items:flex-end; justify-content:center; gap:14px; min-height:200px; }
-  .jar{ position:relative; width:56px; height:96px;
-    border:2.5px solid var(--jar); border-radius:6px 6px 10px 10px;
-    background:linear-gradient(180deg, rgba(255,255,255,.4), rgba(220,210,185,.25));
+  /* ── single jar + scale layout ── */
+  #scene{
+    display:flex; align-items:flex-end; justify-content:center; gap:28px;
+    opacity:0; transform:translateY(12px) scale(.95);
+    transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.2,.64,1);
+  }
+  #scene.in{ opacity:1; transform:none; }
+
+  /* The jar */
+  #jarwrap{ display:flex; flex-direction:column; align-items:center; }
+  #jar-neck{
+    width:60px; height:18px;
+    border:2.5px solid var(--jar); border-bottom:none;
+    border-radius:6px 6px 0 0;
+    background:rgba(255,255,255,.25);
+  }
+  #jar-body{
+    /* Full size from the START — tall enough for all 7 rows so the jar never
+       grows as scoops pour in (rows fill from the bottom up). */
+    width:200px; height:248px;
+    border:2.5px solid var(--jar); border-radius:0 0 12px 12px;
+    background:linear-gradient(180deg, rgba(255,255,255,.35), rgba(220,210,185,.20));
+    padding:6px 6px 6px 6px;
+    /* Rows build from the BOTTOM up — column-reverse anchors the FIRST poured scoop
+       at the bottom of the jar; each later scoop stacks ON TOP of it. The rows below
+       never move — every new scoop just adds another row above the stack, growing it
+       upward toward the neck. */
+    display:flex; flex-direction:column-reverse; justify-content:flex-start; gap:3px;
     overflow:hidden;
-    opacity:0; transform:translateY(12px) scale(.9);
-    transition:opacity .4s ease, transform .4s cubic-bezier(.34,1.56,.64,1); }
-  .jar.in{ opacity:1; transform:none; }
-  /* a tidy grid of 8 distinct cubes — one COUNTABLE group of eight per jar */
-  .jar .cubes{ position:absolute; left:4px; right:4px; bottom:4px;
-    display:grid; grid-template-columns:repeat(2,1fr); gap:3px; }
-  /* one cube — matches SkipJar.m3-cube: vermilion eighths fill, the eighths v-stripe
-     hatch (denomHatch 8, ink tone @ .34, 6px period), 1.5px denomTone(8) outline */
-  .jar .cube{ width:100%; aspect-ratio:1; border:1.5px solid var(--eighths-edge);
-    border-radius:3px; background:var(--eighths);
-    background-image:repeating-linear-gradient(90deg, rgba(20,14,10,.34) 0 1px, transparent 1px 6px);
-    opacity:0; transform:translateY(-14px) scale(.6);
-    transition:opacity .28s ease, transform .28s cubic-bezier(.34,1.4,.64,1); }
-  .jar.full .cube{ opacity:1; transform:none; }
+  }
+  /* one cluster = one scoop = 8 pebbles in a row */
+  .cluster{
+    display:grid; grid-template-columns:repeat(8,1fr); gap:3px;
+    padding:3px; border:1.5px solid rgba(107,90,60,.4); border-radius:5px;
+    background:rgba(255,255,255,.18);
+    opacity:0; transform:translateY(-20px);
+    transition:opacity .3s ease, transform .3s cubic-bezier(.34,1.2,.64,1);
+  }
+  .cluster.in{ opacity:1; transform:none; }
+  .pebble{
+    width:100%; aspect-ratio:1; border-radius:50%;
+    background:var(--dot); border:1.5px solid var(--dot-edge);
+  }
+  #jar-tally{
+    margin-top:8px; text-align:center;
+    opacity:0; transition:opacity .4s ease;
+  }
+  #jar-tally.on{ opacity:1; }
+  #tally-n{ font-family:"Russo One",sans-serif; font-size:36px; color:var(--ink); line-height:1; display:block; }
+  #tally-cap{ font-family:"Old Standard TT",serif; font-size:12px; color:var(--ink-soft); }
 
-  /* SMALL running tally (a secondary readout — the cubes are the main visual) */
-  #tally{ position:absolute; top:8px; left:50%; transform:translateX(-50%);
-    font-family:"Russo One",sans-serif; font-size:30px; color:var(--ink);
-    opacity:0; transition:opacity .4s ease; text-shadow:0 1px 0 rgba(255,250,235,.9); }
-  #tally.on{ opacity:1; }
-  #tally .cap{ display:block; font-family:"Old Standard TT",serif; font-size:13px; color:var(--ink-soft); text-align:center; }
+  /* scoop indicator on the left */
+  /* the scoop CARD — mirrors the lesson's scoop sprite (paper card + a trough). */
+  #scoop{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    margin-bottom:8px; padding:10px 14px;
+    border:2px solid var(--ink); border-radius:10px; background:var(--paper-1);
+    opacity:0; transition:opacity .4s ease;
+  }
+  #scoop.on{ opacity:1; }
+  /* the scoop trough — a shallow bowl (flat top, rounded bottom) holding ONE row
+     of 8 round dots, exactly like the lesson's scoop. */
+  #scoop-bowl{
+    display:grid; grid-template-columns:repeat(8,1fr); gap:3px;
+    padding:5px 7px; border:2px solid #8a6a2e; border-radius:0 0 16px 16px;
+    background:rgba(202,163,90,0.28); width:150px;
+  }
+  .scoop-dot{ width:100%; aspect-ratio:1; border-radius:50%; background:var(--dot); border:1.5px solid var(--dot-edge); }
+  #scoop-label{
+    font-family:"Old Standard TT",serif; font-size:11px; color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  #scoop-count{
+    font-family:"Russo One",sans-serif; font-size:13px; color:var(--ink-soft);
+    white-space:nowrap;
+  }
 
-  /* the equation, revealed late */
-  #eq{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) translateY(16px);
+  /* skip-count scale on the right */
+  #scale{
+    display:flex; flex-direction:column; justify-content:flex-end; gap:4px;
+    margin-bottom:8px; min-width:64px;
+    opacity:0; transition:opacity .4s ease;
+  }
+  #scale.on{ opacity:1; }
+  .scale-step{
+    display:flex; align-items:center; gap:6px;
+    opacity:0; transform:translateX(8px);
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .scale-step.in{ opacity:1; transform:none; }
+  /* the circled row number (1..7) — mirrors the lesson's numbered count ladder */
+  .scale-num{
+    font-family:"Old Standard TT",serif; font-size:14px; font-weight:700; color:var(--ink);
+    width:24px; height:24px; flex:0 0 auto;
+    border:1.5px solid rgba(60,40,20,.55); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .scale-add{ font-family:"Old Standard TT",serif; font-size:12px; color:var(--ink-soft); width:24px; text-align:right; }
+  .scale-tot{ font-family:"Russo One",sans-serif; font-size:18px; color:var(--ink); }
+  .scale-tot.is-final{ color:var(--red); }
+
+  /* equation */
+  /* The equation sits in the normal column flow BELOW the jar (not as an overlay
+     on top of it). It reserves its space so the jar never sits under it. */
+  #eq{
+    margin-top:20px;
     display:flex; align-items:center; gap:16px; font-family:"Russo One",sans-serif; z-index:7;
-    opacity:0; transition:opacity .6s ease, transform .6s ease; }
-  #eq.on{ opacity:1; transform:translate(-50%,-50%); }
+    opacity:0; transform:translateY(10px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #eq.on{ opacity:1; transform:none; }
   #eq .t{ font-size:56px; color:var(--ink); } #eq .op{ font-size:40px; color:var(--red); }
   #eq .ans{ font-size:56px; color:var(--red); }
-  #jars:has(~ #eq.on) .jar{ opacity:.18; }
 
   /* derived-fact split chip */
-  #trick{ position:absolute; left:50%; bottom:96px; transform:translateX(-50%);
+  #trick{
+    position:absolute; left:50%; bottom:96px; transform:translateX(-50%);
     font-family:"Old Standard TT",serif; font-size:20px; color:var(--ink-soft);
-    opacity:0; transition:opacity .5s ease; }
+    opacity:0; transition:opacity .5s ease;
+  }
   #trick.on{ opacity:1; }
   #trick b{ color:var(--red); }
 
-  #caption{ position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
-    width:min(820px,94vw); text-align:center; font-size:24px; color:var(--ink); min-height:60px; }
-  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
-    transition:opacity .55s ease, transform .55s ease; }
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(820px,94vw); text-align:center; font-size:24px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{
+    position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease;
+  }
   #caption .cap.on{ opacity:1; transform:none; }
-  .f{color:var(--eighths);font-weight:700;} .r{color:var(--red);font-weight:700;}
+  .f{color:var(--dot);font-weight:700;} .r{color:var(--red);font-weight:700;}
 
   #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
     background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
@@ -98,22 +179,38 @@
   <div id="stage">
     <div id="kicker">Times Facts</div>
 
-    <div id="tally"><span id="tallyn">0</span><span class="cap">in all</span></div>
-    <div id="jars"></div>
+    <div id="scene">
+      <!-- scoop on the left -->
+      <div id="scoop">
+        <div id="scoop-bowl"></div>
+        <div id="scoop-label">scoop 8</div>
+        <div id="scoop-count">0 / 7 scoops</div>
+      </div>
+
+      <!-- the single jar -->
+      <div id="jarwrap">
+        <div id="jar-neck"></div>
+        <div id="jar-body"></div>
+        <div id="jar-tally">
+          <span id="tally-n">0</span>
+          <span id="tally-cap" class="tally-cap">cubes (0 groups of 8)</span>
+        </div>
+      </div>
+
+      <!-- skip-count scale on the right -->
+      <div id="scale"></div>
+    </div>
 
     <div id="eq">
       <span class="t">7</span><span class="op">×</span><span class="t">8</span><span class="op">=</span><span class="ans">56</span>
     </div>
 
-    <div id="trick">split it: <b>7×5</b> + <b>7×3</b> = 35 + 21 = <b>56</b></div>
-
     <div id="caption">
-      <div class="cap" data-i="0">Seven empty <span class="f">jars</span>, and a scoop that holds <span class="f">eight</span>.</div>
-      <div class="cap" data-i="1">One handful into each jar — <b>eight at a time</b>.</div>
+      <div class="cap" data-i="0">One jar, and a <span class="f">scoop of eight</span>.</div>
+      <div class="cap" data-i="1">One handful in — <b>eight at a time</b>.</div>
       <div class="cap" data-i="2">Count by eights… 8, 16, 24, 32, 40, 48, <span class="r">56</span>.</div>
       <div class="cap" data-i="3">Seven eights are <span class="r">fifty-six</span>. <b>7 × 8 = 56.</b></div>
       <div class="cap" data-i="4">Skip-counting gets you there — a master cook <b>knows</b> it by heart.</div>
-      <div class="cap" data-i="5">Forgot one? <b>Split it</b>: 7×5 and 7×3 make 56.</div>
     </div>
   </div>
 
@@ -124,80 +221,104 @@
 (function(){
   "use strict";
   var PERSIST = "timesfacts.v1";
-  var DURATION = 24;
+  var DURATION = 28;
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
   var GROUPS = 7, SIZE = 8, PRODUCT = 56;
   var SEQ = [8,16,24,32,40,48,56];
 
   function el(id){ return document.getElementById(id); }
 
-  // build the seven jars — each holds a grid of SIZE distinct, countable cubes
-  var jarsWrap = el("jars");
-  var jars = [];
-  for (var i=0;i<GROUPS;i++){
-    var j=document.createElement("div"); j.className="jar";
-    var cubes=document.createElement("div"); cubes.className="cubes";
-    for (var c=0;c<SIZE;c++){ var cu=document.createElement("span"); cu.className="cube"; cubes.appendChild(cu); }
-    j.appendChild(cubes); jarsWrap.appendChild(j); jars.push(j);
+  // build the scoop bowl (2×4 grid of dots)
+  var bowl = el("scoop-bowl");
+  for (var s=0;s<SIZE;s++){ var sd=document.createElement("span"); sd.className="scoop-dot"; bowl.appendChild(sd); }
+
+  // build the skip-count scale steps (hidden until needed)
+  var scaleEl = el("scale");
+  var scaleSteps = [];
+  for (var ss=0;ss<GROUPS;ss++){
+    var step=document.createElement("div"); step.className="scale-step";
+    var num=document.createElement("span"); num.className="scale-num"; num.textContent=(ss+1);
+    var add=document.createElement("span"); add.className="scale-add"; add.textContent="+"+SIZE;
+    var tot=document.createElement("span"); tot.className="scale-tot"+(ss===GROUPS-1?" is-final":""); tot.textContent=SEQ[ss];
+    step.appendChild(num); step.appendChild(add); step.appendChild(tot); scaleEl.appendChild(step); scaleSteps.push(step);
+  }
+
+  // track poured clusters
+  var poured = 0;
+  var clusters = [];
+
+  function pourCluster(idx){
+    var c=document.createElement("div"); c.className="cluster";
+    for (var p=0;p<SIZE;p++){ var dot=document.createElement("span"); dot.className="pebble"; c.appendChild(dot); }
+    el("jar-body").appendChild(c);
+    clusters.push(c);
+    // animate in after a tick
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ c.classList.add("in"); }); });
+    poured++;
+    el("tally-n").textContent=SEQ[idx];
+    el("tally-cap").textContent="cubes ("+poured+" group"+(poured===1?"":"s")+" of "+SIZE+")";
+    el("jar-tally").classList.add("on");
+    el("scoop-count").textContent=poured+" / "+GROUPS+" scoops";
+    // show and animate corresponding scale step
+    scaleEl.classList.add("on");
+    var stepEl=scaleSteps[idx];
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ stepEl.classList.add("in"); }); });
+    // pulse tally
+    pulse(el("tally-n"));
   }
 
   var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
   function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
 
-  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.18)";
-    setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
+  function pulse(node){ if(!node) return;
+    node.style.transition="transform .25s ease"; node.style.transform="scale(1.22)";
+    setTimeout(function(){ node.style.transform="scale(1)"; }, 270); }
 
   var beatsDone = [];
+  var pourTimers = [];
 
   var BEATS = [
     [0.3, function(){ el("kicker").classList.add("on"); }],
 
-    // Beat 1 — seven empty jars pop in one by one
+    // Beat 1 — the single empty jar + scoop appear
     [1.5, function(){
       showCap(0);
-      for (var i=0;i<jars.length;i++){ (function(jr,k){
-        setTimeout(function(){ jr.classList.add("in"); }, k*180);
-      })(jars[i], i); }
+      el("scene").classList.add("in");
+      el("scoop").classList.add("on");
     }],
 
-    // Beat 2 — first scoop into jar 1; tally shows 8
-    [4.5, function(){
+    // Beat 2 — first scoop pours in, tally shows 8
+    [4.7, function(){
       showCap(1);
-      el("tally").classList.add("on");
-      jars[0].classList.add("full");
-      el("tallyn").textContent = SEQ[0];
-      pulse(el("tally"));
+      pourCluster(0);
     }],
 
-    // Beat 3 — fill the rest; tally jumps 16,24,…,56
-    [8.0, function(){
-      showCap(2);
-      for (var i=1;i<jars.length;i++){ (function(jr,k){
-        setTimeout(function(){
-          jr.classList.add("full");
-          el("tallyn").textContent = SEQ[k];
-          pulse(el("tally"));
-        }, (k)*620);
-      })(jars[i], i); }
-    }],
+    // Beat 3 — the spoken "count by eights" clip begins. The first scoop (8) is
+    // already in, so we PULSE it on the spoken "eight"; each LATER scoop then
+    // pours on its own spoken number (beats below). Every pour is gated off the
+    // SAME playhead clock the narration rides, so the visual count and the voice
+    // stay in lockstep at any voice rate (no wall-clock drift).
+    [8.5,  function(){ showCap(2); pulse(clusters[0]); if (scaleSteps[0]) scaleSteps[0].classList.add("in"); }],
+    [9.85, function(){ pourCluster(1); }],   // "sixteen"
+    [11.2, function(){ pourCluster(2); }],   // "twenty-four"
+    [12.55,function(){ pourCluster(3); }],   // "thirty-two"
+    [13.9, function(){ pourCluster(4); }],   // "forty"
+    [15.25,function(){ pourCluster(5); }],   // "forty-eight"
+    [16.6, function(){ pourCluster(6); }],   // "fifty-six"
 
-    // Beat 4 — write 7 × 8 = 56
-    [13.0, function(){
+    // Beat 4 — write 7 × 8 = 56 (after the count clip finishes)
+    [18.4, function(){
       showCap(3);
-      el("tally").classList.remove("on");
+      el("jar-tally").classList.remove("on");
       el("eq").classList.add("on");
       pulse(el("eq"));
     }],
 
-    // Beat 5 — know it by heart (pulse the answer)
-    [16.5, function(){
+    // Beat 5 — the closing line: a master cook knows it by heart. (This is the
+    // final beat; the video ends here — no derived-fact "split it" tangent.)
+    [22.2, function(){
       showCap(4);
       pulse(document.querySelector("#eq .ans"));
-    }],
-
-    // Beat 6 — the derived-fact split trick (leans on the m2 tray-split)
-    [19.5, function(){
-      showCap(5);
-      el("trick").classList.add("on");
     }],
   ];
 
@@ -205,12 +326,12 @@
     for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
   }
 
-  // ── playhead + pause-aware clock (parent reads PERSIST:t; window.__anim freezes) ──
+  // ── playhead + pause-aware clock ──
   try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
-    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
     lastWall=now;
     var t=elapsed; if (t>DURATION) t=DURATION;
     try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
@@ -225,11 +346,22 @@
     pause: function(){ paused=true;  },
     seek:  function(s){
       elapsed=Math.max(0,+s||0); beatsDone=[];
-      // reset visuals so a backward seek re-runs the beats cleanly
+      // clear pour timers so they don't fire on a backward seek
+      pourTimers.forEach(function(t){ clearTimeout(t); }); pourTimers=[];
+      // reset all visuals
       el("kicker").classList.remove("on");
-      el("tally").classList.remove("on"); el("tallyn").textContent="0";
-      el("eq").classList.remove("on"); el("trick").classList.remove("on");
-      jars.forEach(function(j){ j.classList.remove("in","full"); });
+      el("scene").classList.remove("in");
+      el("scoop").classList.remove("on");
+      el("jar-tally").classList.remove("on");
+      el("tally-n").textContent="0";
+      el("tally-cap").textContent="cubes (0 groups of 8)";
+      el("scoop-count").textContent="0 / "+GROUPS+" scoops";
+      el("eq").classList.remove("on");
+      el("scale").classList.remove("on");
+      scaleSteps.forEach(function(s){ s.classList.remove("in"); });
+      // remove poured clusters
+      clusters.forEach(function(c){ c.parentNode && c.parentNode.removeChild(c); });
+      clusters=[]; poured=0;
       showCap(-1);
     }
   };

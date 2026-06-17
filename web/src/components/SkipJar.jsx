@@ -21,7 +21,7 @@
 // distinct, glyph-backed color — same visual approach as BlockSandbox's number mode.
 import React, { useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { denomColor, denomTone, denomHatch, denomHatchSize } from "../denominatorColors.js";
+import { denomColor, denomTone } from "../denominatorColors.js";
 
 export default function SkipJar({
   groupSize = 1,
@@ -29,6 +29,7 @@ export default function SkipJar({
   filled = 0,
   onScoop = () => {},
   ghost = false,
+  showScoop = true,
 }) {
   const clampedFilled = Math.max(0, Math.min(groups, filled));
   const tally = clampedFilled * groupSize;            // the small running total
@@ -83,19 +84,20 @@ export default function SkipJar({
   // Each poured scoop is one CLUSTER of `groupSize` distinct cubes, oldest → newest.
   const clusters = Array.from({ length: clampedFilled }, (_, i) => i);
 
-  // Cube color keyed by the group size (so every "group of 8" matches). The shared
-  // palette is colorblind-safe (hue + hatch + outline) — same as the workbench.
+  // Scoop bowl color (squares in the draggable scoop).
   const cubeFill = denomColor(groupSize);
   const cubeEdge = denomTone(groupSize, 0.6);
-  const cubeHatch = denomHatch(groupSize);
-  const cubeHatchSize = denomHatchSize(groupSize);
-
-  // Lay the cubes of one group in a tidy little grid (columns of up to 4 high) so a
-  // cluster reads as "one scoop of M" at a glance regardless of M.
-  const cols = Math.ceil(groupSize / 4);
 
   return (
     <div className={"m3-jarwrap" + (ghost ? " is-ghost" : "")}>
+      {/* BIG scoop-count to the LEFT of the jar — how many scoops (groups) are in
+          right now. The prominent readout; grows as the child pours. Shown on
+          every jar stage (manipulate / bind / fade). */}
+      <div className="m3-jar-scoopnum" aria-label={`${clampedFilled} scoop${clampedFilled === 1 ? "" : "s"} in the jar`}>
+        <span className="m3-jar-scoopnum-n">{clampedFilled}</span>
+        <span className="m3-jar-scoopnum-lab">scoop{clampedFilled === 1 ? "" : "s"}</span>
+      </div>
+
       {/* the jar itself — the poured clusters of cubes pile up inside it */}
       <div className="m3-jar" aria-label={`jar holding ${clampedFilled} groups of ${groupSize} — ${tally} cubes`}>
         <div className="m3-jar-neck" aria-hidden="true" />
@@ -105,16 +107,11 @@ export default function SkipJar({
               <div className="m3-jar-empty" aria-hidden="true">empty</div>
             ) : (
               clusters.map((ci) => (
-                <div key={ci} className="m3-cluster" title={`group ${ci + 1} of ${groupSize}`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+                <div key={ci} className="m3-cluster" title={`group ${ci + 1} of ${groupSize}`} style={{ gridTemplateColumns: `repeat(${groupSize}, 1fr)` }}>
                   {Array.from({ length: groupSize }, (_, k) => (
-                    <span
-                      key={k}
-                      className="m3-cube"
-                      style={{ background: cubeFill, borderColor: cubeEdge }}
-                      aria-hidden="true"
-                    >
-                      <span className="m3-cube-hatch" style={{ backgroundImage: cubeHatch, backgroundSize: cubeHatchSize }} />
-                    </span>
+                    <svg key={k} viewBox="0 0 32 32" className="kq-pebble" aria-hidden="true">
+                      <circle cx="16" cy="16" r="13" fill="#d1495b" stroke="#a33040" strokeWidth="2" />
+                    </svg>
                   ))}
                 </div>
               ))
@@ -124,7 +121,7 @@ export default function SkipJar({
         {/* small SECONDARY running-tally label under the jar */}
         <div className="m3-jar-tally">
           <span className="m3-jar-tally-n">{tally}</span>
-          <span className="m3-jar-tally-cap">cubes ({clampedFilled} group{clampedFilled === 1 ? "" : "s"} of {groupSize})</span>
+          <span className="m3-jar-tally-label">cubes ({clampedFilled} group{clampedFilled === 1 ? "" : "s"} of {groupSize})</span>
         </div>
       </div>
 
@@ -135,6 +132,7 @@ export default function SkipJar({
         ) : (
           clusters.map((ci) => (
             <div key={ci} className="m3-scale-step">
+              <span className="m3-scale-step-num" aria-label={`row ${ci + 1}`}>{ci + 1}</span>
               <span className="m3-scale-step-add">+{groupSize}</span>
               <span className="m3-scale-step-tot">{(ci + 1) * groupSize}</span>
             </div>
@@ -143,7 +141,9 @@ export default function SkipJar({
       </div>
 
       {/* the scoop bowl — DRAG it into the jar to pour ONE group of `groupSize`
-          cubes (drag-only; keyboard Enter/Space also scoops for a11y) */}
+          cubes (drag-only; keyboard Enter/Space also scoops for a11y). Hidden when
+          `showScoop` is false (e.g. the Bind stage, where pouring is disabled). */}
+      {showScoop && (
       <div className="m3-scoopzone">
         <button
           type="button"
@@ -176,6 +176,7 @@ export default function SkipJar({
           <div className="m3-scoop-dragcue" aria-hidden="true">drag into the jar ↑</div>
         )}
       </div>
+      )}
 
       {/* the scoop ghost that follows the pointer while dragging into the jar.
           Portaled to <body> so its position:fixed resolves against the VIEWPORT —

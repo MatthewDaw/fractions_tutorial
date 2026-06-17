@@ -1,0 +1,59 @@
+/* knife.css — the ONE shared knife-rack look, owned by components/lesson/KnifeRack.
+   Used by every lesson/tool that "cuts" by dragging a knife (den, unlike-den, …)
+   so the splitting tool is identical everywhere and lives in the question rail. */
+.den-knife-rack {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.den-knife-rack-lab {
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  text-align: center; max-width: 200px;
+}
+.den-knife-row {
+  display: flex; flex-direction: column; gap: 6px; align-items: center;
+}
+.den-knife-tool {
+  padding: 2px 4px; border-radius: 10px; cursor: grab;
+  -webkit-user-select: none; user-select: none;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.den-knife-tool:hover:not(.is-frozen) { transform: translate(-1px,-1px); }
+.den-knife-tool:active:not(.is-frozen) { cursor: grabbing; transform: translate(0,1px); }
+.den-knife-tool:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.den-knife-tool.is-frozen { cursor: default; opacity: 0.55; }
+
+/* pick-and-check variant (the equivalence lesson lists "cut each cell into N"
+   beside each knife and highlights the chosen one). When any tool carries a
+   description, each row lays the knife + caption side by side in a bordered card. */
+.den-knife-row:has(.has-desc) { gap: 8px; align-self: stretch; }
+.den-knife-tool.has-desc {
+  display: flex; flex-direction: row; align-items: center; gap: 12px;
+  padding: 6px 12px; border: 1.5px solid var(--ink); border-radius: 10px;
+  background: var(--paper-1); cursor: grab;
+}
+.den-knife-tool.has-desc:active:not(.is-frozen) { cursor: grabbing; }
+.den-knife-desc { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--ink-mute); }
+
+/* the shared "undo this split" chip (components/lesson/UndoSplitButton). Floats
+   just ABOVE whatever the knife cut — its frame must be position: relative. */
+.undo-split {
+  all: unset;
+  box-sizing: border-box;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 11px; border-radius: 999px; white-space: nowrap;
+  border: 1.5px solid var(--ink); background: var(--paper-1); color: var(--ink);
+  font-family: var(--serif); font-style: italic; font-size: 12.5px; line-height: 1;
+  cursor: pointer; z-index: 7;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.14);
+}
+.undo-split:hover { background: var(--paper-2); }
+.undo-split:active { transform: translateX(-50%) translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.14); }
+.undo-split:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.undo-split[disabled] { opacity: 0.5; cursor: default; box-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .den-knife-tool { transition: none; }
+}

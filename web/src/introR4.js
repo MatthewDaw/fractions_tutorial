@@ -1,30 +1,36 @@
-// introR4.js — narration cue sheet + transcript for the R4 "Simplify" intro
-// video (public/intros/r4-simplify.html).
+// introR4.js — narration cue sheet + transcript for the R4 "Equivalent
+// Fractions" intro video (public/intros/r4-simplify.html — filename kept).
 //
-// The video is a ~27s hand-animated timeline whose on-screen captions appear at
+// The video is a ~26s hand-animated timeline whose on-screen captions appear at
 // fixed timecodes (see the BEATS table in the html). Each cue pairs one beat with:
 //   - `gate`:  the second the line's beat begins on screen (matches the caption)
 //   - `pause`: a breath (seconds) required AFTER the previous line finishes
-//   - `key`:   the pre-baked voice clip, public/voice/<key>.mp3 (r4i_* clips)
-//   - `text`:  the transcript line (also the exact words the clip says)
+//   - `key`:   the pre-baked voice clip, public/voice/<key>.mp3 (r4e_* clips)
+//   - `text`:  the transcript line (also the exact words the clip says, and the
+//              exact words the matching #caption .cap shows)
 //
 // RoomIntro.jsx reads the video's playhead (localStorage[`${STAGE_PERSIST_KEY}:t`])
 // and plays/highlights these in sync: a line begins when the playhead passes BOTH
 // its `gate` and `prevLineEnd + pause`, so it never talks over the wrong visual nor
 // clips the one before. Keep `gate`s aligned with the html BEATS table if that
-// timeline changes.
+// timeline changes. The html's `var PERSIST` MUST equal STAGE_PERSIST_KEY below.
 
 export const STAGE_PERSIST_KEY = "simplify.v1";
-export const INTRO_DURATION = 27;
+export const INTRO_DURATION = 31;
 
-// gates track the video's BEATS table:
-//   8 of 12 1.5, watch the edge 5, group by 2 -> 4/6 9, group again -> 2/3 13,
-//   divide top+bottom = divide by 1 17.5, 8/12 = 2/3 simplest 22.
+// gates track the video's BEATS table; each is set so a line never starts before
+// the previous clip (+breath) finishes, and the duration leaves the final line
+// room to complete. Keep in lockstep with the html BEATS table if it changes.
+// gates are aligned to the html BEATS table in r4-simplify.html.
+// knife ×2 slides in at 6.0 → cut at 7.0 → exits 7.7; knife ×3 at 17.2 → cut 18.2 → exits 18.9.
+// Gates spaced so each clip finishes (+~0.6s breath) before the next beat fires, so
+// the narration lands ON its visual instead of drifting behind it (was the rushed feel).
 export const INTRO_CUES = [
-  { gate: 1.5,  pause: 0.3, key: "r4i_intro",    text: "Babushka's answer came out as eight out of twelve. One whole, cut into twelve equal pieces, with eight of them filled." },
-  { gate: 5,    pause: 0.5, key: "r4i_edge",     text: "Watch the right edge of the filled part. We are about to rename this fraction, but that edge will never move — the amount stays the same." },
-  { gate: 9,    pause: 0.5, key: "r4i_group",    text: "Group the pieces by twos. Twelve cells become six, and the eight filled become four. Four out of six — and look, the filled edge did not move at all." },
-  { gate: 13,   pause: 0.5, key: "r4i_again",    text: "Group again by twos. Six cells become three, and the four filled become two. Two out of three — and that filled edge has still not moved." },
-  { gate: 17.5, pause: 0.5, key: "r4i_byone",    text: "Here is why this is allowed. We divided the top and the bottom by the same number. Same number over same number is one — and dividing by one can never change the amount." },
-  { gate: 22,   pause: 0.5, key: "r4i_simplest", text: "So eight twelfths is exactly two thirds. The same amount, just written with the smallest numbers — its simplest name." },
+  { gate: 1.5,  pause: 0.3, key: "r4e_intro", text: "One third — one of three equal pieces." },
+  { gate: 6.0,  pause: 0.5, key: "r4e_cut2",  text: "Cut each piece in two." },
+  { gate: 8.5,  pause: 0.5, key: "r4e_six",   text: "Now six pieces, and two are shaded." },
+  { gate: 12.7, pause: 0.5, key: "r4e_same2", text: "Same amount — two sixths equals one third." },
+  { gate: 17.2, pause: 0.5, key: "r4e_cut3",  text: "Cut each third into three instead." },
+  { gate: 20.7, pause: 0.5, key: "r4e_nine",  text: "Nine pieces, three shaded — three ninths." },
+  { gate: 25.5, pause: 0.5, key: "r4e_same",  text: "Same red strip — one third, two sixths, three ninths." },
 ];

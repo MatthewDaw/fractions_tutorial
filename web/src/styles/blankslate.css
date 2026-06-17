@@ -57,6 +57,11 @@
   overflow: hidden;
 }
 
+/* ScratchSurface inside a flex-column stage: grow to fill all available height. */
+.lboard-stage .scratch-surface {
+  flex: 1; min-height: 0; width: 100%; height: auto;
+}
+
 /* The shared "show your work" sheet (showWork.js) IS the stage. It fills the whole
    play area with ZERO margin: the stage drops its own border / inset / padding and
    the sheet becomes the single bordered surface, edge to edge. One rule, every

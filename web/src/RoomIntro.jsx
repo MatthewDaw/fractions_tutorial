@@ -32,7 +32,9 @@ import { INTRO_CUES as INTRO_CUES_M1, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M1 
 import { INTRO_CUES as INTRO_CUES_M3, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_M3 } from "./introM3.js";
 import { INTRO_CUES as INTRO_CUES_NL, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_NL } from "./introNL.js";
 import { INTRO_CUES as INTRO_CUES_S1, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_S1 } from "./introS1.js";
-import { INTRO_CUES as INTRO_CUES_CMP, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_CMP } from "./introCmp.js";
+import { INTRO_CUES as INTRO_CUES_DEN, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_DEN } from "./introDen.js";
+import { INTRO_CUES as INTRO_CUES_NUM, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_NUM } from "./introNum.js";
+import { INTRO_CUES as INTRO_CUES_SIMP, STAGE_PERSIST_KEY as STAGE_PERSIST_KEY_SIMP } from "./introSimp.js";
 import SettingsButton from "./SettingsButton.jsx";
 import { getSettings } from "./settings.js";
 import { LESSONS } from "./lessons/index.js";
@@ -51,7 +53,9 @@ const INTROS = {
   m3: { cues: INTRO_CUES_M3, persistKey: STAGE_PERSIST_KEY_M3 },
   nl: { cues: INTRO_CUES_NL, persistKey: STAGE_PERSIST_KEY_NL },
   s1: { cues: INTRO_CUES_S1, persistKey: STAGE_PERSIST_KEY_S1 },
-  cmp: { cues: INTRO_CUES_CMP, persistKey: STAGE_PERSIST_KEY_CMP },
+  den: { cues: INTRO_CUES_DEN, persistKey: STAGE_PERSIST_KEY_DEN },
+  num: { cues: INTRO_CUES_NUM, persistKey: STAGE_PERSIST_KEY_NUM },
+  simp: { cues: INTRO_CUES_SIMP, persistKey: STAGE_PERSIST_KEY_SIMP },
 };
 
 // ── reusable chrome ─────────────────────────────────────────────────────────
@@ -143,6 +147,7 @@ function useGatedNarration({ cues, persistKey, hasNarration, ended, setEnded, re
     audiosRef.current = cues.map((c) => { const a = new Audio(VOICE_BASE + c.key + ".mp3"); a.preload = "auto"; return a; });
   }
   const curRef = useRef(null);                 // currently-playing clip
+  const pendingRef = useRef(null);             // a clip whose play() was autoplay-blocked
   const mutedRef = useRef(muted);
   useEffect(() => { mutedRef.current = muted; }, [muted]);
 
@@ -178,19 +183,35 @@ function useGatedNarration({ cues, persistKey, hasNarration, ended, setEnded, re
         busy = true;
         setActiveIdx(i);
         const a = audiosRef.current && audiosRef.current[i];
-        const advance = () => { prevEnd = readT(); busy = false; nextIdx = i + 1; };
+        let settled = false;
+        const advance = () => {
+          if (settled) return; settled = true;
+          if (a) a.removeEventListener("ended", done);
+          prevEnd = readT(); busy = false; nextIdx = i + 1;
+        };
+        function done() { advance(); }
         if (!a) { setTimeout(advance, 1500); }
         else {
-          const done = () => { a.removeEventListener("ended", done); advance(); };
           stopClip();
           a.volume = mutedRef.current ? 0 : getSettings().voiceVol / 100;
+          // Narrator speed: play faster with pitch preserved (no chipmunk). The
+          // video's playhead is sped by the same rate (see the intro html), so the
+          // narration stays gated to the animation — just compressed in wall-clock.
+          const rate = Number(getSettings().voiceRate) || 1;
+          try { a.preservesPitch = true; a.mozPreservesPitch = true; a.webkitPreservesPitch = true; a.playbackRate = rate; } catch (e) {}
           try { a.currentTime = 0; } catch (e) {}
           a.addEventListener("ended", done);
           curRef.current = a;
+          const estMs = Math.round(((a.duration && isFinite(a.duration)) ? a.duration : 2.5) / rate * 1000);
           const p = a.play();
-          if (p && p.catch) p.catch(() => {           // autoplay block → advance on an estimate
-            a.removeEventListener("ended", done);
-            setTimeout(advance, Math.round(((a.duration && isFinite(a.duration)) ? a.duration : 2.5) * 1000));
+          if (p && p.catch) p.catch(() => {
+            // Autoplay blocked — happens on the FIRST clip when the page is loaded
+            // straight to the intro (no prior user gesture). Don't drop the line:
+            // stash it so the first user interaction replays it (see the unlock
+            // effect). Safety net: if no interaction comes, advance on an estimate
+            // so the rest of the narration isn't held up.
+            pendingRef.current = a;
+            setTimeout(() => { if (pendingRef.current === a) { pendingRef.current = null; advance(); } }, Math.max(estMs, 5000));
           });
         }
       }
@@ -201,6 +222,28 @@ function useGatedNarration({ cues, persistKey, hasNarration, ended, setEnded, re
   }, [hasNarration, ended, replayKey, persistKey]);
 
   useEffect(() => () => stopClip(), []); // stop on unmount
+
+  // First-clip autoplay rescue: a page loaded straight to the intro has no prior
+  // user gesture, so the browser blocks the opening clip's play(). Replay the
+  // stashed clip on the first interaction anywhere on the page. The clip keeps its
+  // "ended" listener, so narration advances normally once it finishes.
+  useEffect(() => {
+    if (!hasNarration) return;
+    const unlock = () => {
+      const a = pendingRef.current; if (!a) return; pendingRef.current = null;
+      try { a.currentTime = 0; } catch (e) {}
+      a.volume = mutedRef.current ? 0 : getSettings().voiceVol / 100;
+      a.play().catch(() => {});
+    };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    window.addEventListener("touchstart", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, [hasNarration]);
 
   // Pause/resume the whole intro: video (iframe window.__anim) + current clip.
   function setPlay(next, finishRef, DURATION) {
@@ -253,7 +296,10 @@ export default function RoomIntro({ room, onContinue, onBack }) {
   useEffect(() => {
     if (ended) return;
     const f = finishRef.current;
-    f.remaining = DURATION; f.startedAt = Date.now();
+    // The intro animation runs at the narrator speed, so the whole video finishes
+    // proportionally sooner — scale the end-card timer by the same rate.
+    const rate = Number(getSettings().voiceRate) || 1;
+    f.remaining = DURATION / rate; f.startedAt = Date.now();
     f.id = setTimeout(() => setEnded(true), f.remaining);
     return () => { if (f.id) clearTimeout(f.id); f.id = null; };
   }, [ended, replayKey, DURATION]);

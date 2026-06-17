@@ -5,26 +5,25 @@
 // (unlikeDenMath.js); the worked example (anchor), the L4 transfer bank, and the
 // voice-clip keys all come from the per-lesson `lesson` config prop.
 import React, { useState, useEffect, useRef } from "react";
-import Cook from "./components/Cook.jsx";
 import Knife from "./components/Knife.jsx";
+import { KnifeRack } from "./components/lesson/KnifeRack.jsx";
 import Plank from "./components/Plank.jsx";
-import Rosette from "./components/Rosette.jsx";
 import DenominatorPicker from "./components/DenominatorPicker.jsx";
 import BigFrac from "./components/BigFrac.jsx";
 import InkPad from "./components/InkPad.jsx";
 import Slate from "./components/Slate.jsx";
-import WordProblem from "./components/WordProblem.jsx";
 // BlockSandbox removed — Workbench (LW) beat replaced by Simplify (SMP) in r2 arc
-import QuestionBand from "./components/QuestionBand.jsx";
+// QuestionBand removed (Wave-F): no wireframe analog — the question folds into the
+// rail/stage; the goal banner is gone (instruction copy now lives in the rail).
 import ExpressionSlate from "./components/ExpressionSlate.jsx";
-import BlankSlate from "./components/BlankSlate.jsx";
-import { LessonShell, LessonBoard, AnswerBar, TutorRibbon } from "./components/lesson";
+import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, RailInstruction, ScratchSurface } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { denomColor, denomTextColor, denomTone } from "./denominatorColors.js";
 import { lcd, exactSum, commonDenChoices, multipliersFor, verify, generateProblem, crossMultiply } from "./unlikeDenMath.js";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
 import { LESSONS } from "./lessons/index.js";
+import { getInputMode, subscribeSettings } from "./settings.js";
 import "./styles/lesson-unlike.css";
 
 // ---------------------------------------------------------------------------
@@ -129,8 +128,11 @@ function inkConfidence(numPadRef, denPadRef) {
 // width math is untouched; only the Y lanes + ruler line moved, and the drag-Y clamp
 // (CH-BAR_H) tracks the taller strips. The whole diagram is then vertically centered
 // in the stage via a CSS wrapper (.lu-diagram), not by rewriting these coords.
-const ORIGIN = 60, SPAN = 600, CW = 720, CH = 296, LINE_Y = 256, BAR_H = 78;
-const HOME = { A: { x: ORIGIN, y: 156 }, B: { x: ORIGIN, y: 68 } };
+const ORIGIN = 60, SPAN = 600, CW = 720, CH = 360, LINE_Y = 326, BAR_H = 78;
+// Two lanes spaced so the LOWER strip's floating labels (undo row at top:-72,
+// fraction tag + ×N chip at top:-54) clear the UPPER strip's body. B's body ends
+// at 84+72≈156; A's labels start at 232-72=160, so they no longer overlap.
+const HOME = { A: { x: ORIGIN, y: 232 }, B: { x: ORIGIN, y: 84 } };
 
 // ---- the joined strip ----
 // Once joined, every block is one common size (denominator D), so the whole
@@ -171,7 +173,25 @@ function Combined({ countA, countB, D, unit }) {
 // (LA) and Words (L7). The child must put ink down before advancing; it is
 // ungraded (no answer, never judged by the engine). String-keyed so it slots in
 // without renumbering anything; scaffoldMap maps "showwork" → L3.
-const NEXT_BEAT = { L0: "L2", L2: "L4", L4: "L5", L5: "L6", L6: "SMP", SMP: "LA", LA: "SW", SW: "L7", L7: "practice" };
+// Build a NEXT_BEAT map and filtered BEAT_WIRING that skip any beats listed in
+// lesson.skipBeats. The full linear chain is collapsed so each skipped beat's
+// predecessor jumps directly to the next active beat.
+function buildBeatNav(skipBeats) {
+  const skip = new Set(skipBeats || []);
+  // Filter wiring
+  const wiring = BEAT_WIRING.filter(w => !skip.has(w.key));
+  // Rebuild next-beat map: walk the full chain, skip over removed nodes
+  const next = {};
+  const allKeys = BEAT_WIRING.map(w => w.key);
+  for (let i = 0; i < allKeys.length; i++) {
+    const key = allKeys[i];
+    // find next active beat after this position
+    let j = i + 1;
+    while (j < allKeys.length && skip.has(allKeys[j])) j++;
+    if (j < allKeys.length) next[key] = allKeys[j];
+  }
+  return { nextBeat: next, beatWiring: wiring };
+}
 
 export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIntro }) {
   // Pedagogical beat. The ladder is one click each for the demo (topbar selector).
@@ -182,7 +202,13 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   //            (some >1), auto-join, New-problem cycles (transfer beat).
   //   L5     = "bare + ghost backdrop": just the equation; bars linger, dimmed.
   //   L6     = "bare slate": equation + inputs only, no manipulatives at all.
+  const { nextBeat: NEXT_BEAT, beatWiring: activeBeatWiring } = buildBeatNav(lesson?.skipBeats);
   const [beat, _setBeat] = useState("L0");
+
+  // Live answer-input mode from Settings ("stylus" | "typing"). Subscribing here so
+  // flipping the toggle re-renders the lesson immediately (same pattern as <Slate>).
+  const [inputMode, setInputMode] = useState(getInputMode);
+  useEffect(() => subscribeSettings((s) => setInputMode(s.inputMode)), []);
 
   // ---- Engine integration (U10) -------------------------------------------
   // Derive stable ids so the hook receives consistent values on every render.
@@ -210,7 +236,9 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     initialStage: "L0",
     resetStage: () => {},               // LU owns per-beat reset via clearForBeat
     emitMountPresent: false,            // clearForBeat emits problem_present itself
-    initialStatus: { tone: "normal", text: "Two strips, different block sizes. Grab a knife and slice, povaryonok." },
+    initialStatus: { tone: "normal", text: lesson?.framing?.kind === "scaleOne"
+      ? "The eighths already fit — only the one-fourth strip needs cutting. Slice it in half so its blocks match the eighths."
+      : "Two strips, different block sizes. Grab a knife and slice, povaryonok." },
     // The final "practice" beat serves auto-generated unlike-denominator variations
     // (skill auto-derives from the node id), paced by the engine. LU drives it by
     // calling goStage("practice") on entry (see setBeatLevel), so the scaffold's
@@ -283,6 +311,12 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   // NOTE: this `stage` is LU's own two-stage answer gate ("den"/"num") — distinct
   // from the hook's stage key (which LU does NOT use; it owns its beat nav).
   const [stage, setStage] = useState("den");
+  // SIMPLIFY (SMP) beat — the child WRITES the lowest-terms answer on the shared
+  // <Slate> fraction surface (the same write channel as the main answer), instead
+  // of picking from chips. Its own state so it never touches the add-beat answer.
+  const [smpNum, setSmpNum] = useState("");
+  const [smpDen, setSmpDen] = useState("");
+  const [smpSolved, setSmpSolved] = useState(false);
   const [hoverBar, setHoverBar] = useState(null);
   const [posA, _setPosA] = useState(HOME.A);
   const [posB, _setPosB] = useState(HOME.B);
@@ -293,8 +327,17 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   // Applied (LA): the child TRANSCRIBES the two shown fractions here; once they
   // match the problem (either order) the answer unlocks (setupOk). Words (L7): the
   // same surface is OPTIONAL scratch — never gates, never graded.
+  //
+  // If the student writes the original fractions (valid but different denominators),
+  // `setupPhase` advances to "rename": the original slate locks and a second slate
+  // appears asking them to rewrite both fractions over the common denominator.
+  // Only once the renamed fractions are correct does setupOk become true.
   const [setupA, setSetupA] = useState({ num: "", den: "" });
   const [setupB, setSetupB] = useState({ num: "", den: "" });
+  // "write" = initial entry, "rename" = original fractions confirmed, now rename over LCD
+  const [setupPhase, setSetupPhase] = useState("write");
+  const [renameA, setRenameA] = useState({ num: "", den: "" });
+  const [renameB, setRenameB] = useState({ num: "", den: "" });
   const [setupOk, setSetupOk] = useState(false);
   // Show-your-work (SW) gate: the mandatory blank slate must have ink before the
   // child may advance. Reset per beat entry (clearForBeat); the slate remounts on
@@ -320,6 +363,10 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   const barW = (id) => (id === "A" ? aNum / aDen : bNum / bDen) * UNIT;
 
   // speaking / say / stopVoice + solvedRef now come from useLessonScaffold (above).
+  // Phase-open narration guard: tracks the last beat we auto-narrated, so opening
+  // a beat speaks its question line exactly ONCE (never re-fires on re-render or
+  // on an in-beat re-deal of the same beat). See clearForBeat.
+  const spokenBeatRef = useRef(null);
   const mARef = useRef(mA), mBRef = useRef(mB), matchedRef = useRef(matched);
   const joinedRef = useRef(joined);
   const posARef = useRef(posA), posBRef = useRef(posB);
@@ -331,6 +378,17 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   useEffect(() => { joinedRef.current = joined; }, [joined]);
   const setPosA = (p) => { posARef.current = p; _setPosA(p); };
   const setPosB = (p) => { posBRef.current = p; _setPosB(p); };
+
+  // Mount = opening the FIRST phase (L0). The shared hook skips its mount narration
+  // here (emitMountPresent:false), and L0 isn't entered via clearForBeat, so narrate
+  // the initial beat's question line once on mount — the same phase-open auto-play.
+  useEffect(() => {
+    if (spokenBeatRef.current == null) {
+      spokenBeatRef.current = beat;
+      const line = beatLineFor(beat, problemRef.current);
+      if (line) say(line, { source: "phase" });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function clientToStage(cx, cy) { const s = document.getElementById("stage").getBoundingClientRect(); const k = s.width / 1280 || 1; return { x: (cx - s.left) / k, y: (cy - s.top) / k }; }
   function hitBar(cx, cy) {
@@ -348,13 +406,23 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
 
   function applyCut(bar, n) {
     if (joinedRef.current || solvedRef.current) return;
+    const p = problemRef.current;
+    // SCALE ONE constraint (Manipulate beat): one strip already fits the other, so
+    // the ONLY valid move is slicing the smaller-block strip by the single factor
+    // that makes it match (anchor 3/8 + 1/4 → slice the 1/4 strip in half → 2/8).
+    // Knives still drag freely, but dropping the wrong knife — or a knife on the
+    // already-fitting strip — does nothing at all.
+    if (framing.kind === "scaleOne") {
+      const targetD = Math.max(p.aDen, p.bDen);
+      const renameBar = p.aDen < p.bDen ? "A" : "B"; // the smaller-block (doesn't-fit) strip
+      const needMult = targetD / (renameBar === "A" ? p.aDen : p.bDen);
+      if (bar !== renameBar || n !== needMult) return; // not the one valid cut → no-op
+    }
     setM(bar, n);
     const nA = mARef.current, nB = mBRef.current;
-    const p = problemRef.current;
     setCook("idle");
     if (p.aDen * nA === p.bDen * nB) {
       setStatus({ tone: "ok", text: "Same-size blocks now! Write the bottom number: how big is each block?" });
-      say("denPrompt");
     } else {
       setStatus({ tone: "normal", text: `${p.aNum}/${p.aDen} is now ${p.aNum * nA}/${p.aDen * nA} and ${p.bNum}/${p.bDen} is now ${p.bNum * nB}/${p.bDen * nB}. Keep slicing until every block is the same size.` });
     }
@@ -368,7 +436,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     const { multA, multB, valid } = multipliersFor(p, denom);
     if (!valid) {
       setStatus({ tone: "warn", text: "That size doesn't make both strips match. Try another." });
-      say("notQuite");
       return;
     }
     setM("A", multA);   // setM updates mARef synchronously, then schedules state
@@ -380,7 +447,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       // L2 still manipulates blocks: after the picker slices, the child JOINS by
       // hand — drag the strips together — same as the L0/L1 knife path. No auto-join.
       setStatus({ tone: "ok", text: "Same-size blocks now! Drag the strips together to join them." });
-      say("dragTogether");
     } else {
       // L3/L4 are symbolic ("numbers lead"); the bars are only a check, so jump
       // straight to the numerator with an auto-join.
@@ -402,6 +468,38 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     clearForBeat(b);
   }
 
+  // The single source for each beat's QUESTION line — the per-beat instruction the
+  // rail shows AND the line phase-open narration speaks AND the line the Read-aloud
+  // button reads. `p` is the live problem for that beat (L7's caption / LA's applied
+  // sentence vary with it). Keep this in sync with the per-beat status text below.
+  function beatLineFor(b, p) {
+    const wps = lesson.wordProblems || [];
+    switch (b) {
+      case "L0": return framing.kind === "scaleOne"
+        ? "The eighths already fit, povaryonok — only the one-fourth strip needs cutting. Slice it in half so its blocks match the eighths."
+        : "Two strips, different block sizes. Grab a knife and slice, povaryonok.";
+      case "L2": return "Pick the common block size, watch each fraction scale, then join the strips.";
+      case "L4": return "A new pair. Find a common size, then add — same move, new dress.";
+      case "L5": return "Just the numbers. The bars are only a memory now — write the whole answer.";
+      case "L6": return "Bare slate. Find the common denominator, scale, and add — write it all.";
+      case "SMP": return showCross
+        ? "Fourteen over thirty isn't finished — both divide by two, so simplify to seven fifteenths. Always reduce your answer to lowest terms."
+        : "Three over six isn't in lowest terms yet — what number divides both 3 and 6? Write the simplified fraction.";
+      case "LA": return lesson.applied
+        || (p ? `Babushka needs ${p.aNum}/${p.aDen} + ${p.bNum}/${p.bDen} cups — how many cups is that?` : "");
+      case "SW": return "Show your work, povaryonok — write out how you'd solve it on the blank slate, then press Next.";
+      case "L7": {
+        // The recipe prompt the rail reads (matches wp.caption for the active word problem).
+        if (wps.length) {
+          const wpEntry = wps[wpIndex % wps.length];
+          if (wpEntry && wpEntry.caption) return wpEntry.caption;
+        }
+        return "A recipe! Read it, work out the two fractions yourself, and write the total.";
+      }
+      default: return "";
+    }
+  }
+
   // Reset the board to a fresh start appropriate for beat `b` (sets the problem,
   // multipliers, inputs, status). One place so every entry point stays coherent.
   function clearForBeat(b, genIndex) {
@@ -418,14 +516,19 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     // reset the word→math surfaces (Applied gate) + the show-work gate on every
     // beat change. The Words optional scratch is now an ungraded blank slate
     // (remounts via its key), so there is no scratch state to clear here.
-    setSetupA({ num: "", den: "" }); setSetupB({ num: "", den: "" }); setSetupOk(false);
+    setSetupA({ num: "", den: "" }); setSetupB({ num: "", den: "" });
+    setSetupPhase("write"); setRenameA({ num: "", den: "" }); setRenameB({ num: "", den: "" });
+    setSetupOk(false);
     setShowWorkInked(false);
-    if (b === "L0") setStatus({ tone: "normal", text: "Two strips, different block sizes. Grab a knife and slice, povaryonok." });
+    setSmpNum(""); setSmpDen(""); setSmpSolved(false);
+    if (b === "L0") setStatus({ tone: "normal", text: framing.kind === "scaleOne"
+      ? "The eighths already fit — only the one-fourth strip needs cutting. Slice it in half so its blocks match the eighths."
+      : "Two strips, different block sizes. Grab a knife and slice, povaryonok." });
     else if (b === "L2") setStatus({ tone: "normal", text: "Pick the common block size, watch each fraction scale, then join the strips." });
     else if (b === "L4") setStatus({ tone: "normal", text: "A new pair. Find a common size, then add — same move, new dress." });
     else if (b === "L5") setStatus({ tone: "normal", text: "Just the numbers. The bars are only a memory now — write the whole answer." });
     else if (b === "L6") setStatus({ tone: "normal", text: "Bare slate. Find the common denominator, scale, and add — write it all." });
-    else if (b === "SMP") setStatus({ tone: "normal", text: "Fourteen over thirty isn't finished — both divide by two, so simplify to seven fifteenths. Always reduce your answer to lowest terms." });
+    else if (b === "SMP") setStatus({ tone: "normal", text: showCross ? "Fourteen over thirty isn't finished — both divide by two, so simplify to seven fifteenths. Always reduce your answer to lowest terms." : "Three over six isn't in lowest terms yet — what number divides both 3 and 6? Write the simplified fraction." });
     else if (b === "LA") setStatus({ tone: "normal", text: "A question in words — the fractions are right there. Write them as a sum first, then give the answer." });
     else if (b === "SW") setStatus({ tone: "normal", text: "Show your work, povaryonok — write out how you'd solve it on the blank slate, then press Next." });
     else if (b === "L7") setStatus({ tone: "normal", text: "A recipe! Read it, work out the two fractions yourself, and write the total." });
@@ -443,11 +546,33 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       },
       modality: "tap",
     });
+    // PHASE-OPEN NARRATION (one of the three sanctioned auto-play triggers): opening
+    // a beat speaks that beat's question line exactly ONCE. Guarded by spokenBeatRef
+    // so re-renders and same-beat re-deals (e.g. New problem / New recipe) don't
+    // re-fire. The line is the SAME one the rail shows + the Read-aloud button reads.
+    if (spokenBeatRef.current !== b) {
+      spokenBeatRef.current = b;
+      // For L7 the spoken caption follows the word problem just dealt (genIndex),
+      // not the stale wpIndex state; everything else is index-independent.
+      let line;
+      if (b === "L7" && wps.length) {
+        const wpEntry = wps[(genIndex != null ? genIndex : wpIndex) % wps.length];
+        line = (wpEntry && wpEntry.caption) || beatLineFor(b, p);
+      } else {
+        line = beatLineFor(b, p);
+      }
+      if (line) say(line, { source: "phase" });
+    }
   }
 
   function resetBar(bar) {
-    if (joinedRef.current || solvedRef.current || matchedRef.current) return;
+    // Undo a cut any time before the strips are JOINED/solved — including after the
+    // blocks already match (the child may want to retry with fewer, bigger blocks).
+    if (joinedRef.current || solvedRef.current) return;
     setM(bar, 1);
+    // Undoing a cut clears the answer's auto-filled denominator and resets the
+    // two-stage gate, so the child re-derives the common size after re-slicing.
+    setDenStr(""); setNumStr(""); setStage("den");
     // Each reset after a cut counts as one self-correction (place→remove oscillation).
     selfCorrRef.current += 1;
     setCook("idle"); setStatus({ tone: "normal", text: "Put that strip back together — now try a different knife." });
@@ -456,8 +581,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   function grabKnife(n, e) {
     if (joined || solved || matched) return; // slicing locks once the blocks match
     e.preventDefault(); e.stopPropagation();
-    const p = clientToStage(e.clientX, e.clientY); setDragKnife({ n, x: p.x, y: p.y });
-    const move = (ev) => { const q = clientToStage(ev.clientX, ev.clientY); setDragKnife({ n, x: q.x, y: q.y }); setHoverBar(hitBar(ev.clientX, ev.clientY)); };
+    setDragKnife({ n, x: e.clientX, y: e.clientY });
+    const move = (ev) => { setDragKnife({ n, x: ev.clientX, y: ev.clientY }); setHoverBar(hitBar(ev.clientX, ev.clientY)); };
     const up = (ev) => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); const h = hitBar(ev.clientX, ev.clientY); setDragKnife(null); setHoverBar(null); if (h) applyCut(h, n); };
     window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
   }
@@ -503,7 +628,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       // mismatch — bounce back and shake
       setShakeA(true); setShakeB(true); setCook("think");
       setStatus({ tone: "warn", text: "These blocks aren't the same size — they don't fit together. Slice them to match first." });
-      say("dontFit");
       setPosA(HOME.A); setPosB(HOME.B);
       setTimeout(() => { setShakeA(false); setShakeB(false); }, 460);
       setTimeout(() => setCook("idle"), 1500);
@@ -516,7 +640,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   function doJoin() {
     setJoined(true); joinedRef.current = true; setCook("idle");
     setStatus({ tone: "ok", text: "Joined! Write the bottom number first — how big is each block? — then press Check." });
-    say("denPrompt");
   }
 
   // Dev-only: when Check is pressed in handwriting mode, ship the WRITTEN answer
@@ -554,7 +677,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     if (!bareEntry && !matched) {
       setCook("think");
       setStatus({ tone: "warn", text: "Slice both strips into the same-size blocks first — then write the total." });
-      say("sliceFirst"); return;
+      return;
     }
 
     // Two-stage entry: the DENOMINATOR is written and checked first — it must be
@@ -568,7 +691,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       if (!multipliersFor(p, d).valid) {
         setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
         setStatus({ tone: "warn", text: "That bottom number isn't a size both strips reach. Find a common denominator." });
-        say("notQuite");
         // Emit wrong denominator as an incorrect attempt (partial — denominator wrong).
         _emitIncorrectAttempt(p, n > 0 ? n : null, d > 0 ? d : null);
         return;
@@ -576,7 +698,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       // Valid common size — lock the denominator in and unlock the numerator.
       setStage("num"); setCook("idle");
       setStatus({ tone: "ok", text: "Good — the bottom number is set. Now count the blocks and write the top number." });
-      say("joined");
       return;
     }
 
@@ -589,7 +710,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     if (!res.ok) {
       setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
       setStatus({ tone: "warn", text: "Not quite — count every block. How many in all?" });
-      say("notQuite");
       // Emit incorrect attempt with error signature for engine tracking.
       _emitIncorrectAttempt(p, n, d);
       return;
@@ -599,7 +719,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
 
   // Emit a judgeAndAdvance for an incorrect attempt (both stages of two-stage entry).
   function _emitIncorrectAttempt(p, n, d) {
-    const usingInkPad = lesson.handwriting && !useSlate;
+    const usingInkPad = useInk;
     const modality = usingInkPad ? "handwriting" : "tap";
     const recognizerConf = usingInkPad ? inkConfidence(numPad, denPad) : null;
     const dec = judgeAndAdvance(
@@ -623,14 +743,12 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     const p = problemRef.current; const s = exactSum(p);
     if (st === 3) {
       setStatus({ tone: "ok", text: `Yes! ${p.aNum}/${p.aDen} + ${p.bNum}/${p.bDen} = ${s.num}/${s.den}. Same-size blocks, counted up — full marks, povaryonok!` });
-      say(lesson.voice.fullMarks);
     } else {
       setStatus({ tone: "ok", text: `Right — ${n}/${d} is the same amount. Fewer, bigger blocks earn more stars.` });
-      say(lesson.voice.sameAs);
     }
     // Emit the full correct Observation burst for the engine.
     // useSlate = Slate (tap-digital); !useSlate + handwriting = InkPad (handwriting).
-    const usingInkPad = lesson.handwriting && !useSlate;
+    const usingInkPad = useInk;
     const modality = usingInkPad ? "handwriting" : "tap";
     const recognizerConf = usingInkPad ? inkConfidence(numPad, denPad) : null;
     const dec = judgeAndAdvance(
@@ -655,31 +773,15 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   // "New problem" button (not yet solved) it instead re-deals the current beat,
   // and on L4 cycles to the next generated pair.
   //
-  // Engine integration: if the last Decision was RaiseScaffold, stay at the
-  // current beat (or go back one rung) rather than advancing. All other decisions
-  // preserve the existing happy path so playability is never regressed.
+  // UX guarantee: a CORRECT answer never auto-advances and never redirects. The
+  // child sees the success (rosette + cheer), then taps "Next ▸", which ALWAYS
+  // moves strictly to the next beat in NEXT_BEAT (linear) — never a restart, a
+  // jump, or an engine-driven hold. The engine Decision banked in lastDecisionRef
+  // is still LOGGED at grade time (finishSolved → judgeAndAdvance); it just no
+  // longer steers this file's beat navigation.
   function reset() {
     stopVoice(); // advancing silences any in-flight clip at once
     const wasSolved = solvedRef.current;
-    const dec = lastDecisionRef.current;
-
-    // RaiseScaffold: hold at the current beat (do not advance even on solve).
-    // This is the engine's in-lesson scaffold raise — work is preserved (dec.preserveWork).
-    if (wasSolved && dec && dec.kind === "RaiseScaffold") {
-      // Stay at the current beat — re-deal the same level for another practice round.
-      if (beat === "L4") {
-        const next = probIndex + 1;
-        setProbIndex(next);
-        clearForBeat("L4", next);
-      } else if (beat === "L7") {
-        const next = wpIndex + 1;
-        setWpIndex(next);
-        clearForBeat("L7", next);
-      } else {
-        clearForBeat(beat);
-      }
-      return;
-    }
 
     if (wasSolved && NEXT_BEAT[beat]) {
       const nb = NEXT_BEAT[beat];
@@ -727,6 +829,42 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     if (key === "num") setNumStr(v);
     else if (key === "den") setDenStr(v);
   }
+
+  // ---- SIMPLIFY (SMP) write-the-answer wiring ----
+  // The displayed sum and its lowest-terms target for the active framing:
+  //   r2 (crossMultiply): 14/30 → 7/15.   r3 (scaleOne): 3/6 → 1/2.
+  const SMP_SUM = showCross ? [14, 30] : [3, 6];
+  const SMP_SIMPLE = showCross ? [7, 15] : [1, 2];
+  function onSmpChange(key, value) {
+    const v = onlyDigits(value);
+    if (key === "num") setSmpNum(v);
+    else if (key === "den") setSmpDen(v);
+  }
+  const smpReady = !smpSolved && smpNum !== "" && smpDen !== "";
+  function checkSimplify() {
+    // Once solved, the button reads "Next ▸" and advances to the Applied beat.
+    if (smpSolved) { _setBeat("LA"); clearForBeat("LA"); return; }
+    const n = parseInt(smpNum, 10), d = parseInt(smpDen, 10);
+    if (!(n > 0) || !(d > 0)) {
+      setBadInput(true); setTimeout(() => setBadInput(false), 460);
+      setStatus({ tone: "warn", text: "Write the top and bottom of the simplest fraction." });
+      return;
+    }
+    const [tn, td] = SMP_SIMPLE;
+    const [sn, sd] = SMP_SUM;
+    if (n === tn && d === td) {
+      setSmpSolved(true); setCook("cheer");
+      setStatus({ tone: "ok", text: `Yes — ${sn}/${sd} in lowest terms is ${tn}/${td}. Always simplify your answer.` });
+      return;
+    }
+    setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
+    if (n * sd === sn * d) {
+      // Same amount, but not yet reduced all the way (e.g. they wrote the raw sum).
+      setStatus({ tone: "warn", text: `${n}/${d} is the same amount, but it isn't in lowest terms — keep dividing top and bottom by a common factor.` });
+    } else {
+      setStatus({ tone: "warn", text: `Not quite — divide ${sn} and ${sd} by their greatest common factor, then write what's left.` });
+    }
+  }
   // On beats WITH strips, the answer stays locked until the child has sliced both
   // strips to equal-size blocks (matched = a shared common denominator). Bare
   // beats (L5/L6/L7) have no strips to slice, so writing is always available there.
@@ -762,6 +900,16 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   // Stylus pivot: when the lesson opts in, the answer digits are HANDWRITTEN
   // (InkPad) instead of typed. Same numStr/denStr state + verify path downstream.
   const handwriting = !!lesson.handwriting;
+  // Honor the Settings answer-input toggle ("stylus" vs "typing"). When the child
+  // has chosen typing, the bespoke InkPad (drawing-only) must NOT be used — we fall
+  // through to the shared <Slate>, which renders a real numeric keyboard cell in
+  // typing mode. The InkPad path (drawing surface) is therefore gated on BOTH the
+  // lesson opting into handwriting AND the device being in stylus mode.
+  const typingMode = inputMode === "typing";
+  // The drawing InkPad is used only for L0's pre-slate answer slot, and only when
+  // the child is in stylus mode. Typing mode → Slate (which types). useSlate covers
+  // every beat from L2 on; useInk covers the L0 remainder when stylus is on.
+  const useInk = handwriting && !useSlate && !typingMode;
 
   const denEnabled = !solved && stage === "den" && blocksReady;
   const numEnabled = !solved && stage === "num" && blocksReady;
@@ -786,16 +934,65 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       setStatus({ tone: "warn", text: "Write both fractions from the question — a top and a bottom for each." });
       return;
     }
-    const match = (x, y) => x.n === y.n && x.d === y.d;
+    const match = (x, y) => x.n === y.n && x.d === y.d;       // exact transcription
+    const equiv = (x, y) => x.n * y.d === y.n * x.d;          // same value (cross-mult)
     const A = { n: an, d: ad }, B = { n: bn, d: bd };
     const P = { n: aNum, d: aDen }, Q = { n: bNum, d: bDen };
-    const ok = (match(A, P) && match(B, Q)) || (match(A, Q) && match(B, P));
-    if (!ok) {
+    const exactOk = (match(A, P) && match(B, Q)) || (match(A, Q) && match(B, P));
+    // Accept any value-equivalent pair too, so a child who jumps ahead and writes
+    // the already-renamed common form (e.g. 3/8 + 2/8 for 3/8 + 1/4) isn't punished.
+    const equivOk = (equiv(A, P) && equiv(B, Q)) || (equiv(A, Q) && equiv(B, P));
+    if (!equivOk) {
       setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
       setStatus({ tone: "warn", text: "Not quite — copy the two fractions exactly as the question gives them, then add." });
       return;
     }
-    setSetupOk(true); setCook("idle");
+    // If the denominators already match, the student wrote (or renamed to) a common
+    // form — accept the setup and skip straight to the total (no rename step).
+    if (ad === bd) {
+      setSetupOk(true); setSetupPhase("ok"); setCook("idle");
+      setStatus({ tone: "ok", text: "That's the sum, already over one common bottom. Now work it out and write the total." });
+    } else if (exactOk) {
+      // Exact addends with unlike bottoms — guide them through the rename step.
+      setSetupPhase("rename"); setCook("idle");
+      setStatus({ tone: "ok", text: `Good — now rewrite both fractions with ${PLCD} on the bottom.` });
+    } else {
+      // Equivalent in value but with mismatched, non-common bottoms — nudge to a shared one.
+      setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
+      setStatus({ tone: "warn", text: `Almost — give both fractions the same bottom number (try ${PLCD}), then add.` });
+    }
+  }
+  function onRenameChange(side, key, value) {
+    const v = onlyDigits(value);
+    if (side === "a") setRenameA((s) => ({ ...s, [key]: v }));
+    else setRenameB((s) => ({ ...s, [key]: v }));
+  }
+  function checkRename() {
+    const raN = parseInt(renameA.num, 10), raD = parseInt(renameA.den, 10);
+    const rbN = parseInt(renameB.num, 10), rbD = parseInt(renameB.den, 10);
+    if (!(raN > 0 && raD > 0 && rbN > 0 && rbD > 0)) {
+      setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
+      setStatus({ tone: "warn", text: `Write both fractions with ${PLCD} as the bottom number.` });
+      return;
+    }
+    if (raD !== PLCD || rbD !== PLCD) {
+      setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
+      setStatus({ tone: "warn", text: `Both fractions need ${PLCD} on the bottom — that's the common denominator.` });
+      return;
+    }
+    // Verify the renamed fractions represent the correct values (either order).
+    const P = { n: aNum, d: aDen }, Q = { n: bNum, d: bDen };
+    const okA_P = raN * P.d === P.n * PLCD;
+    const okA_Q = raN * Q.d === Q.n * PLCD;
+    const okB_P = rbN * P.d === P.n * PLCD;
+    const okB_Q = rbN * Q.d === Q.n * PLCD;
+    const renamed = (okA_P && okB_Q) || (okA_Q && okB_P);
+    if (!renamed) {
+      setBadInput(true); setCook("think"); setTimeout(() => setBadInput(false), 460);
+      setStatus({ tone: "warn", text: "Check your numerators — the fractions need to equal the originals." });
+      return;
+    }
+    setSetupOk(true); setSetupPhase("ok"); setCook("idle");
     setStatus({ tone: "ok", text: "That's the sum. Now work it out and write the total." });
   }
   function onSetupChange(side, key, value) {
@@ -812,7 +1009,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   // renders via the existing .lu-stylus class on write beats when handwriting is on.
   const stylusMark = <span className="lu-stylus" aria-hidden="true">✎</span>;
   const tabs = {
-    stages: BEAT_WIRING.map((w, i) => {
+    stages: activeBeatWiring.map((w, i) => {
       const t = (L && L.tabs && L.tabs[i]) || {};
       return {
         key: w.key,
@@ -827,36 +1024,28 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     label: "interaction-arc stage",
   };
 
-  // ---- the shared full-width QuestionBand (every stage EXCEPT Words/L7/SMP/Practice)
-  const Band = !isL7 && !isPractice && !isSMP ? (
-    <QuestionBand
-      lead="solve"
-      expr={<>{aNum}/{aDen} <span className="qb-op">+</span> {bNum}/{bDen}</>}
-      answer={solved ? <>{numStr}/{denStr}</> : "?"}
-    />
-  ) : null;
+  // ---- Wave-F chrome: the goal banner + QuestionBand are GONE. The task copy now
+  // lives in a <RailInstruction> (the FIRST card of the rail column), which also
+  // carries the Read-aloud pill. The pill speaks the CURRENT beat's question line —
+  // the SAME line phase-open narration spoke (beatLineFor) — so tap-to-read repeats
+  // exactly what the phase said, never a stale per-lesson key. The per-beat heading
+  // + copy mirror the wireframe's `.panel h3` + `.hint`.
+  const railVoiceKey = isL7 && wp ? wp.caption : beatLineFor(beat, problem);
+  const railHeading =
+    isSMP ? "Now Simplify the Answer" :
+    isLA ? "Applied" :
+    isSW ? "Show your work" :
+    isL7 ? "Word Problem" :
+    isL5 ? "From Memory" :
+    isL6 ? "On the Slate" :
+    isL4 ? "Scale & Add" :
+    isL2 ? (framing.pickTitle || "Pick the Size") :
+    "The Knives";
 
-  // ---- the goal banner (dynamic per-beat copy + a dynamic readAloud target, so
-  // it stays the bespoke .goal node rather than the static-voiceKey <LessonGoal>).
-  const Goal = (
-    <div className="goal">
-      <button className={"speaker" + (speaking ? " speaking" : "")} onClick={() => say(isL7 && wp ? wp.caption : lesson.voice.goal)}>
-        <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
-        Read aloud
-      </button>
-      <div className="goal-text" data-vox-speaker="mom">{
-        isSMP ? (showCross
-          ? <>Over a common bottom of <b>30</b>, the sum is <b>14/30</b> — but that isn't in <b>lowest terms</b>. Find the <b>greatest common factor</b> of <b>14</b> and <b>30</b> — it's <b>2</b> — and divide both: <b>7/15</b>. <b>Always simplify your answer.</b></>
-          : <>You added and got <b>3/6</b> — but a fraction isn't finished until it's in <b>lowest terms</b>. <b>3</b> and <b>6</b> both divide by <b>3</b>, so bundle <b>÷3</b> to reach <b>1/2</b>. <b>Always simplify your answer.</b></>)
-        : isLA ? <>A question in words, with the fractions shown. Write what it's asking as a <b>sum</b> first, then give the answer.</>
-        : isSW ? <>Show your work. Write out — any way you like — how you'd add <b>{aNum}/{aDen} + {bNum}/{bDen}</b>, then press Next.</>
-        : isL7 ? "Read the recipe, work out the two fractions yourself, and write the total."
-        : <>Babushka needs <b>{aNum}/{aDen}</b> of a dough strip and <b>{bNum}/{bDen}</b> of a strip — add them together.</>}</div>
-    </div>
-  );
-
-  // ---- the shared Cook + ribbon tutor (bottom-right of the fixed-zone board) --
-  const Tutor = <TutorRibbon cook={cook} status={status} />;
+  // ---- the shared Cook + ribbon tutor (bottom-right of the fixed-zone board). The
+  // ribbon is corrective-only (Wave-F decision B): TutorRibbon hides it unless the
+  // status tone is "warn". Each beat's `tutor` slot renders <TutorRibbon> inline
+  // (SMP/LA/SW included), so the always-on bespoke .hud/.ribbon copies are gone.
 
   return (
     <LessonShell
@@ -867,8 +1056,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       onRewatchIntro={onRewatchIntro}
       onReset={() => { setProbIndex(0); clearForBeat(beat); }}
       tabs={tabs}
-      band={Band}
-      goal={Goal}
     >
       {isPractice ? (
         /* PRACTICE — auto-generated unlike-denominator variations, engine-paced. */
@@ -880,7 +1067,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
         <>
           <LessonBoard
             variant="split"
-            footHeight={150}
+            footHeight={196}
             railWidth={360}
             stage={
               showCross ? (
@@ -894,7 +1081,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                   </div>
                   <div className="eq-eq">÷2 ↓</div>
                   <div className="bignum" style={{ fontSize: 64 }}><span className="n" style={{ color: "var(--red)" }}>7</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">15</span></div>
-                  <div className="eq-cap">14 and 30 share the factor <b>2</b> — divide both to reach <b>7/15</b></div>
                 </div>
               ) : (
                 <div className="eq-stage" style={{ flexDirection: "column", gap: 22 }}>
@@ -905,59 +1091,65 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                     <span className="eq-eq" style={{ fontStyle: "normal" }}>=</span>
                     <div className="bignum" style={{ fontSize: 48 }}><span className="n" style={{ color: "var(--red)" }}>3</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">6</span></div>
                   </div>
-                  <div className="eq-eq">÷3 ↓</div>
-                  <div className="bignum" style={{ fontSize: 64 }}><span className="n" style={{ color: "var(--red)" }}>1</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">2</span></div>
-                  <div className="eq-cap">3 and 6 share the factor <b>3</b> — divide both to reach <b>1/2</b></div>
+                  {smpSolved ? (
+                    <>
+                      <div className="eq-eq">÷3 ↓</div>
+                      <div className="bignum" style={{ fontSize: 64 }}><span className="n" style={{ color: "var(--red)" }}>1</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">2</span></div>
+                    </>
+                  ) : (
+                    <div className="r4-bigeq-q" style={{ fontSize: 64 }}>?</div>
+                  )}
                 </div>
               )
             }
             rail={
-              <div className="panel">
-                <h3 className="pick-title">Now Simplify the Answer</h3>
-                <div className="hint">
-                  {showCross ? (
-                    <>Over a common bottom of <b>30</b>, the sum is <b>14/30</b> — but that isn't
-                    in <b>lowest terms</b>. Find the <b>greatest common factor</b> of <b>14</b>
-                    and <b>30</b> — it's <b>2</b> — and divide both: <b>7/15</b>. <b>Always
-                    simplify your answer.</b></>
-                  ) : (
-                    <>You added and got <b>3/6</b> — but a fraction isn't finished until it's
-                    in <b>lowest terms</b>. 3 and 6 both divide by 3, so bundle ÷3 to reach <b>1/2</b>.
-                    Always simplify your answer.</>
-                  )}
-                </div>
-              </div>
+              <RailInstruction
+                say={say} speaking={speaking}
+                voiceKey={railVoiceKey} voxSpeaker="cook"
+                heading="Now Simplify the Answer"
+              >
+                {showCross ? (
+                  <>Over a common bottom of <b>30</b>, the sum is <b>14/30</b> — but that isn't
+                  in <b>lowest terms</b>. Find the <b>greatest common factor</b> of <b>14</b>
+                  and <b>30</b> — it's <b>2</b> — and divide both: <b>7/15</b>. <b>Always
+                  simplify your answer.</b></>
+                ) : smpSolved ? (
+                  <>You added and got <b>3/6</b>, and simplified to <b>1/2</b> — 3 and 6 both
+                  divide by 3. Always simplify your answer.</>
+                ) : (
+                  <>You added and got <b>3/6</b> — but a fraction isn't finished until it's
+                  in <b>lowest terms</b>. What number divides both 3 and 6 evenly? Write the
+                  simplified fraction below.</>
+                )}
+              </RailInstruction>
             }
             answer={
-              <div className="lbar">
+              <div className={"lbar" + (badInput ? " is-bad" : "")}>
                 <div className="lbar-eq">
-                  {showCross ? (
-                    <>
-                      <span className="bignum"><span className="n" style={{ color: "var(--red)" }}>14</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">30</span></span>
-                      <span className="nl-ans-eq">=</span>
-                      <span className="nl-ans-amt">simplest answer:</span>
-                      <span className="den-choices">
-                        <span className="den-choice is-on">7/15</span>
-                        <span className="den-choice">14/30</span>
-                        <span className="den-choice">7/30</span>
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="bignum"><span className="n" style={{ color: "var(--red)" }}>3</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">6</span></span>
-                      <span className="nl-ans-eq">=</span>
-                      <span className="nl-ans-amt">simplest answer:</span>
-                      <span className="den-choices">
-                        <span className="den-choice is-on">1/2</span>
-                        <span className="den-choice">3/6</span>
-                        <span className="den-choice">2/6</span>
-                      </span>
-                    </>
-                  )}
+                  <span className="bignum"><span className="n" style={{ color: "var(--red)" }}>{SMP_SUM[0]}</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">{SMP_SUM[1]}</span></span>
+                  <span className="nl-ans-eq">=</span>
+                  <span className="nl-ans-amt">simplest answer:</span>
+                  {/* Write the lowest-terms fraction on the shared Slate (same write
+                      channel as the main answer), instead of picking from chips. */}
+                  <Slate
+                    layout="fraction"
+                    slots={[
+                      { key: "num", label: "top", locked: smpSolved, digit: smpSolved ? String(SMP_SIMPLE[0]) : undefined },
+                      { key: "den", label: "bottom", locked: smpSolved, digit: smpSolved ? String(SMP_SIMPLE[1]) : undefined },
+                    ]}
+                    values={{ num: smpNum, den: smpDen }}
+                    onChange={onSmpChange}
+                    onSubmit={checkSimplify}
+                    den={SMP_SIMPLE[1]}
+                    disabled={smpSolved}
+                    autoFocusKey={smpSolved ? undefined : (smpNum === "" ? "num" : (smpDen === "" ? "den" : undefined))}
+                    ariaLabel="write the simplest fraction"
+                  />
                 </div>
-                <div className="lbar-cap">{showCross ? "add, then reduce by the GCF — 14/30 = 7/15" : "add, then reduce by the GCF — 3/6 = 1/2"}</div>
                 <div className="lbar-marks">
-                  <button className="check" onClick={() => { _setBeat("LA"); clearForBeat("LA"); }}>Next ▸</button>
+                  <button className={"check" + (smpReady ? " ready" : "")} onClick={checkSimplify}>
+                    {smpSolved ? "Next ▸" : "Check"}
+                  </button>
                 </div>
               </div>
             }
@@ -965,119 +1157,202 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
           />
         </>
       ) : isLA ? (
-        /* APPLIED — a worded question (fractions shown) with the required setup gate:
-           transcribe the sum, then the answer unlocks. */
-        <>
-          <div className="play lu-applied-play">
-            <WordProblem
-              story={appliedSentence}
-              tag="Babushka's kitchen"
-              readAloud={() => say(appliedSentence)}
-              speaking={speaking}
-              answerLead="Now write the total"
-              setupLead="First, write the question as a sum"
-              setup={
-                <>
-                  <ExpressionSlate
-                    a={setupA} b={setupB}
-                    onChange={onSetupChange}
-                    onSubmit={checkSetup}
-                    denA={aDen} denB={bDen}
-                    disabled={setupOk || solved}
-                    autoFocus={!setupOk && setupA.num === "" ? "a-num" : undefined}
-                    className={badInput && !setupOk ? "is-shake" : ""}
-                  />
-                  {setupOk
-                    ? <span className="lu-setup-ok">✓ that's the sum — now solve it</span>
-                    : <button type="button" className="wp-check" onClick={checkSetup}>Check the sum</button>}
-                </>
-              }
-              slots={slateSlots}
-              values={{ num: numStr, den: denStr }}
-              onChange={onSlateChange}
-              layout="fraction"
-              den={slateDen}
-              disabled={!setupOk || solved}
-              autoFocusKey={setupOk ? slateAutoKey : undefined}
-              onCheck={checkAnswer}
-              checkLabel={checkLabel}
-              checkDisabled={!setupOk}
-            />
-          </div>
-          <div className="hud">
-            <div className="cook-zone">
-              <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-              <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
+        /* APPLIED — a worded question (fractions shown) with the required setup gate.
+           Wave-F: restructured onto the shared 4-zone <LessonBoard> exactly as the
+           wireframe room-r2-a-applied.js specifies — rail = <RailInstruction> (the
+           story prompt + hint, ONCE), stage = the setup gate (.wp-setup: story tag +
+           caption + ExpressionSlate "write the question as a sum"), answer = the
+           total (.wp-answer slate + Check), tutor = corrective-only ribbon. The old
+           .play/.hud chrome + the all-in-one <WordProblem> column are gone. */
+        <LessonBoard
+          variant="split"
+          footHeight={196}
+          railWidth={360}
+          stage={
+            <div className="wp-setup">
+              <div className="wp-setup-lead">First, write the question as a sum</div>
+              <div className="wp-setup-row">
+                <ExpressionSlate
+                  a={setupA} b={setupB}
+                  onChange={onSetupChange}
+                  onSubmit={setupPhase === "write" ? checkSetup : undefined}
+                  denA={aDen} denB={bDen}
+                  disabled={setupPhase !== "write" || solved}
+                  autoFocus={setupPhase === "write" && setupA.num === "" ? "a-num" : undefined}
+                  className={badInput && setupPhase === "write" ? "is-shake" : ""}
+                />
+                {setupPhase === "write" &&
+                  <button type="button" className="wp-check" onClick={checkSetup}>Check the sum</button>}
+                {(setupPhase === "rename" || setupPhase === "ok") && (
+                  <div className={"wp-rename-gate" + (setupPhase === "ok" ? " is-done" : "")}>
+                    <div className="wp-rename-lead">
+                      {setupPhase === "ok" ? `✓ Rewritten over ${PLCD}` : `Now rewrite both over ${PLCD}`}
+                    </div>
+                    <ExpressionSlate
+                      a={renameA} b={renameB}
+                      onChange={onRenameChange}
+                      onSubmit={checkRename}
+                      denA={PLCD} denB={PLCD}
+                      disabled={setupPhase === "ok" || setupOk || solved}
+                      autoFocus={setupPhase === "rename" && renameA.num === "" ? "a-num" : undefined}
+                      className={badInput && setupPhase === "rename" ? "is-shake" : ""}
+                    />
+                    {setupPhase === "rename" &&
+                      <button type="button" className="wp-check" onClick={checkRename}>Check renaming</button>}
+                  </div>
+                )}
+                {setupPhase === "ok" &&
+                  <span className="lu-setup-ok">✓ that's the sum — now solve it</span>}
+              </div>
+              <div className="wp-answer-lead">Now write the total</div>
             </div>
-            {solved && <div className="marks"><Rosette count={stars} /></div>}
-          </div>
-        </>
+          }
+          rail={
+            <RailInstruction
+              say={say} speaking={speaking}
+              voiceKey={railVoiceKey} voxSpeaker="cook"
+              heading={railHeading}
+            >
+              <span className="wp-rail-story">Babushka's kitchen — {appliedSentence}</span> Write what it's asking
+              as a <b>sum</b> first, then give the answer.
+            </RailInstruction>
+          }
+          answer={
+            <div className="wp-answer">
+              <div className="wp-answer-row">
+                <Slate
+                  slots={slateSlots}
+                  values={{ num: numStr, den: denStr }}
+                  onChange={onSlateChange}
+                  onSubmit={checkAnswer}
+                  layout="fraction"
+                  den={slateDen}
+                  disabled={!setupOk || solved}
+                  autoFocusKey={setupOk ? slateAutoKey : undefined}
+                  ariaLabel="write the total"
+                />
+                <button
+                  type="button"
+                  className={"wp-check" + (answerReady ? " ready" : "")}
+                  onClick={checkAnswer}
+                  disabled={!setupOk}
+                >{checkLabel}</button>
+              </div>
+            </div>
+          }
+          tutor={<TutorRibbon cook={cook} status={status} rosette={solved} stars={stars} />}
+        />
       ) : isSW ? (
         /* SHOW YOUR WORK — a MANDATORY free-form blank slate between Applied and
            Words. No grading, no answer: the child writes out their solution any
            way they like; the "Next ▸" button stays disabled until ink is down
            (onInkChange → showWorkInked). Advancing is a plain beat hop to L7,
-           never an engine decision. */
-        <>
-          <div className="play lu-showwork-play">
-            <div className="bs-surface" style={{ position: "relative", width: 800, height: 360 }}>
-              <BlankSlate
-                key={`showwork:${beat}`}
-                hint="show your work here — write anything you like ✎"
-                onInkChange={setShowWorkInked}
-                ariaLabel="show your work on the blank slate"
-              />
-            </div>
-          </div>
-          <div className="hud">
-            <div className="cook-zone">
-              <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-              <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
-            </div>
-            <div className="marks">
-              <button
-                type="button"
-                className={"check" + (showWorkInked ? " ready" : "")}
-                disabled={!showWorkInked}
-                onClick={() => { _setBeat("L7"); clearForBeat("L7"); }}
-              >Next ▸</button>
-            </div>
-          </div>
-        </>
-      ) : isL7 ? (
-      /* ── WORDS (L7) — the shared WIDE LessonBoard: the WordProblem column fills
-         the full stage height (room for the roomy scratch slate), the Cook sits in
-         the narrow right tutor column. The answer Slate + Check live INSIDE the
-         WordProblem card (no separate .lu-ans). Two real grid tracks → no overlap. */
-      <LessonBoard
-        variant="wide"
-        className="lu-words-board"
-        tutorWidth={300}
-        content={wp && (
-          <div className="lu-wp-board">
-            <WordProblem
-              story={wp.caption}
-              tag="Babushka's recipe"
-              readAloud={() => say(wp.caption)}
-              speaking={speaking}
-              answerLead="Write the total"
-              setupLead="Optional — show your work here first"
-              setup={
-                <div className="lu-words-scratch bs-surface" style={{ position: "relative", width: "100%", height: 132 }}>
-                  <BlankSlate
-                    key="words-scratch"
-                    hint="optional — show your work here ✎"
-                    ariaLabel="optional: show your work on the blank slate"
-                  />
-                </div>
+           never an engine decision. Wave-F: restructured onto the shared 4-zone
+           <LessonBoard> per the wireframe room-r2-sw-showwork.js — rail =
+           <RailInstruction> (task copy + Read-aloud), stage = the showWork() blank
+           slate, answer = the Next gate (.lbar), tutor = corrective ribbon. The old
+           .play/.hud chrome is gone. */
+        <LessonBoard
+          variant="split"
+          footHeight={196}
+          railWidth={360}
+          stage={
+            <ScratchSurface variant="required" slateKey={`showwork:${beat}`} onInkChange={setShowWorkInked} />
+          }
+          rail={
+            <RailInstruction
+              say={say} speaking={speaking}
+              voiceKey={railVoiceKey} voxSpeaker="cook"
+              heading={railHeading}
+            >
+              Show your work — any way you like — for how you'd add{" "}
+              <b>{eqLead}</b>, then write the total below and check it.
+            </RailInstruction>
+          }
+          answer={
+            <AnswerBar
+              className="lu-ansbar"
+              eq={
+                solved ? (
+                  <span className="lu-ans-slot"><BigFrac num={parseInt(numStr, 10)} den={parseInt(denStr, 10)} /></span>
+                ) : (
+                  <span className="lu-ans-slot">
+                    <span className={"lu-slate" + (badInput ? " bad" : "")}>
+                      <Slate
+                        slots={slateSlots}
+                        values={{ num: numStr, den: denStr }}
+                        onChange={onSlateChange}
+                        onSubmit={checkAnswer}
+                        layout="fraction"
+                        den={slateDen}
+                        disabled={solved}
+                        autoFocusKey={slateAutoKey}
+                        ariaLabel="write the total"
+                      />
+                    </span>
+                  </span>
+                )
               }
-              slots={slateSlots}
-              values={{ num: numStr, den: denStr }}
-              onChange={onSlateChange}
-              layout="fraction"
-              den={slateDen}
-              disabled={solved}
-              autoFocusKey={slateAutoKey}
+              solved={solved}
+              ready={answerReady}
+              stars={stars}
+              onCheck={checkAnswer}
+              checkLabel={checkLabel}
+            />
+          }
+          tutor={<TutorRibbon cook={cook} status={status} />}
+        />
+      ) : isL7 ? (
+      /* ── WORDS (L7) — Wave-F: restructured onto the shared 4-zone <LessonBoard>
+         per the wireframe room-r2-7-words / room-r3-7-words: rail = <RailInstruction>
+         (the recipe prompt + Read-aloud), stage = the optional ungraded scratch
+         slate, answer = the from-scratch fraction Slate + Check + New recipe, tutor =
+         the corrective ribbon. The all-in-one WordProblem column (the story across
+         the top) is gone; stage and answer live in SEPARATE grid tracks → no overlap. */
+      <LessonBoard
+        variant="split"
+        footHeight={196}
+        railWidth={360}
+        stage={
+          <ScratchSurface slateKey="words-scratch" />
+        }
+        rail={wp && (
+          <RailInstruction
+            say={say} speaking={speaking}
+            voiceKey={wp.caption} voxSpeaker="cook"
+            heading="Babushka's recipe"
+          >
+            {wp.caption}
+          </RailInstruction>
+        )}
+        answer={wp && (
+          <div className="lu-words-answer">
+            <AnswerBar
+              className="lu-ansbar"
+              eq={
+                solved ? (
+                  <span className="lu-ans-slot"><BigFrac num={parseInt(numStr, 10)} den={parseInt(denStr, 10)} /></span>
+                ) : (
+                  <span className="lu-ans-slot">
+                    <span className={"lu-slate" + (badInput ? " bad" : "")}>
+                      <Slate
+                        slots={slateSlots}
+                        values={{ num: numStr, den: denStr }}
+                        onChange={onSlateChange}
+                        onSubmit={checkAnswer}
+                        layout="fraction"
+                        den={slateDen}
+                        disabled={solved}
+                        autoFocusKey={slateAutoKey}
+                        ariaLabel="write the total"
+                      />
+                    </span>
+                  </span>
+                )
+              }
+              solved={solved}
+              ready={answerReady}
+              stars={stars}
               onCheck={checkAnswer}
               checkLabel={checkLabel}
             />
@@ -1099,7 +1374,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       <>
       <LessonBoard
         variant="split"
-        footHeight={150}
+        footHeight={170}
         railWidth={360}
         stage={
           <div className="canvas lu-canvas" id="r2canvas">
@@ -1135,10 +1410,11 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                     <div className="btag">
                       <BigFrac num={numA} den={denA} />
                       {mA > 1 && <span key={tickA} className={"xchip" + (stripsFaded ? "" : " pop")}>×{mA}</span>}
-                      {mA > 1 && !matched && !stripsFaded && <button className="mini" title="put it back together" onPointerDown={(e) => e.stopPropagation()} onClick={() => resetBar("A")}>↺</button>}
+                      {mA > 1 && !stripsFaded && !joined && !solved && (
+                        <button className="undo-pill" title="put it back together" onPointerDown={(e) => e.stopPropagation()} onClick={() => resetBar("A")}>↺ undo</button>
+                      )}
                     </div>
                     <Plank baseNum={aNum} baseDen={aDen} m={mA} unit={UNIT} sliceTick={stripsFaded ? 0 : tickA} matched={matched} hoverCut={hoverBar === "A" && !!dragKnife} bodyRef={bodyA} faded={stripsFaded} />
-                    {mA > 1 && <span className="xchip-bot">×{mA}</span>}
                   </div>
 
                   <div className={"nbar" + (dragBar === "B" ? " dragging" : "") + (shakeB ? " is-shake" : "")}
@@ -1146,10 +1422,11 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                     <div className="btag">
                       <BigFrac num={numB} den={denB} />
                       {mB > 1 && <span key={tickB} className={"xchip" + (stripsFaded ? "" : " pop")}>×{mB}</span>}
-                      {mB > 1 && !matched && !stripsFaded && <button className="mini" title="put it back together" onPointerDown={(e) => e.stopPropagation()} onClick={() => resetBar("B")}>↺</button>}
+                      {mB > 1 && !stripsFaded && !joined && !solved && (
+                        <button className="undo-pill" title="put it back together" onPointerDown={(e) => e.stopPropagation()} onClick={() => resetBar("B")}>↺ undo</button>
+                      )}
                     </div>
                     <Plank baseNum={bNum} baseDen={bDen} m={mB} unit={UNIT} sliceTick={stripsFaded ? 0 : tickB} matched={matched} hoverCut={hoverBar === "B" && !!dragKnife} bodyRef={bodyB} faded={stripsFaded} />
-                    {mB > 1 && <span className="xchip-bot">×{mB}</span>}
                   </div>
                 </React.Fragment>
               )}
@@ -1208,18 +1485,38 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
           </div>
         }
         rail={
-          /* rail — its content depends on the beat */
-          <div className="panel">
-            {usesPicker ? (
-              <>
-                <h3 className="pick-title">{isL4 ? "Scale & Add" : (framing.pickTitle || "Pick the Size")}</h3>
-                <div className="hint">
-                  {isL4
+          /* rail — the FIRST card is the <RailInstruction> (Wave-F: it carries the
+             task copy + Read-aloud pill that the deleted goal banner used to hold;
+             same voice key, lesson.voice.goal). The beat-specific manipulatives
+             (worksheet + denpicker / bare equation / knife rack) follow it as
+             sibling cards in the same rail column, mirroring the wireframe panel. */
+          <>
+            <RailInstruction
+              say={say} speaking={speaking}
+              voiceKey={railVoiceKey} voxSpeaker="cook"
+              heading={railHeading}
+            >
+              {usesPicker
+                ? (isL4
                     ? (showCross
                         ? "Pick the common bottom, then rename BOTH fractions as equivalent fractions over it (top & bottom together) and add like same-denominators. Fast way to find that bottom: multiply the two bottoms."
                         : "Pick the common bottom — rename the strip that doesn't fit into an equivalent fraction over it (top & bottom together), then add like same-denominators.")
-                    : (framing.pickHint || "Choose the common block size — both strips multiply to reach it (top & bottom the same).")}
-                </div>
+                    : (framing.pickHint || "Choose the common block size — both strips multiply to reach it (top & bottom the same)."))
+                : bareEntry
+                ? (isL5
+                    ? (showCross
+                        ? "The bars are behind, faded — just a reminder. Rename BOTH fractions as equivalent fractions over a common bottom, then add like same-denominators. (The fast way to get that bottom is to multiply each by the other's bottom.)"
+                        : "The bars are behind, faded — just a reminder. Rename the one that doesn't fit into an equivalent fraction over the common bottom, then add like same-denominators.")
+                    : (showCross
+                        ? "Nothing but the numbers. Rename BOTH fractions as equivalent fractions over a common bottom, then add like same-denominators. Fast way: the common bottom is the two bottoms multiplied."
+                        : "Nothing but the numbers. Rename just the one that doesn't fit into an equivalent fraction over the common bottom, then add like same-denominators."))
+                : (framing.kind === "scaleOne"
+                    ? "The eighths already fit, povaryonok — only the one-fourth strip needs cutting. Slice it in half so its blocks match the eighths."
+                    : "Drag a knife onto a strip — it cuts every block into that many equal pieces (top & bottom together).")}
+            </RailInstruction>
+
+            {usesPicker ? (
+              <div className="panel lu-rail-tools">
                 <div className="worksheet">
                   <div className="ws-row">
                     <span className="ws-frac">{aNum}/{aDen}</span>
@@ -1241,44 +1538,22 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                 {isL4 && !solved && (
                   <button type="button" className="newprob" onClick={() => { if (!joined && !matched) reset(); }} disabled={joined || matched}>↻ New problem</button>
                 )}
-              </>
-            ) : isL7 ? (
-              <>
-                <h3>Word Problem</h3>
-                <div className="hint">No numbers laid out this time. Read Babushka's recipe, figure out the two fractions yourself, add them, and write the total.</div>
-                {!solved && (
-                  <button type="button" className="newprob" onClick={() => { const n = wpIndex + 1; setWpIndex(n); clearForBeat("L7", n); }}>↻ New recipe</button>
-                )}
-              </>
+              </div>
             ) : bareEntry ? (
-              <>
-                <h3>{isL5 ? "From Memory" : "On the Slate"}</h3>
-                <div className="hint">
-                  {isL5
-                    ? (showCross
-                        ? "The bars are behind, faded — just a reminder. Rename BOTH fractions as equivalent fractions over a common bottom, then add like same-denominators. (The fast way to get that bottom is to multiply each by the other's bottom.)"
-                        : "The bars are behind, faded — just a reminder. Rename the one that doesn't fit into an equivalent fraction over the common bottom, then add like same-denominators.")
-                    : (showCross
-                        ? "Nothing but the numbers. Rename BOTH fractions as equivalent fractions over a common bottom, then add like same-denominators. Fast way: the common bottom is the two bottoms multiplied."
-                        : "Nothing but the numbers. Rename just the one that doesn't fit into an equivalent fraction over the common bottom, then add like same-denominators.")}
-                </div>
+              <div className="panel lu-rail-tools">
                 <div className="bare-eq">{eqLead} = <b>?</b></div>
-              </>
+              </div>
             ) : (
-              <>
-                <h3>The Knives</h3>
-                <div className="hint">Drag a knife onto a strip — it cuts every block into that many equal pieces (top &amp; bottom together).</div>
-                <div className="knife-rack" style={{ opacity: matched ? 0.3 : 1, pointerEvents: matched ? "none" : "auto" }}>
-                  {[2, 3, 4].map((n) => (
-                    <div className="knife-row" key={n} style={{ opacity: dragKnife && dragKnife.n === n ? 0.18 : 1 }}>
-                      <Knife n={n} onGrab={(e) => grabKnife(n, e)} hint={!dragKnife && mA === 1 && mB === 1} scale={0.48} />
-                      <span className="krow-lab">→ {n} pieces</span>
-                    </div>
-                  ))}
-                </div>
-              </>
+              <div className="panel lu-rail-tools">
+                <KnifeRack
+                  options={[2, 3, 4]}
+                  onGrab={grabKnife}
+                  disabled={matched}
+                  label="drag a knife onto a strip to cut it"
+                />
+              </div>
             )}
-          </div>
+          </>
         }
         answer={
           /* ── EQUATION + ANSWER, ONE bordered card (the shared <AnswerBar>) ──────
@@ -1299,7 +1574,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                 <span className="lu-ans-slot">
                   {solved ? (
                     <BigFrac num={parseInt(numStr, 10)} den={parseInt(denStr, 10)} />
-                  ) : handwriting && !useSlate ? (
+                  ) : useInk ? (
                     <span className={"frinput ink" + (badInput ? " bad" : "")}>
                       <InkPad ref={numPad} value={numStr} onChange={(t) => setNumStr(onlyDigits(t))} disabled={!numEnabled} want={numEnabled && !numStr} ariaLabel="write the numerator" />
                       <span className="ln" />
@@ -1323,12 +1598,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
                 </span>
               </>
             }
-            cap={
-              solved ? "full marks!" :
-              (!bareEntry && !matched) ? "slice the blocks to the same size to unlock the answer" :
-              stage === "den" ? "write the bottom number — how big is each block?" :
-              "write the top number — how many blocks in all?"
-            }
             solved={solved}
             ready={answerReady}
             stars={stars}
@@ -1340,13 +1609,11 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       />
 
       {/* floating knife while dragging */}
-      <div className="knife-layer">
-        {dragKnife && (
-          <div className="knife-wrap" style={{ transform: `translate(${dragKnife.x - 40}px, ${dragKnife.y - 48}px)` }}>
-            <Knife n={dragKnife.n} dragging={true} />
-          </div>
-        )}
-      </div>
+      {dragKnife && (
+        <div style={{ position: "fixed", left: dragKnife.x, top: dragKnife.y, transform: "translate(-50%, -50%)", zIndex: 9999, pointerEvents: "none" }}>
+          <Knife n={dragKnife.n} dragging scale={0.62} />
+        </div>
+      )}
       </>
       )}
     </LessonShell>

@@ -66,7 +66,9 @@
   .pc .lab{ position:relative; font-family:"Russo One",sans-serif; font-size:13px; font-weight:700; color:var(--ink); }
   /* a piece dragged off → fly down into the tray, leave a dashed ghost slot */
   .pc.taken{ transform:translateY(150px); opacity:0; }
-  .pc.slot{ background:transparent !important; border:2px dashed var(--ink-soft); border-radius:6px; opacity:.45; box-shadow:none !important; }
+  /* !important on the border: #row.broken .pc sets border-right:none at higher
+     specificity, which would otherwise strip the slot's right edge → an open box. */
+  .pc.slot{ background:transparent !important; border:2px dashed var(--ink-soft) !important; border-radius:6px; opacity:.45; box-shadow:none !important; }
   .pc.slot .hatch,.pc.slot .lab{ display:none; }
 
   /* the live decompose equation under the stack */
@@ -133,7 +135,8 @@
 (function(){
   "use strict";
   var PERSIST = "takingaway.v1";
-  var DURATION = 21;            // seconds
+  var DURATION = 25;            // seconds
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
   var START_N = 5, TAKE_N = 2, DEN = 8;
 
   function el(id){ return document.getElementById(id); }
@@ -179,7 +182,7 @@
     [1.4, function(){ showCap(0); setEq("one stack of five eighths"); }],
 
     // Beat 2 — break it into five single 1/8 pieces (decompose)
-    [5.0, function(){ showCap(1); el("row").classList.add("broken"); decompEq(); }],
+    [5.3, function(){ showCap(1); el("row").classList.add("broken"); decompEq(); }],
 
     // Beat 3 — drag 2 pieces off into the "used" tray (last two fly down)
     [9.5, function(){
@@ -207,7 +210,7 @@
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
-    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
     lastWall=now;
     var t=elapsed; if (t>DURATION) t=DURATION;
     try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}

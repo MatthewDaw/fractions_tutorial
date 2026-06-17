@@ -28,19 +28,19 @@
 }
 .slate-cell.committed { background: #fff8ea; border-color: var(--red); }
 
-/* HEIGHT/WIDTH CAP for the STACKED fraction layout (Issue 1). In .slate-fraction
-   the two cells stack vertically (top cell + bar + bottom cell + guess chips), so
-   the full 124px cells make the Slate ~253-308px tall — too tall for the fixed
-   800px stage's HUD/rail band, pushing into or off the diagram. Cap each stacked
-   cell to ~90px tall (≈ the 94px InkPad cap) and trim width to ~114px so it fits
-   the band. The side-by-side "row" layout stays at full size (cells don't stack),
-   so this scope leaves whole-number row cells comfortable. */
-.slate-fraction .slate-cell { width: 114px; height: 90px; }
-.slate-fraction .slate-bar { width: 114px; }
+/* HEIGHT/WIDTH CAP for the STACKED fraction layout. In .slate-fraction the two
+   cells stack vertically (top cell + bar + bottom cell), so two 90px cells made
+   the Slate ~196px tall — TALLER than the shared answer bar's equation row
+   (.lbar is a fixed ~196px foot, leaving ~150px for the eq row after padding +
+   caption). The bottom cell (a square) then poked out BELOW the answer box. Cap
+   each stacked cell so the whole fraction fits the bar: 2·64 + gaps + bar ≈ 144px.
+   The side-by-side "row" layout stays full size (cells don't stack). */
+.slate-fraction .slate-cell { width: 92px; height: 64px; }
+.slate-fraction .slate-bar { width: 92px; }
 /* shrink the painted digits to match the shorter fraction cell so nothing crops */
-.slate-fraction .slate-fixed { font-size: 48px; }
-.slate-fraction .slate-committed-digit { font-size: 52px; }
-.slate-fraction .slate-ph { font-size: 30px; }
+.slate-fraction .slate-fixed { font-size: 42px; }
+.slate-fraction .slate-committed-digit { font-size: 44px; }
+.slate-fraction .slate-ph { font-size: 26px; }
 
 /* locked / fixed slot — hatched, padlock-feel, unenterable (e.g. a fixed bottom) */
 .slate-slot.is-locked .slate-cell {
@@ -181,7 +181,7 @@
 @keyframes wpSpk { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 .wp-story {
-  font-family: var(--serif); font-size: 25px; line-height: 1.44; color: var(--ink); margin: 0;
+  font-family: var(--serif); font-size: 20px; line-height: 1.44; color: var(--ink); margin: 0;
 }
 .wp-story b { color: var(--red-deep); }
 

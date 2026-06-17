@@ -65,18 +65,10 @@ let state = {
   //   coherenceCorrect — of those, how many correctly named goal/why (numerator).
   // Coherence answers the state-model "Orientation" success criterion: does the
   // learner know what they are working on / why the surface changed?
-  //   predictionsMade        — voice/typed pre-commitment predictions recorded (UI7).
-  //   predictionAntiPatterns — of those, how many were the confident-WRONG (fast +
-  //                            wrong) anti-pattern-match flag.
-  // The pre-commitment read is ADVISORY ONLY (state-model §10): it is instrumentation
-  // for the engine/affect side and NEVER a gate or mastery input — the real attempt
-  // is still graded by the room when the learner actually submits.
   metrics: {
     uiChurn: 0,
     coherenceAsked: 0,
     coherenceCorrect: 0,
-    predictionsMade: 0,
-    predictionAntiPatterns: 0,
   },
   // UI2: UI-responsiveness counter-metrics (instrumentation only — advisory,
   // never feeds adaptation). Raw tallies; the inspector derives rates from them.
@@ -212,31 +204,6 @@ export function recordCoherence(coherent) {
 }
 
 /**
- * UI7: record one voice/typed pre-commitment prediction (the "say the answer
- * before you stack it" beat). ADVISORY instrumentation ONLY — this feeds the
- * prediction counter-metrics and the engine/affect signal channel, and NEVER the
- * mastery gate. A skipped beat records nothing (an opt-out is not a signal). The
- * real attempt is still graded by the room on actual submit.
- *
- * @param {{ kind?: string, advisory?: boolean, antiPatternMatch?: boolean }} signal
- *   a predictionSignal() from runtime/voicePrediction.js. Defensive: only a
- *   well-formed voice_prediction signal is tallied.
- */
-export function recordPrediction(signal) {
-  if (!signal || signal.kind !== 'voice_prediction') return;
-  state = {
-    ...state,
-    metrics: {
-      ...state.metrics,
-      predictionsMade: state.metrics.predictionsMade + 1,
-      predictionAntiPatterns:
-        state.metrics.predictionAntiPatterns + (signal.antiPatternMatch ? 1 : 0),
-    },
-  };
-  notify();
-}
-
-/**
  * UI2: derive the reportable UI-responsiveness metrics from the raw tallies.
  *   • avgTimeToChangeMs — mean ms from trigger to a UI-change surfacing (null if none)
  *   • ackRate           — fraction of change-banners acknowledged (null if none shown)
@@ -289,8 +256,6 @@ export function resetEngineStore() {
       uiChurn: 0,
       coherenceAsked: 0,
       coherenceCorrect: 0,
-      predictionsMade: 0,
-      predictionAntiPatterns: 0,
     },
     uiMetrics: emptyUiMetrics(),
     pendingTriggerT: null,

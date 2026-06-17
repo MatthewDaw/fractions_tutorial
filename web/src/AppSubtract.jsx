@@ -22,19 +22,21 @@
 // AppR1 (grabBar/move/up/dropBar, scale-calibrated by #stage width/1280), the
 // locked-denominator Slate (slots with {key:"den",locked:true,digit:DEN}), Cook,
 // Rosette, BigFrac, Lock, WordProblem, BlankSlate, FitStage, and the shared lesson
-// library (LessonShell/LessonBoard/AnswerBar/TutorRibbon/HintRail/LessonGoal) +
+// library (LessonShell/LessonBoard/AnswerBar/TutorRibbon/HintRail/RailInstruction) +
 // the useLessonScaffold controller backbone. Only .s1-* CONTENT rules live in s1.css.
+//
+// Wave-F chrome distillation (docs/wave-f-shell-contract.md): the goal banner is
+// gone — its copy now lives in the rail's <RailInstruction> (Read-aloud pill +
+// .panel .hint), per stage; the QuestionBand is removed (no wireframe analog);
+// the tutor ribbon is corrective-only (silent unless status.tone === "warn");
+// in-stage captions + the answer-bar caption are dropped (hidden by lesson.css).
 import React, { useState, useRef, useEffect } from "react";
 import Cook from "./components/Cook.jsx";
 import Rosette from "./components/Rosette.jsx";
 import BigFrac from "./components/BigFrac.jsx";
 import Lock from "./components/Lock.jsx";
 import Slate from "./components/Slate.jsx";
-import WordProblem from "./components/WordProblem.jsx";
-import BlankSlate from "./components/BlankSlate.jsx";
-import QuestionBand from "./components/QuestionBand.jsx";
-import FitStage from "./components/FitStage.jsx";
-import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
+import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, RailInstruction, ScratchSurface } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { LESSONS } from "./lessons/index.js";
@@ -164,7 +166,7 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
     stage, goStage, nextStage,
     emit, reportAttempt, award, flashBad,
     solved, solvedRef, stars, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef,
+    sayPhase, speaking, selfCorrectionsRef,
   } = sc;
 
   const toStageVal = (key) => {
@@ -177,8 +179,19 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
   function doBreak() {
     if (stage !== 1 || brokenRef.current || solvedRef.current) return;
     setBroken(true); brokenRef.current = true;
-    setCook("cheer");
+    setCook("idle");
     emit({ type: "place_block", payload: { node_id: NODE } });
+    // No auto-finish — breaking just shows the pieces; the child confirms with Check.
+    setStatus({ tone: "normal", text: `Broken into ${START_N} pieces of ${DEN}ths — press Check.` });
+  }
+  function checkBreak() {
+    if (solved) { nextStage(); return; }
+    if (!brokenRef.current) {
+      flashBad();
+      setStatus({ tone: "warn", text: "Break the loaf into pieces first — tap Break apart." });
+      return;
+    }
+    setCook("cheer");
     award(
       `Yes! ${START_N}/${DEN} is just ${START_N} pieces of ${DEN}ths put together: 1/${DEN} + 1/${DEN} + 1/${DEN} + 1/${DEN} + 1/${DEN}. Now we can take some away.`,
       "s1Decompose",
@@ -246,7 +259,6 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
     if (takenCount !== TAKE_N) {
       setCook("think");
       setStatus({ tone: "warn", text: `Babushka used ${TAKE_N}/${DEN}. Drag exactly ${TAKE_N} pieces down into the tray, then count what's left.` });
-      say("s1TakeAway");
       return;
     }
     const n = parseInt(slate.num, 10);
@@ -260,7 +272,6 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
     if (d && d !== DEN) {
       flashBad();
       setStatus({ tone: "warn", text: `Careful — the bottom stays ${DEN}. We only take pieces away from the top.` });
-      say("s1TakeAway");
       reportAttempt({ correct: false, answerValue: [n, d], errorSignature: "add_denominators", stars: 0 });
       return;
     }
@@ -322,45 +333,32 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
 
   function reset() { goStage(1); }
 
-  // ---- the goal banner (shared <LessonGoal>) ----
-  const Goal = (
-    <LessonGoal say={say} speaking={speaking} voiceKey="s1Goal" voxSpeaker="mom">
-      Babushka had <b>{START_N}/{DEN}</b> of a loaf and used <b>{TAKE_N}/{DEN}</b> — the pieces are the same size, so take the tops apart and keep the bottom.
-    </LessonGoal>
-  );
-
-  // The bare equation reads in the same spot on every stage except Words (4), where
-  // the child must read the prose and extract the math.
-  const questionBand = (
-    <QuestionBand
-      lead="the question"
-      expr={
-        stage === 3
-          ? <>{NUM_A}/{DEN} <span className="qb-op">−</span> {NUM_B}/{DEN}</>
-          : <>{START_N}/{DEN} <span className="qb-op">−</span> {TAKE_N}/{DEN}</>
-      }
-      answer={
-        solved
-          ? (stage === 3 ? `${NUM_ANS}/${DEN}` : `${ANSWER}/${DEN}`)
-          : "?"
-      }
-    />
-  );
-
   const Tutor = <TutorRibbon cook={cook} status={status} />;
 
-  // The "keep the bottom" hint rail (shared across the write stages).
+  // The rail-as-instruction card (Wave-F): heading + task copy + Read-aloud pill,
+  // with the shared "keep the bottom" lock card stacked below it. This replaces
+  // BOTH the deleted goal banner and the QuestionBand — all instruction copy now
+  // lives in the rail. The voice key is reused per stage (the line the old goal /
+  // intro spoke) so tap-to-read keeps working.
+  const lockCard = (
+    <div className="lockcard">
+      <BigFrac num={<span style={{ color: "var(--red)" }}>−</span>} den={DEN} locked />
+      <div className="lockcard-note">take tops apart<br />keep the {DEN}</div>
+    </div>
+  );
   const Rail = (heading, hint) => (
-    <HintRail heading={heading} hint={hint}>
-      <div className="lockcard">
-        <BigFrac num={<span style={{ color: "var(--red)" }}>−</span>} den={DEN} locked />
-        <div className="lockcard-note">take tops apart<br />keep the {DEN}</div>
-      </div>
-    </HintRail>
+    <RailInstruction
+      say={sayPhase}
+      speaking={speaking}
+      voxSpeaker="cook"
+      heading={heading}
+      extra={lockCard}
+    >
+      {hint}
+    </RailInstruction>
   );
 
   const takenCount = taken.size;
-  const remaining = START_N - takenCount;
 
   // "Ready to check": the answer the current stage needs is committed.
   const answerReady = !solved && (
@@ -380,7 +378,7 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
     // STAGE 1 · DECOMPOSE — 5/8 as one solid stack; break it into 5 unit pieces.
     body = (
       <LessonBoard
-        footHeight={140}
+        footHeight={196}
         railWidth={396}
         stage={
           <div className="canvas s1-canvas" id="s1canvas">
@@ -418,13 +416,12 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
                 )}
               </div>
             }
-            cap={solved ? `${START_N}/${DEN} is a sum of ${START_N} unit fractions — nicely decomposed!` : "break the stack into single eighths"}
             solved={solved}
-            ready={false}
+            ready={broken && !solved}
             stars={stars}
-            onCheck={() => { if (solved) nextStage(); }}
-            checkLabel={solved ? "Next stage ▸" : "Break it first"}
-            checkDisabled={!solved}
+            onCheck={checkBreak}
+            checkLabel={solved ? "Next stage ▸" : "Check"}
+            checkDisabled={!broken && !solved}
           />
         }
         tutor={Tutor}
@@ -434,7 +431,7 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
     // STAGE 2 · TAKE AWAY — drag 2 pieces OFF into the tray; write the remainder.
     body = (
       <LessonBoard
-        footHeight={140}
+        footHeight={196}
         railWidth={396}
         stage={
           <div className="canvas s1-canvas s1-canvas-takeaway" id="s1canvas">
@@ -477,8 +474,6 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
                 })}
               </div>
             </div>
-
-            <div className="s1-count-cap">{remaining} left on the line · {takenCount} taken away</div>
           </div>
         }
         rail={Rail("Take It Away", <>Drag <b>{TAKE_N}</b> pieces down into the tray — that's what Babushka used. Count the pieces still on the line: that's the answer's <b>top</b>. The bottom stays {DEN}.</>)}
@@ -505,7 +500,6 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
                 </span>
               </>
             }
-            cap={solved ? `full marks — ${START_N}/${DEN} − ${TAKE_N}/${DEN} = ${ANSWER}/${DEN}!` : "drag 2 pieces off, count what's left, write the top"}
             solved={solved}
             ready={answerReady}
             stars={stars}
@@ -521,7 +515,7 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
     // bottom is a locked slot). No blocks — the numbers lead alone.
     body = (
       <LessonBoard
-        footHeight={140}
+        footHeight={196}
         railWidth={396}
         stage={
           <div className="canvas s1-canvas s1-canvas-center" id="s1canvas">
@@ -532,7 +526,6 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
               <span className="s1-bigeq-op">=</span>
               {solved ? <BigFrac num={NUM_ANS} den={DEN} /> : <BigFrac num="?" den={DEN} locked />}
             </div>
-            <div className="s1-numbers-cap">No blocks now — subtract the tops, keep the bottom {DEN}, and write the answer.</div>
           </div>
         }
         rail={Rail("Subtract the Tops", <>Take the tops apart ({NUM_A} − {NUM_B}) and keep the bottom {DEN}. Write the top number on the Slate.</>)}
@@ -559,7 +552,6 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
                 </span>
               </>
             }
-            cap={solved ? `full marks — ${NUM_A}/${DEN} − ${NUM_B}/${DEN} = ${NUM_ANS}/${DEN}!` : "write the top number on the Slate, then Check"}
             solved={solved}
             ready={answerReady}
             stars={stars}
@@ -573,45 +565,53 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
   } else {
     // STAGE 4 · WORDS — a plain-language Babushka kitchen story; read it, find the
     // two fractions, write how much is LEFT. Optional ungraded scratch slate.
-    const story = (
-      <>
-        Babushka had <b>five eighths</b> of a loaf of black bread. She sliced off{" "}
-        <b>two eighths</b> for the soup. The pieces are the same size — eighths.{" "}
-        How much of the loaf is <b>left</b>?
-      </>
-    );
+    // Wave-F: restructured onto the shared 4-zone <LessonBoard> per the wireframe
+    // room-s1-4-words.js — rail = <RailInstruction> (the story + Read-aloud), stage =
+    // the optional scratch slate, answer = the fraction Slate + Check, tutor =
+    // corrective ribbon. The story no longer sits in a top column.
     body = (
       <LessonBoard
-        variant="wide"
-        className="s1-words"
-        tutorWidth={220}
-        content={
-          <FitStage axis="y">
-            <WordProblem
-              story={story}
-              tag="Babushka's Bread"
-              readAloud={() => say("Babushka had five eighths of a loaf of black bread. She sliced off two eighths for the soup. The pieces are the same size, eighths. How much of the loaf is left?")}
-              speaking={speaking}
-              answerLead="Write how much is left"
-              setupLead="Optional — show your work here"
-              setup={
-                <div className="bs-surface s1-words-scratch">
-                  <BlankSlate key="s1-words-scratch" hint="optional — show your work here ✎" />
-                </div>
-              }
-              slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
-              values={slate}
-              onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
-              layout="fraction"
-              den={DEN}
-              disabled={solved}
-              autoFocusKey="num"
-              onCheck={checkWords}
-              checkLabel={solved ? "Finish ▸" : "Check"}
-            />
-          </FitStage>
+        footHeight={196}
+        railWidth={396}
+        stage={
+          <ScratchSurface slateKey="s1-words-scratch" />
         }
-        tutor={<TutorRibbon cook={cook} status={status} narrow />}
+        rail={
+          <RailInstruction
+            say={sayPhase} speaking={speaking}
+            voxSpeaker="cook"
+            heading="Babushka's Bread"
+          >
+            Babushka had <b>five eighths</b> of a loaf of black bread. She sliced off{" "}
+            <b>two eighths</b> for the soup. The pieces are the same size — eighths.{" "}
+            How much of the loaf is <b>left</b>?
+          </RailInstruction>
+        }
+        answer={
+          <AnswerBar
+            eq={
+              <span className="s1-slate">
+                <Slate
+                  slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
+                  values={slate}
+                  onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+                  onSubmit={checkWords}
+                  layout="fraction"
+                  den={DEN}
+                  disabled={solved}
+                  autoFocusKey="num"
+                  ariaLabel="write how much is left"
+                />
+              </span>
+            }
+            solved={solved}
+            ready={answerReady}
+            stars={stars}
+            onCheck={checkWords}
+            checkLabel={solved ? "Finish ▸" : "Check"}
+          />
+        }
+        tutor={Tutor}
       />
     );
   }
@@ -629,8 +629,6 @@ export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}
-      band={stage !== 4 && stage !== "practice" ? questionBand : null}
-      goal={Goal}
     >
       {body}
     </LessonShell>

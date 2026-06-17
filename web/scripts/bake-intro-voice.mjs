@@ -29,6 +29,11 @@ import { INTRO_CUES as R2 } from "../src/introR2.js";
 import { INTRO_CUES as R3 } from "../src/introR3.js";
 import { INTRO_CUES as R4 } from "../src/introR4.js";
 import { INTRO_CUES as R5 } from "../src/introR5.js";
+import { INTRO_CUES as NL } from "../src/introNL.js";
+import { INTRO_CUES as S1 } from "../src/introS1.js";
+import { INTRO_CUES as DEN } from "../src/introDen.js";
+import { INTRO_CUES as NUM } from "../src/introNum.js";
+import { INTRO_CUES as SIMP } from "../src/introSimp.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "public", "voice");
@@ -48,6 +53,7 @@ const dry = args.includes("--dry");
 const ALL_CUES = [
   ["m1", M1], ["m3", M3],
   ["r1", R1], ["r2", R2], ["r3", R3], ["r4", R4], ["r5", R5],
+  ["nl", NL], ["s1", S1], ["den", DEN], ["num", NUM], ["simp", SIMP],
 ];
 
 async function existsNonEmpty(p) {

@@ -63,27 +63,53 @@
    footprint and CENTER it in the stage track, so the diagram sits balanced with
    comfortable margins on every side instead of floating top-left. */
 .lu-canvas {
-  width: 720px; height: 296px; flex: 0 0 auto;
+  width: 720px; height: 360px; flex: 0 0 auto;
   margin: auto;                 /* centers both axes inside the flex stage column */
   max-height: 100%;
 }
 
+/* RAIL — Wave-F: the rail now stacks the <RailInstruction> card (task copy +
+   Read-aloud pill, the old goal banner's job) above a second .lu-rail-tools panel
+   holding the beat's manipulatives (worksheet + denpicker / bare equation / knife
+   rack). Keep a tight gap between them and let the tools panel size to content. */
+.lboard-rail .lu-rail-tools { margin-top: 6px; }
+.lboard-rail .lu-rail-tools .knife-rack { margin-top: 0; }
+.lboard-rail .lu-rail-tools .worksheet:first-child { margin-top: 0; }
+
 /* RAIL — compress the L4 worksheet + picker readouts so the whole picker (incl.
-   the Slice & Check / New problem buttons) fits the rail column height. */
-.lboard-rail .panel .hint {
+   the Slice & Check / New problem buttons) fits the rail column height. SCOPED to
+   the picker beat ONLY (`:has(.lu-rail-tools)`): the bare `.lboard-rail .panel
+   .hint` selector is the SHARED rail used by every lesson, so leaving this
+   unscoped clamped + shrank the canonical question text everywhere. The picker
+   beat is the one space-constrained exception; every other rail keeps the shared
+   readable template (lesson.css `.panel .hint`). */
+.lboard-rail:has(.lu-rail-tools) .panel .hint {
   /* clamp the hint to 2 lines so a longer string never grows the panel */
   margin-top: 4px; font-size: 12px; line-height: 1.3;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.lboard-rail .worksheet { margin: 6px 0 2px; padding: 7px 10px; }
-.lboard-rail .worksheet .ws-row { font-size: 15px; }
-.lboard-rail .denpicker { margin-top: 5px; }
-.lboard-rail .denpicker-hint { font-size: 11.5px; line-height: 1.25; }
-.lboard-rail .picker-grid { margin-top: 6px; gap: 7px; }
-.lboard-rail .picker-choice { width: 56px; height: 56px; }
-.lboard-rail .picker-readouts { margin-top: 6px; gap: 3px; font-size: 12px; }
-.lboard-rail .slicecheck { margin-top: 7px; }
-.lboard-rail .newprob { margin-top: 6px; height: 34px; }
+.lboard-rail .worksheet { margin: 4px 0 2px; padding: 5px 10px; }
+.lboard-rail .worksheet .ws-row { font-size: 13px; }
+.lboard-rail .denpicker { margin-top: 3px; }
+.lboard-rail .denpicker-hint { font-size: 11px; line-height: 1.2; }
+.lboard-rail .picker-grid { margin-top: 4px; gap: 6px; }
+.lboard-rail .picker-choice { width: 42px; height: 42px; }
+.lboard-rail .picker-readouts { margin-top: 3px; gap: 2px; font-size: 11px; }
+.lboard-rail .slicecheck { margin-top: 4px; }
+.lboard-rail .newprob { margin-top: 3px; height: 30px; }
+/* tighten the gap between the instruction card and the tools panel, and trim the
+   panel chrome, so the whole picker (incl. the New problem button) clears the foot. */
+.lboard-rail:has(.lu-rail-tools) { gap: 5px; }
+.lboard-rail:has(.lu-rail-tools) .panel { padding-top: 9px; padding-bottom: 9px; }
+.lboard-rail:has(.lu-rail-tools) .panel h3 { margin-bottom: 2px; }
+
+/* SAFETY (no-overlap guarantee for the rail too) — the L4 "Scale & Add" beat packs
+   the most content into the rail (instruction + worksheet + picker + readouts + the
+   Slice & Check / New problem buttons). Keep that column clipped to its own grid row
+   so it can never paint DOWN over the Cook in the foot row; the tools panel scrolls
+   internally as a last resort on very short viewports instead of spilling. */
+.lboard-rail:has(.lu-rail-tools) { overflow: hidden; min-height: 0; }
+.lboard-rail .lu-rail-tools { min-height: 0; overflow-y: auto; }
 
 /* ANSWER CARD (.lu-ansbar = the shared <AnswerBar> .lbar) — the equation row's
    fraction terms are sized identically (the two addends via BigFrac AND the
@@ -174,7 +200,7 @@
 /* trim the story card a touch so the roomy scratch + answer/Check still clear the
    tutor row, but keep the prose the child reads fully legible (no clamp). */
 .lu-wp-board .wp-card { padding: 9px 22px 7px; }
-.lu-wp-board .wp-story { font-size: 18px; }
+.lu-wp-board .wp-story { font-size: 20px; }
 .lu-wp-board .wp-answer { gap: 4px; }
 /* the answer (the total the child writes) is the payoff of the Words stage — keep
    it comfortably large now that the scratch slate no longer crowds the column. */
@@ -189,10 +215,27 @@
 .lu-words-newrecipe { align-self: center; margin-top: 2px; }
 
 /* ---- Applied stage (LA): worded question + the setup gate ------------------ */
-/* one full-width card (the .play grid would otherwise pin it to the left track) */
-.lu-applied-play { display: block; }
+/* Wave-F: the Applied beat now renders on the shared 4-zone <LessonBoard> (stage =
+   .wp-setup gate, answer = .wp-answer total), so the bespoke .lu-applied-play /
+   .play / .hud chrome is gone. Only the setup-gate confirmation + shake remain. */
 .lu-setup-ok { font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center; }
 .expr-slate.is-shake { animation: luShake 0.42s ease; }
+/* rename gate: second ExpressionSlate that appears after the originals are confirmed */
+.wp-rename-gate {
+  display: flex; flex-direction: column; gap: 12px; align-items: flex-start;
+  margin-left: 22px; padding: 14px 18px; border: 1.5px solid var(--red-deep);
+  background: rgba(255,248,234,0.7); border-radius: 6px;
+}
+.wp-rename-lead {
+  font-family: var(--display); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--red-deep); margin-bottom: 2px;
+}
+/* once checked, the rename stays visible as a confirmed (locked) reference */
+.wp-rename-gate.is-done {
+  border-color: var(--green, #2e7d32); border-style: dashed;
+  background: rgba(232,245,233,0.6); opacity: 0.92;
+}
+.wp-rename-gate.is-done .wp-rename-lead { color: var(--green, #2e7d32); }
 @keyframes luShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
 /* ════════════════════════════════════════════════════════════════════════════

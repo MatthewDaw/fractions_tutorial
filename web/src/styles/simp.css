@@ -1,5 +1,9 @@
 /* simp.css — Lesson №9 "Simplify" (#/simp) room-specific styles.
-   Shared grouping-bar styles live in r4.css (imported first in AppSimp.jsx). */
+   The equal-area SQUARE + ÷k tool rack geometry now comes from the shared
+   assets.css (auto-imported by ./components/assets); .eq-stage / answer-row
+   layout comes from r4.css (imported first in AppSimp.jsx). Everything here is
+   simp-specific: the MC chip pickers, the bundle-stage layout, the lowest-terms
+   card and slate row. */
 
 /* ── Stage 1: Identify ──────────────────────────────────────────────────── */
 .simp-identify-canvas {
@@ -9,32 +13,6 @@
   gap: 48px;
   flex: 1;
   padding: 24px 32px;
-}
-
-.simp-id-box-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-/* The SimpBox grid */
-.simp-box {
-  display: grid;
-  width: 180px;
-  height: 240px;
-  border: 2px solid var(--ink);
-  gap: 0;
-}
-
-.simp-box-cell {
-  border: 1px solid var(--ink-30, rgba(0,0,0,0.18));
-  background: transparent;
-}
-
-.simp-box-cell.is-filled {
-  background: var(--red);
-  opacity: 0.82;
 }
 
 .simp-id-choices {
@@ -91,26 +69,24 @@
   margin-right: 8px;
 }
 
-/* ── Stage 5: Pick ──────────────────────────────────────────────────────── */
+/* ── Stage 5: Pick ──────────────────────────────────────────────────────────
+   The shared DigitGrid (0–9 two-column picker) on the left; the child arms a
+   digit and DROPS it onto the top/bottom <DigitSlot>s of a ?/? fraction, then
+   sees it = the 8/12 target. Same drag-to-place model as AppDen/AppNum. */
 .simp-pick-canvas {
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 1;
+  gap: 40px;
   padding: 24px 32px;
 }
 
-.simp-pick-cols {
+/* the build area: the ?/? fraction the child fills, = the target */
+.simp-pick-build {
   display: flex;
   align-items: center;
-  gap: 28px;
-}
-
-.simp-pick-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  gap: 24px;
 }
 
 .simp-pick-label {
@@ -122,39 +98,30 @@
   letter-spacing: 0.04em;
 }
 
-.simp-mc-col {
+/* the ?/? fraction stack (numerator slot · bar · denominator slot) */
+.simp-pick-frac {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
 }
-
-.simp-pick-chip {
-  width: 64px;
-  height: 44px;
-  font-size: 22px;
-  font-weight: 700;
-  border: 2px solid var(--ink-30, rgba(0,0,0,0.18));
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.simp-pick-chip.is-on,
-.simp-pick-chip.is-correct {
-  border-color: var(--red);
-  background: color-mix(in srgb, var(--red) 12%, #fff);
-}
-
-.simp-pick-chip:disabled {
-  cursor: default;
-  opacity: 0.7;
-}
-
-.simp-pick-frac-preview {
-  font-size: 32px;
+/* each slot is a big serif digit box; the .digit-slot armed ring shows when a
+   number is picked and this slot is a legal target. */
+.simp-pick-frac .simp-slot {
   min-width: 72px;
-  text-align: center;
+  height: 64px;
+  font-family: var(--serif);
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--red);
+}
+/* the empty slot reads as a faint "?" placeholder until filled */
+.simp-pick-frac .simp-slot:not(.is-armed) { color: var(--red); }
+.simp-pick-bar {
+  width: 84px;
+  height: 4px;
+  background: var(--ink);
+  border-radius: 2px;
 }
 
 .simp-pick-eq {
@@ -170,4 +137,41 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
+}
+
+/* ── Stage 2-4: Bundle / Lowest / Big Bundle ────────────────────────────── */
+/* The before/after EqBoxes + the ÷k bundle rack. .eq-stage (from r4.css) does
+   the centering; this just tightens the column gap so two 232px boxes + the ÷
+   glyph fit comfortably. */
+.simp-bundle-stage { gap: 36px; }
+
+/* a gentle bounce when a ÷k tool can't divide evenly (mirrors the warn beat) */
+.eq-tool.bounce { animation: simp-bounce 0.46s ease; }
+@keyframes simp-bounce {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.eq-tool.is-dragging { opacity: 0.4; }
+
+/* ── Stage 6: Numbers ───────────────────────────────────────────────────── */
+.simp-numbers-canvas { gap: 32px; }
+/* the dimmed "? / ?" placeholder before the child answers */
+.simp-frac-ghost { opacity: 0.35; }
+
+/* the lowest-terms reference card in the rail (8/12 → write in lowest terms) */
+.r4-card {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--parchment-1, var(--paper-2));
+  border-radius: 6px;
+}
+.r4-card .bignum { font-size: 32px; }
+.r4-card-note {
+  font-size: 13px;
+  color: var(--ink-2, var(--ink-mute));
+  line-height: 1.3;
 }

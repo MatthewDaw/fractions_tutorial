@@ -84,6 +84,12 @@
 .lboard-rail .panel { height: 100%; box-sizing: border-box; overflow-y: auto; }
 /* multiple stacked panels keep their natural heights and share the column */
 .lboard-rail.is-stack .panel { height: auto; }
+/* AUTO-STACK: when the rail holds more than one panel (e.g. a RailInstruction
+   card PLUS a tools card with a knife rack / denominator picker), forcing each to
+   height:100% makes the second overflow and show its own scrollbar. Let stacked
+   panels take their natural height and flow from the top of the column instead —
+   no per-panel scroll, content uses the space above. */
+.lboard-rail:has(> .panel ~ .panel) > .panel { height: auto; overflow: visible; }
 
 /* ANSWER — the equation + Check bar (bottom-left). The bordered card is .lbar,
    rendered by <AnswerBar> as this zone's child. */
@@ -91,6 +97,15 @@
 
 /* TUTOR — Cook + speech ribbon (bottom-right). Rendered by <TutorRibbon>. */
 .lboard-tutor { grid-area: tutor; min-width: 0; min-height: 0; }
+/* The tutor is purely decorative (Cook sprite + status ribbon — nothing
+   clickable). A tall rail (e.g. a RailInstruction card PLUS a 5-knife rack)
+   overflows its flexible row and spills DOWN over this bottom-right cell; being
+   painted later, the tutor would otherwise swallow the pointer-downs on the
+   lower knives (the ×6/×8 you "can't grab"). Make the whole tutor cell
+   transparent to hit-testing so those overflowing knives stay draggable — on
+   every lesson at once. Re-enable pointer events on any future interactive
+   tutor child explicitly if one is ever added. */
+.lboard-tutor { pointer-events: none; }
 
 /* ── WIDE variant — word-problem stages ───────────────────────────────────────
    The WordProblem card carries its own setup + answer + Check, so there is no
@@ -137,6 +152,17 @@
   gap: 16px;
   min-width: 0;
 }
+/* ── ANSWER-CARD FIT GUARD ─────────────────────────────────────────────────
+   The equation row must NEVER spill past the card (the footHeight box). The
+   tallest offender is the stacked numerator/denominator answer input — the
+   stylus ink-pads are sized 168×94 for the big in-stage HUD equation, which is
+   far too tall once two of them stack inside this short card. Cap them HERE,
+   centrally, so every lesson's AnswerBar input reliably fits its box. The
+   high-specificity selector (.lbar .lbar-eq …) intentionally overrides any
+   per-lesson ink sizing (e.g. .lu-ans-slot), so no lesson can re-overflow. */
+.lbar .lbar-eq .frinput.ink { gap: 4px; }
+.lbar .lbar-eq .frinput.ink .inkpad { width: 112px; height: 50px; }
+.lbar .lbar-eq .frinput.ink .ln { width: 112px; }
 .lbar-cap {
   grid-column: 1; grid-row: 2;
   align-self: end;

@@ -1,4 +1,4 @@
-/* lessons/nl.js — identity + step strip for Lesson №6 "On the Number Line"
+/* lessons/nl.js — identity + step strip for Lesson №5 "Same Denominators"
    (merged nl + r1 lesson), route #/nl.
 
    The wireframe source of truth: docs/wireframe/src/lessons.js keeps nl inline
@@ -10,7 +10,7 @@
 export default {
   id: "nl",
   num: "№5",
-  tag: "Lesson 5 · On the Number Line",
+  tag: "Lesson 5 · Same Denominators",
   title: "Same Denominators",
   route: "#/nl",
   tabs: [

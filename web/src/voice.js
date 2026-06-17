@@ -26,9 +26,22 @@ import { getSettings, subscribeSettings } from "./settings.js";
 // to every clip's audio.volume; updated live and pushed to whatever is playing.
 const clampGain = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
 let voiceGain = clampGain(getSettings().voiceVol / 100);
+// Narrator speed (playback rate) from Settings. preservesPitch keeps the voice at
+// its natural pitch as it speeds up — faster, never squeaky. Applied to every clip
+// and pushed live to whatever is currently playing.
+let voiceRate = Number(getSettings().voiceRate) || 1;
+function applyRate(a) {
+  if (!a) return;
+  try { a.preservesPitch = true; a.mozPreservesPitch = true; a.webkitPreservesPitch = true; } catch (_) {}
+  try { a.playbackRate = voiceRate; } catch (_) {}
+}
 subscribeSettings((s) => {
   voiceGain = clampGain(s.voiceVol / 100);
-  if (current && current.audio) { try { current.audio.volume = voiceGain; } catch (_) {} }
+  voiceRate = Number(s.voiceRate) || 1;
+  if (current && current.audio) {
+    try { current.audio.volume = voiceGain; } catch (_) {}
+    applyRate(current.audio);
+  }
 });
 
 const VOICE_BASE = import.meta.env.BASE_URL + "voice/";
@@ -104,6 +117,7 @@ function playUrl(url, objectUrl = null) {
   haltAudio();
   const audio = new Audio(url);
   audio.volume = voiceGain; // honor the Settings voice-volume level
+  applyRate(audio);         // honor the Settings narrator speed (pitch preserved)
   const entry = { audio, url: objectUrl };
   current = entry;
   const finish = () => {

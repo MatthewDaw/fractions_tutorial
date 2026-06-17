@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson — The Top Number intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --eighths:#d1495b;   /* 8 = red (denomColor(8)) */
+    --eighths-tone:rgba(20,14,10,.34);   /* denomTone(8) */
+    --eighths-cut:rgba(20,14,10,.55);    /* denomTone(8,.55) — divider */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the working board: a ruler 0→1 cut into eighths, with floating numerals ── */
+  #board{ position:relative; width:560px; max-width:92vw;
+    display:flex; flex-direction:column; align-items:center; gap:18px; }
+
+  /* the big floating numerator "5" that hovers above the shaded run */
+  #topnum{ position:relative; width:100%; height:64px; }
+  #topnum .big{ position:absolute; top:0; left:0; transform:translate(-50%,8px);
+    font-family:"Russo One",sans-serif; font-size:56px; color:var(--eighths);
+    opacity:0; transition:opacity .55s ease, transform .55s ease; }
+  #topnum.show .big{ opacity:1; transform:translate(-50%,0); }
+
+  /* the ruler bar cut into 8 equal pieces */
+  #ruler{ display:flex; align-items:stretch; gap:0; width:100%; height:84px;
+    border:2px solid var(--ink-soft); border-radius:8px; overflow:hidden; }
+  .pc{
+    position:relative; flex:1 1 0; height:100%;
+    background:transparent;
+    border-right:1.5px solid var(--eighths-cut);
+    display:flex; align-items:center; justify-content:center;
+    transition:background .45s ease;
+  }
+  .pc:last-child{ border-right:none; }
+  .pc.shaded{ background:var(--eighths); }
+  /* the v_stripe hatch (vertical lines) — denomHatch(8) */
+  .pc .hatch{ position:absolute; inset:0; opacity:0; pointer-events:none;
+    background-image:repeating-linear-gradient(90deg, var(--eighths-tone) 0 1px, transparent 1px 6px);
+    transition:opacity .45s ease; }
+  .pc.shaded .hatch{ opacity:.5; }
+
+  /* the endpoint labels 0 and 1 under the ruler */
+  #ends{ display:flex; justify-content:space-between; width:100%;
+    font-family:"Old Standard TT",serif; font-style:italic; font-size:15px; color:var(--ink-soft); }
+
+  /* the big floating denominator "8" emphasis below the bar */
+  #botnum{ position:relative; min-height:64px; width:100%; text-align:center; }
+  #botnum .big{ font-family:"Russo One",sans-serif; font-size:46px; color:var(--ink-soft);
+    opacity:0; transform:translateY(8px); transition:opacity .55s ease, transform .55s ease; }
+  #botnum.show .big{ opacity:1; transform:none; }
+  #botnum .big .e{ color:var(--eighths); }
+
+  /* the final clean 5/8 fraction — a normal STACKED fraction shown in the botnum
+     band BELOW the ruler, so it reads clearly and never overlaps the bar. It
+     replaces the "8 pieces in all" line at the final beat (#botnum.fin). */
+  #botnum .finalfrac{ display:none; flex-direction:column; align-items:center; line-height:1;
+    opacity:0; transform:translateY(8px); transition:opacity .55s ease, transform .55s ease; }
+  #botnum.fin .big{ display:none; }
+  #botnum.fin .finalfrac{ display:inline-flex; opacity:1; transform:none; }
+  #botnum .finalfrac .fn, #botnum .finalfrac .fd{
+    font-family:"Russo One",sans-serif; font-size:34px; color:var(--eighths); }
+  #botnum .finalfrac .fbar{ width:30px; height:4px; background:var(--ink); border-radius:2px; margin:4px 0; }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(680px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .e{color:var(--eighths);font-weight:700;} .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">The Top Number</div>
+
+    <div id="board">
+      <div id="topnum"><span class="big">5</span></div>
+      <div id="ruler"></div>
+      <div id="ends"><span>0</span><span>1</span></div>
+      <div id="botnum"><span class="big"><span class="e">8</span> pieces in all</span><span class="finalfrac"><span class="fn">5</span><span class="fbar"></span><span class="fd">8</span></span></div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">One whole, cut into <span class="e">8 equal pieces</span>.</div>
+      <div class="cap" data-i="1">Shade the pieces you have — one, two, three, four, <span class="e">five</span>.</div>
+      <div class="cap" data-i="2">The top number counts the shaded pieces — <span class="e">five</span>.</div>
+      <div class="cap" data-i="3">The bottom number is how many pieces in all — <span class="e">eight</span>.</div>
+      <div class="cap" data-i="4">Five shaded out of eight — that's <span class="e">five eighths, 5/8</span>.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "topnumber.v1";
+  var DURATION = 26;            // seconds
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
+  var NUM_N = 5, DEN = 8;
+
+  function el(id){ return document.getElementById(id); }
+
+  // build the ruler cut into eight equal empty pieces
+  function buildRuler(){
+    var ruler = el("ruler"); ruler.innerHTML="";
+    for (var i=0;i<DEN;i++){
+      var d=document.createElement("div"); d.className="pc"; d.id="pc"+i;
+      var h=document.createElement("div"); h.className="hatch"; d.appendChild(h);
+      ruler.appendChild(d);
+    }
+  }
+  buildRuler();
+
+  function shadeUpTo(n){
+    for (var i=0;i<DEN;i++){ el("pc"+i).classList.toggle("shaded", i<n); }
+  }
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  var beatsDone = [];
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — one whole, cut into 8 equal empty pieces
+    [1.4, function(){ showCap(0); shadeUpTo(0); }],
+
+    // Beat 2 — shade the pieces one at a time, left to right, up to five, each
+    // piece filling exactly as the narrator says "one … two … three … four … five".
+    // Offsets below are the measured word-start times (s) within numi_shade.mp3,
+    // which begins playing when this beat fires (see scripts/rebake-num-shade.mjs).
+    [6.0, function(){
+      showCap(1);
+      shadeUpTo(0);
+      setTimeout(function(){ shadeUpTo(1); }, 1811); // "one"
+      setTimeout(function(){ shadeUpTo(2); }, 2148); // "two"
+      setTimeout(function(){ shadeUpTo(3); }, 2485); // "three"
+      setTimeout(function(){ shadeUpTo(4); }, 2810); // "four"
+      setTimeout(function(){ shadeUpTo(5); }, 3088); // "five"
+    }],
+
+    // Beat 3 — the big "5" floats above the shaded run (the numerator)
+    [13.0, function(){ showCap(2); shadeUpTo(NUM_N); el("topnum").classList.add("show"); }],
+
+    // Beat 4 — emphasize the bottom "8" (total pieces, the denominator)
+    [18.0, function(){ showCap(3); el("botnum").classList.add("show"); }],
+
+    // Beat 5 — swap "8 pieces in all" for the clean stacked 5/8 (below the ruler)
+    [22.0, function(){ showCap(4); el("botnum").classList.add("fin"); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // playhead + pause-aware clock
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[];
+      // rebuild to the clean start so a seek-back replays cleanly
+      el("topnum").classList.remove("show"); el("botnum").classList.remove("show");
+      el("botnum").classList.remove("fin");
+      buildRuler(); showCap(-1);
+    }
+  };
+})();
+</script>
+</body>
+</html>

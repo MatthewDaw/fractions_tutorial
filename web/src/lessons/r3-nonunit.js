@@ -9,6 +9,9 @@ export default {
   // The whole arc writes on the stylus Slate from Stage 2 (Bind) onward.
   handwriting: true,
 
+  // Skip "Bind" (L2) and "Fade" (L4) — r3 goes straight from Manipulate to Ghost.
+  skipBeats: ["L2", "L4"],
+
   // Framing knobs read by LessonUnlikeDen so the two lessons stay distinct.
   // Scale One renames ONE fraction (the smaller-block one already fits the
   // bigger), so there is NO crossing-arrows visual — just a single ×N rename.

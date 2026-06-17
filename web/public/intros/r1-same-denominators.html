@@ -156,7 +156,8 @@
 (function(){
   "use strict";
   var PERSIST = "samedenom.v1";
-  var DURATION = 24;            // seconds — tightened so beats don't drag
+  var DURATION = 26;            // seconds — tightened so beats don't drag
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
   var LIFT = 48;                // one piece's vertical stride (height 42 + 6 gap)
 
   function el(id){ return document.getElementById(id); }
@@ -256,7 +257,7 @@
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
-    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
     lastWall=now;
     var t=elapsed; if (t>DURATION) t=DURATION;
     try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}

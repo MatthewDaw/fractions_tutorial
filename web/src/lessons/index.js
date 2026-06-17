@@ -24,17 +24,16 @@ import r3 from "./r3.js";
 import r4 from "./r4.js";
 import r5 from "./r5.js";
 import s1 from "./s1.js";
-import cmp from "./cmp.js";
 import den from "./den.js";
 import num from "./num.js";
 import mom from "./mom.js";
 import review from "./review.js";
 import simp from "./simp.js";
 
-// Teaching sequence order (mirrors wireframe shelf numbers):
-//   m1=1, m3=2, den=3, num=4, cmp=5, nl=6, s1=7, r4=8, simp=9, r3=10, r2=11, r5=12
+// Teaching sequence order (Compare & Check removed):
+//   m1=1, m3=2, den=3, num=4, nl=5, s1=6, r4=7, simp=8, r3=9, r2=10, r5=11
 //   r1 (null no) is merged into nl; mom + review are meta-lessons at the end.
-const DEFS = [m1, m3, den, num, cmp, nl, s1, r4, simp, r3, r2, r5, r1, mom, review];
+const DEFS = [m1, m3, den, num, nl, s1, r4, simp, r3, r2, r5, r1, mom, review];
 
 export const LESSONS = {};
 for (const def of DEFS) {

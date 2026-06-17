@@ -45,7 +45,14 @@
 
 /* lesson node cards */
 .wcard {
-  all: unset; position: absolute; transform: translate(-50%, -50%); width: 250px; box-sizing: border-box;
+  all: unset; position: absolute; transform: translate(-50%, -50%);
+  /* Uniform card size: fixed footprint so every lesson card matches regardless of
+     how long its concept text is. 220px clears the longest (4-line) concept and
+     stays under the two-row centre gap (276px), so rows never overlap. The card
+     is a flex column; the example row pins to the bottom (see .wex below) so the
+     dashed rule + example line up across every card. */
+  width: 250px; height: 220px; box-sizing: border-box;
+  display: flex; flex-direction: column;
   cursor: pointer; border: 2px solid var(--ink); background: var(--paper-1); padding: 12px 15px 14px; z-index: 3;
   box-shadow: 4px 4px 0 rgba(28,22,18,0.22); transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
@@ -60,7 +67,7 @@
 .wcard .wtag.soon { color: var(--ink-mute); border-color: var(--paper-3); }
 .wcard h2 { font-family: var(--display); font-size: 18px; margin: 10px 0 4px; color: var(--ink); }
 .wcard p { font-family: var(--serif); font-size: 12.5px; line-height: 1.35; color: var(--ink-mute); margin: 0; }
-.wcard .wex { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--paper-3); }
+.wcard .wex { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 9px; border-top: 1px dashed var(--paper-3); }
 .wcard .wex-label { font-family: var(--display); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute); }
 .wcard .wex-frac { font-family: var(--serif); font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
 

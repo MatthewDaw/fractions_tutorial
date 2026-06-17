@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson — Simplify intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --red-tone:rgba(20,14,10,.30);   /* shaded hatch tone */
+    --cut:rgba(20,14,10,.60);        /* cell divider */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the board: a 3-column "eq box" + a stacked fraction label below ──────────
+     The box is a fixed-size rectangle of 3 COLUMNS. Rows MERGE as we bundle, so
+     the cell count drops (12 → 6 → 3) but the box outline and the RED edge at the
+     2/3 boundary never move — the shaded AMOUNT is invariant.                     */
+  #board{ position:relative; width:380px; max-width:90vw;
+    display:flex; flex-direction:column; align-items:center; gap:22px; }
+
+  /* ── the eq box itself ──────────────────────────────────────────────────────── */
+  .box{ position:relative; width:300px; height:280px; }
+  .box-track{ position:relative; width:100%; height:100%;
+    display:grid;
+    gap:4px; padding:4px;
+    background:var(--ink);
+    border:2.5px solid var(--ink); border-radius:6px; overflow:hidden;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.14), inset 0 -4px 8px rgba(20,12,6,.16); }
+  .bcell{
+    position:relative;
+    transition:background .5s ease;
+  }
+  /* shaded cells — RED, with diagonal cross-hatch */
+  .bcell.is-shaded{ background:var(--red); }
+  .bcell.is-shaded::after{ content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:
+      repeating-linear-gradient(45deg, var(--red-tone) 0 1.5px, transparent 1.5px 9px),
+      repeating-linear-gradient(-45deg, var(--red-tone) 0 1.5px, transparent 1.5px 9px); }
+  .bcell.is-empty{ background:var(--paper-1);
+    background-image:repeating-linear-gradient(45deg, rgba(20,14,10,.06) 0 6px, transparent 6px 12px); }
+
+  /* the fixed RED EDGE at the 2/3 boundary (between shaded cols 2 and 3) */
+  .vedge{
+    position:absolute; top:-14px; bottom:-14px; width:3px; background:var(--red);
+    left:calc(200% / 3);   /* boundary between shaded columns (2) and the empty one (1) */
+    transform:translateX(-1.5px); z-index:4;
+    opacity:0; transition:opacity .6s ease;
+  }
+  .vedge.on{ opacity:.9; }
+  .vedge .ecap{
+    position:absolute; top:-26px; left:50%; transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--red); white-space:nowrap;
+    opacity:0; transition:opacity .6s ease;
+  }
+  .vedge .ecap.on{ opacity:.92; }
+
+  /* the live fraction below the box */
+  #frac{ display:flex; flex-direction:column; align-items:center; line-height:1;
+    font-family:"Russo One",sans-serif; color:var(--red);
+    opacity:0; transition:opacity .5s ease; }
+  #frac.on{ opacity:1; }
+  #frac .n,#frac .d{ font-size:42px; }
+  #frac .bar{ width:46px; height:5px; border-radius:2px; margin:7px 0; background:currentColor; }
+
+  /* ── final result: two full-size boxes side by side, fills the stage ─────── */
+  #result{
+    position:absolute; inset:0; z-index:7;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    font-family:"Russo One",sans-serif; pointer-events:none;
+    opacity:0; transition:opacity .6s ease, transform .6s ease;
+    transform:translateY(6px);
+  }
+  #result.on{ opacity:1; transform:none; pointer-events:auto; }
+  #result .res-row{ display:flex; align-items:center; gap:32px; }
+  #result .res-col{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  #result .res-eq{ font-size:36px; color:var(--ink-soft); }
+  /* fraction labels under result boxes — match #frac style */
+  #result .rfrac{ display:flex; flex-direction:column; align-items:center; line-height:1; color:var(--red); }
+  #result .rfrac .rn,#result .rfrac .rd{ font-size:42px; }
+  #result .rfrac .rbar{ width:46px; height:5px; background:currentColor; border-radius:2px; margin:7px 0; }
+  #result .same{ font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--red); opacity:.9; }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(720px,94vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .r{color:var(--red);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">Simplify</div>
+
+    <div id="board">
+      <!-- the eq box: 3 columns, rows merge as we bundle -->
+      <div class="box" id="box">
+        <div class="box-track" id="track"></div>
+        <!-- the fixed red edge at the 2/3 boundary -->
+        <div class="vedge" id="edge"><span class="ecap" id="edgeCap">same amount</span></div>
+      </div>
+
+      <!-- the live fraction below the box -->
+      <div id="frac"><div class="n" id="fN">8</div><div class="bar"></div><div class="d" id="fD">12</div></div>
+    </div>
+
+    <!-- final result: two full-size boxes side by side; covers the stage at beat 25 -->
+    <div id="result">
+      <div class="res-row">
+        <!-- 8/12: same box as start of video (3×4, 2 cols shaded) -->
+        <div class="res-col">
+          <div class="box"><div class="box-track" id="rtrack12"></div></div>
+          <div class="rfrac"><span class="rn">8</span><span class="rbar"></span><span class="rd">12</span></div>
+        </div>
+        <span class="res-eq">=</span>
+        <!-- 2/3: same box as end of bundle sequence (3×1, 2 cols shaded) -->
+        <div class="res-col">
+          <div class="box"><div class="box-track" id="rtrack3"></div></div>
+          <div class="rfrac"><span class="rn">2</span><span class="rbar"></span><span class="rd">3</span></div>
+        </div>
+      </div>
+      <span class="same">simplest name, fewest pieces</span>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">Eight twelfths — the same amount, but lots of little pieces.</div>
+      <div class="cap" data-i="1">Bundle every two cells together — <span class="r">8/12</span> becomes <span class="r">4/6</span>.</div>
+      <div class="cap" data-i="2">Bundle again — <span class="r">4/6</span> becomes <span class="r">2/3</span>.</div>
+      <div class="cap" data-i="3">The <span class="r">red amount</span> never moved — same amount, fewer pieces.</div>
+      <div class="cap" data-i="4"><span class="r">8/12 = 2/3</span> — the simplest name, the fewest pieces.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST  = "simplify.v1";  // MUST equal STAGE_PERSIST_KEY in src/introSimp.js
+  var DURATION = 35;             // seconds
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
+  var COLS = 3, SHADED_COLS = 2;   // 3 columns; left 2 fully shaded → red edge fixed at 2/3 boundary
+
+  function el(id){ return document.getElementById(id); }
+
+  // render any box-track element: `rows` rows × `cols` cols, `shadedCols` left cols shaded
+  function renderTrack(trackEl, rows, shadedCols, cols){
+    trackEl.innerHTML = "";
+    trackEl.style.gridTemplateColumns = "repeat("+cols+",1fr)";
+    trackEl.style.gridTemplateRows = "repeat("+rows+",1fr)";
+    for (var r=0;r<rows;r++){
+      for (var c=0;c<cols;c++){
+        var cell = document.createElement("div");
+        cell.className = "bcell " + (c < shadedCols ? "is-shaded" : "is-empty");
+        trackEl.appendChild(cell);
+      }
+    }
+  }
+
+  function renderBox(rows, shadedCols, cols){
+    shadedCols = shadedCols || SHADED_COLS; cols = cols || COLS;
+    renderTrack(el("track"), rows, shadedCols, cols);
+  }
+
+  function setFrac(n, d){ el("fN").textContent = n; el("fD").textContent = d; }
+
+  function pulse(node){ if(!node) return; node.style.transition="transform .25s ease"; node.style.transform="scale(1.28)";
+    setTimeout(function(){ node.style.transform="scale(1)"; }, 260); }
+  function flashEdge(scale){
+    var e=el("edge"); e.style.transition="transform .3s ease, opacity .6s ease";
+    e.style.transform="translateX(-1.5px) scaleX("+(scale||2.4)+")";
+    setTimeout(function(){ e.style.transform="translateX(-1.5px) scaleX(1)"; }, 320);
+  }
+
+  // start: 8/12 — 3 cols × 4 rows = 12 cells, left 2 cols shaded (8 shaded)
+  renderBox(4, SHADED_COLS, COLS);
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  var beatsDone = [];
+
+  // ── BEATS — keyed by introSimp.js gates ─────────────────────────────────────
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // gate 1.4 — "Eight twelfths": 12-cell box (3×4), 8 shaded red; fraction 8/12
+    [1.4, function(){
+      showCap(0);
+      renderBox(4, SHADED_COLS, COLS);
+      setFrac(8, 12);
+      el("frac").classList.add("on");
+    }],
+
+    // gate 7.0 — caption "bundle every two cells"; box transitions ~2s later when audio says "becomes 4/6"
+    [7.0, function(){
+      showCap(1);
+    }],
+    [9.2, function(){
+      renderBox(2, SHADED_COLS, COLS);
+      setFrac(4, 6);
+      pulse(el("frac"));
+    }],
+
+    // gate 14.0 — caption "bundle again"; box transitions ~1.5s later when audio says "becomes 2/3"
+    [14.0, function(){
+      showCap(2);
+    }],
+    [15.8, function(){
+      renderBox(1, SHADED_COLS, COLS);
+      setFrac(2, 3);
+      pulse(el("frac"));
+    }],
+
+    // gate 20.0 — emphasize the unchanged red edge across all three states
+    [20.0, function(){
+      showCap(3);
+      el("edge").classList.add("on"); el("edgeCap").classList.add("on");
+      flashEdge(2.6);
+    }],
+
+    // gate 25.0 — two full-size boxes: 8/12 and 2/3 side by side
+    [25.0, function(){
+      showCap(4);
+      // populate the two result box-tracks
+      renderTrack(el("rtrack12"), 4, SHADED_COLS, COLS);  // 8/12: 3×4
+      renderTrack(el("rtrack3"),  1, SHADED_COLS, COLS);  // 2/3:  3×1
+      // hide the animated board, show result
+      el("board").style.opacity = "0";
+      el("result").classList.add("on");
+      pulse(el("result"));
+    }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // ── playhead + pause-aware clock ──────────────────────────────────────────
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+
+  function resetVisual(){
+    el("kicker").classList.remove("on");
+    el("edge").classList.remove("on"); el("edgeCap").classList.remove("on");
+    el("edge").style.transform="translateX(-1.5px) scaleX(1)";
+    el("frac").classList.remove("on");
+    el("board").style.opacity="";
+    el("result").classList.remove("on");
+    setFrac(8, 12);
+    renderBox(4, SHADED_COLS, COLS);
+    caps.forEach(function(c){ c.classList.remove("on"); });
+  }
+
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[]; resetVisual();
+      applyBeats(elapsed);
+    }
+  };
+})();
+</script>
+</body>
+</html>

@@ -28,7 +28,15 @@
 //                   number mode reports num = #scoops (groups), den = scoop size, so
 //                   the room can read groups×size; AppM1 reads num*den = the product.
 //     onPlace() / onRemove()   — optional telemetry for the engine
-//     title, hint              — rail copy
+//
+// LAYOUT (centralized): this component renders ONLY the stage content — the
+// number line + the block bin + the live readout — as a single vertical stack.
+// The instruction copy (title / hint / lock card) and the Read-aloud pill live in
+// the room's shared <RailInstruction>, exactly like every other lesson stage, and
+// the Check/Next control lives in the shared <AnswerBar>. The caller drops this
+// into a standard <LessonBoard variant="split"> `stage` slot — NOT a `bare` one —
+// so the four-zone grid (stage · rail · answer · tutor) governs the whole room and
+// the workbench is no longer a bespoke two-column layout nested inside one cell.
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import BigFrac from "./BigFrac.jsx";
@@ -68,8 +76,10 @@ export default function BlockSandbox({
   onSolve = () => {},
   onPlace = () => {},
   onRemove = () => {},
-  title = "Workbench",
-  hint = "Drag a block from the bin onto the line and stack them up. Build the answer out of same-size pieces, then count them.",
+  // Show the size/value label INSIDE each placed block (e.g. "8" or "1/4"). When
+  // the line below already reveals the running totals, a caller can set this false
+  // to avoid printing the same number twice (m3 Workbench).
+  showPieceLabel = true,
 }) {
   const isNumber = mode === "number";
   // The row of placed pieces, in order, as their denominators.
@@ -197,16 +207,26 @@ export default function BlockSandbox({
   const wholeTicks = isNumber
     ? Array.from({ length: lineSpan + 1 }, (_, k) => k)
     : Array.from({ length: rulerWholes + 1 }, (_, k) => k);
-  const tickLabel = (k) => (isNumber ? (k === 0 || k === lineSpan ? String(k) : "") : String(k));
+  // Number mode: the ruler does NOT pre-label the final number. Instead each placed
+  // block's running total is revealed as a tick number AS blocks are added
+  // (8, 16, 24 …); the final number appears only once every block is on the line
+  // (its cumulative total reaches the end). Fraction mode: label every whole.
+  const placedTotals = isNumber
+    ? (() => { const out = new Set(); let acc = 0; for (const d of pieces) { acc += blockVal(d); out.add(Math.round(acc)); } return out; })()
+    : null;
+  const tickLabel = (k) => {
+    if (!isNumber) return String(k);
+    if (k === 0) return "0";
+    return placedTotals.has(k) ? String(k) : "";
+  };
   const targetX = targetValue != null ? ORIGIN + targetValue * UNIT : null;
 
   // lay the placed pieces left to right
   let runX = ORIGIN;
 
   return (
-    <div className="play sandbox-play">
-      <div className="diagram">
-        <div className="canvas sandbox-canvas" ref={lineRef}>
+    <div className="sandbox-stage">
+      <div className="sandbox-canvas" ref={lineRef}>
           <div className={"sandbox-status" + (tone === "warn" ? " warn" : tone === "ok" ? " ok" : "")}>{status}</div>
 
           {/* DROP-TARGET highlight band — lights up the row/ruler region while a bin
@@ -222,14 +242,14 @@ export default function BlockSandbox({
             {pieces.map((d, i) => {
               const w = blockVal(d) * UNIT;
               const x = runX; runX += w;
-              const fill = denomColor(d), cut = denomTone(d, 0.55), labColor = denomTextColor(d);
+              const fill = denomColor(d), labColor = denomTextColor(d);
               const lab = isNumber ? String(d) : "1/" + d;
               return (
                 <button
                   key={i}
                   type="button"
                   className="sandbox-piece"
-                  style={{ left: x, width: w, background: fill, borderRight: `1.5px solid ${cut}` }}
+                  style={{ left: x, width: w, background: fill }}
                   onClick={() => removeAt(i)}
                   title="tap to take this block off"
                   aria-label={`one ${isNumber ? groupName(d) : denomName(d)} — tap to remove`}
@@ -238,7 +258,9 @@ export default function BlockSandbox({
                   {isNumber && d > 1 && (
                     <span className="sandbox-seg" style={{ backgroundImage: segLines(d) }} />
                   )}
-                  <span className="sandbox-piece-lab" style={{ color: labColor, fontSize: w < 40 ? 11 : 14 }}>{lab}</span>
+                  {showPieceLabel && (
+                    <span className="sandbox-piece-lab" style={{ color: labColor, fontSize: w < 40 ? 11 : 14 }}>{lab}</span>
+                  )}
                 </button>
               );
             })}
@@ -257,15 +279,10 @@ export default function BlockSandbox({
               <span className="sandbox-flag-lab">{targetLabel || "answer"}</span>
             </div>
           )}
-        </div>
       </div>
 
-      {/* the rail: the bin of every block + a live count + clear */}
-      <div className="rail">
-        <div className="panel">
-          <h3>{title}</h3>
-          <div className="hint">{hint}</div>
-          <div className="sandbox-bin" role="group" aria-label="block bin">
+      {/* the bin of every block + a live count + clear — stacked under the line */}
+      <div className="sandbox-bin" role="group" aria-label="block bin">
             {bin.map((d) => {
               const fill = denomColor(d), labColor = denomTextColor(d);
               const full = total + blockVal(d) > lineSpan + EPS;
@@ -320,8 +337,6 @@ export default function BlockSandbox({
             </div>
             <button type="button" className="sandbox-clear" onClick={clearAll} disabled={solved || pieces.length === 0}>↺ Clear the line</button>
           </div>
-        </div>
-      </div>
 
       {/* the DRAG GHOST — a copy of the grabbed block that follows the pointer in
           real time while dragging (fixed-positioned, pointer-events:none). Portaled

@@ -48,9 +48,10 @@ function submenuPositions(n) {
     const startCx = (1280 - total) / 2 + CARD_W / 2;
     return startCx + i * (CARD_W + GAP);
   };
-  // Up to five lessons fit one centred row; six or more split into two rows
-  // (top then bottom) so the cards never overflow the 1280-wide stage.
-  if (n <= 5) {
+  // Up to four lessons fit one centred row; five or more split into two rows
+  // (top then bottom) so the cards never overflow — and so the 5-lesson
+  // "Combining & Renaming" shelf keeps its two-row layout.
+  if (n <= 4) {
     return Array.from({ length: n }, (_, i) => ({ x: rowX(n, i), y: 438 }));
   }
   const top = Math.ceil(n / 2);

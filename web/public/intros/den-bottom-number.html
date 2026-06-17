@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson — The Bottom Number intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper-1:#ede2c8; --paper-2:#e3d4b1;
+    --ink:#1c1612; --ink-soft:#3a2e24; --red:#a32a22;
+    --thirds:#e07b00;    /* 3 = orange (denomColor(3)) */
+    --thirds-tone:rgba(20,14,10,.34);    /* denomTone(3) */
+    --thirds-cut:rgba(20,14,10,.55);     /* denomTone(3,.55) — divider */
+    --eighths:#d1495b;   /* 8 = red (denomColor(8)) */
+    --eighths-tone:rgba(20,14,10,.34);   /* denomTone(8) */
+    --eighths-cut:rgba(20,14,10,.55);    /* denomTone(8,.55) — divider */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Old Standard TT",Georgia,serif; color:var(--ink);
+    background:radial-gradient(120% 100% at 50% 30%, var(--paper-1) 0%, var(--paper-2) 78%, #d8c79f 100%);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    box-shadow:inset 0 0 140px rgba(60,40,20,.30), inset 0 0 40px rgba(60,40,20,.12);
+    background-image:radial-gradient(rgba(120,90,50,.05) 1px, transparent 1.4px);
+    background-size:4px 4px; mix-blend-mode:multiply;
+  }
+  #stage{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #kicker{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    font-family:"Russo One",sans-serif; letter-spacing:.16em; text-transform:uppercase;
+    font-size:13px; color:var(--red);
+    opacity:0; transform:translateY(-6px); transition:opacity .6s ease, transform .6s ease;
+  }
+  #kicker.on{opacity:.95; transform:none;}
+
+  /* ── the working board: two rulers (one whole each) stacked, with end caps ── */
+  #board{ position:relative; width:560px; max-width:92vw;
+    display:flex; flex-direction:column; align-items:center; gap:26px; }
+
+  /* one ruler = one whole, from 0 to 1 */
+  .ruler{ position:relative; width:100%; }
+  .rulerlab{ font-family:"Old Standard TT",serif; font-style:italic; font-size:14px;
+    color:var(--ink-soft); margin-bottom:6px; opacity:0; transition:opacity .5s ease; }
+  .ruler.on .rulerlab{ opacity:1; }
+  /* the bar: a filled whole that we later slice into pieces */
+  .bar{ position:relative; width:100%; height:74px; border:2px solid var(--ink-soft);
+    border-radius:8px; overflow:hidden; display:flex; align-items:stretch;
+    background:rgba(0,0,0,.02); opacity:0; transform:scaleX(.4); transform-origin:left center;
+    transition:opacity .55s ease, transform .6s cubic-bezier(.5,.05,.2,1); }
+  .ruler.on .bar{ opacity:1; transform:none; }
+  /* 0 and 1 end marks under each bar */
+  .ends{ position:relative; height:18px; margin-top:4px; opacity:0; transition:opacity .5s ease; }
+  .ruler.on .ends{ opacity:1; }
+  .ends .z{ position:absolute; left:0; font-family:"Russo One",sans-serif; font-size:13px; color:var(--ink-soft); }
+  .ends .o{ position:absolute; right:0; font-family:"Russo One",sans-serif; font-size:13px; color:var(--ink-soft); }
+
+  /* a single piece inside a sliced bar */
+  .pc{
+    position:relative; flex:1 1 0; height:100%;
+    border-right:1.5px solid var(--ink-soft);
+    display:flex; align-items:center; justify-content:center;
+    transition:background .45s ease, box-shadow .35s ease;
+  }
+  .pc:last-child{ border-right:none; }
+  .pc .hatch{ position:absolute; inset:0; opacity:0; pointer-events:none;
+    transition:opacity .45s ease; }
+  .pc.fill .hatch{ opacity:.5; }
+  .pc .lab{ position:relative; font-family:"Russo One",sans-serif; font-size:13px; font-weight:700;
+    color:var(--ink); opacity:0; transition:opacity .45s ease; }
+  .pc.lit .lab{ opacity:1; }
+  /* the highlighted "first piece" of each bar */
+  .pc.lit.t{ background:var(--thirds); box-shadow:inset 0 0 0 2px var(--thirds-cut); }
+  .pc.lit.t .hatch{ background-image:repeating-linear-gradient(45deg, var(--thirds-tone) 0 1px, transparent 1px 6px); }
+  .pc.lit.e{ background:var(--eighths); box-shadow:inset 0 0 0 2px var(--eighths-cut); }
+  .pc.lit.e .hatch{ background-image:repeating-linear-gradient(90deg, var(--eighths-tone) 0 1px, transparent 1px 6px); }
+
+  /* the dashed comparison guides dropped from each lit piece's right edge */
+  .guide{ position:absolute; top:-10px; bottom:-10px; width:0; border-left:2px dashed var(--ink-soft);
+    opacity:0; transition:opacity .5s ease; pointer-events:none; }
+  .guide.on{ opacity:.7; }
+  .guide.gt{ border-color:var(--thirds); }
+  .guide.ge{ border-color:var(--eighths); }
+
+  /* the big comparison statement: 1/8 < 1/3 */
+  #compare{ font-family:"Old Standard TT",serif; font-size:40px; color:var(--ink-soft);
+    min-height:48px; text-align:center; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #compare.on{ opacity:1; transform:none; }
+  #compare .lt{ color:var(--red); font-weight:700; padding:0 .25em; }
+
+  #caption{
+    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    width:min(680px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
+  }
+  #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
+    transition:opacity .55s ease, transform .55s ease; }
+  #caption .cap.on{ opacity:1; transform:none; }
+  .e{color:var(--eighths);font-weight:700;} .t{color:var(--thirds);font-weight:700;}
+
+  #prog{ position:absolute; left:0; bottom:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--red),#c8643a); opacity:.6; z-index:6; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="kicker">The Bottom Number</div>
+
+    <div id="board">
+      <div class="ruler" id="ruler3">
+        <div class="rulerlab">cut into 3</div>
+        <div class="bar" id="bar3"></div>
+        <div class="ends"><span class="z">0</span><span class="o">1</span></div>
+      </div>
+      <div class="ruler" id="ruler8">
+        <div class="rulerlab">cut into 8</div>
+        <div class="bar" id="bar8"></div>
+        <div class="ends"><span class="z">0</span><span class="o">1</span></div>
+      </div>
+      <div id="compare"></div>
+    </div>
+
+    <div id="caption">
+      <div class="cap" data-i="0">This is one whole — from zero to one.</div>
+      <div class="cap" data-i="1">Cut it into 3 equal pieces — each one is one <span class="t">third</span>.</div>
+      <div class="cap" data-i="2">Cut another whole into 8 — each one is one <span class="e">eighth</span>.</div>
+      <div class="cap" data-i="3">More pieces means each piece is smaller.</div>
+      <div class="cap" data-i="4">So one <span class="e">eighth</span> is smaller than one <span class="t">third</span>.</div>
+    </div>
+  </div>
+
+  <div id="prog"></div>
+  <div id="vignette"></div>
+
+<script>
+(function(){
+  "use strict";
+  var PERSIST = "bottomnumber.v1";
+  var DURATION = 26;            // seconds
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
+
+  function el(id){ return document.getElementById(id); }
+
+  // slice a bar into n equal pieces, label the cls-family fraction, lit/fill the first
+  function buildBar(barId, n, cls){
+    var bar = el(barId); bar.innerHTML="";
+    for (var i=0;i<n;i++){
+      var d=document.createElement("div"); d.className="pc"; d.id=barId+"_pc"+i;
+      var h=document.createElement("div"); h.className="hatch"; d.appendChild(h);
+      var s=document.createElement("span"); s.className="lab"; s.textContent="1/"+n; d.appendChild(s);
+      bar.appendChild(d);
+    }
+  }
+  // a single, un-sliced whole (one piece spanning 0→1)
+  function buildWhole(barId){
+    var bar = el(barId); bar.innerHTML="";
+    var d=document.createElement("div"); d.className="pc"; d.id=barId+"_pc0";
+    var h=document.createElement("div"); h.className="hatch"; d.appendChild(h);
+    var s=document.createElement("span"); s.className="lab"; s.textContent="1"; d.appendChild(s);
+    bar.appendChild(d);
+  }
+  buildWhole("bar3");
+
+  // drop a dashed guide at the right edge of a bar's first piece
+  function dropGuide(barId, cls){
+    var bar = el(barId); var pc = el(barId+"_pc0");
+    var g = document.createElement("div"); g.className="guide "+cls;
+    g.style.left = (pc.offsetLeft + pc.offsetWidth) + "px";
+    bar.appendChild(g);
+    return g;
+  }
+
+  function setCompare(text){ el("compare").innerHTML = text; }
+
+  var caps = Array.prototype.slice.call(document.querySelectorAll("#caption .cap"));
+  function showCap(i){ caps.forEach(function(c,k){ c.classList.toggle("on", k===i); }); }
+
+  var beatsDone = [];
+  var BEATS = [
+    [0.3, function(){ el("kicker").classList.add("on"); }],
+
+    // Beat 1 — one whole, the bar from 0 to 1
+    [1.4, function(){ showCap(0); el("ruler3").classList.add("on"); }],
+
+    // Beat 2 — cut it into 3 equal pieces; light the first as 1/3
+    [5.5, function(){
+      showCap(1); buildBar("bar3", 3, "t");
+      var pc = el("bar3_pc0"); pc.classList.add("fill","lit","t");
+    }],
+
+    // Beat 3 — a second whole cut into 8; light the first as 1/8
+    [10.5, function(){
+      showCap(2); el("ruler8").classList.add("on"); buildBar("bar8", 8, "e");
+      var pc = el("bar8_pc0"); pc.classList.add("fill","lit","e");
+    }],
+
+    // Beat 4 — compare the 1/3 width vs the 1/8 width (1/8 is clearly narrower)
+    [16.0, function(){
+      showCap(3);
+      var g3 = dropGuide("bar3", "gt"); var g8 = dropGuide("bar8", "ge");
+      setTimeout(function(){ g3.classList.add("on"); g8.classList.add("on"); }, 40);
+    }],
+
+    // Beat 5 — the statement: 1/8 < 1/3
+    [21.0, function(){ showCap(4); setCompare('<span class="e">1/8</span><span class="lt">&lt;</span><span class="t">1/3</span>'); el("compare").classList.add("on"); }],
+  ];
+
+  function applyBeats(t){
+    for (var i=0;i<BEATS.length;i++){ if (!beatsDone[i] && t >= BEATS[i][0]){ beatsDone[i]=true; try{BEATS[i][1]();}catch(e){} } }
+  }
+
+  // playhead + pause-aware clock
+  try { localStorage.setItem(PERSIST+":t","0"); } catch(e){}
+  var startPerf=null, elapsed=0, paused=false, lastWall=0;
+  function frame(now){
+    if (startPerf===null){ startPerf=now; lastWall=now; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
+    lastWall=now;
+    var t=elapsed; if (t>DURATION) t=DURATION;
+    try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
+    applyBeats(t);
+    el("prog").style.width=(Math.min(t,DURATION)/DURATION*100)+"%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window.__anim = {
+    play:  function(){ paused=false; },
+    pause: function(){ paused=true;  },
+    seek:  function(s){
+      elapsed=Math.max(0,+s||0); beatsDone=[];
+      // rebuild to the clean start so a seek-back replays cleanly
+      el("ruler3").classList.remove("on"); el("ruler8").classList.remove("on");
+      buildWhole("bar3"); el("bar8").innerHTML="";
+      el("compare").classList.remove("on"); setCompare("");
+      var gs=document.querySelectorAll(".guide"); for (var i=0;i<gs.length;i++) gs[i].remove();
+      showCap(-1);
+    }
+  };
+})();
+</script>
+</body>
+</html>

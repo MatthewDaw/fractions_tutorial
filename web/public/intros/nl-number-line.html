@@ -38,15 +38,18 @@
   }
   #kicker.on{opacity:.95; transform:none;}
 
-  /* ── the number-line board: a 0→1 ruler with ticks, a fill bar, a red bead ── */
-  #board{ position:relative; width:620px; max-width:92vw; height:200px; }
+  /* ── the number-line board: a 0→1 ruler with ticks, a fill bar, a red bead ──
+       Part 1 uses the TOP line (line A) to place 3/4. Part 2 adds a SECOND line
+       (line B) below it, breaks each fill into unit 1/4 blocks, and slides B's
+       block up onto line A to add 2/4 + 1/4 = 3/4. */
+  #board{ position:relative; width:620px; max-width:92vw; height:300px; }
 
-  /* the line itself (the .nline equivalent) */
+  /* line A — the 0→1 ruler (top) */
   #nline{
     position:absolute; left:30px; right:30px; top:96px; height:4px;
     background:var(--ink); border-radius:2px;
   }
-  /* translucent fill 0→point (the .nl-fill equivalent, teal-tinted) */
+  /* translucent fill 0→point on line A (teal-tinted) */
   #fill{
     position:absolute; left:30px; top:91px; height:14px; width:0;
     background:rgba(10,147,150,.22); border-radius:7px; z-index:2;
@@ -64,8 +67,32 @@
     font-family:"Russo One",sans-serif; font-size:15px; color:var(--ink); }
   .lab.part{ font-size:13px; color:var(--ink-soft); opacity:0; transition:opacity .5s ease; }
   #board.cut .lab.part{ opacity:.85; }
-  .lab.tgt{ color:var(--fourths); opacity:0; transition:opacity .5s ease; }
+  /* The ¾ target label reveals like the others but stays the SAME ink colour as
+     the ¼ / 2/4 partition labels — it is not tinted a different colour. */
+  .lab.tgt{ color:var(--ink-soft); opacity:0; transition:opacity .5s ease; }
   #board.named .lab.tgt{ opacity:1; }
+
+  /* ── line B — the second ruler (revealed in Part 2) ── */
+  #lineB{ opacity:0; transform:translateY(12px); transition:opacity .6s ease, transform .6s ease; }
+  #lineB.on{ opacity:1; transform:none; }
+  #nline2{
+    position:absolute; left:30px; right:30px; top:226px; height:4px;
+    background:var(--ink); border-radius:2px;
+  }
+  .tick.major2{ position:absolute; top:214px; height:28px; width:3px; background:var(--ink); transform:translateX(-50%); }
+  .labB{ position:absolute; top:250px; transform:translateX(-50%); white-space:nowrap;
+    font-family:"Russo One",sans-serif; font-size:15px; color:var(--ink); }
+
+  /* unit 1/4 blocks — the physical pieces a fraction is built from. Created in JS
+     and positioned by slot; the white borders make the count readable. */
+  .blk{
+    position:absolute; height:18px; margin-top:-9px; z-index:4;
+    background:rgba(10,147,150,.55); border:1.6px solid #fff; border-radius:3px;
+    box-shadow:0 1px 4px rgba(0,0,0,.18); opacity:0;
+    transition:left .9s cubic-bezier(.5,.05,.2,1), top .9s cubic-bezier(.5,.05,.2,1), opacity .4s ease;
+  }
+  .blk .blab{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:"Russo One",sans-serif; font-size:12px; color:#fff; }
 
   /* the round red bead — the draggable point (~26px, white border) */
   #bead{
@@ -76,9 +103,9 @@
   }
   #bead.lift{ transform:scale(1.16); box-shadow:0 6px 16px rgba(0,0,0,.42); }
 
-  /* the fraction the bead names, floating above it (revealed late) */
+  /* the fraction the point names, floating above line A (revealed late) */
   #beadtag{
-    position:absolute; top:50px; transform:translateX(-50%) scale(.6);
+    position:absolute; top:14px; transform:translateX(-50%) scale(.6);
     display:flex; flex-direction:column; align-items:center; line-height:1;
     font-family:"Russo One",sans-serif; color:var(--fourths);
     opacity:0; transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.56,.64,1), left 1.0s cubic-bezier(.5,.05,.2,1);
@@ -88,8 +115,18 @@
   #beadtag .n,#beadtag .d{ font-size:26px; }
   #beadtag .fbar{ width:24px; height:4px; background:var(--fourths); border-radius:2px; margin:4px 0; }
 
+  /* per-line equation labels (Part 2): "2/4" floats above line A, "1/4" above
+     line B; line A's grows into "2/4 + 1/4" then "2/4 + 1/4 = 3/4". Kept well
+     above each ruler so the symbols never sit on the number line itself. */
+  .eqlab{ position:absolute; transform:translateX(-50%);
+    font-family:"Russo One",sans-serif; font-size:18px; color:var(--fourths);
+    white-space:nowrap; opacity:0;
+    transition:opacity .45s ease, left .9s cubic-bezier(.5,.05,.2,1); }
+  .eqlab.on{ opacity:1; }
+  .eqlab.big{ font-size:30px; }
+
   #caption{
-    position:absolute; left:50%; bottom:30px; transform:translateX(-50%);
+    position:absolute; left:50%; bottom:24px; transform:translateX(-50%);
     width:min(680px,92vw); text-align:center; font-size:25px; color:var(--ink); min-height:60px;
   }
   #caption .cap{ position:absolute; left:0; right:0; opacity:0; transform:translateY(8px);
@@ -125,6 +162,19 @@
 
       <span id="bead"></span>
       <span id="beadtag"><span class="n">3</span><span class="fbar"></span><span class="d">4</span></span>
+
+      <!-- per-line equation labels (Part 2): A above line A, B above line B -->
+      <span class="eqlab" id="eqA" style="top:58px;"></span>
+      <span class="eqlab" id="eqB" style="top:188px;"></span>
+
+      <!-- line B — the second ruler, revealed in Part 2 -->
+      <div id="lineB">
+        <div id="nline2"></div>
+        <span class="tick major2" style="left:30px;"></span>
+        <span class="tick major2" style="right:30px; left:auto;"></span>
+        <span class="labB" style="left:30px;">0</span>
+        <span class="labB" style="right:30px; left:auto;">1</span>
+      </div>
     </div>
 
     <div id="caption">
@@ -133,6 +183,13 @@
       <div class="cap" data-i="2">Slide the <span class="r">red point</span> three parts along…</div>
       <div class="cap" data-i="3">The fill grows to show <span class="f">three fourths</span> of the way.</div>
       <div class="cap" data-i="4">That point <b>is</b> the number <span class="f">three fourths</span>.</div>
+
+      <!-- Part 2 — adding fractions with the same bottom -->
+      <div class="cap" data-i="5">So where does <span class="f">three fourths</span> come from? We <b>add</b>.</div>
+      <div class="cap" data-i="6">Start with <span class="f">two fourths</span> — two equal pieces.</div>
+      <div class="cap" data-i="7">Draw a <b>second line</b>: one more fourth, the same size.</div>
+      <div class="cap" data-i="8">Same bottom, same-size pieces — slide them <b>together</b>.</div>
+      <div class="cap" data-i="9"><span class="f">2/4</span> + <span class="f">1/4</span> = <span class="f">3/4</span> — keep the bottom, add the tops.</div>
     </div>
   </div>
 
@@ -143,7 +200,8 @@
 (function(){
   "use strict";
   var PERSIST = "numberline.v1";
-  var DURATION = 20;            // seconds
+  var DURATION = 45;            // seconds
+  function vrate(){ try { var s = JSON.parse(localStorage.getItem("bf_settings_v1")||"{}"); var r = +s.voiceRate; return (r>=0.5 && r<=2) ? r : 1; } catch(e){ return 1; } }
 
   function el(id){ return document.getElementById(id); }
 
@@ -156,6 +214,10 @@
     return x0 + v * (x1 - x0);
   }
   function px(n){ return n + "px"; }
+  function pieceW(){ return leftAt(0.25) - leftAt(0); }
+
+  // line A and line B vertical centres (must match #nline / #nline2 top + 2px)
+  var AY = 98, BY = 228;
 
   // lay out the quarter ticks/labels + park the bead at 0
   function layout(){
@@ -176,29 +238,91 @@
     el("fill").style.width = px(Math.max(0, leftAt(v) - leftAt(0)));
   }
 
+  // ── unit-block helpers (Part 2) ── one teal 1/4 piece per slot, labelled 1/4.
+  var blocks = [];
+  function mkBlock(slot, top){
+    var b = document.createElement("div");
+    b.className = "blk";
+    b.style.left  = px(leftAt(slot/4) + 1.5);
+    b.style.top   = px(top);
+    b.style.width = px(pieceW() - 3);
+    b.innerHTML = '<span class="blab">1/4</span>';
+    board.appendChild(b);
+    blocks.push(b);
+    requestAnimationFrame(function(){ b.style.opacity = "1"; });
+    return b;
+  }
+  function clearBlocks(){ blocks.forEach(function(b){ if(b.parentNode) b.parentNode.removeChild(b); }); blocks = []; }
+  var joinBlock = null;
+
+  // hide Part-1 point decorations so Part 2 can rebuild 3/4 from pieces
+  function enterAdd(){
+    el("fill").style.width = "0px";
+    el("bead").style.display = "none";
+    el("beadtag").classList.remove("on");
+    board.classList.remove("named");
+  }
+
   var beatsDone = [];
   var BEATS = [
     [0.3, function(){ el("kicker").classList.add("on"); }],
 
-    // Beat 1 — a fraction is a number, one point on the line
+    // ── Part 1 — a fraction is a number, one point on the line ──
     [1.4, function(){ showCap(0); }],
 
-    // Beat 2 — cut 0→1 into four equal parts (partition ticks + ¼/2/4/¾ appear)
-    [5.0, function(){ showCap(1); board.classList.add("cut"); }],
+    // "cut the line into four equal parts" — caption first, line stays whole…
+    [5.4, function(){ showCap(1); }],
+    // …then on "…equal parts" the line divides into fourths.
+    [8.0, function(){ board.classList.add("cut"); }],
 
-    // Beat 3 — slide the bead three parts along (to 3/4); it lifts as it glides
-    [9.0, function(){
-      showCap(2);
+    // "slide the red point three parts along" — narrated; the bead waits.
+    [9.7, function(){ showCap(2); }],
+
+    // "the fill grows to show three fourths" — bead glides to 3/4, fill follows.
+    [13.0, function(){
+      showCap(3);
       el("bead").classList.add("lift");
       moveBead(0.75);
       setTimeout(function(){ el("bead").classList.remove("lift"); }, 1100);
     }],
 
-    // Beat 4 — the fill bar shows three fourths of the way (fill already grew with the bead)
-    [13.0, function(){ showCap(3); }],
+    // "that point IS the number three fourths" — reveal the tag + name the tick.
+    [16.8, function(){ showCap(4); board.classList.add("named"); el("beadtag").classList.add("on"); }],
 
-    // Beat 5 — that point IS the number 3/4 (reveal the fraction tag + name the tick)
-    [16.0, function(){ showCap(4); board.classList.add("named"); el("beadtag").classList.add("on"); }],
+    // ── Part 2 — adding fractions with the same bottom ──
+    // "where does three fourths come from? we add" — clear the point, keep fourths.
+    [21.0, function(){ showCap(5); enterAdd(); }],
+
+    // "start with two fourths" — two 1/4 blocks grow on line A; "2/4" floats above it.
+    [25.0, function(){
+      showCap(6); mkBlock(0, AY); mkBlock(1, AY);
+      el("eqA").textContent = "2/4"; el("eqA").style.left = px(leftAt(0.25)); el("eqA").classList.add("on");
+    }],
+
+    // "draw a second line: one more fourth" — line B appears, one block + "1/4" above it.
+    [29.0, function(){
+      showCap(7); el("lineB").classList.add("on"); joinBlock = mkBlock(0, BY);
+      el("eqB").textContent = "1/4"; el("eqB").style.left = px(leftAt(0.125)); el("eqB").classList.add("on");
+    }],
+
+    // "slide them onto one line" — B's block rises to line A's third slot; the two
+    // line labels fuse into "2/4 + 1/4" above line A.
+    [33.7, function(){
+      showCap(8);
+      if (joinBlock){ joinBlock.style.left = px(leftAt(2/4) + 1.5); joinBlock.style.top = px(AY); }
+      el("eqB").classList.remove("on");
+      el("eqA").textContent = "2/4 + 1/4"; el("eqA").style.left = px(leftAt(0.375));
+    }],
+
+    // "2/4 + 1/4 = 3/4" — three pieces from 0; complete the equation (enlarged) + name the ¾ tick.
+    [37.9, function(){
+      showCap(9);
+      moveBead(0.75);                 // grow line-A fill under the three blocks
+      el("eqA").textContent = "2/4 + 1/4 = 3/4";
+      el("eqA").style.left = px(leftAt(0.375));
+      el("eqA").classList.add("big");
+      board.classList.add("named");
+    }],
   ];
 
   function applyBeats(t){
@@ -210,7 +334,7 @@
   var startPerf=null, elapsed=0, paused=false, lastWall=0;
   function frame(now){
     if (startPerf===null){ startPerf=now; lastWall=now; }
-    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed+=dt; }
+    if (!paused){ var dt=(now-lastWall)/1000; if (dt>0.25) dt=0.25; elapsed += dt * vrate(); }
     lastWall=now;
     var t=elapsed; if (t>DURATION) t=DURATION;
     try { localStorage.setItem(PERSIST+":t", t.toFixed(3)); } catch(e){}
@@ -227,7 +351,12 @@
       elapsed=Math.max(0,+s||0); beatsDone=[];
       // reset visuals so a seek-back replays cleanly
       board.classList.remove("cut","named"); el("beadtag").classList.remove("on");
-      el("bead").classList.remove("lift"); moveBead(0); showCap(-1);
+      el("beadtag").style.left = px(leftAt(0));
+      el("bead").classList.remove("lift"); el("bead").style.display = "";
+      el("lineB").classList.remove("on");
+      el("eqA").classList.remove("on","big"); el("eqB").classList.remove("on");
+      clearBlocks(); joinBlock = null;
+      moveBead(0); showCap(-1);
     }
   };
 })();

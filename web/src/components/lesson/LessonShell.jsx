@@ -1,17 +1,22 @@
-// LessonShell — the ONE page chrome shared by every lesson. Replaces the
-// byte-for-byte identical shell each AppM*/AppR*/LessonUnlikeDen used to inline:
+// LessonShell — the ONE page chrome shared by every lesson. Renders:
 //   <div className="page" data-vox-speaker="cook">
 //     <div className="foxing" />
 //     <div className="topbar">… num-mark · tag · title · controls …</div>
 //     <StageTabs … />
-//     {band}
-//     <div className="goal">…</div>
-//     {body}
+//     {children}              ← usually a <LessonBoard>
+//     {extra}
 //   </div>
 //
-// The ONLY things that ever differed between lessons were the puzzle-tag string,
-// the reset handler/title, and the body — so those are props; everything else is
-// rendered here once.
+// WAVE-F SHELL DECISIONS (mirror the wireframe's three chrome choices):
+//   (A) NO persistent top goal banner. The wireframe deleted it
+//       (LessonScreen.jsx:129-131) and moved the task copy + Read-aloud into the
+//       FIRST rail card. Rooms now stop passing `goal` and instead render a
+//       <RailInstruction> as the first node of LessonBoard's `rail` slot.
+//       For backward-compat during migration, an explicitly-passed `goal` node is
+//       still honored — but migrated rooms MUST NOT pass it.
+//   (B) The tutor ribbon is CORRECTIVE-ONLY (hidden by default; shown on a
+//       corrective/feedback status). Enforced in TutorRibbon.jsx + lesson.css.
+//   (C) The 4-zone LessonBoard grid is unchanged (it already matches).
 //
 // Props:
 //   no, tag, title          — header identity ("Lesson {no} · {tag}", big title)
@@ -19,8 +24,11 @@
 //   onReset, resetTitle     — the ⟲ control (title defaults to "Start over")
 //   speaker                 — data-vox-speaker on .page (default "cook")
 //   tabs                    — { stages, current, onSelect, label } for <StageTabs>
-//   band                    — the <QuestionBand> node, or null to omit it
-//   goal                    — the <LessonGoal> node
+//   band                    — DEPRECATED. The wireframe has no QuestionBand; pass
+//                             null (rooms fold the question into the rail/stage).
+//   goal                    — DEPRECATED back-compat escape hatch (the old
+//                             <LessonGoal> node). Migrated rooms pass nothing and
+//                             use <RailInstruction> in the rail instead.
 //   children                — the stage body (usually a <LessonBoard>)
 //   extra                   — anything mounted after the body (drag ghosts, etc.)
 import React from "react";
@@ -51,12 +59,11 @@ import "../../styles/lesson-board.css";
  *   "done" (stages before `current`) is derived from list order inside StageTabs;
  *   callers never compute completion themselves.
  *
- * band — the <QuestionBand> node, or `null` to omit it (e.g. words-only / practice
- *        stages where showing the bare equation would give the answer away).
- * goal — the <LessonGoal> node (per-stage goal/intro copy).
- *
- * No signature change was required in F2: the existing props already implement
- * this contract; this block documents it canonically.
+ * band — DEPRECATED (no wireframe analog). Pass null. Kept only so un-migrated
+ *        rooms still compile; migrated rooms omit it entirely.
+ * goal — DEPRECATED back-compat escape hatch (the old <LessonGoal> node). The
+ *        wireframe removed the goal banner; migrated rooms pass nothing and put
+ *        the task copy in a <RailInstruction> at the top of the rail column.
  */
 export default function LessonShell({
   no, tag, title,

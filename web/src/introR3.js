@@ -19,7 +19,7 @@
 // timeline changes.
 
 export const STAGE_PERSIST_KEY = "scaleone.v1";
-export const INTRO_DURATION = 24;
+export const INTRO_DURATION = 31;
 
 // gates track the video's BEATS table:
 //   two strips 1.5, "quarter is bigger" 4.4, "a quarter is two eighths" 8.7,

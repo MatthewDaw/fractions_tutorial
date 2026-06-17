@@ -15,7 +15,11 @@
 // pedagogy; "typing" is the opt-in path for devices without a stylus.
 const STORE = "bf_settings_v1";
 
-export const SETTINGS_DEFAULTS = { voiceVol: 80, musicVol: 55, inputMode: "stylus" };
+// The narrator-speed choices (playback rate). Pitch is PRESERVED at every rate
+// (consumers set preservesPitch), so 1.5× is "talks faster", never chipmunk-squeaky.
+export const VOICE_RATES = [1, 1.25, 1.5, 2];
+
+export const SETTINGS_DEFAULTS = { voiceVol: 80, musicVol: 55, inputMode: "stylus", voiceRate: 1 };
 
 // Volumes are integers 0-100. Clamp + tolerate bad/missing values.
 function clampVol(v) {
@@ -24,12 +28,19 @@ function clampVol(v) {
   return Math.max(0, Math.min(100, n));
 }
 function normMode(m) { return m === "typing" ? "typing" : "stylus"; }
+// Snap a stored speed to the nearest allowed rate (default 1× on bad input).
+function normRate(r) {
+  const n = Number(r);
+  if (!Number.isFinite(n)) return 1;
+  return VOICE_RATES.reduce((best, v) => (Math.abs(v - n) < Math.abs(best - n) ? v : best), 1);
+}
 
 function normalize(s) {
   return {
     voiceVol: clampVol(s.voiceVol),
     musicVol: clampVol(s.musicVol),
     inputMode: normMode(s.inputMode),
+    voiceRate: normRate(s.voiceRate),
   };
 }
 

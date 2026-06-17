@@ -1,4 +1,4 @@
-/* lessons/s1.js — identity + step strip for Lesson №7 "Taking Away" (#/s1).
+/* lessons/s1.js — identity + step strip for Lesson №6 "Taking Away" (#/s1).
    The single source of truth: each s1 step page declares only `lesson: "s1"`
    and pulls № / tag / title / route + this tab strip from here. */
 export default {

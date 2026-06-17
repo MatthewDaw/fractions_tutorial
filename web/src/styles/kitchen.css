@@ -1,0 +1,285 @@
+/* styles/kitchen.css — Babushka's Kitchen styling, ported from the wireframe
+ * (docs/wireframe/css/app/kitchen.css + manip.css + the cmp drag block in
+ * cmp.css) so the ported markup in kitchen/primitives.jsx and the tool stubs are
+ * styled identically to the source-of-truth wireframe.
+ *
+ * SCOPE: the kq-* tool/layout rules are scoped under `.kitchen` (the kitchen page
+ * root, matching the wireframe). The shared manipulative TOKENS (jars/plums/
+ * pickles) are intentionally UN-scoped (they render the same in the kitchen and in
+ * lesson rooms). The tool-stub wrapper + answer-surface chips are un-scoped so the
+ * reusable components also render correctly outside the kitchen page (e.g. tests).
+ *
+ * DEPENDS ON the app's existing global stylesheets for the shared lesson
+ * primitives the tools reuse (eq-box/eq-cell, den-num/eq-numgrid, bignum,
+ * eq-frac, slate-cell/slate-ph/slate-bar/slate-fraction, s1-piece/s1-takeline/
+ * s1-tray, eqstate). Those are imported below so importing THIS file is enough.
+ */
+@import "./tokens.css";
+@import "./slate.css";
+@import "./den.css";
+@import "./num.css";
+@import "./r4.css";
+@import "./s1.css";
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * manip.css — shared manipulative tokens (jars / plums / trays / pickles)
+ * UN-scoped on purpose so the SAME game renders identically everywhere.
+ * ════════════════════════════════════════════════════════════════════════════ */
+.kq-jars { display: inline-flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+.kq-jar { width: 62px; height: auto; display: block; }
+.kq-plum { width: 18px; height: 18px; border-radius: 50%; background: var(--red); border: 2px solid var(--red-deep); display: inline-block; }
+.kq-tray { display: inline-flex; flex-wrap: wrap; gap: 8px; padding: 8px 12px; margin-top: 16px;
+  border: 1.5px dashed var(--ink); align-items: center; justify-content: center; }
+.kq-pickle { width: 44px; height: auto; display: block; }
+.kq-pebble { width: 28px; height: auto; display: block; }
+
+/* №1 Equal Groups tool — stack the count badge above each jar, minus below. */
+.kq-m1-jar { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+.kq-m1-jarcount {
+  font-family: var(--serif); font-weight: 700; font-size: 18px; line-height: 1;
+  color: var(--ink); min-width: 1em; text-align: center;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * the tool-stub wrapper + tool surface (un-scoped so stubs render anywhere)
+ * ════════════════════════════════════════════════════════════════════════════ */
+.kq-toolstub { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.kq-toolstub-tag {
+  font-family: var(--serif); font-style: italic; font-size: 11px; letter-spacing: 0.03em;
+  color: var(--ink-mute); border: 1px dashed var(--ink); border-radius: 4px; padding: 2px 8px;
+  opacity: 0.8;
+}
+.kq-toolstub-body { display: flex; justify-content: center; }
+.kq-tool { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.kq-tool-hint { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+.kq-readout { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+.kq-tool-placeholder {
+  display: grid; place-items: center; width: 100%; height: 100%; padding: 18px; text-align: center;
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+  border: 2px dashed var(--ink); background: rgba(28,22,18,0.03);
+}
+
+/* answer-surface chips + small fraction glyph (used by compare/choice answers).
+   Ported from the wireframe kitchen.css; un-scoped so KitchenAnswer styles
+   standalone. */
+.kq-choices { display: inline-flex; align-items: stretch; gap: 12px; }
+.kq-chip {
+  all: unset; cursor: pointer; box-sizing: border-box; min-width: 72px; min-height: 72px; padding: 8px 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 30px; color: var(--ink);
+  border: 2px solid var(--ink); background: var(--paper-1); box-shadow: 3px 3px 0 rgba(28,22,18,0.16);
+}
+.kq-chip:hover { background: var(--paper-2); transform: translate(-1px,-1px); }
+.kq-chip.is-picked { border-color: var(--red-deep); background: var(--red); box-shadow: 3px 3px 0 rgba(110,28,22,0.34); }
+.kq-chip.is-picked .kq-frac-n { color: var(--paper-1); border-bottom-color: var(--paper-1); }
+.kq-chip.is-picked .kq-frac-d { color: var(--paper-1); }
+.kq-frac { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-size: 24px; }
+.kq-frac-n { border-bottom: 2px solid currentColor; padding: 0 4px 2px; }
+.kq-frac-d { padding: 2px 4px 0; }
+
+/* the compare drop slot shows the picked symbol */
+.cmp-sym.is-picked { border-color: var(--red-deep); background: var(--red); color: var(--paper-1); }
+
+/* the controlled text-input answer cell (KitchenAnswer's DigitCell). The shared
+   .slate-cell supplies the box; this styles the input that fills it. */
+.slate-int .slate-cell { width: 80px; height: 68px; }
+.slate-input {
+  all: unset; box-sizing: border-box; width: 100%; height: 100%; text-align: center;
+  font-family: var(--display); font-size: 40px; color: var(--ink); caret-color: var(--red);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * kitchen.css (wireframe) — layout + tool surfaces, scoped under .kitchen
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+/* two columns: answer surface on the left, the question + cast rail on the right */
+.kitchen .kq {
+  flex: 1 1 auto; min-height: 0; margin-top: 12px;
+  display: grid; grid-template-columns: 1fr 380px; gap: 22px; align-items: stretch;
+}
+
+.kitchen .kq-main { display: flex; flex-direction: column; min-width: 0; gap: 16px; }
+
+.kitchen .kq-play { position: relative; flex: 1 1 auto; min-height: 0; }
+.kitchen .kq-sheet { position: absolute; inset: 0; }
+.kitchen .kq-visual { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; pointer-events: none; }
+.kitchen .kq-visual svg { max-width: 520px; max-height: 60%; height: auto; display: block; }
+
+.kitchen .kq-answer {
+  position: relative; flex: 0 0 auto;
+  display: flex; align-items: center; gap: 26px;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+  padding: 10px 24px;
+}
+.kitchen .kq-write { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 0 0 auto; }
+.kitchen .kq-slate { display: inline-flex; align-items: center; gap: 16px; }
+.kitchen .kq-slate .slate-fraction .slate-cell,
+.kitchen .kq-slate .slate-int .slate-cell { width: 80px; height: 68px; }
+.kitchen .kq-slate .slate-fraction .slate-bar { width: 80px; }
+.kitchen .kq-slate .slate-ph { font-size: 30px; }
+.kitchen .kq-slate .mr-and { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-mute); }
+
+/* tap-to-answer chips (compare  <  =  >  and multiple-choice fractions) */
+.kitchen .kq-choices { display: inline-flex; align-items: stretch; gap: 12px; }
+.kitchen .kq-chip {
+  all: unset; cursor: pointer; box-sizing: border-box; min-width: 72px; min-height: 72px; padding: 8px 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 30px; color: var(--ink);
+  border: 2px solid var(--ink); background: var(--paper-1); box-shadow: 3px 3px 0 rgba(28,22,18,0.16);
+}
+.kitchen .kq-chip:hover { background: var(--paper-2); transform: translate(-1px,-1px); }
+.kitchen .kq-frac { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-size: 24px; }
+.kitchen .kq-frac-n { border-bottom: 2px solid currentColor; padding: 0 4px 2px; }
+.kitchen .kq-frac-d { padding: 2px 4px 0; }
+
+.kitchen .kq-answer-marks { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.kitchen .kq-answer-marks .check { min-width: 150px; height: 48px; }
+.kitchen .kq-answer-marks .mr-wallbtn { height: 46px; justify-content: center; }
+
+/* DEMO-only state toggle — sits in the top controls */
+.kitchen .controls .kq-modebtn {
+  width: auto; min-width: 0; padding: 0 12px; gap: 6px; white-space: nowrap;
+  font-family: var(--display); font-size: 11px; letter-spacing: 0.04em;
+  border-style: dashed; cursor: pointer;
+}
+
+/* ── the helper tool surface — lives in the drawing space (kq-play) ───────── */
+.kitchen .kq-toolwrap {
+  position: absolute; inset: 0; z-index: 3;
+  display: grid; place-items: center; padding: 20px;
+  border: 2px solid var(--ink);
+  background: repeating-linear-gradient(0deg, transparent 0 37px, rgba(28,22,18,0.08) 37px 38px), var(--paper-2);
+  box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
+}
+.kitchen .kq-tool { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.kitchen .kq-tool-hint { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+.kitchen .kq-readout { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+
+/* m3 — rows (clumps) of pickles to count up */
+.kitchen .kq-pickrows { display: flex; flex-direction: column; gap: 6px; }
+.kitchen .kq-pickrow { display: inline-flex; align-items: center; gap: 6px; }
+.kitchen .kq-rownum {
+  width: 32px; height: 32px; margin-right: 12px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 18px; color: var(--ink);
+  border: 2px solid var(--ink); border-radius: 50%; background: var(--paper-1);
+}
+.kitchen .kq-rowtools { display: inline-flex; gap: 16px; margin-top: 16px; }
+.kitchen .kq-rowjar { all: unset; cursor: pointer; position: relative; display: inline-block; }
+.kitchen .kq-rowjar .kq-jar { width: 44px; }
+.kitchen .kq-rowjar-lab {
+  position: absolute; left: 50%; top: 56%; transform: translate(-50%, -50%);
+  font-family: var(--display); font-size: 14px; color: var(--ink-mute);
+}
+.kitchen .kq-rowjar:not(.is-del) .kq-jar path { fill: #6f7f3a; stroke: #4f5a26; }
+.kitchen .kq-rowjar:not(.is-del) .kq-jar rect { fill: #8a9a52; stroke: #4f5a26; }
+.kitchen .kq-rowjar:not(.is-del) .kq-rowjar-lab { color: var(--paper-1); }
+
+/* the wide sheet cake — stretch across the stage; slices read as tappable */
+.kitchen .kq-cakewide { width: 100%; padding: 0 8px; box-sizing: border-box; }
+.kitchen .kq-cakewide .kq-cakerow { display: flex; width: 100%; gap: 0; }
+.kitchen .kq-cakewide .kq-cakecell { flex: 1 1 0; width: auto; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; }
+.kitchen .kq-cakewide .kq-cakecell .kq-cakeblock { width: 100%; height: 96px; }
+.kitchen .kq-cakewide .kq-cakecell .kq-cherry { width: 26px; height: auto; }
+.kitchen .kq-cakewide .kq-cakecell.is-empty { cursor: pointer; opacity: 0.5; height: 96px; align-self: flex-end; }
+.kitchen .kq-caketools { display: flex; justify-content: center; margin-bottom: 12px; }
+.kitchen .kq-spatula { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border: 2px solid var(--ink); background: var(--paper-1);
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.04em; color: var(--ink); }
+.kitchen .kq-spatula:hover { background: var(--paper-2); }
+.kitchen .kq-cakeruler { display: flex; width: 100%; margin-top: 4px; border-top: 2.4px solid var(--ink); }
+.kitchen .kq-cakeruler-tick { flex: 1 1 0; text-align: center; padding: 5px 0 0;
+  font-family: var(--display); font-size: 13px; color: var(--ink-mute);
+  border-left: 1.5px solid var(--ink); }
+.kitchen .kq-cakeruler-tick:first-child { border-left: none; }
+
+/* drag-block number lines (nl, r5) */
+.kitchen .kq-qline { width: 100%; display: flex; justify-content: center; }
+.kitchen .kq-qline-svg { width: 480px; max-width: 100%; height: auto; display: block; }
+.kitchen .kq-qline-svg text { font-family: var(--display); font-weight: 700; }
+.kitchen .kq-qbin { display: inline-flex; align-items: center; gap: 12px; margin-top: 18px; padding: 10px 16px; border: 1.5px dashed var(--ink); }
+.kitchen .kq-qbin-lab { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+.kitchen .kq-qblock { width: 48px; height: 30px; display: block; cursor: pointer; }
+
+/* labelled measuring-stick rows (den / cmp / r5) */
+.kitchen .kq-cutrow { display: flex; align-items: center; gap: 12px; }
+.kitchen .kq-cutlbl { font-size: 17px; min-width: 34px; }
+.kitchen .kq-ruler { width: 480px; max-width: 100%; height: auto; display: block; }
+.kitchen .kq-ruler text { font-weight: 700; font-style: normal; }
+.kitchen .nlab { font-size: 15px; font-weight: 700; color: var(--ink); }
+.kitchen .nlab.ng { color: var(--red); }
+
+/* num — sheet cake = a contiguous row of the SAME shared cake slices used by s1 */
+.kitchen .kq-cakerow { display: inline-flex; align-items: flex-end; }
+.kitchen .kq-cakecell { width: 48px; display: flex; flex-direction: column; align-items: center; }
+.kitchen .kq-cakecell.is-empty { height: 46px; align-self: center; border: 2px dashed var(--ink); border-radius: 6px; opacity: 0.4; }
+
+/* nl — host the reused room-r1 lesson canvas at its native size */
+.kitchen .kq-r1box { position: relative; width: 584px; max-width: 100%; height: 330px; }
+
+/* s1 — take-away canvas; pieces are full-bleed sheet-cake blocks */
+.kitchen .kq-takebox { position: relative; width: 720px; max-width: 100%; height: 320px; }
+.kitchen .kq-cakepiece { background: transparent !important; flex-direction: column; gap: 0; padding: 0 !important; justify-content: flex-end; }
+.kitchen .kq-cakepiece .s1-piece-lab { color: var(--ink) !important; margin-top: 2px; }
+.kitchen .kq-cherry { width: 16px; height: 13px; display: block; margin-bottom: -6px; position: relative; z-index: 2; }
+.kitchen .kq-cakeblock { width: 100%; height: 46px; display: block; }
+.kitchen .kq-cakeslot { align-self: center; height: 40px; border-radius: 6px; opacity: 0.7; }
+
+/* r2 / r3 — host the reused lesson block canvases at their native size */
+.kitchen .kq-r2box { position: relative; width: 720px; max-width: 100%; height: 300px; }
+
+/* r4 + simp — the shared fraction-builder square + manipulative layout */
+.kitchen .kq-manip { display: flex; align-items: center; justify-content: center; gap: 26px; flex-wrap: wrap; }
+.kitchen .kq-sticks { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.kitchen .kq-fraclab { display: inline-flex; align-items: center; gap: 28px; }
+.kitchen .kq-fraclab-side { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.kitchen .kq-splitrow { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 220px; }
+.kitchen .kq-splitbtn { all: unset; cursor: pointer; padding: 6px 12px; font-family: var(--display); font-size: 11px;
+  letter-spacing: 0.02em; color: var(--ink); border: 2px solid var(--ink); background: var(--paper-1); }
+.kitchen .kq-splitbtn:hover { background: var(--paper-2); }
+.kitchen .kq-splitbtn.is-on { background: var(--red); border-color: var(--red-deep); color: var(--paper-1); }
+
+/* r4 — tappable option sticks stacked under the target */
+.kitchen .kq-opts { display: inline-flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.kitchen .kq-opts-col { flex-direction: column; align-items: stretch; gap: 8px; }
+.kitchen .kq-opt { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+  padding: 6px 12px; border: 2px solid var(--ink); background: var(--paper-1); box-shadow: 3px 3px 0 rgba(28,22,18,0.16); }
+.kitchen .kq-opt:hover { background: var(--paper-2); transform: translate(-1px,-1px); }
+.kitchen .kq-opt .kq-ruler { width: 320px; }
+.kitchen .kq-opt-label { font-size: 18px; }
+
+/* ── the rail: the question, cook, skill, Babushka ───────────────────────── */
+.kitchen .kq-rail { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.kitchen .kq-rail .panel { box-sizing: border-box; }
+.kitchen .kq-question-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kitchen .kq-question-head .speaker { flex: 0 0 auto; }
+.kitchen .kq-story {
+  margin-top: 8px;
+  font-family: var(--serif); font-weight: 500; font-size: 17px; line-height: 1.42; color: var(--ink);
+}
+.kitchen .kq-story b { color: var(--red-deep); }
+/* Drop the box's bottom padding so the portrait's feet sit flush on the bottom
+   border instead of hovering above it. */
+.kitchen .kq-rail .mr-asker { display: flex; align-items: flex-end; justify-content: center; overflow: hidden; padding-bottom: 0; }
+/* The cook portraits are tall (150×220 viewBox). Scale the SVG to the box height
+   instead of trusting its intrinsic width, so kid/grandpa/cat all fit fully
+   inside the box rather than spilling past the bottom edge. */
+.kitchen .kq-rail .mr-asker-art { height: 160px; display: grid; place-items: end center; overflow: hidden; }
+.kitchen .kq-rail .mr-asker-art > svg { height: 100%; width: auto; max-width: 100%; display: block; }
+
+/* Strip+knife rooms: the knife rack sits BESIDE the bonus character (the character
+   slides right to make room). Keeps the rack in the question rail — not stacked
+   under the strips, which would overflow the tight play area. */
+.kitchen .kq-rail .mr-asker--tools { align-items: center; justify-content: center; gap: 14px; }
+.kitchen .kq-rail .mr-asker--tools .mr-asker-art { height: 150px; }
+.kitchen .kq-rail .mr-asker-knives { flex: 0 0 auto; }
+.kitchen .kq-rail .mr-asker-knives .knife-rack { margin: 0; gap: 5px; }
+.kitchen .kq-rail .mr-asker-knives .knife-row { padding: 1px 4px; }
+.kitchen .kq-rail .mr-asker-knives .krow-lab { font-size: 11px; }
+.kitchen .kq-tutor { margin-top: auto; display: flex; align-items: flex-end; gap: 12px; }
+.kitchen .kq-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 110px; flex: 0 0 auto; pointer-events: none; }
+.kitchen .kq-tutor .ribbon { position: relative; margin: 0 0 14px; max-width: none; flex: 1 1 auto; }
+.kitchen .kq-tutor .ribbon::before { left: -9px; }

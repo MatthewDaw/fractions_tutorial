@@ -31,6 +31,11 @@
 
 .r1-s1-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
 .r1-s1-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
+/* The Applied/Words answer slate is locked (disabled) until the setup gate passes.
+   Keep it reading as the standard brown-penciled answer square while locked —
+   the crisp ink border + warm paper, not a faint grey placeholder. */
+.wp-answer .slate-slot.is-disabled .slate-cell { opacity: 0.82; background: #fff8ea; }
+
 .r1-s1-slate { display: inline-flex; }
 /* the handwriting cells stay comfortably large for a child's digit */
 .r1-s1-slate .slate-fraction .slate-cell { width: 96px; height: 78px; }
@@ -92,7 +97,7 @@
 .r1-fz-words .wp { gap: 14px; width: 100%; align-items: center; }
 .r1-fz-words .wp-card { padding: 18px 36px 16px; max-width: 880px; }
 .r1-fz-words .wp-card-head { margin-bottom: 12px; }
-.r1-fz-words .wp-story { font-size: 21px; line-height: 1.5; }
+.r1-fz-words .wp-story { font-size: 20px; line-height: 1.5; }
 .r1-fz-words .wp-setup { gap: 8px; }
 .r1-fz-words .wp-answer { gap: 10px; }
 /* answer Slate — GENEROUSLY large for handwriting, matching the block stages'
@@ -121,18 +126,6 @@
   transform: translate(-50%, -50%);
   display: flex; flex-direction: column; align-items: center;
 }
-.r1-bind-cap {
-  margin-top: 18px;
-  max-width: 560px;
-  text-align: center;
-  font-family: var(--serif);
-  font-size: 15px;
-  color: var(--ink-soft);
-  /* clamp so a different font can't grow the proof zone */
-  height: 22px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-}
-.r1-bind-cap b { color: var(--red); }
-
 /* Fade: dim the blocks to a faint check */
 .r1-faded .r1-bind-stack { opacity: 1; }
 .r1-ghostblocks { opacity: 0.28; filter: grayscale(0.5); }
@@ -176,17 +169,6 @@
   font-weight: 700;
   color: var(--red);
 }
-.r1-numbers-cap {
-  margin-top: 22px;
-  font-family: var(--serif);
-  font-size: 15px;
-  color: var(--ink-soft);
-  max-width: 520px;
-  text-align: center;
-  /* clamp to one line so a longer string can't grow the proof zone */
-  height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-}
-
 /* ── Stage 6/7 word→math setup confirmation chip ──────────────────────────────
    The required/optional ExpressionSlate sits in <WordProblem>'s setup region; on
    Applied a chip replaces the "Check the sum" button once setupOk. */

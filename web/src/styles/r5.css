@@ -1,189 +1,40 @@
 /* r5.css — Room R5 "Mixed Numbers" (IMPROPER_TO_MIXED) room-specific styles.
-   Redesigned for the number-line strip arc (Identify / Fill a Whole / Read /
-   How Many Wholes / The Other Way / Numbers / Practice).
-   Reuses lesson.css classes by name; only NEW, namespaced .r5-* rules live here. */
+   WAVE-F: the visual primitives (MixRuler / MixedNum / MixedSlots / FracSlots /
+   BigFrac / DigitGrid) now come from the shared asset library — their geometry
+   lives in assets.css / lesson.css, so this file holds ONLY the room-specific
+   stage LAYOUT wrappers (the wireframe's .eq-stage / .eq-col / .eq-eq markup) and
+   the shake-on-wrong affordance. No more inline ruler / bigfrac / mixnum / Slate
+   sizing rules — those duplicated the shared primitives and are gone. */
 
-/* ── FitStage wrapper ────────────────────────────────────────────────────────── */
-.r5-board-fit { width: 100%; height: 100%; }
-
-/* ── Stage canvas ────────────────────────────────────────────────────────────── */
-.r5-stage-canvas {
-  display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 28px;
-  width: 800px; min-height: 280px; padding: 24px 0; box-sizing: border-box;
-  margin: 0 auto;
+/* ── Stage layout (wireframe .eq-stage / .eq-col markup) ─────────────────────── */
+.eq-stage {
+  height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  gap: 34px; padding: 16px 40px; box-sizing: border-box;
 }
-
-/* Stages 1–4: digit-grid row layout */
-.r5-stage-row {
-  display: flex; flex-direction: row; align-items: center; gap: 34px;
+.eq-col {
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
 }
-.r5-stage-col {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 18px;
-}
-
-/* Inline equation below the ruler */
-.r5-stage-eq {
-  display: inline-flex; align-items: center; gap: 16px;
-}
-.r5-stage-eq.bad { animation: shakeX .42s ease-in-out; }
-
-/* Slate sizing inside r5-stage-eq (stage canvas area, stages 1–4) */
-.r5-stage-eq .slate-fraction .slate-cell { width: 76px; height: 64px; }
-.r5-stage-eq .slate-fraction .slate-bar { width: 76px; }
-.r5-stage-eq .slate-row .slate-cell { width: 76px; height: 64px; }
-.r5-stage-eq .slate-fraction .slate-fixed,
-.r5-stage-eq .slate-row .slate-fixed { font-size: 36px; }
-.r5-stage-eq .slate-fraction .slate-committed-digit,
-.r5-stage-eq .slate-row .slate-committed-digit { font-size: 40px; }
-.r5-stage-eq .slate-fraction .slate-ph,
-.r5-stage-eq .slate-row .slate-ph { font-size: 22px; }
-.r5-stage-eq .slate-fraction,
-.r5-stage-eq .slate-row { position: relative; }
-.r5-stage-eq .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }
-
-/* ── MixRuler ────────────────────────────────────────────────────────────────── */
-/* A horizontal number-line strip: each segment is one 1/den piece; shaded
-   pieces are filled in red; whole boundaries get a heavier right border.
-   Labels 0,1,2… sit below each whole-boundary position. */
-.r5-ruler-wrap {
-  display: flex; flex-direction: column; gap: 0; position: relative;
-}
-.r5-ruler {
-  display: flex; height: 52px; border: 2px solid var(--ink);
-  overflow: hidden; box-sizing: border-box;
-}
-.r5-seg {
-  flex: 1 1 0; box-sizing: border-box; height: 100%;
-  background: var(--paper-2);
-  border-right: 1px solid rgba(28,22,18,0.25);
-  transition: background .18s ease;
-}
-.r5-seg:last-child { border-right: none; }
-.r5-seg.is-on { background: var(--red); }
-/* whole boundaries: a heavier divider every den pieces */
-.r5-seg.whole-end { border-right: 2.5px solid var(--ink); }
-
-.r5-ruler-labels {
-  position: relative; height: 22px; margin-top: 4px;
-}
-.r5-ruler-labels span {
-  position: absolute; transform: translateX(-50%);
-  font-family: var(--display); font-size: 13px; color: var(--ink-mute);
-}
-
-/* ── BigFracDisplay ─────────────────────────────────────────────────────────── */
-.r5-bigfrac {
-  display: inline-flex; flex-direction: column; align-items: center; gap: 0;
-  font-family: var(--display); line-height: 1; vertical-align: middle;
-}
-.r5-bf-n { color: var(--red); }
-.r5-bf-bar {
-  display: block; height: 2.5px; background: var(--ink);
-  width: 100%; margin: 2px 0;
-}
-.r5-bf-d { color: var(--ink); }
-
-/* ── MixedNumDisplay ────────────────────────────────────────────────────────── */
-.r5-mixnum {
-  display: inline-flex; align-items: flex-start; gap: 4px;
-  font-family: var(--display); vertical-align: middle;
-}
-.r5-mn-whole { font-size: 1em; color: var(--ink); line-height: 1; align-self: center; }
-.r5-mn-frac {
-  display: inline-flex; flex-direction: column; align-items: center;
-  font-size: 0.52em; line-height: 1; gap: 1px;
-}
-.r5-mn-n { color: var(--red); border-bottom: 1.5px solid var(--ink); padding-bottom: 1px; min-width: 1.2em; text-align: center; }
-.r5-mn-d { color: var(--ink); min-width: 1.2em; text-align: center; }
-
-/* ── Answer bar equation row ─────────────────────────────────────────────────── */
-.r5-ans-eqrow {
-  display: inline-flex; align-items: center; gap: 16px;
-}
-.r5-ans-eqrow.bad { animation: shakeX .42s ease-in-out; }
-.r5-ans-label { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-mute); max-width: 160px; }
-.r5-ans-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
-.r5-ans-eq { font-family: var(--display); font-size: 28px; color: var(--ink); }
-.r5-ans-note { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-mute); }
-
-/* ── Mixed-number write composer (whole + "and" + fraction slate) ────────────── */
-.r5-write { display: inline-flex; align-items: center; gap: 14px; }
-.r5-write.bad { animation: shakeX .42s ease-in-out; }
-.r5-write .r5-and { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); }
-.r5-write .r5-write-whole, .r5-write .r5-write-frac { display: inline-flex; }
-
-/* Size the Slate cells in the AnswerBar composer */
-.lbar .r5-write .slate-fraction .slate-cell { width: 92px; height: 76px; }
-.lbar .r5-write .slate-fraction .slate-bar { width: 92px; }
-.lbar .r5-write .slate-row .slate-cell { width: 92px; height: 76px; }
-.lbar .r5-write .slate-fraction .slate-fixed,
-.lbar .r5-write .slate-row .slate-fixed { font-size: 44px; }
-.lbar .r5-write .slate-fraction .slate-committed-digit,
-.lbar .r5-write .slate-row .slate-committed-digit { font-size: 48px; }
-.lbar .r5-write .slate-fraction .slate-ph,
-.lbar .r5-write .slate-row .slate-ph { font-size: 28px; }
-.lbar .r5-write .slate-fraction,
-.lbar .r5-write .slate-row { position: relative; }
-.lbar .r5-write .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }
-
-/* Fraction Slate sizing for isIdentify / isFill / isBack in the AnswerBar */
-.lbar .r5-ans-eqrow .slate-fraction .slate-cell { width: 92px; height: 76px; }
-.lbar .r5-ans-eqrow .slate-fraction .slate-bar { width: 92px; }
-.lbar .r5-ans-eqrow .slate-row .slate-cell { width: 92px; height: 76px; }
-.lbar .r5-ans-eqrow .slate-fraction .slate-fixed,
-.lbar .r5-ans-eqrow .slate-row .slate-fixed { font-size: 44px; }
-.lbar .r5-ans-eqrow .slate-fraction .slate-committed-digit,
-.lbar .r5-ans-eqrow .slate-row .slate-committed-digit { font-size: 48px; }
-.lbar .r5-ans-eqrow .slate-fraction .slate-ph,
-.lbar .r5-ans-eqrow .slate-row .slate-ph { font-size: 28px; }
-
-/* ── Stage 5 equation row (in the stage canvas, below the ruler) ────────────── */
-.r5-stage-eq {
-  display: inline-flex; align-items: center; gap: 18px;
-}
-/* Size the Slate cells for the stage-canvas equation in Stage 5 */
-.r5-stage-eq .r5-write .slate-fraction .slate-cell { width: 92px; height: 96px; }
-.r5-stage-eq .r5-write .slate-fraction .slate-bar { width: 92px; }
-.r5-stage-eq .r5-write .slate-fraction .slate-fixed { font-size: 44px; }
-.r5-stage-eq .r5-write .slate-fraction .slate-committed-digit { font-size: 52px; }
-.r5-stage-eq .r5-write .slate-fraction .slate-ph { font-size: 28px; }
-.r5-stage-eq .r5-write .slate-fraction { position: relative; }
-.r5-stage-eq .r5-write .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }
-
-/* ── Stage 6 "Numbers" panel ─────────────────────────────────────────────────── */
-.r5-numbers-panel {
-  display: flex; flex-direction: column; gap: 28px; padding: 8px 0;
-  width: 100%; max-width: 680px;
-}
-.r5-numbers-row {
-  display: flex; flex-direction: column; gap: 8px;
-}
-.r5-numbers-lab {
-  font-family: var(--display); font-size: 13px; letter-spacing: .06em;
+.eq-lab {
+  font-family: var(--display); font-size: 11px; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--ink-mute);
 }
-.r5-numbers-eq {
-  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+.eq-eq {
+  font-family: var(--serif); font-style: italic; font-size: 30px;
+  color: var(--ink-mute); text-align: center; line-height: 1.1;
 }
-.r5-eq-arrow {
-  font-family: var(--display); font-size: 32px; color: var(--ink-mute);
-}
-.r5-numbers-cap {
+.eq-cap {
   font-family: var(--serif); font-style: italic; font-size: 13px;
-  color: var(--ink-mute);
+  color: var(--ink-mute); text-align: center;
 }
 
-/* Size slates inside the Numbers stage (in the stage canvas area) */
-.r5-numbers-eq .r5-write .slate-fraction .slate-cell { width: 76px; height: 64px; }
-.r5-numbers-eq .r5-write .slate-fraction .slate-bar { width: 76px; }
-.r5-numbers-eq .r5-write .slate-row .slate-cell { width: 76px; height: 64px; }
-.r5-numbers-eq .r5-write .slate-fraction .slate-fixed,
-.r5-numbers-eq .r5-write .slate-row .slate-fixed { font-size: 36px; }
-.r5-numbers-eq .r5-write .slate-fraction .slate-committed-digit,
-.r5-numbers-eq .r5-write .slate-row .slate-committed-digit { font-size: 40px; }
-.r5-numbers-eq .r5-write .slate-fraction .slate-ph,
-.r5-numbers-eq .r5-write .slate-row .slate-ph { font-size: 22px; }
-.r5-numbers-eq .r5-write .slate-fraction,
-.r5-numbers-eq .r5-write .slate-row { position: relative; }
-.r5-numbers-eq .r5-write .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }
+/* an inline equation row beneath/alongside the ruler (frac = mixed, bignum → slots) */
+.eq-stage-inline {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 16px;
+}
+.eq-slots-row { display: inline-flex; align-items: center; }
+
+/* shake the equation row on a wrong answer */
+.eq-stage-inline.bad,
+.eq-slots-row.bad { animation: shakeX .42s ease-in-out; }

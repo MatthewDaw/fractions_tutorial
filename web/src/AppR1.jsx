@@ -22,8 +22,10 @@
 //        an OPTIONAL ungraded scratch lets the child write the sum; the child
 //        reads it, pulls out the numbers, writes the total.
 //
-// Reachability: a STAGE SELECTOR strip jumps to any stage in one click, and a
-// correct answer auto-advances to the next stage.
+// Reachability: a STAGE SELECTOR strip jumps to any stage in one click. A correct
+// answer NEVER auto-advances — the child sees the success (rosette + cheer), and
+// the Check button becomes "Next stage ▸", which on tap calls nextStage() (a pure
+// LINEAR advance to the next step — never a redirect, jump, or lesson restart).
 //
 // Reuses (read-only): Stack, Cook, Rosette, BigFrac, Lock (shared components),
 // the new Foundations Slate + WordProblem, and the denominator palette. The
@@ -31,19 +33,13 @@
 // shared <LessonShell>; the engine + stage-nav + outcome controller backbone is
 // the shared useLessonScaffold hook. Only .r1-* CONTENT rules live in r1.css.
 import React, { useState, useRef, useEffect } from "react";
-import Cook from "./components/Cook.jsx";
 import Stack from "./components/Stack.jsx";
-import Rosette from "./components/Rosette.jsx";
 import BigFrac from "./components/BigFrac.jsx";
 import Lock from "./components/Lock.jsx";
 import Slate from "./components/Slate.jsx";
-import WordProblem from "./components/WordProblem.jsx";
 import BlockSandbox from "./components/BlockSandbox.jsx";
-import QuestionBand from "./components/QuestionBand.jsx";
 import ExpressionSlate from "./components/ExpressionSlate.jsx";
-import BlankSlate from "./components/BlankSlate.jsx";
-import FitStage from "./components/FitStage.jsx";
-import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
+import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, RailInstruction, ScratchSurface } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { useLessonIdentity } from "./lessons/useLessonIdentity.js";
@@ -51,11 +47,16 @@ import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } fro
 import "./styles/r1.css";
 
 // Geometry for the manipulate canvas (matches the original room).
-// LINE_Y/HOME.A sit high enough that the ruler labels (drawn at LINE_Y+12) stay
-// inside the fixed, clipped block zone (.r1-s1-canvas is 336px tall) instead of
-// being cut off below it. The lower stack rests its bottom edge on the ruler.
-const ORIGIN = 96, UNIT = 392, CW = 584, CH = 336, BAR_H = 72, LINE_Y = 258;
-const HOME = { A: { x: ORIGIN, y: 186 }, B: { x: ORIGIN, y: 44 } };
+// The two stacks are vertically separated so NEITHER stack's body overlaps the
+// OTHER stack's fraction label (.btag, which sits 58px above its stack). The
+// ruler sits below the lower stack (its bottom edge rests on the ruler), pushed
+// far enough down that the lower stack's label clears the upper stack's body.
+const ORIGIN = 96, UNIT = 392, CW = 584, CH = 372, BAR_H = 72, LINE_Y = 300;
+// B is the UPPER stack; its label (.btag) sits 58px ABOVE the stack (≈ y:6→64),
+// kept inside the canvas top. A is the LOWER stack; its label sits at y:158→216,
+// clearing B's body (ends y:136) with room to spare, then its body 216→300 rests
+// on the ruler (LINE_Y 300). Ruler labels at 312 stay inside the play area.
+const HOME = { A: { x: ORIGIN, y: 216 }, B: { x: ORIGIN, y: 64 } };
 
 // The single worked example threaded through every stage: 2/7 + 3/7 = 5/7.
 const A_N = 2, B_N = 3, DEN = 7, ANSWER = A_N + B_N; // 5
@@ -117,7 +118,19 @@ function Combined({ a, b, den, reveal, dim = false }) {
 }
 
 // ---------------- main ----------------
-export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage, stumpingRecipe = null, onReturnToKitchen }) {
+// `mergeHost` lets a HOST lesson reuse AppR1's interactive stages inline while
+// presenting its OWN header + tab strip. Used by AppNumberLine for the merged
+// nl+r1 lesson (the wireframe folds r1's add-stages into nl's 8-tab strip): nl
+// renders <AppR1 mergeHost=…> for tabs 3–7. When present, AppR1:
+//   • shows the host's header (no/tag/title) + the host's 8-tab strip;
+//   • restricts advance/back to the host-listed SUBSET of stages in host order
+//     (so r1's Bind/Fade/Workbench are skipped — they're not in the nl lesson),
+//     and hands control back to the host (nl) at the ends (→ nl ★Practice forward,
+//     → nl Write backward);
+//   • routes a click on a non-r1 host tab (Place / Write / ★Practice) back to nl,
+//     while r1 tabs (3–7) navigate AppR1's own stages.
+// Without mergeHost, AppR1 is the standalone lesson exactly as before.
+export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage, stumpingRecipe = null, onReturnToKitchen, mergeHost = null }) {
   // Identity + tab strip come from the central registry (web/src/lessons/r1.js).
   // The component no longer hardcodes tag/title or its own tab display copy.
   // `id.stages` is the registry strip in order; we re-key each strip item to this
@@ -155,6 +168,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
   const [setupOk, setSetupOk] = useState(false);
   // --- mandatory "show your work" step (ungraded; ink-presence gate) ---
   const [showWorkInked, setShowWorkInked] = useState(false);
+  const [wbBuilt, setWbBuilt] = useState(null); // build stage: a complete row, awaiting Check
 
   // --- shared controller backbone (engine wiring + stage nav + outcome state) ---
   // The hook owns everything identical across lessons; R1 supplies only its stage
@@ -165,11 +179,32 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
   const SCAFFOLD_KEY = (key) => (key === "sw" ? "showwork" : String(key));
   // Advance / back by STAGES ORDER (not arithmetic) so the string-keyed "sw" step
   // sits correctly between Applied (6) and Words (7).
+  //
+  // mergeHost narrows the order to the host-listed subset (mergeHost.order, a list
+  // of stage VALUES `n`): advancing past its last entry / backing before its first
+  // hands control to the host (nl) instead of touching r1's omitted stages. The
+  // standalone path is unchanged (full STAGES order).
   const advanceByOrder = (cur) => {
+    if (mergeHost) {
+      const order = mergeHost.order;
+      const i = order.indexOf(cur);
+      if (i < 0) return cur;
+      if (i < order.length - 1) return order[i + 1];
+      mergeHost.onExitForward?.();   // past the last merged stage → nl ★Practice
+      return cur;
+    }
     const idx = STAGES.findIndex((s) => s.n === cur);
     return idx >= 0 && idx < STAGES.length - 1 ? STAGES[idx + 1].n : cur;
   };
   const backByOrder = (cur) => {
+    if (mergeHost) {
+      const order = mergeHost.order;
+      const i = order.indexOf(cur);
+      if (i < 0) return cur;
+      if (i > 0) return order[i - 1];
+      mergeHost.onExitBack?.();      // before the first merged stage → nl Write
+      return cur;
+    }
     const idx = STAGES.findIndex((s) => s.n === cur);
     return idx > 0 ? STAGES[idx - 1].n : cur;
   };
@@ -189,7 +224,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
       setMerged(false); setMergeTick(0);
       setSlate({ num: "", den: "" });
       setSetupA({ num: "", den: "" }); setSetupB({ num: "", den: "" }); setSetupOk(false);
-      setShowWorkInked(false);
+      setShowWorkInked(false); setWbBuilt(null);
       setPosA(HOME.A); setPosB(HOME.B);
     },
     // U3: when opened from a stumping kitchen recipe, certified mastery returns the
@@ -205,7 +240,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     stage, goStage, nextStage,
     emit, reportAttempt, award, flashBad,
     solved, solvedRef, stars, badInput, cook, setCook, status, setStatus,
-    say, speaking, selfCorrectionsRef,
+    sayPhase, speaking, selfCorrectionsRef,
   } = sc;
 
   // Selector clicks pass a STAGES `key` string; normalize to the stage VALUE
@@ -236,7 +271,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     setMergeTick((t) => t + 1);
     setCook("idle");
     setStatus({ tone: "ok", text: `Same-size pieces, all counted up — that's ${ANSWER} pieces. The bottom stays ${DEN}. How many ${DEN}ths in all? Write the top number.` });
-    say("r1CountUp");
   }
 
   function unmerge() {
@@ -244,7 +278,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     setMerged(false); mergedRef.current = false;
     setPosA(HOME.A); setPosB(HOME.B);
     setCook("idle"); setStatus({ tone: "normal", text: "Split them back apart — drag them together when you're ready to count." });
-    say("r1Split");
     // Count a self-correction (place → remove oscillation).
     selfCorrectionsRef.current += 1;
     emit({ type: "remove_block", payload: { node_id: NODE } });
@@ -289,7 +322,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     if (!merged) {
       setCook("think");
       setStatus({ tone: "warn", text: "Bring the two stacks together and count the pieces first." });
-      say("r1FirstMerge"); return;
+      return;
     }
     const n = parseInt(slate.num, 10);
     if (!(n > 0)) {
@@ -303,7 +336,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
       setStatus({ tone: "warn", text: reachedForBottom
         ? `Careful — the bottom number is locked. We only count the tops. How many ${DEN}ths in all?`
         : `Not quite — count every piece in the joined stack. How many ${DEN}ths in all?` });
-      say(reachedForBottom ? "r1KeepBottom" : "r1NotQuite");
       // Report incorrect attempt to the engine.
       reportAttempt({ correct: false, answerValue: [n, DEN], errorSignature: errSig, stars: 0 });
       return;
@@ -322,25 +354,23 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     if (!(n > 0)) {
       flashBad();
       setStatus({ tone: "warn", text: "Write the top number — add the tops together." });
-      say("Write the top number. Add the tops together."); return { ok: false, errorSignature: null };
+      return { ok: false, errorSignature: null };
     }
     if (!numeratorOnly && !(d > 0)) {
       flashBad();
       setStatus({ tone: "warn", text: `Write the bottom number too — the bottom stays ${DEN}.` });
-      say(`Write the bottom number too. The bottom stays ${DEN}.`); return { ok: false, errorSignature: null };
+      return { ok: false, errorSignature: null };
     }
     if (n === DEN || (!numeratorOnly && d !== DEN)) {
       // added the bottoms, or changed the denominator — the classic slip
       flashBad();
       setStatus({ tone: "warn", text: `Careful — keep the bottom ${DEN} and only add the tops. ${A_N} + ${B_N} = ?` });
-      say(`Careful. Keep the bottom ${DEN} and only add the tops.`);
       reportAttempt({ correct: false, answerValue: [n, d || DEN], errorSignature: "add_denominators", stars: 0 });
       return { ok: false, errorSignature: "add_denominators" };
     }
     if (n !== ANSWER) {
       flashBad();
       setStatus({ tone: "warn", text: `Not quite — add the tops: ${A_N} + ${B_N}. How many ${DEN}ths in all?` });
-      say(`Not quite. Add the tops, ${A_N} plus ${B_N}. How many sevenths in all?`);
       reportAttempt({ correct: false, answerValue: [n, d || DEN], errorSignature: null, stars: 0 });
       return { ok: false, errorSignature: null };
     }
@@ -364,6 +394,14 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
   function onSandboxSolve({ num, den }) {
     if (solvedRef.current) return;
     setSlate({ num: String(num), den: String(den) });
+    // No auto-finish — record the built row; the child confirms with Check.
+    setWbBuilt({ num, den });
+    setStatus({ tone: "normal", text: "Row built — press Check to count it up." });
+  }
+  function checkBuildRow() {
+    if (solved) { nextStage(); return; }
+    if (!wbBuilt) return;
+    const { num, den } = wbBuilt;
     award(`Yes! ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN} — built from same-size pieces and counted up. Brilliant!`, "r1FullMarks", [num, den]);
   }
 
@@ -406,27 +444,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     })
     .filter(([, , isWhole]) => reveal || isWhole);
 
-  // ---- the goal banner (shared <LessonGoal>) ----
-  const Goal = (
-    <LessonGoal say={say} speaking={speaking} voiceKey="r1Goal" voxSpeaker="mom">
-      Babushka needs <b>{A_N}/{DEN}</b> of a tray and <b>{B_N}/{DEN}</b> of a tray — the pieces are the same size, so add the tops and keep the bottom.
-    </LessonGoal>
-  );
-
-  // ── THE QUESTION, MADE PROMINENT ───────────────────────────────────────────
-  // The shared <QuestionBand> carries the bare equation. LessonShell mounts it
-  // ONCE, as a full-width row directly UNDER the stage-selector tabs, so the
-  // question reads in the exact same spot on every stage and never overlaps the
-  // working area. The bare equation body + the "?"→solved answer are the lesson's
-  // data; goal/story/helper copy stays secondary below it.
-  const questionBand = (
-    <QuestionBand
-      lead="the question"
-      expr={<>{A_N}/{DEN} <span className="qb-op">+</span> {B_N}/{DEN}</>}
-      answer={solved ? `${ANSWER}/${DEN}` : "?"}
-    />
-  );
-
   // "Ready to check": the child has committed the answer the current stage needs,
   // so the Check button lights up (a red glow) to say "you can check now". Stage 1
   // also needs the stacks merged; stage 3 writes only the numerator (den locked).
@@ -440,20 +457,51 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
   // The Cook + speech ribbon, shared by every standard four-zone stage.
   const Tutor = <TutorRibbon cook={cook} status={status} />;
 
-  // The "keep the bottom" hint rail (manipulation / number / proof stages).
+  // The rail-as-instruction card (Wave-F): the task copy + the Read-aloud pill at
+  // the TOP of the rail (replacing the deleted goal banner), with the "keep the
+  // bottom" lock card rendered below it (the wireframe r1 rail's .lockcard).
   const Rail = (heading, hint) => (
-    <HintRail heading={heading} hint={hint}>
-      <div className="lockcard">
-        <BigFrac num={<span style={{ color: "var(--red)" }}>+</span>} den={DEN} locked />
-        <div className="lockcard-note">add the tops<br />keep the {DEN}</div>
-      </div>
-    </HintRail>
+    <RailInstruction
+      say={sayPhase}
+      speaking={speaking}
+      voxSpeaker="cook"
+      heading={heading}
+      extra={
+        <div className="lockcard">
+          <BigFrac num={<span style={{ color: "var(--red)" }}>+</span>} den={DEN} locked />
+          <div className="lockcard-note">add the tops<br />keep the {DEN}</div>
+        </div>
+      }
+    >
+      {hint}
+    </RailInstruction>
   );
 
   // ---- the stage selector "key" for StageTabs. The current stage is matched by
   // `n` so the string-keyed "sw" step selects/navigates correctly alongside the
   // numeric stages; tabs carry the canonical STAGES `.key` strings. ----
   const curKey = STAGES.find((s) => s.n === stage)?.key;
+
+  // ---- merged (nl+r1) tab strip. When hosted by nl, the strip is the HOST's
+  // 8-tab strip: `current` is THIS r1 stage mapped to its host key (so the strip
+  // tracks AppR1's own auto-advance), and onSelect routes r1 tabs into AppR1's
+  // goStage while non-r1 host tabs (Place/Write/★Practice) hand back to nl. ----
+  const tabsForShell = mergeHost
+    ? {
+        stages: mergeHost.stages,
+        current: mergeHost.hostKeyForN?.[stage],
+        onSelect: (hostKey) => {
+          const n = mergeHost.nFromHostKey?.[hostKey];
+          if (n !== undefined) goStage(n);     // an r1 tab → AppR1's own stage
+          else mergeHost.onNative?.(hostKey);  // Place / Write / ★Practice → nl
+        },
+        label: mergeHost.label || "Lesson stages",
+      }
+    : {
+        stages: stripStages,
+        current: curKey,
+        onSelect: (key) => goStage(toStageVal(key)),
+      };
 
   // ---- Per-stage body -------------------------------------------------------
   let body = null;
@@ -469,7 +517,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     // slots. Overlap of the answer bar over the blocks is structurally impossible.
     body = (
       <LessonBoard
-        footHeight={140}
+        footHeight={196}
         railWidth={396}
         stage={
           <div className="canvas r1-s1-canvas" id="r1canvas">
@@ -483,7 +531,9 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
             ))}
 
             {merged ? (
-              <div className="nbar" style={{ left: HOME.A.x, top: 96 }}>
+              /* the joined stack sits ON the ruler (same resting y as the lower
+                 stack), so its 5 pieces line up with the 0→5/7 ticks below. */
+              <div className="nbar" style={{ left: HOME.A.x, top: HOME.A.y }}>
                 <div className="btag">
                   <BigFrac num={(reveal || solved) ? ANSWER : "?"} den={DEN} locked />
                   {!solved && <button className="mini" title="split them back apart" onClick={unmerge}>↺</button>}
@@ -532,7 +582,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
                 </span>
               </>
             }
-            cap={solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : merged ? "count the pieces — write the top number" : "count the pieces to unlock the answer"}
             solved={solved}
             ready={answerReady}
             stars={stars}
@@ -557,7 +606,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
 
     body = (
       <LessonBoard
-        footHeight={140}
+        footHeight={196}
         railWidth={396}
         stage={
           <div className={"canvas r1-fz-canvas" + (stage === 3 ? " r1-faded" : "")} id="r1canvas">
@@ -575,11 +624,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
             <div className="r1-bind-stack">
               <div className="btag"><BigFrac num={ANSWER} den={DEN} locked /></div>
               <Combined a={A_N} b={B_N} den={DEN} reveal dim={stage === 3} />
-              <div className="r1-bind-cap">
-                {stage === 2
-                  ? <>this one stack <b>is</b> the number {ANSWER}/{DEN}</>
-                  : <>the blocks just confirm it — the equation up top leads now</>}
-              </div>
             </div>
           </div>
         }
@@ -612,7 +656,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
                 </span>
               </>
             }
-            cap={solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : "write your answer on the Slate, then Check"}
             solved={solved}
             ready={answerReady}
             stars={stars}
@@ -627,34 +670,45 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     // STAGE 4 · WORKBENCH — the shared <BlockSandbox>. The bin offers sevenths PLUS
     // two distractor sizes (halves, thirds) so the child must CHOOSE the right
     // pieces, stack them on the ruler, and count to 5/7. The sandbox renders its
-    // OWN .play (diagram + rail); we mount a sibling .hud with the Cook + ribbon +
-    // a "Next ▸" button that stays disabled until the row solves. This Workbench
-    // .hud stage has no overlap bug, so it stays as-is (not in LessonBoard).
+    // OWN .play (diagram + rail); we mount a sibling .hud with the shared
+    // corrective-only <TutorRibbon> (Cook always visible, ribbon hidden unless a
+    // wrong answer sets tone:"warn") + a "Next ▸" button gated on the solved row.
     body = (
-      <>
-        <BlockSandbox
-          bin={[7, 2, 3]}
-          targetValue={ANSWER / DEN}
-          targetLabel={`${A_N}/${DEN} + ${B_N}/${DEN}`}
-          rulerWholes={answerWholes}
-          solved={solved}
-          onSolve={onSandboxSolve}
-          onPlace={() => { selfCorrectionsRef.current += 1; emit({ type: "place_block", payload: { node_id: NODE } }); }}
-          onRemove={() => { selfCorrectionsRef.current += 1; emit({ type: "remove_block", payload: { node_id: NODE } }); }}
-          title="Workbench"
-          hint={`Pull blocks from the bin and stack them on the line. Build ${A_N}/${DEN} + ${B_N}/${DEN} out of same-size pieces, then count them up.`}
-        />
-        <div className="hud">
-          <div className="cook-zone">
-            <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-            <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
-          </div>
-          <div className="marks">
-            {solved && <Rosette count={stars} />}
-            <button className={"check" + (solved ? " done" : "")} onClick={() => { if (solved) nextStage(); }} disabled={!solved}>{solved ? "Next stage ▸" : "Build it ▸"}</button>
-          </div>
-        </div>
-      </>
+      <LessonBoard
+        footHeight={196}
+        railWidth={396}
+        stage={
+          <BlockSandbox
+            bin={[7, 2, 3]}
+            targetValue={ANSWER / DEN}
+            targetLabel={`${A_N}/${DEN} + ${B_N}/${DEN}`}
+            rulerWholes={answerWholes}
+            solved={solved}
+            onSolve={onSandboxSolve}
+            onPlace={() => { selfCorrectionsRef.current += 1; emit({ type: "place_block", payload: { node_id: NODE } }); }}
+            onRemove={() => { selfCorrectionsRef.current += 1; emit({ type: "remove_block", payload: { node_id: NODE } }); }}
+          />
+        }
+        rail={Rail("Workbench", <>Pull blocks from the bin and stack them on the line. Build {A_N}/{DEN} + {B_N}/{DEN} out of same-size pieces, then count them up.</>)}
+        answer={
+          <AnswerBar
+            eq={
+              <>
+                <span className="r1-fz-frac">{A_N}/{DEN}</span>
+                <span className="r1-fz-op">+</span>
+                <span className="r1-fz-frac">{B_N}/{DEN}</span>
+              </>
+            }
+            cap="stack same-size pieces to the flag, then count them"
+            solved={solved}
+            ready={!!wbBuilt && !solved}
+            stars={stars}
+            onCheck={checkBuildRow}
+            checkLabel={solved ? "Next stage ▸" : "Check"}
+          />
+        }
+        tutor={Tutor}
+      />
     );
   } else if (stage === 5) {
     // STAGE 5 · NUMBERS — a BARE equation; write the whole fraction. No blocks at
@@ -663,7 +717,7 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     // equation + Slate + Check ride in the shared <AnswerBar>.
     body = (
       <LessonBoard
-        footHeight={140}
+        footHeight={196}
         railWidth={396}
         stage={
           <div className="canvas r1-fz-canvas r1-fz-canvas-center" id="r1canvas">
@@ -674,7 +728,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
               <span className="r1-bigeq-op">=</span>
               {solved ? <BigFrac num={ANSWER} den={DEN} /> : <BigFrac num="?" den="?" />}
             </div>
-            <div className="r1-numbers-cap">No blocks now — add the tops, keep the bottom, and write the whole answer.</div>
           </div>
         }
         rail={Rail("Write the Whole Answer", <>Add the tops ({A_N} + {B_N}) and keep the bottom {DEN}. Write both numbers on the Slate.</>)}
@@ -701,7 +754,6 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
                 </span>
               </>
             }
-            cap={solved ? `full marks — ${A_N}/${DEN} + ${B_N}/${DEN} = ${ANSWER}/${DEN}!` : "write the whole fraction on the Slate, then Check"}
             solved={solved}
             ready={answerReady}
             stars={stars}
@@ -722,50 +774,71 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     const story = (
       <>Babushka needs <b>{A_N}/{DEN}</b> + <b>{B_N}/{DEN}</b> of a tray — how much in all?</>
     );
+    // Wave-F: restructured onto the shared 4-zone <LessonBoard> per the wireframe
+    // room-r1-6-applied.js — rail = <RailInstruction> (the question + Read-aloud),
+    // stage = the required word→sum setup gate (story + ExpressionSlate), answer =
+    // the total Slate + Check, tutor = corrective ribbon. The all-in-one WordProblem
+    // column (question across the top) is gone.
     body = (
       <LessonBoard
-        variant="wide"
-        className="r1-fz-words"
-        tutorWidth={220}
-        content={
-          <FitStage axis="y">
-          <WordProblem
-            story={story}
-            tag="Babushka's kitchen"
-            readAloud={() => say(`Babushka needs ${A_N}/${DEN} plus ${B_N}/${DEN} of a tray. How much in all?`)}
-            speaking={speaking}
-            answerLead="Now write the total"
-            setupLead="First, write the question as a sum"
-            setup={
-              <>
-                <ExpressionSlate
-                  a={setupA} b={setupB}
-                  onChange={onSetupChange}
-                  onSubmit={checkSetup}
-                  denA={DEN} denB={DEN}
-                  disabled={setupOk || solved}
-                  autoFocus={!setupOk && setupA.num === "" ? "a-num" : undefined}
-                  className={badInput && !setupOk ? "is-shake" : ""}
-                />
-                {setupOk
-                  ? <span className="r1-setup-ok">✓ that's the sum — now solve it</span>
-                  : <button type="button" className="wp-check" onClick={checkSetup}>Check the sum</button>}
-              </>
-            }
-            slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
-            values={slate}
-            onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
-            layout="fraction"
-            den={DEN}
-            disabled={!setupOk || solved}
-            autoFocusKey={setupOk ? "num" : undefined}
-            onCheck={() => checkSlateStage(false)}
-            checkLabel={solved ? "Next stage ▸" : "Check"}
-            checkDisabled={!setupOk}
-          />
-          </FitStage>
+        footHeight={196}
+        railWidth={360}
+        stage={
+          <div className="wp-setup">
+            <span className="wp-tag">Babushka's kitchen</span>
+            <p className="wp-story">{story}</p>
+            <div className="wp-setup-lead">First, write the question as a sum</div>
+            <div className="wp-setup-row">
+              <ExpressionSlate
+                a={setupA} b={setupB}
+                onChange={onSetupChange}
+                onSubmit={checkSetup}
+                denA={DEN} denB={DEN}
+                disabled={setupOk || solved}
+                autoFocus={!setupOk && setupA.num === "" ? "a-num" : undefined}
+                className={badInput && !setupOk ? "is-shake" : ""}
+              />
+              {setupOk
+                ? <span className="r1-setup-ok">✓ that's the sum — now solve it</span>
+                : <button type="button" className="wp-check" onClick={checkSetup}>Check the sum</button>}
+            </div>
+            <div className="wp-answer-lead">Now write the total</div>
+          </div>
         }
-        tutor={<TutorRibbon cook={cook} status={status} narrow />}
+        rail={
+          <RailInstruction
+            say={sayPhase} speaking={speaking}
+            voxSpeaker="cook"
+            heading="Babushka's kitchen"
+          >
+            A question in words, with the fractions shown. Write what it's asking
+            as a <b>sum</b> first, then give the total.
+          </RailInstruction>
+        }
+        answer={
+          <div className="wp-answer">
+            <div className="wp-answer-row">
+              <Slate
+                slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
+                values={slate}
+                onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+                onSubmit={() => checkSlateStage(false)}
+                layout="fraction"
+                den={DEN}
+                disabled={!setupOk || solved}
+                autoFocusKey={setupOk ? "num" : undefined}
+                ariaLabel="write the total"
+              />
+              <button
+                type="button"
+                className={"wp-check" + (answerReady ? " ready" : "")}
+                onClick={() => checkSlateStage(false)}
+                disabled={!setupOk}
+              >{solved ? "Next stage ▸" : "Check"}</button>
+            </div>
+          </div>
+        }
+        tutor={Tutor}
       />
     );
   } else if (stage === "sw") {
@@ -773,114 +846,131 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
     // Words. The child shows their working however they like; advancing is gated
     // purely on ink presence (onInkChange), never on a graded answer. The slate
     // remounts (key) on (re)entry to clear, and resetStage clears showWorkInked.
-    const story = (
-      <>Show how you worked it out — write the sum, draw the pieces, do whatever helps. There's no wrong way here.</>
-    );
+    // Wave-F: restructured onto the shared 4-zone <LessonBoard> per the wireframe
+    // room-r1-sw-showwork.js — rail = <RailInstruction> (task copy + Read-aloud),
+    // stage = the free-form blank slate, answer = the presence-gated Next ▸, tutor =
+    // corrective ribbon. The instruction no longer sits in a top column.
+    // The child can EITHER scribble on the slate (ink) OR type the total into the
+    // number-entry Slate in the answer bar; Next unlocks on either. Still UNGRADED —
+    // any values are accepted (this is "show your work", not a checked answer).
+    const swReady = showWorkInked || (slate.num !== "" && slate.den !== "");
     body = (
       <LessonBoard
-        variant="wide"
-        className="r1-fz-words"
-        tutorWidth={220}
-        content={
-          <FitStage axis="y">
-          <WordProblem
-            story={story}
-            tag="Babushka's kitchen"
-            readAloud={() => say("Show how you worked it out. Write the sum, draw the pieces, whatever helps. There is no wrong way here.")}
-            speaking={speaking}
-            answerLead="Show your work"
-            setup={
-              <div className="bs-surface" style={{ position: "relative", width: "100%", height: 320 }}>
-                <BlankSlate
-                  key="showwork:r1"
-                  hint="show your work here — write anything you like ✎"
-                  onInkChange={setShowWorkInked}
-                  ariaLabel="show your work on a blank slate"
-                />
-              </div>
-            }
-            setupLead="Show your work — write anything you like"
-          >
-            {/* custom "answer" surface: this step is ungraded, so the only control
-                is a presence-gated Next ▸ (BlankSlate never advances itself). */}
-            <button
-              className={"check" + (showWorkInked ? " ready" : "")}
-              disabled={!showWorkInked}
-              onClick={() => nextStage()}
-            >
-              Next ▸
-            </button>
-          </WordProblem>
-          </FitStage>
+        footHeight={196}
+        railWidth={360}
+        stage={
+          <ScratchSurface variant="required" slateKey="showwork:r1" onInkChange={setShowWorkInked} />
         }
-        tutor={<TutorRibbon cook={cook} status={status} narrow />}
+        rail={
+          <RailInstruction
+            say={sayPhase} speaking={speaking}
+            voxSpeaker="cook"
+            heading="Show your work"
+          >
+            Show how you worked it out — write the sum, draw the pieces, do whatever
+            helps. There's no wrong way here.
+          </RailInstruction>
+        }
+        answer={
+          <div className="lbar">
+            <div className="lbar-eq">
+              <span className="r1-fz-frac">{A_N}/{DEN}</span>
+              <span className="r1-fz-op">+</span>
+              <span className="r1-fz-frac">{B_N}/{DEN}</span>
+              <span className="r1-fz-op">=</span>
+              <span className="r1-fz-slate">
+                <Slate
+                  slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
+                  values={slate}
+                  onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+                  layout="fraction"
+                  den={DEN}
+                  autoFocusKey="num"
+                  ariaLabel="write your total here"
+                />
+              </span>
+            </div>
+            <div className="lbar-marks">
+              <button
+                type="button"
+                className={"check" + (swReady ? " ready" : "")}
+                disabled={!swReady}
+                onClick={() => nextStage()}
+              >Next ▸</button>
+            </div>
+          </div>
+        }
+        tutor={Tutor}
       />
     );
   } else {
     // STAGE 7 · WORDS — a plain-language story; read it, pull the numbers, write
     // the total. No blocks, no given equation. The setup here is an OPTIONAL,
     // ungraded free-form BlankSlate — it NEVER gates the answer (answer stays enabled).
-    const story = (
-      <>
-        Babushka used <b>two sevenths</b> of the oats for the porridge, then poured in{" "}
-        <b>three sevenths</b> more. The pieces are the same size — sevenths.{" "}
-        How much of the oats did she use in all?
-      </>
-    );
+    // Wave-F: restructured onto the shared 4-zone <LessonBoard> per the wireframe
+    // room-r1-7-words.js — rail = <RailInstruction> (the story + Read-aloud), stage =
+    // the optional ungraded scratch slate, answer = the from-scratch fraction Slate +
+    // Check, tutor = corrective ribbon. The story no longer sits in a top column.
     body = (
       <LessonBoard
-        variant="wide"
-        className="r1-fz-words"
-        tutorWidth={220}
-        content={
-          <FitStage axis="y">
-          <WordProblem
-            story={story}
-            tag="Babushka's Recipe"
-            readAloud={() => say("Babushka used two sevenths of the oats, then poured in three sevenths more. The pieces are the same size. How much of the oats did she use in all?")}
-            speaking={speaking}
-            answerLead="Write how much in all"
-            setupLead="Optional — show your work here"
-            setup={
-              <div className="bs-surface r1-words-scratch">
-                <BlankSlate key="words-scratch" hint="optional — show your work here ✎" />
-              </div>
+        footHeight={196}
+        railWidth={360}
+        stage={
+          <ScratchSurface slateKey="words-scratch" />
+        }
+        rail={
+          <RailInstruction
+            say={sayPhase} speaking={speaking}
+            voxSpeaker="cook"
+            heading="Babushka's Recipe"
+          >
+            Babushka used <b>two sevenths</b> of the oats for the porridge, then poured in{" "}
+            <b>three sevenths</b> more. The pieces are the same size — sevenths.{" "}
+            How much of the oats did she use in all?
+          </RailInstruction>
+        }
+        answer={
+          <AnswerBar
+            eq={
+              <span className="r1-fz-slate">
+                <Slate
+                  slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
+                  values={slate}
+                  onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
+                  onSubmit={() => checkSlateStage(false)}
+                  layout="fraction"
+                  den={DEN}
+                  disabled={solved}
+                  autoFocusKey="num"
+                  ariaLabel="write how much in all"
+                />
+              </span>
             }
-            slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
-            values={slate}
-            onChange={(k, v) => setSlate((s) => ({ ...s, [k]: v }))}
-            layout="fraction"
-            den={DEN}
-            disabled={solved}
-            autoFocusKey="num"
+            solved={solved}
+            ready={answerReady}
+            stars={stars}
             onCheck={() => checkSlateStage(false)}
             checkLabel={solved ? "Finish ▸" : "Check"}
           />
-          </FitStage>
         }
-        tutor={<TutorRibbon cook={cook} status={status} narrow />}
+        tutor={Tutor}
       />
     );
   }
 
   return (
     <LessonShell
-      no={shellNo}
-      tag={id.tag.replace(/^Lesson \d+ · /, "")}
-      title={shellTitle}
+      no={mergeHost?.no ?? shellNo}
+      tag={(mergeHost?.tag ?? id.tag).replace(/^Lesson \d+ · /, "")}
+      title={mergeHost?.title ?? shellTitle}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={reset}
-      tabs={{
-        stages: stripStages,
-        current: curKey,
-        onSelect: (key) => goStage(toStageVal(key)),
-      }}
-      // The bare equation reads in the same spot on every stage EXCEPT the final
-      // words-only stage (7): there the child must read the PROSE and extract the
-      // math themselves, so showing the equation would give the answer away.
-      band={stage !== 7 && stage !== "practice" ? questionBand : null}
-      goal={Goal}
+      // When hosted by nl the strip reads as the HOST's 8-tab lesson; otherwise
+      // AppR1 drives its own registry strip. (See tabsForShell.)
+      // Wave-F: no goal banner, no QuestionBand — the task copy lives in the rail
+      // (<RailInstruction>), the tutor ribbon is corrective-only.
+      tabs={tabsForShell}
     >
       {body}
     </LessonShell>

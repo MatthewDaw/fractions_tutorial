@@ -55,11 +55,15 @@ export function useLessonScaffold({
   nodeId,
   lessonId,
   initialStage,
-  advance,
+  advance: advanceProp,
   back,
   stagesOrder,
   scaffoldKeyFor = (k) => k,
   introFor,
+  // Optional: the narration line (baked clip key OR text) spoken when a phase
+  // OPENS. Defaults to introFor(key)'s text — the on-screen question itself. This
+  // is the ONE auto-play trigger in a lesson; see sayPhaseLine/goStage.
+  voiceForStage,
   resetStage,
   surfaceFormFor,
   onEnd,
@@ -92,17 +96,12 @@ export function useLessonScaffold({
   // so the default start is mid-ladder, not L0).
   generatedStartLevel = 2,
   // ---- UI1: engine-paced TEACHING stages (reversible) -----------------------
-  // When true, a SCRIPTED (non-generated) teaching stage is paced by the engine
-  // DECISION the same way the generated practice stage is — not just on a single
-  // correct. Concretely, on a wrong answer the shared `reportAttempt` routes the
-  // returned Decision through `applyEngineDecision`, so a stumble that the engine
-  // answers with RaiseScaffold steps the teaching stage BACK (to more support,
-  // work preserved), and a default PresentProblem HOLDS the stage (no advance,
-  // work preserved). On a strong run, a FadeScaffold on a teaching stage SKIPS
-  // AHEAD to the stage that matches the faded design level (instead of a single
-  // step). Default ON; pass `adaptiveTeaching: false` to fully restore the prior
-  // advance-on-single-correct / ignore-the-engine-on-error behavior (the kill
-  // switch if this regresses a room).
+  // A WRONG answer on a teaching stage always HOLDS the current step (the child
+  // stays put and retries — see reportAttempt). When this flag is on, the only
+  // engine pacing on a teaching stage is on the CORRECT path: a strong run
+  // (FadeScaffold) SKIPS AHEAD to the stage matching the faded design level
+  // instead of a single step (applyEngineDecision). Default ON; pass
+  // `adaptiveTeaching: false` to restore plain single-step advance-on-correct.
   adaptiveTeaching = true,
 }) {
   const resolvedNodeId = typeof nodeId === "function" ? nodeId(lesson) : nodeId;
@@ -118,16 +117,8 @@ export function useLessonScaffold({
     return false;
   }, [genSkill, generatedStages]);
 
-  // UI1: does this lesson drive its STAGE through the hook (full adopter), or does
-  // it keep its own beat navigation (partial adopter, e.g. LessonUnlikeDen)? Only
-  // the full adopters — those that hand the hook an advance/back fn or a
-  // stagesOrder — get the engine-paced wrong-answer routing; a partial adopter
-  // renders off its OWN beat state and never reads the hook's `stage`, so applying
-  // a stage move there would desync it. So we gate the new routing on this.
-  const drivesStageThroughHook = !!(advance || back || stagesOrder);
-
   // advance / back: explicit callbacks win; otherwise derive from stagesOrder.
-  const advanceFn = advance || ((cur) => {
+  const advanceFn = advanceProp || ((cur) => {
     if (!stagesOrder) return cur;
     const i = stagesOrder.indexOf(cur);
     return i >= 0 && i < stagesOrder.length - 1 ? stagesOrder[i + 1] : cur;
@@ -211,6 +202,13 @@ export function useLessonScaffold({
   const stageRef = useRef(stage);
   const selfCorrectionsRef = useRef(0);
   const presentEmittedRef = useRef(false);
+  // UX: a correct answer NEVER auto-advances. The engine Decision earned on a
+  // correct attempt is BANKED here and applied only when the child explicitly
+  // advances (the "Next →" button → nextStage / advance). This guarantees the
+  // child always gets a beat to SEE the success (rosette + cheer) before moving
+  // on — no immediate redirect to a fresh problem/stage. Wrong-answer routing is
+  // unaffected (it never banks; see reportAttempt).
+  const pendingDecisionRef = useRef(null);
   useEffect(() => { solvedRef.current = solved; }, [solved]);
   useEffect(() => { stageRef.current = stage; }, [stage]);
 
@@ -248,7 +246,26 @@ export function useLessonScaffold({
   // Latest callbacks in a ref so the memoized helpers never go stale without
   // forcing every consumer to re-memoize.
   const cb = useRef({});
-  cb.current = { advanceFn, backFn, scaffoldKeyFor, introFor, resetStage, surfaceFormFor, onEnd, isGenStage, makeProbFor, isCertified };
+  cb.current = { advanceFn, backFn, scaffoldKeyFor, introFor, voiceForStage, resetStage, surfaceFormFor, onEnd, isGenStage, makeProbFor, isCertified };
+
+  // ── THE phase-narration channel (the ONLY in-lesson auto-play) ──────────────
+  // Resolve a phase's question line — a baked clip key (voiceForStage) or, by
+  // default, the on-screen instruction text (introFor) — and speak it. Called in
+  // exactly two places: when a phase OPENS (goStage / initial mount) and by the
+  // read-aloud button (sayPhase). NOTHING else in a lesson may call say(): no
+  // correct/wrong/interaction narration. One trigger, one source of truth.
+  const sayPhaseLine = useCallback((key) => {
+    const vf = cb.current.voiceForStage;
+    let line = vf ? vf(key) : "";
+    if (!line) {
+      const intro = cb.current.introFor?.(key);
+      line = intro ? (typeof intro === "string" ? intro : intro.text || "") : "";
+    }
+    if (line) say(line, { source: "phase" });
+  }, [say]);
+  // The read-aloud button replays the CURRENT phase's question (same line/id as
+  // the auto-play, so a second press toggles it off — the child can shut it off).
+  const sayPhase = useCallback(() => sayPhaseLine(stageRef.current), [sayPhaseLine]);
 
   // UI1: a stable handle to applyEngineDecision (defined below) so the earlier
   // reportAttempt can route a wrong-answer Decision through it without a forward
@@ -270,6 +287,8 @@ export function useLessonScaffold({
             : toScaffoldLevel(resolvedLessonId, scaffoldKeyFor(initialStage)),
         },
       });
+      // Opening the first phase → auto-narrate its question (the one auto-play).
+      sayPhaseLine(initialStage);
     }
     return () => stopVoice();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -309,6 +328,7 @@ export function useLessonScaffold({
       setGenLevel(generatedStartLevel);
     }
     setStage(key); stageRef.current = key;
+    pendingDecisionRef.current = null; // entering a stage clears any banked decision
     setSolved(false); solvedRef.current = false;
     setStars(0); setBadInput(false); setCook("idle");
     cb.current.resetStage?.(key);
@@ -326,10 +346,18 @@ export function useLessonScaffold({
           : toScaffoldLevel(resolvedLessonId, cb.current.scaffoldKeyFor(key)),
       },
     });
-  }, [emit, resolvedNodeId, resolvedLessonId, stopVoice, generatedStartLevel]);
+    // Auto-narrate the phase question — ONLY on a real phase change, never on a
+    // same-stage re-roll (a generated practice variation isn't "opening a phase").
+    if (prevStage !== key) sayPhaseLine(key);
+  }, [emit, resolvedNodeId, resolvedLessonId, stopVoice, generatedStartLevel, sayPhaseLine]);
 
-  // ---- linear advance (no-op at the end) ------------------------------------
+  // ---- linear advance to the NEXT step (the child's "Next →" command) --------
+  // Deterministic: always the next stage in order. It NEVER consults the engine
+  // Decision (that path can step backward / skip / restart — "some random place").
+  // The engine's adaptive pacing on a generated practice stage is applied through
+  // `advance()` instead, which re-rolls in place; teaching stages are pure linear.
   const nextStage = useCallback(() => {
+    pendingDecisionRef.current = null; // moving on; drop any banked decision
     const cur = stageRef.current;
     const n = cb.current.advanceFn(cur);
     if (n == null || n === cur) { cb.current.onEnd?.(); return { atEnd: true }; }
@@ -370,34 +398,21 @@ export function useLessonScaffold({
     );
     selfCorrectionsRef.current = 0;
 
-    // UI1: engine-paced TEACHING stages. On a WRONG answer the rooms historically
-    // called reportAttempt and then simply returned — the engine's Decision was
-    // computed (and logged) but never APPLIED, so a scripted teaching stage never
-    // morphed on a stumble the way the generated practice stage does. Here, on a
-    // FIXED (non-generated) stage we route that wrong-answer Decision through
-    // applyEngineDecision so:
-    //   • RaiseScaffold (≥2 errors at this scaffold) → step the stage BACK to more
-    //     support (work preserved: the prior stage re-enters cleanly; the child is
-    //     never blocked, and the felt step is reachable);
-    //   • PresentProblem (the default) → HOLD this stage (no advance, work intact);
-    //   • escalation/route → the existing onEnd path.
-    // The generated practice stage is intentionally EXCLUDED — its design is
-    // "stay on this problem + reteach + retry" (GenPracticeBoard), and the engine
-    // already paces it on the CORRECT path; auto-stepping it on a wrong answer
-    // would yank the child off a problem mid-reteach. The CORRECT path is
-    // untouched here (rooms still call award/applyEngineDecision themselves).
-    // Reversible: off when adaptiveTeaching is false.
-    if (
-      !correct &&
-      adaptiveTeaching &&
-      drivesStageThroughHook &&
-      !cb.current.isGenStage(stageRef.current) &&
-      applyRef.current
-    ) {
-      applyRef.current(dec, false);
-    }
+    // A WRONG answer on a TEACHING stage HOLDS the current step. The child stays
+    // exactly where they are (their work intact) and simply tries again — pressing
+    // Check on a wrong answer must never move the lesson. The engine attempt was
+    // still recorded above (judgeAndAdvance), so mastery/telemetry see the error;
+    // we just never apply the returned Decision as a STAGE MOVE.
+    //
+    // This used to route the wrong-answer Decision through applyEngineDecision, so
+    // the 2nd consecutive error returned RaiseScaffold and stepped the stage
+    // BACKWARD (backFn → goStage, which also resetStage'd — wiping the child's work
+    // despite the "preserveWork" rationale). Repeated Check presses on a wrong
+    // answer then walked backward through the arc, reading as a jump to a "random"
+    // step. The engine still paces the GENERATED practice stage, but only on the
+    // CORRECT path (award → advance → applyEngineDecision), never on a wrong answer.
     return dec;
-  }, [judgeAndAdvance, adaptiveTeaching, drivesStageThroughHook]);
+  }, [judgeAndAdvance]);
 
   // ---- apply the engine Decision ---------------------------------------------
   // GENERATED stage: the estimator paces practice in place. A clean correct
@@ -488,7 +503,9 @@ export function useLessonScaffold({
     const st = opts.stars ?? 3;
     setSolved(true); solvedRef.current = true; setStars(st); setCook("cheer");
     if (line != null) setStatus({ tone: "ok", text: line });
-    if (voice) say(voice);
+    // NOTE: award no longer speaks the `voice` line. Narration auto-plays ONLY when
+    // a phase opens (sayPhaseLine) or the child taps the read-aloud button. The
+    // `voice` parameter is retained for call-site compatibility but is inert.
     const dec = reportAttempt({
       correct: true,
       answerValue: answerValue ?? null,
@@ -498,13 +515,27 @@ export function useLessonScaffold({
       recognizerConfidence: opts.recognizerConfidence,
       hintMaxRung: opts.hintMaxRung ?? 0,
     });
-    if (advanceMode === "deferred") {
-      setTimeout(() => applyEngineDecision(dec, true), deferredDelayMs);
-    } else {
-      applyEngineDecision(dec, true);
-    }
+    // BANK the decision; never auto-advance. The child sees the success first, then
+    // taps "Next →" — nextStage() (linear, teaching) or advance() (practice re-roll)
+    // is what actually moves on. (advanceMode/deferredDelayMs are now vestigial — no
+    // correct answer redirects on a timer.)
+    pendingDecisionRef.current = dec;
     return dec;
-  }, [reportAttempt, applyEngineDecision, say, advanceMode, deferredDelayMs]);
+  }, [reportAttempt, say]);
+
+  // ---- the child taps Next on a GENERATED practice stage --------------------
+  // Practice's "next step" is a fresh variation (or fade/raise/end) — that lives in
+  // the engine Decision banked by award(). advance() applies it now. With no banked
+  // decision (or on a fixed stage) it falls back to a plain linear nextStage().
+  const advance = useCallback(() => {
+    const dec = pendingDecisionRef.current;
+    pendingDecisionRef.current = null;
+    if (dec && cb.current.isGenStage(stageRef.current)) {
+      applyRef.current?.(dec, true);
+      return;
+    }
+    nextStage();
+  }, [nextStage]);
 
   // ---- flash a bad input (red shake + thinking cook for 460ms) --------------
   const flashBad = useCallback(() => {
@@ -514,7 +545,10 @@ export function useLessonScaffold({
 
   return {
     // stage
-    stage, setStage, goStage, nextStage,
+    stage, setStage, goStage, nextStage, advance,
+    // phase narration: the read-aloud button calls sayPhase() to replay the
+    // current phase's question (same line the phase auto-played on open).
+    sayPhase,
     // generated practice (null on fixed-example stages); genLevel = live 0..4
     prob, genLevel,
     // engine
