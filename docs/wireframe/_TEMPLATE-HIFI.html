@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!--
+  HIGH-FIDELITY TEMPLATE — copy this for every screen in screens/.
+  Goal: the page must look 100% like the real app. We achieve that by REUSING
+  the app's real CSS (css/app/*.css) and inlining the app's real SVG artwork.
+
+  RULES FOR AGENTS
+   • Keep the <head> exactly as below; change only the <title>, the screen-
+     specific app CSS <link>s, and the toolbar title/route.
+   • The screen's REAL root markup goes inside <div id="stage">. Mirror the JSX
+     DOM the component renders — SAME className strings — so the copied app CSS
+     styles it identically. Resolve component state to ONE representative
+     snapshot (e.g. an unsolved lesson stage with the example showing).
+   • Inline the REAL SVG from the character/manipulative components
+     (Mom/Cook/cast/Stack/NumberLine/Slate/BigFrac/…). Copy the <svg> markup
+     verbatim; the SVGs reference CSS vars (--ink/--red/--paper-*) which tokens.css
+     provides. Pick a sensible expr/width.
+   • Always link tokens.css FIRST, your screen CSS next, wf-shell.css LAST.
+   • Real navigation stays clickable: any control that NAVIGATES in the real
+     app (Start, lesson cards, shelves, kitchen node, FABs, back, rewatch-intro,
+     return-to-kitchen, stage tabs) must be an <a href="…"> carrying the SAME
+     className(s) as the real element (often a <button>) so it looks identical
+     but links to the sibling screen file (../index.html for the hub). Use the
+     same link targets the low-fi wireframe used.
+   • Interactions (drag/check/audio) need not work — render a static snapshot.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SCREEN NAME — Babushka's Fractions (wireframe)</title>
+
+  <!-- real app fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- real app CSS: tokens FIRST, then this screen's stylesheet(s) -->
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/SCREEN.css" />
+
+  <!-- wireframe shell chrome LAST (desk + toolbar; not part of the app) -->
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">SCREEN NAME <small>· #/route</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <!-- REAL screen root markup (mirror the component's JSX DOM) goes here -->
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

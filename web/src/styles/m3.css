@@ -76,9 +76,11 @@
    the 7 clusters of cubes are always visibly CONTAINED inside the jar outline. */
 .m3-jar-cubes {
   position: absolute; left: 0; right: 0; top: 0; bottom: 0;
-  display: flex; flex-wrap: wrap-reverse; align-content: center;
+  /* each scoop is ONE ROW of cubes; rows stack (bottom-up) into a 2-D array — the
+     area model of the multiplication. More scoops → more rows → a filled rectangle. */
+  display: flex; flex-direction: column-reverse; flex-wrap: nowrap;
   align-items: center; justify-content: center;
-  gap: 5px; padding: 10px 10px 12px;
+  gap: 3px; padding: 10px 10px 12px;
   box-sizing: border-box; overflow: hidden;
 }
 .m3-jar-empty { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); padding: 8px; }
@@ -123,7 +125,7 @@
 .m3-scoop:disabled { opacity: 0.45; cursor: default; }
 /* the scoop bowl previews the M distinct cubes one handful drops */
 .m3-scoop-bowl {
-  display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, 1fr);
+  display: grid; grid-auto-flow: column; grid-template-rows: repeat(1, 1fr);
   gap: 2px; padding: 5px 7px;
   border: 2px solid #8a6a2e; border-radius: 0 0 16px 16px;
   background: rgba(202,163,90,0.28);
@@ -201,10 +203,20 @@
   width: 30px; text-align: left; white-space: nowrap; overflow: visible;
   font-family: var(--serif); font-size: 12px; font-weight: 600; color: var(--red-deep);
 }
+/* the ROW count to the left of each step — row 1 → 8, row 2 → 16 … row 7 → 56,
+   so the array's rows and the skip-count line up (7 rows of 8). */
+.m3-ribbon-row {
+  position: absolute; right: calc(100% + 9px); top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 13px; color: var(--ink-mute);
+  border: 1.5px solid var(--paper-3); border-radius: 50%; background: var(--paper-1);
+}
 .m3-ribbon-term.is-blank {
   color: var(--red); border: 2px dashed var(--red); background: transparent;
   font-size: 24px;
 }
+.m3-ribbon-term.is-blank .m3-ribbon-row { color: var(--red); border-color: var(--red); }
 .m3-ribbon-term.is-blank::after {
   content: "← lands here";
   position: absolute; left: 100%; top: 50%; transform: translateY(-50%);

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<!--
+  room-nl-3-numbers.html — HIGH-FIDELITY rebuild of AppNumberLine.jsx (room `nl`),
+  STAGE 3 "Numbers". Given 5/3, the child DRAGS the point PAST 1 on a 0→2 line cut
+  into thirds (killing the "fractions only live between 0 and 1" misconception).
+  Mirrors LessonShell + StageTabs + QuestionBand + LessonBoard(split) DOM. Geometry:
+  ORIGIN=60, SPAN=600, LINE_Y=150, wholes=2, den=3 → UNIT=300, xOf(v)=60+v*300.
+  Draggable point seeded at 0 (x=60). Wholes at k=0,3,6 (x=60,360,660). den-3 #e07b00.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>№3 On the Number Line · Numbers · #/nl</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/lesson-board.css" />
+  <link rel="stylesheet" href="../css/app/stagetabs.css" />
+  <link rel="stylesheet" href="../css/app/questionband.css" />
+  <link rel="stylesheet" href="../css/app/slate.css" />
+  <link rel="stylesheet" href="../css/app/gen-practice.css" />
+  <link rel="stylesheet" href="../css/app/fitstage.css" />
+  <link rel="stylesheet" href="../css/app/engine-surfaces.css" />
+  <link rel="stylesheet" href="../css/app/nl.css" />
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">№3 On the Number Line · Numbers <small>· #/nl</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <!-- REAL screen root: LessonShell( … AppNumberLine stage "3-numbers" … ) -->
+    <div class="page" data-vox-speaker="cook">
+      <div class="foxing"></div>
+
+      <div class="topbar">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="num-mark">№3</span>
+          <div>
+            <div class="puzzle-tag">Lesson 3 · Number Line</div>
+            <div class="puzzle-title">On the Number Line</div>
+          </div>
+        </div>
+        <div aria-hidden="true"></div>
+        <div class="controls">
+          <a class="ctrl-btn" href="world.html" title="Back to the lesson map">←</a>
+          <a class="ctrl-btn" href="intro.html" title="Rewatch the intro video" aria-label="Rewatch the intro video">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
+          </a>
+          <button class="ctrl-btn" title="Settings" aria-label="Settings">
+            <img src="../assets/settings-gear.png" width="18" height="18" alt="" aria-hidden="true" style="display:block; object-fit:contain;" />
+          </button>
+          <a class="ctrl-btn" href="kitchen.html" title="Start this stage over">⟲</a>
+        </div>
+      </div>
+
+      <!-- StageTabs — Place + Write done; Numbers active; Practice link -->
+      <div class="stage-tabs" role="tablist" aria-label="Lesson stages">
+        <a href="room-nl.html" role="tab" aria-selected="false" class="stage-tab is-done" title="Drag the point to the fraction">
+          <span class="stage-tab-n">1</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Place</span><span class="stage-tab-sub">Drag the point to the fraction</span></span>
+        </a>
+        <a href="room-nl-2-write.html" role="tab" aria-selected="false" class="stage-tab is-done" title="Name the marked point">
+          <span class="stage-tab-n">2</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Write</span><span class="stage-tab-sub">Name the marked point</span></span>
+        </a>
+        <button type="button" role="tab" aria-selected="true" class="stage-tab is-active" title="Past 1 — place a fraction bigger than a whole">
+          <span class="stage-tab-n">3</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Numbers</span><span class="stage-tab-sub">Past 1 — place a fraction bigger than a whole</span></span>
+        </button>
+        <a href="room-nl-practice.html" role="tab" aria-selected="false" class="stage-tab" title="Fresh problems — paced to your mastery">
+          <span class="stage-tab-n">★</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Practice</span><span class="stage-tab-sub">Fresh problems — paced to your mastery</span></span>
+        </a>
+      </div>
+
+      <!-- LessonGoal -->
+      <div class="goal">
+        <button class="speaker">
+          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none" /></svg>
+          Read aloud
+        </button>
+        <div class="goal-text" data-vox="nlGoal" data-vox-speaker="mom">
+          Fractions don't stop at 1! <b>5/3</b> is five thirds — <b>bigger than one
+          whole</b>. Each whole is still cut into <b>3</b> parts. <b>Drag the point
+          past 1</b> to place it.
+        </div>
+      </div>
+
+      <!-- LessonBoard split -->
+      <div class="lboard" style="--lboard-rail-w:396px; --lboard-foot-h:196px;">
+
+        <!-- STAGE — the 0→2 NumberLine, draggable point seeded at 0 -->
+        <div class="lboard-stage">
+          <div class="fit-stage nl-board-fit">
+            <div class="fit-stage-content" style="transform:scale(1);">
+              <div class="nl-canvas">
+                <div class="nl-line-wrap">
+                  <div class="nline" style="top:150px; left:60px; right:auto; width:600px;"></div>
+
+                  <!-- fill sweep 0→point (point=0 → width 0) -->
+                  <span class="nl-fill" style="position:absolute; left:60px; top:145px; width:0px; height:10px; background:rgba(192,57,43,.16); border-radius:5px; pointer-events:none; z-index:5;"></span>
+
+                  <!-- ticks: k=0..6, major on whole boundaries (k=0,3,6) -->
+                  <span class="ntick is-major" style="left:60px;  top:150px; height:20px; width:2px;   opacity:1;"></span>
+                  <span class="ntick"          style="left:160px; top:150px; height:12px; width:1.5px; opacity:0.72;"></span>
+                  <span class="ntick"          style="left:260px; top:150px; height:12px; width:1.5px; opacity:0.72;"></span>
+                  <span class="ntick is-major" style="left:360px; top:150px; height:20px; width:2px;   opacity:1;"></span>
+                  <span class="ntick"          style="left:460px; top:150px; height:12px; width:1.5px; opacity:0.72;"></span>
+                  <span class="ntick"          style="left:560px; top:150px; height:12px; width:1.5px; opacity:0.72;"></span>
+                  <span class="ntick is-major" style="left:660px; top:150px; height:20px; width:2px;   opacity:1;"></span>
+
+                  <!-- labels: wholes (ng) + partition labels (labelParts) -->
+                  <span class="nlab ng"         style="left:60px;  top:166px; opacity:1;">0</span>
+                  <span class="nlab nl-partlab" style="left:160px; top:166px; opacity:0.7;">1/3</span>
+                  <span class="nlab nl-partlab" style="left:260px; top:166px; opacity:0.7;">2/3</span>
+                  <span class="nlab ng"         style="left:360px; top:166px; opacity:1;">1</span>
+                  <span class="nlab nl-partlab" style="left:460px; top:166px; opacity:0.7;">4/3</span>
+                  <span class="nlab nl-partlab" style="left:560px; top:166px; opacity:0.7;">5/3</span>
+                  <span class="nlab ng"         style="left:660px; top:166px; opacity:1;">2</span>
+
+                  <!-- the draggable point dot, seeded at 0 (x=60) -->
+                  <span class="nl-point is-drag" style="position:absolute; left:60px; top:150px; width:26px; height:26px; margin-left:-13px; margin-top:-13px; border-radius:50%; background:var(--red,#c0392b); border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.3); cursor:grab; touch-action:none; z-index:26;"></span>
+                </div>
+                <div class="nl-cap">drag the point — each tick is 1/3</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RAIL — the hint panel (note past-1 line) -->
+        <div class="lboard-rail">
+          <div class="panel">
+            <h3 class="pick-title">A Fraction Is a Number</h3>
+            <div class="hint">
+              Cut the line from <b>0</b> to <b>1</b> into <b>3</b> equal parts. The
+              <b>bottom</b> (3) is the size of one part; the <b>top</b> counts how many you
+              step from 0. five thirds is <b>5</b> steps of <b>1/3</b>.
+              Past <b>1</b>, the parts just keep going — a fraction can be bigger than a whole.
+            </div>
+            <div class="nl-mini">
+              <span class="nl-mini-frac"><div class="bignum"><span class="n">5</span><span class="bar" style="background:#e07b00;"></span><span class="d">3</span></div></span>
+              <span class="nl-mini-note">5 parts of size 1/3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANSWER — Numbers: no writing; the placed point IS the answer -->
+        <div class="lboard-answer">
+          <div class="lbar">
+            <div class="lbar-eq">
+              <div class="nl-ans-eqrow">
+                <span class="nl-ans-frac"><div class="bignum"><span class="n">5</span><span class="bar" style="background:#e07b00;"></span><span class="d">3</span></div></span>
+                <span class="nl-ans-eq">=</span>
+                <span class="nl-ans-amt">drag the point to place it</span>
+              </div>
+            </div>
+            <div class="lbar-cap">drag the point to five thirds on the line</div>
+            <div class="lbar-marks">
+              <button class="check" disabled>Drag to place</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TUTOR — Cook (idle) + ribbon -->
+        <div class="lboard-tutor">
+          <div class="ltutor">
+            <div class="cook-stage">
+              <svg width="118" height="156.5" viewBox="0 0 196 260" style="display:block; overflow:visible;" aria-hidden="true">
+                <defs>
+                  <pattern id="ck-hatch" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.7" opacity="0.5" /></pattern>
+                  <pattern id="ck-hatch-r" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--red-deep)" stroke-width="0.8" opacity="0.45" /></pattern>
+                </defs>
+                <g stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+                  <path d="M44 258 Q40 188 58 168 Q72 154 98 154 Q124 154 138 168 Q156 188 152 258 Z" fill="var(--paper-1)" />
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="var(--red)" />
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="url(#ck-hatch-r)" stroke="none" />
+                  <path d="M98 156 L98 258" stroke="var(--ink)" stroke-width="1.4" opacity="0.5" fill="none" />
+                  <path d="M44 258 Q40 200 54 176 L70 258 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.7" />
+                  <path d="M58 172 Q34 186 30 214" fill="none" />
+                  <path d="M138 172 Q162 186 166 214" fill="none" />
+                </g>
+                <circle cx="98" cy="182" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="98" cy="200" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <g transform="rotate(6 168 218)">
+                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                </g>
+                <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />
+                <g fill="var(--red-deep)" stroke="var(--ink)" stroke-width="2">
+                  <path d="M58 92 Q50 104 56 116 Q62 108 66 110 Z" />
+                  <path d="M138 92 Q146 104 140 116 Q134 108 130 110 Z" />
+                </g>
+                <circle cx="98" cy="92" r="40" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6" />
+                <path d="M122 78 A40 40 0 0 1 124 116 Q112 120 110 96 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.55" />
+                <circle cx="74" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+                <circle cx="122" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+                <g>
+                  <circle cx="83" cy="87" r="3.6" fill="var(--ink)" />
+                  <circle cx="113" cy="87" r="3.6" fill="var(--ink)" />
+                </g>
+                <path d="M98 92 Q102 99 97 101" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M84 108 Q98 120 112 108" stroke="var(--ink)" stroke-width="2.6" fill="none" stroke-linecap="round" />
+                <g stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round">
+                  <rect x="64" y="52" width="68" height="16" rx="3" fill="var(--paper-2)" />
+                  <path d="M64 56 Q50 52 52 36 Q40 30 50 18 Q58 6 76 12 Q86 0 104 8 Q124 2 130 18 Q150 22 144 38 Q152 52 132 56 Q132 40 120 44 Q120 30 104 34 Q104 22 88 28 Q84 40 72 38 Q74 52 64 56 Z" fill="var(--paper-1)" />
+                </g>
+                <path d="M120 44 Q132 40 132 56 L120 56 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.5" />
+              </svg>
+            </div>
+            <div class="ribbon">Fractions don't stop at 1! Five thirds is more than one whole. Each whole is cut into 3 parts — drag the point past 1 to the fifth tick.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

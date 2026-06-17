@@ -37,8 +37,12 @@ import FitStage from "./components/FitStage.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
+import { LESSONS } from "./lessons/index.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import "./styles/s1.css";
+
+// Identity + tab strip are DATA — sourced from the central registry, not inlined.
+const L = LESSONS.s1;
 
 // Geometry for the decompose/take-away canvas. UNIT = px per whole; a piece is
 // UNIT/DEN wide. The take-away tray (where pulled-off pieces land) sits below the
@@ -52,17 +56,27 @@ const NUM_A = 7, NUM_B = 3, NUM_ANS = NUM_A - NUM_B; // 4
 
 const NODE = "SUB_SAME_DEN";
 
-// The four stages, in order. `key` matches the orchestrator's stage ids.
-const STAGES = [
-  { n: 1, key: "1-decompose", tab: "Decompose", sub: "break 5/8 into eighths" },
-  { n: 2, key: "2-takeaway",  tab: "Take Away", sub: "drag 2 pieces off" },
-  { n: 3, key: "3-numbers",   tab: "Numbers",   sub: "bare 7/8 − 3/8 = ?" },
-  { n: 4, key: "4-words",     tab: "Words",     sub: "story problem" },
-  // Auto-generated, estimator-paced practice: the engine mints fresh SUB_SAME_DEN
-  // variations, re-rolls on a correct answer, fades to harder problems on a clean
-  // streak, and probes transfer. Purely additive — no teaching stage is touched.
-  { n: "practice", key: "practice", tab: "Practice", sub: "Fresh problems — paced to your mastery", badge: "★" },
-];
+// The scaffold stage MODEL (logic, not chrome): the render-branch stage value `n`
+// and the canonical scaffold `key` the orchestrator routes by. Kept HERE because
+// they are interactive wiring. The TAB LABELS / SUBS / badges / ORDER come from the
+// registry (L.tabs) so identity + copy live in ONE place. Each registry tab (keyed
+// by its badge `t.n`) pairs with its scaffold key + render value below.
+//
+// Auto-generated, estimator-paced practice (badge ★): the engine mints fresh
+// SUB_SAME_DEN variations, re-rolls on a correct answer, fades to harder problems
+// on a clean streak, and probes transfer. Purely additive — no teaching stage moves.
+const STAGE_BY_BADGE = {
+  "1": { n: 1, key: "1-decompose" },
+  "2": { n: 2, key: "2-takeaway" },
+  "3": { n: 3, key: "3-numbers" },
+  "4": { n: 4, key: "4-words" },
+  "★": { n: "practice", key: "practice" },
+};
+// Zip the registry strip (order + labels + subs) with the scaffold model above.
+const STAGES = L.tabs.map((t) => {
+  const m = STAGE_BY_BADGE[t.n];
+  return { n: m.n, key: m.key, badge: t.n, tab: t.name, sub: t.sub };
+});
 
 const PIECE_W = UNIT / DEN;
 
@@ -98,10 +112,14 @@ function UnitRow({ count, den, broken = false, gone = null, label = true }) {
 }
 
 // ---------------- main ----------------
-export default function AppSubtract({ no, title, onBack, onRewatchIntro, initialStage }) {
+export default function AppSubtract({ onBack, onRewatchIntro, initialStage }) {
+  // Identity comes from the registry, not props — one source of truth.
+  const no = L.num.replace("№", "");
+  const title = L.title;
   const startN = (() => {
-    const f = STAGES.find((s) => s.key === initialStage || s.n === initialStage);
-    return f ? f.n : 1;
+    const f = STAGES.find((s) => s.key === initialStage || s.n === initialStage || s.badge === String(initialStage));
+    // Normalize the string-keyed practice step to its canonical key.
+    return f ? (f.key === "practice" ? f.key : f.n) : 1;
   })();
 
   // --- Stage 1 (decompose) state: has the solid stack been broken into pieces? ---
@@ -153,7 +171,7 @@ export default function AppSubtract({ no, title, onBack, onRewatchIntro, initial
     const d = STAGES.find((s) => s.n === key || s.key === key);
     return d ? d.n : key;
   };
-  const curKey = STAGES.find((s) => s.n === stage)?.key;
+  const curKey = STAGES.find((s) => s.n === stage || s.key === stage)?.key;
 
   // ---- Stage 1 mechanic: break the solid stack into 5 separate 1/8 pieces ----
   function doBreak() {
@@ -601,13 +619,13 @@ export default function AppSubtract({ no, title, onBack, onRewatchIntro, initial
   return (
     <LessonShell
       no={no}
-      tag="Taking Away"
+      tag={L.tag.replace(/^Lesson \d+ · /, "")}
       title={title}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={reset}
       tabs={{
-        stages: STAGES.map((s) => ({ key: s.key, badge: s.n, title: s.tab, sub: s.sub })),
+        stages: STAGES.map((s) => ({ key: s.key, badge: s.badge, title: s.tab, sub: s.sub })),
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}

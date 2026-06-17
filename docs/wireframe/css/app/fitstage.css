@@ -1,0 +1,47 @@
+/* fitstage.css — styles for the shared <FitStage> auto-fit wrapper
+   (components/FitStage.jsx). The "everything must always fit" invariant: content
+   that is naturally taller/wider than its fixed proof-zone is downscaled (never
+   clipped) by a JS-measured transform applied to .fit-stage-content.
+
+   .fit-stage         — fills the zone it's mounted in; this is the AVAILABLE box
+                        FitStage measures against. It centers its single child so
+                        a downscaled manipulative stays centered (and so the
+                        symmetric scale never pushes content out the top/bottom).
+   .fit-stage-content — the natural-size content. transform: scale(s) is applied
+                        inline by FitStage; transform-origin:center means it shrinks
+                        toward the middle, so both the top and the bottom stay
+                        inside the box (this is exactly what fixes the spun-tray
+                        top+bottom clip). It must be able to take its natural size
+                        regardless of the parent, hence width:max-content. */
+
+.fit-stage {
+  /* Fill the fixed-size proof zone we're dropped into. */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Belt-and-braces: even mid-measure (first paint, before the ResizeObserver
+     fires) nothing escapes the zone. The scale settles within a frame. */
+  overflow: hidden;
+}
+
+.fit-stage-content {
+  /* Lay out at natural size so scrollWidth/scrollHeight report the true content
+     size for the fit math; the visual size is then governed by the inline scale. */
+  width: max-content;
+  max-width: none;
+  /* Shrink toward the middle so the top and bottom edges both stay in view —
+     this is the core of the no-clip guarantee. */
+  transform-origin: center center;
+  /* A gentle settle when the scale changes (e.g. the tray spins / rows added),
+     disabled under reduced-motion by the global rule in lesson.css. */
+  transition: transform 0.18s ease;
+  /* Keep the inner content laid out as the lesson intends (most stage canvases
+     are a centered column). Lessons that pass their own canvas class still get
+     their flex/gap rules; this is just a sane default for bare children. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,35 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - generic [ref=e467]:
+          - paragraph [ref=e469]: Ok let's start with that. Give each person a cookie.
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e54]:
+        - generic [ref=e433]:
+          - generic [ref=e435]:
+            - button [ref=e436] [cursor=pointer]:
+              - img [ref=e437]
+            - button "🔪" [ref=e439] [cursor=pointer]:
+              - generic [ref=e440]: 🔪
+          - generic [ref=e441]:
+            - generic [ref=e444]:
+              - button [ref=e446] [cursor=pointer]
+              - button [ref=e447] [cursor=pointer]
+              - button [ref=e448] [cursor=pointer]
+              - button [ref=e449] [cursor=pointer]
+            - generic [ref=e450]:
+              - generic:
+                - img "Character 1" [ref=e453] [cursor=pointer]
+                - img "Character 2" [ref=e456] [cursor=pointer]
+                - img "Character 3" [ref=e459] [cursor=pointer]
+                - img "Character 4" [ref=e462] [cursor=pointer]
+              - button [ref=e471] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

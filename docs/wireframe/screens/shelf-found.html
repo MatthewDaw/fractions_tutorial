@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!--
+  shelf-found.html — HI-FI rebuild of WorldMap.jsx SUBMENU branch for the
+  "found" strand (Counting & Times, lessons №1–2). masteryMap = null → every
+  card status "Ready", no Next/mastered badges. Real DOM mirrored verbatim;
+  cards absolutely positioned by submenuPositions(2): centres x=494,786 at y=438.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shelf · Counting &amp; Times · #/world</title>
+
+  <!-- real app fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- real app CSS: tokens FIRST, then this screen's stylesheets -->
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+
+  <!-- wireframe shell chrome LAST (desk + toolbar; not part of the app) -->
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">Shelf · Counting &amp; Times <small>· #/world</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <div class="world world--submenu">
+      <div class="foxing"></div>
+
+      <a class="world-back" href="world.html" aria-label="Back to all shelves">
+        <span aria-hidden="true">←</span> All lessons
+      </a>
+
+      <div class="world-head">
+        <div class="tag">Shelf · Lessons 1–2</div>
+        <h1>Counting &amp; Times</h1>
+        <div class="sub">Whole-number groups — the floor every fraction stands on.</div>
+      </div>
+
+      <!-- chain trail linking the strand's lessons left→right (under the cards) -->
+      <svg class="wedges" viewBox="0 0 1280 800" preserveAspectRatio="none" aria-hidden="true">
+        <g>
+          <path d="M 494 438 Q 640 416 786 438" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round" opacity="0.75" />
+          <path d="M 494 438 Q 640 416 786 438" fill="none" stroke="var(--red)" stroke-width="1.3" stroke-dasharray="1 8" stroke-linecap="round" opacity="0.8" />
+        </g>
+      </svg>
+
+      <a class="wcard" href="room-m1.html" style="left:494px;top:438px;" title="Open Lesson 1" data-mastery-status="not-started">
+        <div class="whead">
+          <span class="wno">№1</span>
+          <span class="wtag ready">Ready</span>
+        </div>
+        <h2>Equal Groups</h2>
+        <p>Same count on every plate — add the group again and again, or multiply.</p>
+        <div class="wex">
+          <span class="wex-label">Multiplying</span>
+          <span class="wex-frac">3 × 4</span>
+        </div>
+      </a>
+
+      <a class="wcard" href="room-m3.html" style="left:786px;top:438px;" title="Open Lesson 2" data-mastery-status="not-started">
+        <div class="whead">
+          <span class="wno">№2</span>
+          <span class="wtag ready">Ready</span>
+        </div>
+        <h2>Times Facts</h2>
+        <p>Skip-count the jar to the answer, then know it by heart.</p>
+        <div class="wex">
+          <span class="wex-label">Multiplying</span>
+          <span class="wex-frac">7 × 8</span>
+        </div>
+      </a>
+
+      <div class="world-foot">Tap a lesson to begin — or go back to pick another shelf.</div>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

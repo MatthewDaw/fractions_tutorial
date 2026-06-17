@@ -19,6 +19,22 @@ import "../../styles/lesson-board.css";
 
 const px = (v) => (typeof v === "number" ? `${v}px` : v);
 
+/**
+ * LessonBoard — canonical play-area layout contract (Foundation F2).
+ *
+ * variant="split" (default) — 2×2 CSS grid in SEPARATE tracks so the answer bar
+ *   can never overlap the interaction area:
+ *     stage (top-left) · rail (top-right) · answer (bottom-left) · tutor (bottom-right)
+ *   Pass rail={null} and the stage spans full width (`is-norail`, e.g. a Workbench
+ *   stage with no side rail).
+ *
+ * variant="wide" — a full-width word-problem column (`content`) + a narrow tutor
+ *   column. Used by Applied / Words stages. (`stage`/`rail`/`answer` are ignored.)
+ *
+ * Sizing props map to CSS custom properties (all optional; defaults in
+ * styles/lesson-board.css): railWidth, footHeight, tutorWidth, colGap, rowGap,
+ * marginTop. F2 confirms both variants and the no-overlap guarantee are unchanged.
+ */
 export default function LessonBoard({
   variant = "split",
   stage, rail, answer, tutor, content,

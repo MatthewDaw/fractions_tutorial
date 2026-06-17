@@ -1,0 +1,48 @@
+[   76551ms] [LOG] trip ended @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   76648ms] [LOG] [rootStore] cleaning up @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   76650ms] [LOG] [rootStore] stopping all sounds @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   76650ms] [LOG] [rootStore] Lesson ended with reason: {
+  "name": "SwitchToExploration",
+  "lessonUrlName": "share_the_cookies",
+  "launchContext": null
+} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   76651ms] [LOG] [startExplorationAccessCheck] pathname: /exploration/share_the_cookies, sessionUser: [object Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   76972ms] [LOG] [rootStore] Running lesson entry for Share the Cookies @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   76972ms] [LOG] [rootStore] created the store and set the api. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   76972ms] [LOG] starting @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   77181ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[   77183ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  382267ms] [LOG] === Cookie Debug === @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  382268ms] [LOG] Pieces: [Object, Object, Object, Object, Object, Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  382268ms] [LOG] People totals: [Object, Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  382268ms] [LOG] Y_THRESHOLD: 150, spread: 150 @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1022824ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1301900ms] [ERROR] %c << mutation #188 %ctrips.markTripActivity%c %O 
+    background-color: #904dfc;
+    color: white;
+    padding: 2px;
+   
+    background-color: #904dfc;
+    color: white;
+    padding: 2px;
+  ; font-weight: bold; 
+    background-color: #904dfc;
+    color: white;
+    padding: 2px;
+  ; font-weight: normal; {input: Object, result: TRPCClientError: Failed to fetch
+    at e.from (https://tutor.synthesis.com/_next/static/chunks/pag…, elapsedMs: 75, context: Object} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1301954ms] [WARNING] Statsig initialized without an user. Feature flag might be incorrect= use_tutor_tts_cache @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:51
+[ 1301954ms] [WARNING] Statsig initialized without an user. Feature flag might be incorrect= use_tutor_tts_staging_server @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:51
+[ 1301954ms] [WARNING] Statsig initialized without an user. Feature flag might be incorrect= lazily_cache_jessica_elevenlabs @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:51
+[ 1301954ms] [WARNING] Statsig initialized without an user. Feature flag might be incorrect= tutor_voice_input @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:51
+[ 1302039ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://tutor.synthesis.com/_vercel/insights/script.js:0
+[ 1302039ms] [LOG] [Vercel Web Analytics] Failed to load script from /_vercel/insights/script.js. Be sure to enable Web Analytics for your project and deploy again. See https://vercel.com/docs/analytics/quickstart for more information. @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:239
+[ 1302359ms] [INFO] [Speech] Active transcription provider {provider: web-speech, source: default} @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:0
+[ 1302361ms] [INFO] MOBILE  false @ https://tutor.synthesis.com/_next/static/chunks/63222-26f51ea14a6b1eba.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:0
+[ 1302363ms] [LOG] setting beautiful prompt @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:0
+[ 1302453ms] [INFO] {category: userAnalysis.updateUserLocation} Updated user location @ https://tutor.synthesis.com/_next/static/chunks/pages/_app-a505808061c751f9.js?dpl=dpl_22frxnmdTBQ9GnkJ2LbdoT6u3AAu:231
+[ 1302594ms] [LOG] FullStory initialized! @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1302594ms] [INFO] MOBILE  false @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1302729ms] [LOG] MNTN Conv init... @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1302729ms] [LOG] MNTN tracking url  null @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1302729ms] [LOG] NO MNTM track script @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3

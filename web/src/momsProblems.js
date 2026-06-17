@@ -7,17 +7,9 @@
 // The look-ahead probe reuses the NEXT room's mirror[0] (see MomsRoom flow).
 //
 // CURRICULUM is the teaching order (must match the room order in rooms.js):
-//   m1 Equal Groups → m2 Baking Trays → m3 Times Facts  (whole-number mult foundations)
-//   → r1 Same Denominators → r3 Scale One → r2 Cross-Multiply → r4 Simplify → r5 Mixed Numbers
+//   r1 Same Denominators → r3 Scale One → r2 Cross-Multiply → r4 Simplify → simp Simplify (GCF) → r5 Mixed Numbers
 // (the room `id`s are historical; the labels here are the source of truth for the
 // kitchen's on-screen skill names.)
-//
-// MULT TRANSFER LAYER (plan 006 O6): the three whole-number multiplication rooms
-// (m1/m2/m3) lead the kitchen sequence, mirroring their upstream placement in the
-// skill DAG. Their recipes grade via the `multiply` op (see gradeAnswer). Per plan
-// 006 R-B5 the product is carried as [product, 1] — the child writes the whole-number
-// product over a denominator of 1, so the existing two-slot grader/Slate path is
-// reused unchanged (no integer-only input path is introduced).
 
 // NOTE: the new CCSS gap-fill rooms (nl "On the Number Line", s1 "Taking Away",
 // cmp "Compare & Check") are intentionally NOT in this kitchen CURRICULUM. The
@@ -26,21 +18,15 @@
 // (none authored for nl/s1/cmp yet). enterStage/firstTask index BANK[roomId]
 // directly, so adding an id without a BANK entry would crash the flow. They live
 // on the world map and engine graph; they simply don't pose kitchen recipes.
-export const CURRICULUM = ["m1", "m2", "m3", "r1", "r3", "r2", "r4", "r5"];
+export const CURRICULUM = ["r1", "r3", "r2", "r4", "simp", "r5"];
 
-// `no` MUST mirror rooms.js ROOMS[].no (plan 006 O9). After the 006 room renumber
-// the displayed lesson numbers are m1=1 m2=2 m3=3 · nl=4 · r1=5 · s1=6 · cmp=7 ·
-// r3=8 · r2=9 · r4=10 · r5=11. nl/s1/cmp are deliberately absent from the kitchen
-// (no BANK entries authored), so their numbers are simply skipped here.
 export const ROOM_SKILL = {
-  m1: { no: 1,  label: "Equal Groups",      blurb: "same count on every plate — multiply the groups" },
-  m2: { no: 2,  label: "Baking Trays",      blurb: "rows times columns fill the tray" },
-  m3: { no: 3,  label: "Times Facts",       blurb: "skip-count, then know it by heart" },
-  r1: { no: 5,  label: "Same Denominators", blurb: "add the tops, keep the bottom" },
-  r3: { no: 8,  label: "Scale One",         blurb: "rename one fraction so the bottoms match" },
-  r2: { no: 9,  label: "Cross-Multiply",    blurb: "rename both to a shared bottom" },
-  r4: { no: 10, label: "Simplify",          blurb: "reduce to the fewest, biggest pieces" },
-  r5: { no: 11, label: "Mixed Numbers",     blurb: "whole units plus a leftover" },
+  r1: { no: 1, label: "Same Denominators", blurb: "add the tops, keep the bottom" },
+  r3: { no: 2, label: "Scale One",         blurb: "rename one fraction so the bottoms match" },
+  r2: { no: 3, label: "Cross-Multiply",    blurb: "rename both to a shared bottom" },
+  r4: { no: 4, label: "Simplify",          blurb: "reduce to the fewest, biggest pieces" },
+  simp: { no: 9, label: "Simplify (GCF)", blurb: "divide top and bottom by their greatest common factor" },
+  r5: { no: 5, label: "Mixed Numbers",     blurb: "whole units plus a leftover" },
 };
 
 export const CHARACTERS = {
@@ -50,50 +36,6 @@ export const CHARACTERS = {
 
 // ── question objects (same shape the renderer/grader already use) ────────────
 const Q = {
-  // M1 · Equal Groups (a groups of b → a×b) ------------------------------------
-  // op:"multiply" — the product is carried as [product, 1]; the child writes the
-  // whole-number product over a denominator of 1 (reuses the two-slot grader).
-  plates: {
-    id: "plates", owner: "kid", prop: "Boxes", initState: "filling", solvedState: "leftover",
-    caption: "You set out three plates and put four pelmeni on every single plate — the same four each time. How many pelmeni in all?",
-    ask: "How many in all?", answerType: "product", op: "multiply", factors: [3, 4], target: [12, 1],
-    nudgeKey: "mr_mom_nudge_equalgroups", banter: ["mr_kid_plates_1", "mr_mom_plates_2", "mr_kid_plates_3"],
-  },
-  skewers: {
-    id: "skewers", owner: "grandpa", prop: "SausageChain", initState: "counting", solvedState: "wrapped_into_units",
-    caption: "Grandpa loaded six skewers, three sausages on each skewer. How many sausages did he grill in all?",
-    ask: "How many in all?", answerType: "product", op: "multiply", factors: [6, 3], target: [18, 1],
-    nudgeKey: "mr_mom_nudge_equalgroups", banter: ["mr_gp_skewers_1", "mr_mom_skewers_2", "mr_gp_skewers_3"],
-  },
-
-  // M2 · Baking Trays / Arrays (rows × columns) --------------------------------
-  trayarray: {
-    id: "trayarray", owner: "kid", prop: "EggCarton", initState: "cells_full", solvedState: "cell_lifting",
-    caption: "The baking tray holds four rows of buns with six buns in every row. How many buns fill the whole tray?",
-    ask: "How many buns?", answerType: "product", op: "multiply", factors: [4, 6], target: [24, 1],
-    nudgeKey: "mr_mom_nudge_array", banter: ["mr_kid_trayarray_1", "mr_mom_trayarray_2", "mr_kid_trayarray_3"],
-  },
-  muffintray: {
-    id: "muffintray", owner: "cat", prop: "EggCarton", initState: "cells_full", solvedState: "fresh_tin_spawned",
-    caption: "Turn the muffin tin sideways: three rows of four, or four rows of three — still the same tray. How many cups in all?",
-    ask: "How many cups?", answerType: "product", op: "multiply", factors: [3, 4], target: [12, 1],
-    nudgeKey: "mr_mom_nudge_array", banter: ["mr_cat_muffintray_1", "mr_mom_muffintray_2", "mr_cat_muffintray_3"],
-  },
-
-  // M3 · Times Facts (skip-count → fluent recall) ------------------------------
-  jars: {
-    id: "jars", owner: "kid", prop: "Boxes", initState: "filling", solvedState: "leftover",
-    caption: "Skip-count the jars: seven jars, eight mushrooms in each. Eight, sixteen, twenty-four… how many mushrooms in all?",
-    ask: "How many in all?", answerType: "product", op: "multiply", factors: [7, 8], target: [56, 1],
-    nudgeKey: "mr_mom_nudge_skipcount", banter: ["mr_kid_jars_1", "mr_mom_jars_2", "mr_kid_jars_3"],
-  },
-  bundles: {
-    id: "bundles", owner: "grandpa", prop: "SausageChain", initState: "counting", solvedState: "wrapped_into_units",
-    caption: "Grandpa tied seven bundles of sausages, seven sausages to a bundle. How many sausages did he tie in all?",
-    ask: "How many in all?", answerType: "product", op: "multiply", factors: [7, 7], target: [49, 1],
-    nudgeKey: "mr_mom_nudge_skipcount", banter: ["mr_gp_bundles_1", "mr_mom_bundles_2", "mr_gp_bundles_3"],
-  },
-
   // R1 · Same Denominators -----------------------------------------------------
   choc: {
     id: "choc", owner: "kid", prop: "ChocolateBar", initState: "full", solvedState: "squares_snapped",
@@ -168,6 +110,14 @@ const Q = {
     nudgeKey: "mr_mom_nudge_tidy", banter: ["mr_kid_addtidy_1", "mr_mom_addtidy_2", "mr_kid_addtidy_3"],
   },
 
+  // Simp · Simplify with GCF (Lesson №9) --------------------------------------
+  dumplingtray: {
+    id: "dumplingtray", owner: "kid", prop: "Lunchbox", initState: "pieces_in", solvedState: "lid_closed",
+    caption: "The Kid filled six ninths of the dumpling tray. Babushka wants the same amount written its simplest way. Write the simplest name for six ninths.",
+    ask: "Simplest name", answerType: "fraction", op: "simplify", target: [2, 3], requireSimplified: true,
+    nudgeKey: "mr_mom_nudge_tidy", banter: ["mr_kid_lunchbox_1", "mr_mom_lunchbox_2", "mr_kid_lunchbox_3"],
+  },
+
   // R5 · Mixed Numbers ---------------------------------------------------------
   cupcakebox: {
     id: "cupcakebox", owner: "kid", prop: "Boxes", initState: "filling", solvedState: "leftover",
@@ -198,13 +148,11 @@ const Q = {
 // The bank, keyed by room id. mirror = mastery checks for that room's skill;
 // combine = recipes that chain this room's skill with earlier-mastered ones.
 export const BANK = {
-  m1: { mirror: [Q.plates, Q.skewers], combine: [] },
-  m2: { mirror: [Q.trayarray, Q.muffintray], combine: [] },
-  m3: { mirror: [Q.jars, Q.bundles], combine: [] },
   r1: { mirror: [Q.choc, Q.cracker, Q.sausage, Q.eggs], combine: [] },
   r3: { mirror: [Q.doughbacon], combine: [] },
   r2: { mirror: [Q.trays, Q.candy], combine: [] },
   r4: { mirror: [Q.lunchbox, Q.carrots, Q.cookietin], combine: [Q.addtidy] },
+  simp: { mirror: [Q.dumplingtray], combine: [] },
   r5: { mirror: [Q.cupcakebox, Q.coolpie, Q.muffin], combine: [Q.halfpie] },
 };
 
@@ -252,31 +200,6 @@ const frEq = (a, b, c, d) => b !== 0 && d !== 0 && a * d === b * c;
 // Returns { state: 'correct'|'wrong'|'incomplete', stars, slip }.
 export function gradeAnswer(p, input) {
   const [tn, td] = p.target;
-  // multiply: whole-number product carried as [product, 1] (plan 006 R-B5).
-  // The child writes the product into the top slot; the bottom is 1. Slip
-  // diagnostics name the classic multiplication misconceptions, but per R-B5
-  // they all fingerprint as 'other' at the engine boundary (slipToErrorSignature)
-  // until the ErrorSignature union is extended (plan O1, separate PR).
-  if (p.op === "multiply") {
-    const prod = intOf(input.num);
-    const d = input.den === "" || input.den == null ? 1 : intOf(input.den);
-    if (Number.isNaN(prod) || Number.isNaN(d) || d <= 0) {
-      return { state: "incomplete", stars: 0, slip: "fillProduct" };
-    }
-    // Compare as a fraction so a [product,1] over any equal-valued denominator
-    // (the child wrote 12/1 or just 12) still reads as the product.
-    if (frEq(prod, d, tn, td)) return { state: "correct", stars: 3, slip: null };
-    let slip = "wrongValue";
-    if (p.factors && p.factors.length === 2) {
-      const [a, b] = p.factors;
-      const value = prod / d; // d is whole-number-denominator; value is the child's product
-      if (value === a + b) slip = "addFactors";          // added the factors (a+b)
-      else if (value === a || value === b) slip = "wroteFactor"; // copied one factor
-      else if (value === tn - a || value === tn - b ||
-               value === tn + a || value === tn + b) slip = "skipDrift"; // skip-count drift (off by one group)
-    }
-    return { state: "wrong", stars: 0, slip };
-  }
   if (p.answerType === "mixed") {
     const w = intOf(input.whole), n = intOf(input.num), d = intOf(input.den);
     if (Number.isNaN(w) || Number.isNaN(n) || Number.isNaN(d) || d <= 0) return { state: "incomplete", stars: 0, slip: "fillAll" };

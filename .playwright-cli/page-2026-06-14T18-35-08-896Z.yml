@@ -1,0 +1,140 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - text: ctrl −
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - button:
+                            - img
+                        - generic:
+                          - button:
+                            - generic:
+                              - generic: M
+                            - generic: Matthew
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button:
+                                - img
+                                - generic: Report a Problem
+                              - button:
+                                - img
+                                - generic: End Lesson
+                              - button:
+                                - img
+                                - generic: Manage Account
+                            - generic:
+                              - generic: Language
+                              - generic:
+                                - button: English
+                                - button: Español
+                            - generic:
+                              - generic:
+                                - generic: Read Answer Choices
+                                - switch
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Voice Input
+                                    - generic: BETA
+                                  - switch
+                            - generic:
+                              - heading [level=3]: Voice Speed
+                              - generic:
+                                - button: Slow
+                                - button: Normal
+                                - button: Fast
+                                - button: Speedy
+                            - generic:
+                              - generic:
+                                - generic: Dyslexic Font
+                                - switch
+                              - generic:
+                                - generic: On-Screen Keyboard
+                                - switch
+                    - generic:
+                      - generic:
+                        - navigation:
+                          - generic:
+                            - generic:
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - paragraph:
+                                      - generic: "Here's your first task: Find the array that represents"
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - math:
+                                              - generic:
+                                                - generic:
+                                                  - generic: "6"
+                                          - generic:
+                                            - generic: "6"
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - math:
+                                              - generic:
+                                                - generic:
+                                                  - generic: +
+                                          - generic:
+                                            - generic: +
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - math:
+                                              - generic:
+                                                - generic:
+                                                  - generic: "6"
+                                          - generic:
+                                            - generic: "6"
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - math:
+                                              - generic:
+                                                - generic:
+                                                  - generic: +
+                                          - generic:
+                                            - generic: +
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - math:
+                                              - generic:
+                                                - generic:
+                                                  - generic: "6"
+                                          - generic:
+                                            - generic: "6"
+                                      - generic: Tap on it and then press Submit.
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - button: SUBMIT
+  - generic:
+    - alert: Synthesis Tutor
+  - dialog "Exit Lesson?" [ref=e354]:
+    - heading "Exit Lesson?" [level=2] [ref=e355]
+    - paragraph [ref=e356]: Are you sure you want to leave this lesson? All of your progress might not be saved.
+    - generic [ref=e357]:
+      - button "Keep Learning" [active] [ref=e358] [cursor=pointer]
+      - button "Exit" [ref=e359] [cursor=pointer]
+    - button "Close" [ref=e360] [cursor=pointer]:
+      - img [ref=e361]

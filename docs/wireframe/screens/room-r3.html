@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<!--
+  HIGH-FIDELITY rebuild of LessonUnlikeDen.jsx (node ADD_UNLIKE_NESTED · Scale One),
+  data lessons/r3-nonunit.js — BEAT 1 · L0 · MANIPULATE.
+  Representative UNSOLVED snapshot of the anchor 3/8 + 1/4 = 5/8, re-cut so the
+  quarter strip is sliced to eighths (mA=1 → 3/8, mB=2 → 2/8), so both strips are
+  the same eighths size (matched). Knife rack in the rail; InkPad answer slot.
+  Mirrors LessonShell · StageTabs (all 10 beats, #1 active) · QuestionBand ·
+  LessonGoal · LessonBoard(split): lu-canvas strips · knife rail · AnswerBar · Cook.
+  Real SVG inlined verbatim from Knife.jsx + Cook.jsx (idle). Nav: ← world.html ·
+  ↻ intro.html · ↩ kitchen.html · tabs link to sibling beats.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>№7 Scale One · Manipulate · #/r3</title>
+
+  <!-- real app fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- real app CSS: tokens FIRST, then this screen's stylesheets -->
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/lesson-unlike.css" />
+  <link rel="stylesheet" href="../css/app/lesson-board.css" />
+  <link rel="stylesheet" href="../css/app/stagetabs.css" />
+  <link rel="stylesheet" href="../css/app/questionband.css" />
+  <link rel="stylesheet" href="../css/app/slate.css" />
+  <link rel="stylesheet" href="../css/app/gen-practice.css" />
+  <link rel="stylesheet" href="../css/app/sandbox.css" />
+  <link rel="stylesheet" href="../css/app/fitstage.css" />
+  <link rel="stylesheet" href="../css/app/blankslate.css" />
+  <link rel="stylesheet" href="../css/app/engine-surfaces.css" />
+
+  <!-- wireframe shell chrome LAST (desk + toolbar; not part of the app) -->
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">№7 Scale One · Manipulate <small>· #/r3</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <div class="page" data-vox-speaker="cook">
+      <div class="foxing"></div>
+
+      <!-- ══ TOPBAR (LessonShell) ════════════════════════════════════════════ -->
+      <div class="topbar">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="num-mark">№7</span>
+          <div>
+            <div class="puzzle-tag">Lesson 7 · Adding Fractions</div>
+            <div class="puzzle-title">Scale One</div>
+          </div>
+        </div>
+        <div aria-hidden="true"></div>
+        <div class="controls">
+          <a class="ctrl-btn" href="world.html" title="Back to the lesson map">←</a>
+          <a class="ctrl-btn" href="intro.html" title="Rewatch the intro video" aria-label="Rewatch the intro video">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
+          </a>
+          <span class="ctrl-btn" title="Settings" aria-label="Settings">⚙</span>
+          <a class="ctrl-btn" href="kitchen.html" title="Return to Babushka's Kitchen">⟲</a>
+        </div>
+      </div>
+
+      <!-- ══ StageTabs (all 10 beats; #1 active, rest are REAL links) ═════════ -->
+      <div class="stage-tabs" role="tablist" aria-label="interaction-arc stage">
+        <button type="button" role="tab" aria-selected="true" class="stage-tab is-active" title="the blocks ARE the problem; drag &amp; slice by touch">
+          <span class="stage-tab-n">1</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Manipulate</span><span class="stage-tab-sub">the blocks ARE the problem; drag &amp; slice by touch</span></span>
+        </button>
+        <a role="tab" class="stage-tab" href="room-r3-2-bind.html" title="blocks + the written fraction; copy the numeral">
+          <span class="stage-tab-n">2</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Bind</span><span class="stage-tab-sub">blocks + the written fraction; copy the numeral</span></span><span class="lu-stylus" aria-hidden="true">✎</span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-r3-3-fade.html" title="blocks dim to a check; the equation leads">
+          <span class="stage-tab-n">3</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Fade</span><span class="stage-tab-sub">blocks dim to a check; the equation leads</span></span><span class="lu-stylus" aria-hidden="true">✎</span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-r3-w-workbench.html" title="pull blocks from the bin and build the answer">
+          <span class="stage-tab-n">W</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Workbench</span><span class="stage-tab-sub">pull blocks from the bin and build the answer</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-r3-5-ghost.html" title="blocks a faded ghost behind; write the whole answer">
+          <span class="stage-tab-n">3·</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Ghost</span><span class="stage-tab-sub">blocks a faded ghost behind; write the whole answer</span></span><span class="lu-stylus" aria-hidden="true">✎</span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-r3-6-numbers.html" title="a bare equation; write the whole solution">
+          <span class="stage-tab-n">4</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Numbers</span><span class="stage-tab-sub">a bare equation; write the whole solution</span></span><span class="lu-stylus" aria-hidden="true">✎</span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-r3-a-applied.html" title="a worded question with the fractions shown; write the sum">
+          <span class="stage-tab-n">A</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Applied</span><span class="stage-tab-sub">a worded question with the fractions shown; write the sum</span></span><span class="lu-stylus" aria-hidden="true">✎</span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-r3-sw-showwork.html" title="write out how you'd solve it on a blank slate">
+          <span class="stage-tab-n">✎</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Show Work</span><span class="stage-tab-sub">write out how you'd solve it on a blank slate</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-r3-7-words.html" title="a plain-language word problem; read it and solve">
+          <span class="stage-tab-n">5</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Words</span><span class="stage-tab-sub">a plain-language word problem; read it and solve</span></span><span class="lu-stylus" aria-hidden="true">✎</span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-r3-practice.html" title="fresh problems — paced to your mastery">
+          <span class="stage-tab-n">★</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Practice</span><span class="stage-tab-sub">fresh problems — paced to your mastery</span></span><span class="lu-stylus" aria-hidden="true">✎</span>
+        </a>
+      </div>
+
+<!-- ══ LessonGoal banner ═══════════════════════════════════════════════ -->
+      <div class="goal">
+        <button class="speaker">
+          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none" /></svg>
+          Read aloud
+        </button>
+        <div class="goal-text" data-vox-speaker="mom">
+          Babushka needs <b>3/8</b> of a dough strip and <b>1/4</b> of a strip — add them together.
+        </div>
+      </div>
+
+      <!-- ══ LessonBoard (split): strips · knife rail · answer · tutor ═══════ -->
+      <div class="lboard" style="--lboard-foot-h:150px; --lboard-rail-w:360px;">
+
+        <!-- ── stage: the two strips (re-cut to matching eighths) ─────────── -->
+        <div class="lboard-stage">
+          <div class="canvas lu-canvas" id="r2canvas">
+            <div class="eqstate eqfloat ok"><span class="g">=</span>blocks match</div>
+
+            <!-- ruler — 1 whole, eighth sub-marks (answerWholes=1, PLCD=8) -->
+            <div class="nline" style="top:256px; left:60px; right:auto; width:600px;"></div>
+            <span class="ntick" style="left:60px;  top:256px; height:14px;"></span>
+            <span class="ntick" style="left:135px; top:256px; height:6px;"></span>
+            <span class="ntick" style="left:210px; top:256px; height:6px;"></span>
+            <span class="ntick" style="left:285px; top:256px; height:6px;"></span>
+            <span class="ntick" style="left:360px; top:256px; height:6px;"></span>
+            <span class="ntick" style="left:435px; top:256px; height:6px;"></span>
+            <span class="ntick" style="left:510px; top:256px; height:6px;"></span>
+            <span class="ntick" style="left:585px; top:256px; height:6px;"></span>
+            <span class="ntick" style="left:660px; top:256px; height:14px;"></span>
+            <span class="nlab ng" style="left:60px;  top:268px;">0</span>
+            <span class="nlab ng" style="left:660px; top:268px;">1</span>
+
+            <!-- strip A — 3/8 (already eighths, mA=1), eighths hue #d1495b -->
+            <div class="nbar" style="left:60px; top:156px; width:225px;">
+              <div class="btag">
+                <div class="bignum"><span class="n">3</span><span class="bar" style="background:#d1495b;"></span><span class="d">8</span></div>
+              </div>
+              <div class="plank is-matched" style="width:225px;">
+                <div class="plank-body">
+                  <div class="piece" style="width:75px; background:#d1495b; border-right:1px solid rgba(237,226,200,0.55);"><div class="piece-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px);"></div><span class="piece-lab" style="color:#ede2c8; font-size:15px;">1/8</span></div>
+                  <div class="piece" style="width:75px; background:#d1495b; border-right:1px solid rgba(237,226,200,0.55);"><div class="piece-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px);"></div><span class="piece-lab" style="color:#ede2c8; font-size:15px;">1/8</span></div>
+                  <div class="piece" style="width:75px; background:#d1495b; border-right:none;"><div class="piece-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px);"></div><span class="piece-lab" style="color:#ede2c8; font-size:15px;">1/8</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- strip B — 1/4 re-cut to 2/8 (mB=2), now eighths too -->
+            <div class="nbar" style="left:60px; top:68px; width:150px;">
+              <div class="btag">
+                <div class="bignum"><span class="n">2</span><span class="bar" style="background:#d1495b;"></span><span class="d">8</span></div>
+                <span class="xchip">×2</span>
+              </div>
+              <div class="plank is-matched" style="width:150px;">
+                <div class="plank-body">
+                  <div class="piece" style="width:75px; background:#d1495b; border-right:1px solid rgba(237,226,200,0.55);"><div class="piece-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px);"></div><span class="piece-lab" style="color:#ede2c8; font-size:15px;">1/8</span></div>
+                  <div class="piece" style="width:75px; background:#d1495b; border-right:none;"><div class="piece-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px);"></div><span class="piece-lab" style="color:#ede2c8; font-size:15px;">1/8</span></div>
+                </div>
+              </div>
+              <span class="xchip-bot">×2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── rail: The Knives ───────────────────────────────────────────── -->
+        <div class="lboard-rail">
+          <div class="panel">
+            <h3>The Knives</h3>
+            <div class="hint">Drag a knife onto a strip — it cuts every block into that many equal pieces (top &amp; bottom together).</div>
+            <div class="knife-rack">
+              <div class="knife-row">
+                <svg width="111" height="40" viewBox="0 0 232 84" class="knife" style="display:block; touch-action:none; cursor:grab; overflow:visible;">
+                  <defs>
+                    <linearGradient id="kn-blade-2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5efdc" /><stop offset="0.4" stop-color="#ddd0ad" /><stop offset="1" stop-color="#ab9468" /></linearGradient>
+                    <pattern id="kn-hatch-2" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.6" opacity="0.4" /></pattern>
+                  </defs>
+                  <path d="M14 30 L150 18 L150 60 Q80 70 14 30 Z" fill="url(#kn-blade-2)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" />
+                  <path d="M22 30 L150 21" stroke="var(--ink)" stroke-width="1.1" opacity="0.4" />
+                  <path d="M26 34 L148 27" stroke="#ffffff" stroke-width="1.6" opacity="0.55" />
+                  <path d="M16 31 Q80 66 150 58" stroke="#fffaf0" stroke-width="1.4" opacity="0.5" fill="none" />
+                  <path d="M126 26 h22 v30 h-22 Z" fill="url(#kn-hatch-2)" stroke="none" opacity="0.4" />
+                  <rect x="149" y="16" width="12" height="46" rx="3" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6" />
+                  <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" />
+                  <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="url(#kn-hatch-2)" stroke="none" opacity="0.28" />
+                  <circle cx="173" cy="39" r="2.8" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.3" />
+                  <text x="198" y="46" text-anchor="middle" style="font:700 22px var(--display); fill:var(--paper-1); letter-spacing:0.01em;">×2</text>
+                </svg>
+                <span class="krow-lab">→ 2 pieces</span>
+              </div>
+              <div class="knife-row">
+                <svg width="111" height="40" viewBox="0 0 232 84" class="knife" style="display:block; touch-action:none; cursor:grab; overflow:visible;">
+                  <defs>
+                    <linearGradient id="kn-blade-3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5efdc" /><stop offset="0.4" stop-color="#ddd0ad" /><stop offset="1" stop-color="#ab9468" /></linearGradient>
+                    <pattern id="kn-hatch-3" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.6" opacity="0.4" /></pattern>
+                  </defs>
+                  <path d="M14 30 L150 18 L150 60 Q80 70 14 30 Z" fill="url(#kn-blade-3)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" />
+                  <path d="M22 30 L150 21" stroke="var(--ink)" stroke-width="1.1" opacity="0.4" />
+                  <path d="M26 34 L148 27" stroke="#ffffff" stroke-width="1.6" opacity="0.55" />
+                  <path d="M16 31 Q80 66 150 58" stroke="#fffaf0" stroke-width="1.4" opacity="0.5" fill="none" />
+                  <path d="M126 26 h22 v30 h-22 Z" fill="url(#kn-hatch-3)" stroke="none" opacity="0.4" />
+                  <rect x="149" y="16" width="12" height="46" rx="3" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6" />
+                  <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" />
+                  <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="url(#kn-hatch-3)" stroke="none" opacity="0.28" />
+                  <circle cx="173" cy="39" r="2.8" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.3" />
+                  <text x="198" y="46" text-anchor="middle" style="font:700 22px var(--display); fill:var(--paper-1); letter-spacing:0.01em;">×3</text>
+                </svg>
+                <span class="krow-lab">→ 3 pieces</span>
+              </div>
+              <div class="knife-row">
+                <svg width="111" height="40" viewBox="0 0 232 84" class="knife" style="display:block; touch-action:none; cursor:grab; overflow:visible;">
+                  <defs>
+                    <linearGradient id="kn-blade-4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5efdc" /><stop offset="0.4" stop-color="#ddd0ad" /><stop offset="1" stop-color="#ab9468" /></linearGradient>
+                    <pattern id="kn-hatch-4" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.6" opacity="0.4" /></pattern>
+                  </defs>
+                  <path d="M14 30 L150 18 L150 60 Q80 70 14 30 Z" fill="url(#kn-blade-4)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" />
+                  <path d="M22 30 L150 21" stroke="var(--ink)" stroke-width="1.1" opacity="0.4" />
+                  <path d="M26 34 L148 27" stroke="#ffffff" stroke-width="1.6" opacity="0.55" />
+                  <path d="M16 31 Q80 66 150 58" stroke="#fffaf0" stroke-width="1.4" opacity="0.5" fill="none" />
+                  <path d="M126 26 h22 v30 h-22 Z" fill="url(#kn-hatch-4)" stroke="none" opacity="0.4" />
+                  <rect x="149" y="16" width="12" height="46" rx="3" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6" />
+                  <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" />
+                  <path d="M161 18 L214 23 Q226 25 226 39 Q226 53 214 55 L161 60 Z" fill="url(#kn-hatch-4)" stroke="none" opacity="0.28" />
+                  <circle cx="173" cy="39" r="2.8" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.3" />
+                  <text x="198" y="46" text-anchor="middle" style="font:700 22px var(--display); fill:var(--paper-1); letter-spacing:0.01em;">×4</text>
+                </svg>
+                <span class="krow-lab">→ 4 pieces</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── answer: AnswerBar (3/8 + 1/4 = ?, ink fraction slot) ───────── -->
+        <div class="lboard-answer">
+          <div class="lbar lu-ansbar">
+            <div class="lbar-eq">
+              <div class="bignum"><span class="n">3</span><span class="bar" style="background:#d1495b;"></span><span class="d">8</span></div>
+              <span class="lu-op">+</span>
+              <div class="bignum"><span class="n">1</span><span class="bar" style="background:#0a9396;"></span><span class="d">4</span></div>
+              <span class="lu-op">=</span>
+              <span class="lu-ans-slot">
+                <span class="frinput ink">
+                  <span class="slate-slot"><span class="slate-cell"><span class="slate-ph" aria-hidden="true">✎</span></span></span>
+                  <span class="ln"></span>
+                  <span class="slate-slot"><span class="slate-cell"></span></span>
+                </span>
+              </span>
+            </div>
+            <div class="lbar-cap">write the bottom number — how big is each block?</div>
+            <div class="lbar-marks">
+              <button class="check">Check</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── tutor: TutorRibbon (Cook idle) ─────────────────────────────── -->
+        <div class="lboard-tutor">
+          <div class="ltutor">
+            <div class="cook-stage">
+              <svg width="118" height="156" viewBox="0 0 196 260" style="display:block; overflow:visible;" aria-hidden="true">
+                <defs>
+                  <pattern id="ck-hatch" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.7" opacity="0.5" /></pattern>
+                  <pattern id="ck-hatch-r" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--red-deep)" stroke-width="0.8" opacity="0.45" /></pattern>
+                </defs>
+                <g stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+                  <path d="M44 258 Q40 188 58 168 Q72 154 98 154 Q124 154 138 168 Q156 188 152 258 Z" fill="var(--paper-1)" />
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="var(--red)" />
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="url(#ck-hatch-r)" stroke="none" />
+                  <path d="M98 156 L98 258" stroke="var(--ink)" stroke-width="1.4" opacity="0.5" fill="none" />
+                  <path d="M44 258 Q40 200 54 176 L70 258 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.7" />
+                  <path d="M58 172 Q34 186 30 214" fill="none" />
+                  <path d="M138 172 Q162 186 166 214" fill="none" />
+                </g>
+                <circle cx="98" cy="182" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="98" cy="200" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <g transform="rotate(6 168 218)">
+                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                </g>
+                <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />
+                <g fill="var(--red-deep)" stroke="var(--ink)" stroke-width="2">
+                  <path d="M58 92 Q50 104 56 116 Q62 108 66 110 Z" />
+                  <path d="M138 92 Q146 104 140 116 Q134 108 130 110 Z" />
+                </g>
+                <circle cx="98" cy="92" r="40" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6" />
+                <path d="M122 78 A40 40 0 0 1 124 116 Q112 120 110 96 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.55" />
+                <circle cx="74" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+                <circle cx="122" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+                <g>
+                  <circle cx="83" cy="87" r="3.6" fill="var(--ink)" />
+                  <circle cx="113" cy="87" r="3.6" fill="var(--ink)" />
+                </g>
+                <path d="M98 92 Q102 99 97 101" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M84 108 Q98 120 112 108" stroke="var(--ink)" stroke-width="2.6" fill="none" stroke-linecap="round" />
+                <g stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round">
+                  <rect x="64" y="52" width="68" height="16" rx="3" fill="var(--paper-2)" />
+                  <path d="M64 56 Q50 52 52 36 Q40 30 50 18 Q58 6 76 12 Q86 0 104 8 Q124 2 130 18 Q150 22 144 38 Q152 52 132 56 Q132 40 120 44 Q120 30 104 34 Q104 22 88 28 Q84 40 72 38 Q74 52 64 56 Z" fill="var(--paper-1)" />
+                </g>
+                <path d="M120 44 Q132 40 132 56 L120 56 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.5" />
+              </svg>
+            </div>
+            <div class="ribbon">Same-size blocks now! Write the bottom number: how big is each block?</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

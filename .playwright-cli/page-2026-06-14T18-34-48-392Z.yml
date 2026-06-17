@@ -1,0 +1,79 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e202]:
+      - generic [ref=e291]:
+        - button [ref=e293] [cursor=pointer]:
+          - img [ref=e294]
+        - button "M Matthew" [ref=e297] [cursor=pointer]:
+          - generic [ref=e299]: M
+          - generic [ref=e300]: Matthew
+        - generic [ref=e302]:
+          - generic [ref=e303]:
+            - button "Report a Problem" [ref=e304] [cursor=pointer]:
+              - img [ref=e305]
+              - generic [ref=e307]: Report a Problem
+            - button "End Lesson" [ref=e308] [cursor=pointer]:
+              - img [ref=e309]
+              - generic [ref=e312]: End Lesson
+            - button "Manage Account" [ref=e313] [cursor=pointer]:
+              - img [ref=e314]
+              - generic [ref=e317]: Manage Account
+          - generic [ref=e318]:
+            - generic [ref=e319]: Language
+            - generic [ref=e320]:
+              - button "English" [ref=e321] [cursor=pointer]
+              - button "Español" [ref=e322] [cursor=pointer]
+          - generic [ref=e323]:
+            - generic [ref=e324]:
+              - generic [ref=e325]: Read Answer Choices
+              - switch "Read Answer Choices" [ref=e326] [cursor=pointer]
+            - generic [ref=e329]:
+              - generic [ref=e330]:
+                - generic [ref=e331]: Voice Input
+                - generic [ref=e332]: BETA
+              - switch "Voice Input" [ref=e333] [cursor=pointer]
+          - generic [ref=e335]:
+            - heading "Voice Speed" [level=3] [ref=e336]
+            - generic [ref=e337]:
+              - button "Slow" [ref=e338] [cursor=pointer]
+              - button "Normal" [ref=e339] [cursor=pointer]
+              - button "Fast" [ref=e340] [cursor=pointer]
+              - button "Speedy" [ref=e341] [cursor=pointer]
+          - generic [ref=e342]:
+            - generic [ref=e343]:
+              - generic [ref=e344]: Dyslexic Font
+              - switch "Dyslexic Font" [ref=e345] [cursor=pointer]
+            - generic [ref=e347]:
+              - generic [ref=e348]: On-Screen Keyboard
+              - switch "On-Screen Keyboard" [ref=e349] [cursor=pointer]
+      - generic [ref=e203]:
+        - generic [ref=e204]:
+          - navigation [ref=e205]:
+            - button [active] [ref=e208] [cursor=pointer]:
+              - img [ref=e351]
+          - paragraph [ref=e220]:
+            - generic [ref=e221]: "Here's your first task: Find the array that represents"
+            - generic [ref=e223]:
+              - math [ref=e225]:
+                - generic [ref=e228]: "6"
+              - generic [ref=e230]: "6"
+            - generic [ref=e232]:
+              - math [ref=e234]:
+                - generic [ref=e237]: +
+              - generic [ref=e239]: +
+            - generic [ref=e241]:
+              - math [ref=e243]:
+                - generic [ref=e246]: "6"
+              - generic [ref=e248]: "6"
+            - generic [ref=e250]:
+              - math [ref=e252]:
+                - generic [ref=e255]: +
+              - generic [ref=e257]: +
+            - generic [ref=e259]:
+              - math [ref=e261]:
+                - generic [ref=e264]: "6"
+              - generic [ref=e266]: "6"
+            - generic [ref=e267]: Tap on it and then press Submit.
+        - button "SUBMIT" [ref=e289] [cursor=pointer]
+  - alert [ref=e11]: Synthesis Tutor

@@ -1,0 +1,52 @@
+/* num.css — "The Top Number" (Numerator) lesson — REAL APP.
+   The ruler / square / number-column / bare-card markup is SHARED with den
+   (den.css owns .den-* and .sq-*). This stylesheet adds only the num-specific
+   bits: the inline Slate slot in the answer bar (Count / Story / Words /
+   Practice), the tappable top/bottom slot buttons in the Make stage, and the
+   Words scratch surface. Interaction state is owned by AppNum.jsx; presentation
+   only here. */
+
+/* Two-column digit grid (0–4 | 5–9) used in Shade, Whole, Build, Make stages. */
+.eq-numgrid { display: flex; gap: 6px; }
+/* Column layout helper used in the Paint stage. */
+.eq-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* Slate sits inline in the answer-bar equation row (write the fraction). */
+.num-slate-wrap { display: inline-flex; align-items: center; }
+.num-slate-wrap .slate.slate-fraction { margin: 0; }
+
+/* Make stage — the top/bottom slots are TAP TARGETS (pick which to set). They
+   reuse the .bignum glyph but become buttons; strip the default button chrome. */
+.num-slot-btn {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  padding: 0 6px;
+  cursor: pointer;
+  line-height: 1;
+}
+.num-slot-btn.sq-slot-active {
+  outline: 2px dashed var(--red);
+  outline-offset: 3px;
+  background: rgba(163, 42, 34, 0.08);
+  border-radius: 9px;
+}
+
+/* Words stage — a plain scratch surface (no picture handed over). */
+.num-scratch {
+  width: 560px;
+  height: 280px;
+  margin: 0 auto;
+  border: 2px dashed var(--paper-3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 30px;
+  color: var(--ink-mute);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+}

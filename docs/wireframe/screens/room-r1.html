@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<!--
+  room-r1.html — HIGH-FIDELITY rebuild of web/src/AppR1.jsx (NODE ADD_SAME_DEN),
+  STAGE 1 · MANIPULATE. The blocks ARE the problem: two same-size stacks (2/7 + 3/7)
+  the child drags together and counts. Unsolved snapshot — stacks apart at HOME
+  positions, numeric Slate empty, Check inert. Shared LessonShell + StageTabs +
+  QuestionBand DOM mirrored with real classNames; real Stack/BigFrac/Lock/Slate/
+  Cook/Rosette SVG inlined. den=7 → palette hue #5a4fcf, label #ede2c8, chevron hatch.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>№4 Same Denominators · Manipulate · #/r1</title>
+
+  <!-- real app fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- real app CSS: tokens FIRST, screen stylesheets next, wf-shell LAST -->
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/lesson-board.css" />
+  <link rel="stylesheet" href="../css/app/stagetabs.css" />
+  <link rel="stylesheet" href="../css/app/questionband.css" />
+  <link rel="stylesheet" href="../css/app/slate.css" />
+  <link rel="stylesheet" href="../css/app/gen-practice.css" />
+  <link rel="stylesheet" href="../css/app/sandbox.css" />
+  <link rel="stylesheet" href="../css/app/fitstage.css" />
+  <link rel="stylesheet" href="../css/app/blankslate.css" />
+  <link rel="stylesheet" href="../css/app/engine-surfaces.css" />
+  <link rel="stylesheet" href="../css/app/r1.css" />
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">№4 Same Denominators · Manipulate <small>· #/r1</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <!-- REAL screen root: LessonShell (page) → topbar · StageTabs · QuestionBand · goal · LessonBoard -->
+    <div class="page" data-vox-speaker="cook">
+      <div class="foxing"></div>
+
+      <!-- ── TOPBAR (LessonShell) ───────────────────────────────────────────── -->
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span class="num-mark">№4</span>
+          <div>
+            <div class="puzzle-tag">Lesson 4 · Adding Fractions</div>
+            <div class="puzzle-title">Same Denominators</div>
+          </div>
+        </div>
+        <div aria-hidden="true"></div>
+        <div class="controls">
+          <a class="ctrl-btn" href="world.html" title="Back to the lesson map">←</a>
+          <a class="ctrl-btn" href="intro.html" title="Rewatch the intro video" aria-label="Rewatch the intro video">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
+          </a>
+          <a class="ctrl-btn" href="settings.html" title="Settings" aria-label="Settings"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="display:block"><path d="M12 8.5 a3.5 3.5 0 1 0 0 7 a3.5 3.5 0 0 0 0-7 Z M20 13.5 v-3 l-2.2-.4 a6 6 0 0 0-.7-1.7 l1.3-1.8 -2.1-2.1 -1.8 1.3 a6 6 0 0 0-1.7-.7 L12 2 H9 l-.4 2.2 a6 6 0 0 0-1.7.7 L5.1 3.6 3 5.7 l1.3 1.8 a6 6 0 0 0-.7 1.7 L1.4 9.6 v3 l2.2.4 a6 6 0 0 0 .7 1.7 L3 16.5 5.1 18.6 6.9 17.3 a6 6 0 0 0 1.7.7 L9 20.2 h3 l.4-2.2 a6 6 0 0 0 1.7-.7 l1.8 1.3 2.1-2.1 -1.3-1.8 a6 6 0 0 0 .7-1.7 Z" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/></svg></a>
+          <span class="ctrl-btn" aria-disabled="true" title="Start over">⟲</span>
+        </div>
+      </div>
+
+      <!-- ── STAGE TABS (StageTabs — all 9 stages; this one is-active) ───────── -->
+      <div class="stage-tabs" role="tablist" aria-label="Lesson stages">
+        <button type="button" role="tab" aria-selected="true" class="stage-tab is-active" title="drag &amp; count blocks">
+          <span class="stage-tab-n">1</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Manipulate</span><span class="stage-tab-sub">drag &amp; count blocks</span></span>
+        </button>
+        <a href="room-r1-2-bind.html" role="tab" aria-selected="false" class="stage-tab" title="blocks + write 5/7">
+          <span class="stage-tab-n">2</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Bind</span><span class="stage-tab-sub">blocks + write 5/7</span></span>
+        </a>
+        <a href="room-r1-3-fade.html" role="tab" aria-selected="false" class="stage-tab" title="blocks dim, write">
+          <span class="stage-tab-n">3</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Fade</span><span class="stage-tab-sub">blocks dim, write</span></span>
+        </a>
+        <a href="room-r1-4-workbench.html" role="tab" aria-selected="false" class="stage-tab" title="build it from the bin">
+          <span class="stage-tab-n">4</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Workbench</span><span class="stage-tab-sub">build it from the bin</span></span>
+        </a>
+        <a href="room-r1-5-numbers.html" role="tab" aria-selected="false" class="stage-tab" title="bare 2/7 + 3/7 = ?">
+          <span class="stage-tab-n">5</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Numbers</span><span class="stage-tab-sub">bare 2/7 + 3/7 = ?</span></span>
+        </a>
+        <a href="room-r1-6-applied.html" role="tab" aria-selected="false" class="stage-tab" title="write the sum, then total">
+          <span class="stage-tab-n">6</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Applied</span><span class="stage-tab-sub">write the sum, then total</span></span>
+        </a>
+        <a href="room-r1-sw-showwork.html" role="tab" aria-selected="false" class="stage-tab" title="show your work">
+          <span class="stage-tab-n">sw</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Show Work</span><span class="stage-tab-sub">show your work</span></span>
+        </a>
+        <a href="room-r1-7-words.html" role="tab" aria-selected="false" class="stage-tab" title="story problem">
+          <span class="stage-tab-n">7</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Words</span><span class="stage-tab-sub">story problem</span></span>
+        </a>
+        <a href="room-r1-practice.html" role="tab" aria-selected="false" class="stage-tab" title="Fresh problems — paced to your mastery">
+          <span class="stage-tab-n">★</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Practice</span><span class="stage-tab-sub">Fresh problems — paced to your mastery</span></span>
+        </a>
+      </div>
+
+      <!-- ── GOAL BANNER (LessonGoal) ───────────────────────────────────────── -->
+      <div class="goal">
+        <button class="speaker">
+          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none" /></svg>
+          Read aloud
+        </button>
+        <div class="goal-text" data-vox="r1Goal" data-vox-speaker="mom">
+          Babushka needs <b>2/7</b> of a tray and <b>3/7</b> of a tray — the pieces are the same size, so add the tops and keep the bottom.
+        </div>
+      </div>
+
+      <!-- ── LESSON BOARD (split): stage · rail · answer · tutor ─────────────── -->
+      <div class="lboard" style="--lboard-rail-w:396px;--lboard-foot-h:140px">
+
+        <!-- STAGE: the manipulate canvas (two stacks of sevenths to drag together) -->
+        <div class="lboard-stage">
+          <div class="canvas r1-s1-canvas" id="r1canvas">
+            <div class="eqstate eqfloat locked"><span class="g"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="display:block"><rect x="4" y="11" width="16" height="11" rx="2" fill="none" stroke="var(--ink)" stroke-width="2" /><path d="M8 11 V8 a4 4 0 0 1 8 0 V11" fill="none" stroke="var(--ink)" stroke-width="2" /><circle cx="12" cy="16" r="1.6" fill="var(--ink)" /></svg></span>bottom stays /7</div>
+
+            <!-- number line: 0 → 1 whole, span 392px from ORIGIN 96, ticks every 1/7 -->
+            <div class="nline" style="top:258px;left:96px;right:auto;width:392px"></div>
+            <span class="ntick" style="left:96px;top:258px;height:14px"></span>
+            <span class="ntick" style="left:152px;top:258px;height:8px"></span>
+            <span class="ntick" style="left:208px;top:258px;height:8px"></span>
+            <span class="ntick" style="left:264px;top:258px;height:8px"></span>
+            <span class="ntick" style="left:320px;top:258px;height:8px"></span>
+            <span class="ntick" style="left:376px;top:258px;height:8px"></span>
+            <span class="ntick" style="left:432px;top:258px;height:8px"></span>
+            <span class="ntick" style="left:488px;top:258px;height:14px"></span>
+            <span class="nlab ng" style="left:96px;top:270px">0</span>
+            <span class="nlab" style="left:152px;top:270px">1/7</span>
+            <span class="nlab" style="left:208px;top:270px">2/7</span>
+            <span class="nlab" style="left:264px;top:270px">3/7</span>
+            <span class="nlab" style="left:320px;top:270px">4/7</span>
+            <span class="nlab" style="left:376px;top:270px">5/7</span>
+            <span class="nlab" style="left:432px;top:270px">6/7</span>
+            <span class="nlab ng" style="left:488px;top:270px">1</span>
+
+            <!-- stack A: 2/7 at HOME.A (96,186), width 112 -->
+            <div class="nbar" style="left:96px;top:186px;width:112px">
+              <div class="btag">
+                <div class="bignum">
+                  <span class="n">2</span>
+                  <span class="bar" style="background:#5a4fcf"></span>
+                  <span class="d-wrap"><span class="d">7</span><span class="lockmark"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" style="display:block"><rect x="4" y="11" width="16" height="11" rx="2" fill="none" stroke="var(--ink)" stroke-width="2" /><path d="M8 11 V8 a4 4 0 0 1 8 0 V11" fill="none" stroke="var(--ink)" stroke-width="2" /><circle cx="12" cy="16" r="1.6" fill="var(--ink)" /></svg></span></span>
+                </div>
+              </div>
+              <!-- Stack n=2 den=7 unit=392 → pieceW 56 -->
+              <div class="plank lit" style="width:112px">
+                <div class="plank-body">
+                  <div class="piece" style="width:56px;background:#5a4fcf;border-right:1.5px solid rgba(237,226,200,0.55)">
+                    <div class="piece-hatch" style="background-image:repeating-linear-gradient(45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px)"></div>
+                    <span class="piece-lab" style="color:#ede2c8;font-size:13px">1/7</span>
+                    <span class="cut-tick top" style="background:rgba(237,226,200,0.55)"></span>
+                    <span class="cut-tick bot" style="background:rgba(237,226,200,0.55)"></span>
+                  </div>
+                  <div class="piece" style="width:56px;background:#5a4fcf;border-right:none">
+                    <div class="piece-hatch" style="background-image:repeating-linear-gradient(45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px)"></div>
+                    <span class="piece-lab" style="color:#ede2c8;font-size:13px">2/7</span>
+                  </div>
+                </div>
+              </div>
+              <div class="grip"><i></i><i></i><i></i></div>
+            </div>
+
+            <!-- stack B: 3/7 at HOME.B (96,44), width 168 -->
+            <div class="nbar" style="left:96px;top:44px;width:168px">
+              <div class="btag">
+                <div class="bignum">
+                  <span class="n">3</span>
+                  <span class="bar" style="background:#5a4fcf"></span>
+                  <span class="d-wrap"><span class="d">7</span><span class="lockmark"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" style="display:block"><rect x="4" y="11" width="16" height="11" rx="2" fill="none" stroke="var(--ink)" stroke-width="2" /><path d="M8 11 V8 a4 4 0 0 1 8 0 V11" fill="none" stroke="var(--ink)" stroke-width="2" /><circle cx="12" cy="16" r="1.6" fill="var(--ink)" /></svg></span></span>
+                </div>
+              </div>
+              <!-- Stack n=3 den=7 unit=392 → pieceW 56 -->
+              <div class="plank lit" style="width:168px">
+                <div class="plank-body">
+                  <div class="piece" style="width:56px;background:#5a4fcf;border-right:1.5px solid rgba(237,226,200,0.55)">
+                    <div class="piece-hatch" style="background-image:repeating-linear-gradient(45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px)"></div>
+                    <span class="piece-lab" style="color:#ede2c8;font-size:13px">1/7</span>
+                    <span class="cut-tick top" style="background:rgba(237,226,200,0.55)"></span>
+                    <span class="cut-tick bot" style="background:rgba(237,226,200,0.55)"></span>
+                  </div>
+                  <div class="piece" style="width:56px;background:#5a4fcf;border-right:1.5px solid rgba(237,226,200,0.55)">
+                    <div class="piece-hatch" style="background-image:repeating-linear-gradient(45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px)"></div>
+                    <span class="piece-lab" style="color:#ede2c8;font-size:13px">2/7</span>
+                    <span class="cut-tick top" style="background:rgba(237,226,200,0.55)"></span>
+                    <span class="cut-tick bot" style="background:rgba(237,226,200,0.55)"></span>
+                  </div>
+                  <div class="piece" style="width:56px;background:#5a4fcf;border-right:none">
+                    <div class="piece-hatch" style="background-image:repeating-linear-gradient(45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px)"></div>
+                    <span class="piece-lab" style="color:#ede2c8;font-size:13px">3/7</span>
+                  </div>
+                </div>
+              </div>
+              <div class="grip"><i></i><i></i><i></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RAIL: HintRail "Keep the Bottom" + lockcard -->
+        <div class="lboard-rail">
+          <div class="panel">
+            <h3>Keep the Bottom</h3>
+            <div class="hint">Both stacks are cut into 7ths — the pieces are the same size, so you just count how many. The bottom number is locked.</div>
+            <div class="lockcard">
+              <div class="bignum">
+                <span class="n" style="color:var(--red)">+</span>
+                <span class="bar" style="background:#5a4fcf"></span>
+                <span class="d-wrap"><span class="d">7</span><span class="lockmark"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" style="display:block"><rect x="4" y="11" width="16" height="11" rx="2" fill="none" stroke="var(--ink)" stroke-width="2" /><path d="M8 11 V8 a4 4 0 0 1 8 0 V11" fill="none" stroke="var(--ink)" stroke-width="2" /><circle cx="12" cy="16" r="1.6" fill="var(--ink)" /></svg></span></span>
+              </div>
+              <div class="lockcard-note">add the tops<br />keep the 7</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANSWER: AnswerBar — equation row with numeric Slate (empty) + inert Check -->
+        <div class="lboard-answer">
+          <div class="lbar">
+            <div class="lbar-eq">
+              <span class="r1-s1-frac">2/7</span>
+              <span class="r1-s1-op">+</span>
+              <span class="r1-s1-frac">3/7</span>
+              <span class="r1-s1-op">=</span>
+              <span class="r1-s1-slate">
+                <div class="slate slate-fraction is-disabled" role="group" aria-label="write the top number">
+                  <div class="slate-slot is-disabled">
+                    <div class="slate-cell"><canvas class="slate-canvas" role="img" aria-label="write the top digit"></canvas></div>
+                  </div>
+                  <span class="slate-bar" style="background:#5a4fcf" aria-hidden="true"></span>
+                  <div class="slate-slot is-locked">
+                    <div class="slate-cell" aria-label="bottom: 7"><span class="slate-fixed">7</span></div>
+                  </div>
+                </div>
+              </span>
+            </div>
+            <div class="lbar-cap">count the pieces to unlock the answer</div>
+            <div class="lbar-marks">
+              <span class="check" aria-disabled="true">Check</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TUTOR: TutorRibbon — Cook + speech ribbon -->
+        <div class="lboard-tutor">
+          <div class="ltutor">
+            <div class="cook-stage">
+              <svg width="118" height="156.5306122448" viewBox="0 0 196 260" style="display:block;overflow:visible" aria-hidden="true">
+                <defs>
+                  <pattern id="ck-hatch" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.7" opacity="0.5" /></pattern>
+                  <pattern id="ck-hatch-r" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--red-deep)" stroke-width="0.8" opacity="0.45" /></pattern>
+                </defs>
+                <g stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+                  <path d="M44 258 Q40 188 58 168 Q72 154 98 154 Q124 154 138 168 Q156 188 152 258 Z" fill="var(--paper-1)" />
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="var(--red)" />
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="url(#ck-hatch-r)" stroke="none" />
+                  <path d="M98 156 L98 258" stroke="var(--ink)" stroke-width="1.4" opacity="0.5" fill="none" />
+                  <path d="M44 258 Q40 200 54 176 L70 258 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.7" />
+                  <path d="M58 172 Q34 186 30 214" fill="none" />
+                  <path d="M138 172 Q162 186 166 214" fill="none" />
+                </g>
+                <circle cx="98" cy="182" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="98" cy="200" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
+                <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <g transform="rotate(6 168 218)">
+                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                </g>
+                <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
+                <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />
+                <g fill="var(--red-deep)" stroke="var(--ink)" stroke-width="2">
+                  <path d="M58 92 Q50 104 56 116 Q62 108 66 110 Z" />
+                  <path d="M138 92 Q146 104 140 116 Q134 108 130 110 Z" />
+                </g>
+                <circle cx="98" cy="92" r="40" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6" />
+                <path d="M122 78 A40 40 0 0 1 124 116 Q112 120 110 96 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.55" />
+                <circle cx="74" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+                <circle cx="122" cy="100" r="7" fill="var(--red-soft)" opacity="0.7" />
+                <g><circle cx="83" cy="87" r="3.6" fill="var(--ink)" /><circle cx="113" cy="87" r="3.6" fill="var(--ink)" /></g>
+                <path d="M98 92 Q102 99 97 101" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M84 108 Q98 120 112 108" stroke="var(--ink)" stroke-width="2.6" fill="none" stroke-linecap="round" />
+                <g stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round">
+                  <rect x="64" y="52" width="68" height="16" rx="3" fill="var(--paper-2)" />
+                  <path d="M64 56 Q50 52 52 36 Q40 30 50 18 Q58 6 76 12 Q86 0 104 8 Q124 2 130 18 Q150 22 144 38 Q152 52 132 56 Q132 40 120 44 Q120 30 104 34 Q104 22 88 28 Q84 40 72 38 Q74 52 64 56 Z" fill="var(--paper-1)" />
+                </g>
+                <path d="M120 44 Q132 40 132 56 L120 56 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.5" />
+              </svg>
+            </div>
+            <div class="ribbon">Two stacks of the same-size pieces. Drag them together to count them up.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

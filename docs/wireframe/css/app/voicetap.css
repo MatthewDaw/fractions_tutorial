@@ -1,0 +1,30 @@
+/* voicetap.css — the little "read aloud" speaker buttons (TapToRead.jsx).
+   Each readable block of copy gets a small speaker button tucked at the end of the
+   line; pressing it reads the line in character, pressing it again stops. The
+   button sizes to the text (em units) so it sits neatly on headings and captions
+   alike. */
+
+.vox-btn {
+  -webkit-appearance: none; appearance: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: middle; margin-left: 0.4em;
+  width: 1.45em; height: 1.45em; padding: 0;
+  border: 1.5px solid var(--ink); border-radius: 50%;
+  background: var(--paper-1); color: var(--ink); cursor: pointer;
+  box-shadow: 1px 1px 0 rgba(28, 22, 18, 0.22);
+  opacity: 0.5; transition: opacity 120ms ease, transform 120ms ease, background 120ms, color 120ms;
+}
+.vox-btn:hover { opacity: 1; transform: translateY(-1px); }
+.vox-btn:active { transform: translateY(0); box-shadow: 0 0 0 rgba(28, 22, 18, 0); }
+.vox-btn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; opacity: 1; }
+
+/* reading now — flip to a stop affordance in the accent colour */
+.vox-btn--on {
+  opacity: 1; background: var(--red); color: var(--paper-1); border-color: var(--red-deep);
+  box-shadow: 1px 1px 0 rgba(110, 28, 22, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vox-btn { transition: none; }
+  .vox-btn:hover { transform: none; }
+}

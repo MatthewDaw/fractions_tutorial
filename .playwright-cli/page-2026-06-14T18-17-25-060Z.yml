@@ -1,0 +1,7 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - navigation [ref=e91]:
+      - button [ref=e94] [cursor=pointer]:
+        - img [ref=e95]
+  - alert [ref=e11]: Synthesis Tutor

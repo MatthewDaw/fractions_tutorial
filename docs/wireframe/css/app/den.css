@@ -1,0 +1,240 @@
+/* den.css — "The Bottom Number" (Denominator) lesson.
+   A RULER (0 → 1) split into N equal pieces; one unit piece (1/N) is inked red.
+   The whole point of the lesson lives in the geometry: more pieces (a bigger
+   bottom number) ⇒ each piece is SMALLER. All classes namespaced .den-*.
+   Reuses shared .bignum for the fraction glyph. Warm paper/ink palette. */
+
+/* ── the play area: number column | fraction | ruler ───────────────────────── */
+.den-play {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  padding: 6px 10px;
+}
+
+/* a stacked column of pickable numbers (the denominator). Kept compact so all
+   nine fit the fixed stage height without clipping. */
+.den-numcol { display: flex; flex-direction: column; gap: 5px; }
+.den-num {
+  width: 36px; height: 36px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 17px; line-height: 1;
+  color: var(--ink);
+  background: var(--paper-1);
+  border: 2px solid var(--ink);
+  border-radius: 9px;
+  box-shadow: 0 2px 0 var(--shade);
+}
+.den-num.is-on {
+  color: var(--paper-1);
+  background: var(--red);
+  border-color: var(--red-deep);
+  box-shadow: 0 2px 0 var(--red-deep);
+}
+
+/* the big 1/N glyph between the column and the ruler */
+.den-pick-frac { margin: 0 6px; }
+.den-pick-frac .bignum { font-size: 46px; }
+
+/* ── the ruler ─────────────────────────────────────────────────────────────── */
+.den-ruler-wrap { display: flex; flex-direction: column; gap: 8px; }
+.den-ruler {
+  width: var(--den-ruler-w, 560px);
+  height: 78px;
+  display: flex;
+  border: 2.5px solid var(--ink);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--paper-2);
+  box-shadow: inset 0 2px 8px rgba(20, 12, 6, 0.18), 0 3px 0 var(--shade);
+}
+.den-ruler.is-sm { height: 60px; }
+
+.den-seg {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  border-right: 2px solid var(--ink);
+  display: flex; align-items: center; justify-content: center;
+}
+.den-seg:last-child { border-right: none; }
+
+/* the highlighted UNIT piece (1/N) — inked red with a cross-hatch */
+.den-seg.is-unit { background: var(--red); }
+.den-seg.is-unit::after {
+  content: ""; position: absolute; inset: 0; opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(237,226,200,0.40) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, rgba(237,226,200,0.40) 0 1px, transparent 1px 7px);
+}
+.den-seg-lab {
+  position: relative; z-index: 1;
+  font-family: var(--type); font-size: 13px; color: var(--paper-1);
+}
+
+/* 0 … 1 end labels under the ruler */
+.den-ends {
+  width: var(--den-ruler-w, 560px);
+  display: flex; justify-content: space-between;
+  font-family: var(--type); font-size: 15px; color: var(--ink-mute);
+}
+.den-cap {
+  text-align: center;
+  font-family: var(--serif); font-style: italic; font-size: 16px;
+  color: var(--ink-mute);
+  max-width: var(--den-ruler-w, 560px);
+}
+
+/* numbered cells under the ruler — count the pieces out (1 … n) */
+.den-ruler-nums { width: var(--den-ruler-w, 560px); display: flex; }
+.den-ruler-num {
+  flex: 1 1 0; text-align: center; padding: 4px 0; border-right: 1.5px solid var(--ink);
+  font-family: var(--type); font-size: 13px; color: var(--ink-mute);
+}
+.den-ruler-num:last-child { border-right: none; }
+
+/* the highlight / unhighlight tool above the ruler */
+.den-paint-row { display: flex; justify-content: center; margin-bottom: 16px; }
+.den-paint-tool {
+  all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border: 2px solid var(--ink); background: var(--paper-1);
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.04em; color: var(--ink);
+}
+.den-paint-tool:hover { background: var(--paper-2); }
+
+/* ── compare layout: two stacked rulers, each tagged with its 1/N ───────────── */
+.den-compare { display: flex; flex-direction: column; gap: 22px; align-items: center; height: 100%; justify-content: center; }
+.den-row { display: flex; align-items: center; gap: 20px; }
+.den-row .bignum { font-size: 38px; min-width: 64px; }
+.den-row .den-ruler { --den-ruler-w: 460px; }
+.den-row.is-pick { cursor: pointer; }
+
+/* a tappable choice chip (smaller / larger / which fraction) */
+.den-choices { display: flex; flex-wrap: wrap; gap: 12px; }
+.den-choice {
+  font-family: var(--display); font-size: 17px;
+  padding: 12px 20px;
+  color: var(--ink); background: var(--paper-1);
+  border: 2px solid var(--ink); border-radius: 10px;
+  box-shadow: 0 3px 0 var(--shade);
+}
+.den-choice.is-on { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+
+/* ── numbers-only stage: two big fractions, no picture ─────────────────────── */
+.den-bare {
+  height: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 54px;
+}
+.den-bare .bignum { font-size: 92px; }
+.den-bare-vs { font-family: var(--serif); font-style: italic; font-size: 26px; color: var(--ink-mute); }
+.den-bare-card {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 20px 30px; border: 2.5px dashed var(--paper-3); border-radius: 14px;
+}
+.den-bare-card.is-on { border-color: var(--red); background: rgba(163,42,34,0.06); border-style: solid; }
+
+/* ── numerator extras: top-number picker + a "match the target" pair ────────── */
+/* the top-number column reuses .den-numcol / .den-num */
+.num-tag {
+  font-family: var(--display); font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink-mute);
+  padding: 2px 8px; border: 1px solid var(--paper-3); border-radius: 4px;
+}
+.den-row.is-target .den-ruler { box-shadow: 0 0 0 2px var(--red), inset 0 2px 8px rgba(20,12,6,0.18); }
+.num-rowlab { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 96px; }
+
+/* ── square-box build game (the Synthesis "match two squares" idea, on OUR
+   2-D box). YOUR box is built from the picked top/bottom; the TARGET box on the
+   right is the goal. Pick numbers → split the box into N cells, fill K red, and
+   make the two squares identical. All classes namespaced .sq-*. ───────────── */
+.sq-game {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 12px 44px;
+}
+/* ONE set of numbers. The child taps a number (it lifts/highlights), then taps
+   the TOP or BOTTOM slot of the fraction to drop it there. The single column
+   reuses .den-numcol/.den-num; the fraction slots carry the interaction. */
+.sq-pickcol { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.sq-pickcol .num-tag { margin-bottom: 2px; }
+
+/* the fraction whose TOP/BOTTOM are tappable drop-slots */
+.sq-frac-pick { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.sq-frac-pick .bignum { font-size: 48px; }
+.sq-frac-pick .bignum .n,
+.sq-frac-pick .bignum .d {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 0.9em; min-height: 0.9em; padding: 2px 6px;
+  border-radius: 9px; cursor: pointer;
+}
+/* an empty slot waiting for a number */
+.sq-slot-empty { color: var(--paper-3); border: 2px dashed var(--paper-3); }
+/* the slot the dropped number will land in (the child has a number picked) */
+.sq-slot-active { outline: 2px dashed var(--red); outline-offset: 3px; background: rgba(163,42,34,0.08); }
+/* a fixed slot the child can't change (the locked top/bottom) */
+.sq-slot-locked { cursor: default; color: var(--ink-mute); background: var(--shade); }
+
+.sq-frac-hint {
+  font-family: var(--serif); font-style: italic; font-size: 14px;
+  color: var(--ink-mute); text-align: center; max-width: 150px;
+}
+
+.sq-side { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.sq-side-lab {
+  font-family: var(--display); font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+
+/* YOUR + TARGET rulers, STACKED VERTICALLY (a ruler is wide, so the two won't
+   sit side-by-side). Each ruler reuses the den lesson's .den-ruler / .den-seg so
+   the whole build game reads in the SAME ruler vocabulary as the rest of the
+   lesson — no separate "square" object. */
+.sq-rulers { display: flex; flex-direction: column; gap: 18px; }
+.sq-rulerrow { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+/* the TARGET ruler gets a red frame so the child knows which one to match */
+.den-ruler.is-target { box-shadow: 0 0 0 2px var(--red), inset 0 2px 8px rgba(20,12,6,0.18); }
+
+/* the fraction glyph that sits between the picker and the rulers */
+.sq-frac .bignum { font-size: 44px; }
+
+/* ── paint game: divide the strip first (a button per cut), then paint K/N red ── */
+.sq-paint { gap: 44px; }
+.den-ruler.is-paint .den-seg { cursor: pointer; }
+/* the "cut the strip into N" buttons — the child must divide before painting */
+.sq-divide { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+.sq-divide-lab { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+.sq-divbtn {
+  min-width: 36px; height: 36px; padding: 0 10px; cursor: pointer;
+  font-family: var(--display); font-size: 16px; color: var(--ink);
+  background: var(--paper-1); border: 2px solid var(--ink); border-radius: 9px;
+  box-shadow: 0 2px 0 var(--shade);
+}
+.sq-divbtn.is-on { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); box-shadow: 0 2px 0 var(--red-deep); }
+.sq-tool {
+  display: flex; flex-direction: column; gap: 10px; align-items: stretch;
+  padding: 12px 14px; border: 2px solid var(--ink); border-radius: 12px;
+  background: var(--paper-1); box-shadow: 0 3px 0 var(--shade);
+}
+.sq-tool-h {
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-mute); text-align: center;
+}
+.sq-swatches { display: flex; gap: 8px; justify-content: center; }
+.sq-swatch {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--ink); box-shadow: 0 2px 0 var(--shade);
+}
+.sq-swatch.is-red { background: var(--red); }
+.sq-swatch.is-ink { background: var(--ink-soft); }
+.sq-swatch.is-on { outline: 2px solid var(--red-deep); outline-offset: 2px; }
+.sq-reset {
+  font-family: var(--display); font-size: 13px;
+  padding: 8px 14px; color: var(--ink); background: var(--paper-2);
+  border: 2px solid var(--ink); border-radius: 9px; box-shadow: 0 2px 0 var(--shade);
+}
+

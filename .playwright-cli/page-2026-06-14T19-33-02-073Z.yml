@@ -1,0 +1,79 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e266]:
+      - generic [ref=e534]:
+        - button [ref=e536] [cursor=pointer]:
+          - img [ref=e537]
+        - button "M Matthew" [ref=e540] [cursor=pointer]:
+          - generic [ref=e542]: M
+          - generic [ref=e543]: Matthew
+        - generic [ref=e545]:
+          - generic [ref=e546]:
+            - button "Report a Problem" [ref=e547] [cursor=pointer]:
+              - img [ref=e548]
+              - generic [ref=e550]: Report a Problem
+            - button "End Lesson" [ref=e551] [cursor=pointer]:
+              - img [ref=e552]
+              - generic [ref=e555]: End Lesson
+            - button "Manage Account" [ref=e556] [cursor=pointer]:
+              - img [ref=e557]
+              - generic [ref=e560]: Manage Account
+          - generic [ref=e561]:
+            - generic [ref=e562]: Language
+            - generic [ref=e563]:
+              - button "English" [ref=e564] [cursor=pointer]
+              - button "Español" [ref=e565] [cursor=pointer]
+          - generic [ref=e566]:
+            - generic [ref=e567]:
+              - generic [ref=e568]: Read Answer Choices
+              - switch "Read Answer Choices" [ref=e569] [cursor=pointer]
+            - generic [ref=e572]:
+              - generic [ref=e573]:
+                - generic [ref=e574]: Voice Input
+                - generic [ref=e575]: BETA
+              - switch "Voice Input" [ref=e576] [cursor=pointer]
+          - generic [ref=e578]:
+            - heading "Voice Speed" [level=3] [ref=e579]
+            - generic [ref=e580]:
+              - button "Slow" [ref=e581] [cursor=pointer]
+              - button "Normal" [ref=e582] [cursor=pointer]
+              - button "Fast" [ref=e583] [cursor=pointer]
+              - button "Speedy" [ref=e584] [cursor=pointer]
+          - generic [ref=e585]:
+            - generic [ref=e586]:
+              - generic [ref=e587]: Dyslexic Font
+              - switch "Dyslexic Font" [ref=e588] [cursor=pointer]
+            - generic [ref=e590]:
+              - generic [ref=e591]: On-Screen Keyboard
+              - switch "On-Screen Keyboard" [ref=e592] [cursor=pointer]
+      - generic [ref=e267]:
+        - generic [ref=e268]:
+          - navigation [ref=e269]:
+            - button [active] [ref=e272] [cursor=pointer]:
+              - img [ref=e594]
+          - generic [ref=e526]:
+            - paragraph [ref=e528]: We can just write the number 2. No problem.
+            - generic:
+              - button [disabled]:
+                - img
+        - generic [ref=e280]:
+          - generic [ref=e407]:
+            - generic:
+              - generic:
+                - generic: "2"
+            - generic [ref=e416]:
+              - generic:
+                - img "Character 1" [ref=e419] [cursor=pointer]
+                - img "Character 2" [ref=e422] [cursor=pointer]
+              - generic [ref=e425]:
+                - generic [ref=e446]:
+                  - button [disabled] [ref=e447] [cursor=pointer]
+                  - button [disabled] [ref=e448] [cursor=pointer]
+                  - button [disabled] [ref=e491] [cursor=pointer]
+                - generic [ref=e449]:
+                  - button [disabled] [ref=e450] [cursor=pointer]
+                  - button [disabled] [ref=e451] [cursor=pointer]
+                  - button [disabled] [ref=e497] [cursor=pointer]
+          - status [ref=e300]: Draggable item whole-0-1781464999410-0.926525223452933 was dropped.
+  - alert [ref=e11]

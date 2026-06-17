@@ -1,0 +1,46 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e273]
+        - generic [ref=e506]:
+          - paragraph [ref=e508]:
+            - generic [ref=e509]: That's it,
+            - generic [ref=e511]:
+              - math [ref=e513]:
+                - generic [ref=e517]:
+                  - generic [ref=e518]: "1"
+                  - generic [ref=e519]: "2"
+              - generic [ref=e526]:
+                - generic [ref=e527]: "2"
+                - generic [ref=e529]: "1"
+            - generic [ref=e533]: .
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e280]:
+        - generic [ref=e356]:
+          - generic:
+            - generic:
+              - generic: "2"
+            - generic:
+              - generic: "1"
+              - generic: "2"
+          - generic [ref=e365]:
+            - generic:
+              - img "Character 1" [ref=e368] [cursor=pointer]
+              - img "Character 2" [ref=e371] [cursor=pointer]
+            - generic [ref=e374]:
+              - generic [ref=e381]:
+                - button [disabled] [ref=e412] [cursor=pointer]
+                - button [disabled] [ref=e382] [cursor=pointer]
+                - button [disabled] [ref=e426] [cursor=pointer]
+              - generic [ref=e383]:
+                - button [disabled] [ref=e384] [cursor=pointer]
+                - button [disabled] [ref=e385] [cursor=pointer]
+                - button [disabled] [ref=e432] [cursor=pointer]
+        - status [ref=e300]
+  - alert [ref=e11]

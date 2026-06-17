@@ -1,0 +1,37 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e273]
+        - paragraph [ref=e642]: There's just one cookie left. Slice it into 4 pieces and give each person a piece.
+      - generic [ref=e280]:
+        - generic [ref=e573]:
+          - generic [ref=e575]:
+            - button [ref=e576] [cursor=pointer]:
+              - img [ref=e577]
+            - button "🔪" [ref=e579] [cursor=pointer]:
+              - generic [ref=e580]: 🔪
+          - generic [ref=e609]:
+            - button [active] [ref=e652] [cursor=pointer]
+            - generic [ref=e618]:
+              - generic:
+                - img "Character 1" [ref=e583] [cursor=pointer]
+                - img "Character 2" [ref=e586] [cursor=pointer]
+                - img "Character 3" [ref=e589] [cursor=pointer]
+                - img "Character 4" [ref=e592] [cursor=pointer]
+              - generic [ref=e621]:
+                - generic [ref=e626]:
+                  - button [ref=e627] [cursor=pointer]
+                  - button [ref=e653] [cursor=pointer]
+                - generic [ref=e628]:
+                  - button [ref=e629] [cursor=pointer]
+                  - button [ref=e647] [cursor=pointer]
+                - generic [ref=e630]:
+                  - button [ref=e631] [cursor=pointer]
+                  - button [ref=e648] [cursor=pointer]
+                - button [ref=e633] [cursor=pointer]
+        - status [ref=e300]: Draggable item whole-4-1781462753732-0.8289798867189118-2 was dropped.
+  - alert [ref=e11]

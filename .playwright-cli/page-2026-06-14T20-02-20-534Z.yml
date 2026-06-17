@@ -1,0 +1,31 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - generic [ref=e1208]:
+        - navigation [ref=e1209]:
+          - button [ref=e1212] [cursor=pointer]:
+            - img [ref=e1213]
+        - generic [ref=e1369]:
+          - paragraph [ref=e1371]: There's enough for each person to get 2 full cookies. Let's start with that.
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e1220]:
+        - generic [ref=e1295]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - button
+                  - button
+                  - button
+                  - button
+                  - button
+                  - button
+            - generic:
+              - generic:
+                - img "Character 1" [ref=e1308] [cursor=pointer]
+                - img "Character 2" [ref=e1311] [cursor=pointer]
+        - status [ref=e1240]
+  - alert [ref=e11]

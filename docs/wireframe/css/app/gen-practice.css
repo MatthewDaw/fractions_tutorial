@@ -1,0 +1,91 @@
+/* gen-practice.css — the shared auto-generated practice stage (GenPracticeBoard).
+   Lives inside the lesson body; matches the Soviet/old-paper palette (tokens.css). */
+.gen-practice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 26px 24px;
+  min-height: 360px;
+}
+.gen-practice.bad { animation: gen-shake 0.42s; }
+@keyframes gen-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-7px); }
+  75% { transform: translateX(7px); }
+}
+.gen-practice__q {
+  font-family: var(--serif, Georgia, serif);
+  color: var(--ink, #1c1612);
+}
+.gen-practice__prompt {
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.gen-practice__answer { min-height: 96px; display: flex; align-items: center; }
+.gen-practice .ribbon {
+  max-width: 620px;
+  text-align: center;
+  font-family: var(--serif, Georgia, serif);
+  font-size: 17px;
+  color: var(--ink-soft, #3a2e24);
+}
+.gen-practice .ribbon--ok { color: #2c5a2c; }
+.gen-practice .ribbon--warn { color: var(--red-deep, #6e1c16); }
+
+/* Hint ladder — a quiet "Need a hint?" affordance and the revealed strategy
+   steps. Understated so it invites a stuck learner without nagging the rest. */
+.gen-practice__hints { max-width: 520px; text-align: center; }
+.gen-practice__hint-btn {
+  background: transparent;
+  border: 1px dashed var(--ink-mute, #6b5a47);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font: italic 14px/1 var(--serif, Georgia, serif);
+  color: var(--ink-mute, #6b5a47);
+  cursor: pointer;
+}
+.gen-practice__hint-btn:hover { color: var(--ink, #1c1612); border-color: var(--ink, #1c1612); }
+.gen-practice__hint-list {
+  margin: 10px auto 0;
+  padding-left: 22px;
+  text-align: left;
+  max-width: 480px;
+  font-family: var(--serif, Georgia, serif);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-soft, #3a2e24);
+}
+.gen-practice__hint-list li { margin-bottom: 4px; }
+
+/* U5 reteach beat — a short corrective card on a diagnosed misconception. Warm,
+   not alarming: an invitation to look again, not a failure stamp. */
+.gen-practice__reteach {
+  max-width: 560px;
+  text-align: left;
+  background: var(--paper-2, #f3e7cf);
+  border: 1px solid var(--line, #d8c4a0);
+  border-left: 5px solid var(--red-deep, #6e1c16);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-family: var(--serif, Georgia, serif);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06);
+  animation: reteach-in 0.28s ease-out;
+}
+@keyframes reteach-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.gen-practice__reteach-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--red-deep, #6e1c16);
+  margin-bottom: 4px;
+}
+.gen-practice__reteach-body {
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ink-soft, #3a2e24);
+}

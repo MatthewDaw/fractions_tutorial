@@ -1,0 +1,41 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - generic [ref=e1208]:
+        - navigation [ref=e1209]:
+          - button [ref=e1212] [cursor=pointer]:
+            - img [ref=e1213]
+        - generic [ref=e1216]:
+          - generic [ref=e1565]:
+            - paragraph [ref=e1566]: Share 5 cookies equally.
+            - button "🖐️" [ref=e1568] [cursor=pointer]:
+              - generic [ref=e1569]: 🖐️
+          - generic [ref=e1589]:
+            - paragraph [ref=e1591]: If you need help, just click the hand.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e1220]:
+        - generic [ref=e1539]:
+          - generic [ref=e1541]:
+            - button [ref=e1542] [cursor=pointer]:
+              - img [ref=e1543]
+            - button "🔪" [ref=e1545] [cursor=pointer]:
+              - generic [ref=e1546]: 🔪
+          - generic [ref=e1575]:
+            - generic [ref=e1578]:
+              - button [ref=e1582] [cursor=pointer]
+              - button [ref=e1583] [cursor=pointer]
+            - generic [ref=e1584]:
+              - generic:
+                - img "Character 1" [ref=e1549] [cursor=pointer]
+                - img "Character 2" [ref=e1552] [cursor=pointer]
+                - img "Character 3" [ref=e1555] [cursor=pointer]
+                - img "Character 4" [ref=e1558] [cursor=pointer]
+              - generic [ref=e1587]:
+                - button [ref=e1593] [cursor=pointer]
+                - button [ref=e1595] [cursor=pointer]
+                - button [ref=e1597] [cursor=pointer]
+        - status [ref=e1240]
+  - alert [ref=e11]

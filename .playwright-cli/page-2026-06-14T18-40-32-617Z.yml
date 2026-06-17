@@ -1,0 +1,40 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e273]
+        - generic [ref=e276]:
+          - generic [ref=e376]:
+            - paragraph [ref=e377]: Share 5 cookies equally.
+            - button "🖐️" [ref=e379] [cursor=pointer]:
+              - generic [ref=e380]: 🖐️
+          - generic [ref=e342]:
+            - paragraph [ref=e344]:
+              - generic [ref=e345]: But how about 5 cookies
+              - generic [ref=e347]:
+                - math [ref=e349]:
+                  - generic [ref=e352]: ÷
+                - generic [ref=e354]: ÷
+              - text: 2 people? Try giving each person the same amount.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e280]:
+        - generic [ref=e356]:
+          - generic [ref=e359]:
+            - button [active] [ref=e360] [cursor=pointer]
+            - button [ref=e364] [cursor=pointer]
+          - generic [ref=e365]:
+            - generic:
+              - img "Character 1" [ref=e368] [cursor=pointer]
+              - img "Character 2" [ref=e371] [cursor=pointer]
+            - generic [ref=e374]:
+              - button [ref=e382] [cursor=pointer]
+              - generic [ref=e383]:
+                - button [ref=e384] [cursor=pointer]
+                - button [ref=e385] [cursor=pointer]
+        - status [ref=e300]
+  - alert [ref=e11]

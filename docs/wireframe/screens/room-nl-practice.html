@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!--
+  room-nl-practice.html — HIGH-FIDELITY rebuild of AppNumberLine.jsx (room `nl`),
+  STAGE ★ "Practice". The body is the shared <GenPracticeBoard skill="FRACTION_ON_LINE">
+  (auto-generated, estimator-paced problems). On this stage the QuestionBand is
+  HIDDEN (band={null}) and there is no LessonBoard — GenPracticeBoard replaces the
+  body. Representative generated problem: "Place 2/3" (fraction answer shape →
+  fraction Slate). Mirrors LessonShell chrome + StageTabs (this stage active).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>№3 On the Number Line · Practice · #/nl</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/lesson-board.css" />
+  <link rel="stylesheet" href="../css/app/stagetabs.css" />
+  <link rel="stylesheet" href="../css/app/questionband.css" />
+  <link rel="stylesheet" href="../css/app/slate.css" />
+  <link rel="stylesheet" href="../css/app/gen-practice.css" />
+  <link rel="stylesheet" href="../css/app/fitstage.css" />
+  <link rel="stylesheet" href="../css/app/engine-surfaces.css" />
+  <link rel="stylesheet" href="../css/app/nl.css" />
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">№3 On the Number Line · Practice <small>· #/nl</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <!-- REAL screen root: LessonShell( … AppNumberLine stage "practice" … ) -->
+    <div class="page" data-vox-speaker="cook">
+      <div class="foxing"></div>
+
+      <div class="topbar">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="num-mark">№3</span>
+          <div>
+            <div class="puzzle-tag">Lesson 3 · Number Line</div>
+            <div class="puzzle-title">On the Number Line</div>
+          </div>
+        </div>
+        <div aria-hidden="true"></div>
+        <div class="controls">
+          <a class="ctrl-btn" href="world.html" title="Back to the lesson map">←</a>
+          <a class="ctrl-btn" href="intro.html" title="Rewatch the intro video" aria-label="Rewatch the intro video">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
+          </a>
+          <button class="ctrl-btn" title="Settings" aria-label="Settings">
+            <img src="../assets/settings-gear.png" width="18" height="18" alt="" aria-hidden="true" style="display:block; object-fit:contain;" />
+          </button>
+          <a class="ctrl-btn" href="kitchen.html" title="Start this stage over">⟲</a>
+        </div>
+      </div>
+
+      <!-- StageTabs — Place + Write + Numbers done; Practice active -->
+      <div class="stage-tabs" role="tablist" aria-label="Lesson stages">
+        <a href="room-nl.html" role="tab" aria-selected="false" class="stage-tab is-done" title="Drag the point to the fraction">
+          <span class="stage-tab-n">1</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Place</span><span class="stage-tab-sub">Drag the point to the fraction</span></span>
+        </a>
+        <a href="room-nl-2-write.html" role="tab" aria-selected="false" class="stage-tab is-done" title="Name the marked point">
+          <span class="stage-tab-n">2</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Write</span><span class="stage-tab-sub">Name the marked point</span></span>
+        </a>
+        <a href="room-nl-3-numbers.html" role="tab" aria-selected="false" class="stage-tab is-done" title="Past 1 — place a fraction bigger than a whole">
+          <span class="stage-tab-n">3</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Numbers</span><span class="stage-tab-sub">Past 1 — place a fraction bigger than a whole</span></span>
+        </a>
+        <button type="button" role="tab" aria-selected="true" class="stage-tab is-active" title="Fresh problems — paced to your mastery">
+          <span class="stage-tab-n">★</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Practice</span><span class="stage-tab-sub">Fresh problems — paced to your mastery</span></span>
+        </button>
+      </div>
+
+      <!-- (QuestionBand HIDDEN on the practice stage — band={null}) -->
+
+      <!-- LessonGoal -->
+      <div class="goal">
+        <button class="speaker">
+          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none" /></svg>
+          Read aloud
+        </button>
+        <div class="goal-text" data-vox="nlGoal" data-vox-speaker="mom">
+          Fresh problems, paced to your mastery — read each fraction, then write the
+          number the point names. The engine keeps minting new ones until you've got it.
+        </div>
+      </div>
+
+      <!-- BODY: the shared GenPracticeBoard (skill FRACTION_ON_LINE) -->
+      <div class="gen-practice">
+        <div class="gen-practice__q">
+          <span class="gen-practice__prompt">Place 2/3</span>
+        </div>
+        <div class="gen-practice__answer">
+          <!-- fraction answer shape → a fraction Slate (top over bottom) -->
+          <div class="slate slate-fraction" role="group" aria-label="write your answer as a fraction">
+            <div class="slate-slot">
+              <div class="slate-cell">
+                <canvas class="slate-canvas" role="img" aria-label="write the top digit"></canvas>
+                <span class="slate-ph" aria-hidden="true">✎</span>
+              </div>
+            </div>
+            <span class="slate-bar" style="background:#1c1612;" aria-hidden="true"></span>
+            <div class="slate-slot">
+              <div class="slate-cell">
+                <canvas class="slate-canvas" role="img" aria-label="write the bottom digit"></canvas>
+                <span class="slate-ph" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="check">Check</button>
+        <div class="gen-practice__hints">
+          <button type="button" class="gen-practice__hint-btn">Need a hint?</button>
+        </div>
+      </div>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

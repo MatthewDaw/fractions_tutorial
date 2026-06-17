@@ -11,10 +11,17 @@
 // performance vs blocked.
 import React, { useState, useMemo, useCallback } from "react";
 import Slate from "./components/Slate.jsx";
+import PrimaryButton from "./components/scene/PrimaryButton.jsx";
 import { generateFor } from "./generators/index.js";
 import { gradeAnswer, answerShape } from "./generators/grade.js";
 import { ROOMS } from "./rooms.js";
+import { LESSONS } from "./lessons/index.js";
 import "./styles/mixreview.css";
+
+// Identity + copy from the shared registry (data only; the interleave loop,
+// grading and Slate logic stay in this component per the "data vs logic" rule).
+const L = LESSONS.review;
+const MSG = L.messages;
 
 // Short, kid-facing label per engine skill, from the room titles.
 const LABEL = {};
@@ -48,9 +55,9 @@ export default function MixedReview({ skills = [], onExit }) {
   function pickType(picked) {
     if (picked === skill) {
       setPhase("solve");
-      setStatus({ tone: "ok", text: "Yes — now solve it." });
+      setStatus({ tone: "ok", text: MSG.bridge });
     } else {
-      setStatus({ tone: "warn", text: "Look again — which kind of recipe is this?" });
+      setStatus({ tone: "warn", text: MSG.wrong });
     }
   }
 
@@ -58,10 +65,10 @@ export default function MixedReview({ skills = [], onExit }) {
     const g = gradeAnswer(problem, answer);
     if (g.correct) {
       setDone((d) => d + 1);
-      setStatus({ tone: "ok", text: "Correct!" });
+      setStatus({ tone: "ok", text: MSG.solved });
       setTimeout(nextTrial, 650);
     } else {
-      setStatus({ tone: "warn", text: "Not quite — take another look." });
+      setStatus({ tone: "warn", text: MSG.miss });
     }
   }
 
@@ -69,9 +76,9 @@ export default function MixedReview({ skills = [], onExit }) {
   if (!ready) {
     return (
       <div className="mixreview mixreview--empty">
-        <h2 className="mixreview__title">Babushka's Mixed Basket</h2>
-        <p className="mixreview__sub">Cook a few more recipes first — then come back and we'll mix them all together!</p>
-        <button className="check" onClick={onExit}>← Back to the map</button>
+        <h2 className="mixreview__title">{L.empty.title}</h2>
+        <p className="mixreview__sub">{L.empty.sub}</p>
+        <PrimaryButton className="mixreview__exit" arrow={null} onClick={onExit}>{L.empty.back}</PrimaryButton>
       </div>
     );
   }
@@ -79,14 +86,14 @@ export default function MixedReview({ skills = [], onExit }) {
   return (
     <div className="mixreview">
       <button className="mixreview__back" onClick={onExit}>←</button>
-      <h2 className="mixreview__title">Mixed Basket</h2>
-      <p className="mixreview__sub">Babushka mixed the recipes together — solved {done} so far.</p>
+      <h2 className="mixreview__title">{L.title}</h2>
+      <p className="mixreview__sub">{L.sub(done)}</p>
 
       <div className="mixreview__prompt">{problem.prompt}</div>
 
       {phase === "identify" ? (
         <div className="mixreview__identify">
-          <p className="mixreview__q">Which recipe is this?</p>
+          <p className="mixreview__q">{L.question}</p>
           <div className="mixreview__choices">
             {eligible.map((s) => (
               <button key={s} type="button" className="mixreview__choice" onClick={() => pickType(s)}>

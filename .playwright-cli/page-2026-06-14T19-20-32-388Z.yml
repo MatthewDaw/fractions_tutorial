@@ -1,0 +1,39 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - button [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+        - paragraph [ref=e507]: Slice the last cookie into 4 pieces and give each person a piece.
+      - generic [ref=e54]:
+        - generic [ref=e433]:
+          - generic [ref=e435]:
+            - button [ref=e436] [cursor=pointer]:
+              - img [ref=e437]
+            - button "🔪" [ref=e439] [cursor=pointer]:
+              - generic [ref=e440]: 🔪
+          - generic [ref=e441]:
+            - generic [ref=e444]:
+              - button [active] [ref=e503] [cursor=pointer]
+              - button [ref=e509] [cursor=pointer]
+              - button [ref=e510] [cursor=pointer]
+              - button [ref=e511] [cursor=pointer]
+              - button [ref=e512] [cursor=pointer]
+              - button [ref=e513] [cursor=pointer]
+            - generic [ref=e450]:
+              - generic:
+                - img "Character 1" [ref=e453] [cursor=pointer]
+                - img "Character 2" [ref=e456] [cursor=pointer]
+                - img "Character 3" [ref=e459] [cursor=pointer]
+                - img "Character 4" [ref=e462] [cursor=pointer]
+              - generic [ref=e465]:
+                - button [ref=e497] [cursor=pointer]
+                - generic [ref=e480]:
+                  - button [ref=e500] [cursor=pointer]
+                  - button [ref=e481] [cursor=pointer]
+                  - button [ref=e501] [cursor=pointer]
+                  - button [ref=e498] [cursor=pointer]
+        - status [ref=e74]
+  - alert [ref=e11]: Synthesis Tutor

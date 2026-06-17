@@ -1,0 +1,119 @@
+/* sandbox.css — the Workbench (BlockSandbox). Reuses lesson.css house classes
+   (.play/.diagram/.canvas/.rail/.panel/.hint); everything room-specific here is
+   .sandbox-* so it never collides. */
+
+/* The Workbench's row + ruler only fill the top ~190px of the canvas; cap the
+   canvas to that content and center it in the (taller) diagram so there is no dead
+   band below the ruler. Drag/drop reads the line's LIVE rect, so centering is safe. */
+.sandbox-canvas { position: relative; height: 232px; }
+.sandbox-play .diagram { justify-content: center; }
+
+/* the running status line, top of the canvas */
+.sandbox-status {
+  position: absolute; left: 8px; right: 8px; top: 6px;
+  font-family: var(--serif); font-style: italic; font-size: 14px;
+  color: var(--ink-mute); line-height: 1.3; min-height: 36px;
+}
+.sandbox-status.ok { color: var(--red-deep); font-style: normal; }
+.sandbox-status.warn { color: #9a3412; }
+
+/* the work strip — placed blocks live here, each tap-to-remove */
+.sandbox-row { position: absolute; }
+.sandbox-piece {
+  all: unset; box-sizing: border-box; position: absolute; top: 0; height: 100%;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  border: 1.5px solid rgba(20,14,10,0.5); overflow: hidden;
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+.sandbox-piece:hover { transform: translateY(-2px); box-shadow: 0 3px 0 rgba(20,14,10,0.25); z-index: 2; }
+.sandbox-piece-hatch { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; }
+.sandbox-piece-lab { position: relative; font-family: var(--display); font-weight: 700; }
+
+/* number-mode cell dividers — split an "N" block into N countable unit cells so the
+   child can physically count the cubes inside a group (shared by chip/piece/ghost) */
+.sandbox-seg { position: absolute; inset: 0; pointer-events: none; }
+
+/* ruler 0 → rulerWholes */
+.sandbox-line { position: absolute; height: 0; border-top: 2px solid var(--ink); }
+.sandbox-tick { position: absolute; width: 2px; height: 14px; background: var(--ink); transform: translateX(-1px); }
+.sandbox-tick-lab { position: absolute; transform: translateX(-50%); font-family: var(--display); font-size: 12px; color: var(--ink); }
+
+/* the target flag — what we're building toward */
+.sandbox-flag { position: absolute; width: 0; border-left: 2px dashed var(--red); }
+.sandbox-flag-lab {
+  position: absolute; left: 6px; top: -2px; white-space: nowrap;
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.03em;
+  color: var(--paper-1); background: var(--red); padding: 3px 7px;
+  box-shadow: 2px 2px 0 rgba(20,14,10,0.2);
+}
+
+/* the bin of every course block */
+.sandbox-bin { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.sandbox-bin-btn {
+  all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; width: 64px; padding: 6px 4px;
+  border: 1.5px solid var(--ink); background: var(--paper-1);
+  box-shadow: 2px 2px 0 rgba(28,22,18,0.16); transition: transform .1s ease, box-shadow .1s ease;
+}
+.sandbox-bin-btn:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 rgba(28,22,18,0.2); }
+.sandbox-bin-btn:disabled { opacity: 0.4; cursor: default; }
+.sandbox-bin-chip {
+  position: relative; overflow: hidden; width: 100%; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-weight: 700; font-size: 14px;
+  border: 1px solid rgba(20,14,10,0.45);
+}
+.sandbox-bin-hatch { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; }
+.sandbox-bin-name { font-family: var(--serif); font-size: 10px; color: var(--ink-mute); }
+
+/* live count + clear */
+.sandbox-readout { margin-top: 12px; border-top: 1px dashed var(--paper-3); padding-top: 10px; }
+.sandbox-readout-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sandbox-readout-lab { font-family: var(--display); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mute); }
+.sandbox-readout-val { font-family: var(--serif); font-size: 14px; color: var(--ink); }
+.sandbox-readout-val em { font-style: italic; color: var(--ink-mute); font-size: 12.5px; }
+.sandbox-clear {
+  all: unset; box-sizing: border-box; cursor: pointer; margin-top: 10px; display: inline-block;
+  font-family: var(--serif); font-size: 12.5px; color: var(--ink); padding: 5px 12px;
+  border: 1.5px solid var(--ink-mute); background: var(--paper-2);
+}
+.sandbox-clear:hover:not(:disabled) { background: var(--paper-1); }
+.sandbox-clear:disabled { opacity: 0.4; cursor: default; }
+
+/* ── DRAG-AND-DROP ─────────────────────────────────────────────────────────
+   A bin block is dragged with pointer events; a ghost follows the pointer and the
+   line lights as a drop target. Placement is drag-only — drop on the line. */
+
+/* the drop-target band over the row/ruler — shown only while dragging; it pulses
+   to a stronger red tint once the pointer is actually over the line (is-hot). */
+.sandbox-droptarget {
+  position: absolute; z-index: 1; pointer-events: none; box-sizing: border-box;
+  border: 2px dashed var(--red-soft);
+  background: rgba(163, 42, 34, 0.05);
+  transition: background .1s ease, border-color .1s ease, box-shadow .1s ease;
+}
+.sandbox-droptarget.is-hot {
+  border-color: var(--red);
+  background: rgba(163, 42, 34, 0.14);
+  box-shadow: inset 0 0 0 2px rgba(163, 42, 34, 0.22);
+}
+
+/* the chip being dragged fades in its tray slot (its ghost is what you see move) */
+.sandbox-bin-btn.is-dragging { opacity: 0.35; }
+
+/* the ghost block that tracks the pointer — centered on the cursor, above all */
+.sandbox-ghost {
+  position: fixed; z-index: 60; pointer-events: none;
+  transform: translate(-50%, -50%);
+  min-width: 56px; height: 38px; padding: 0 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-weight: 700; font-size: 15px;
+  border: 1.5px solid var(--ink); overflow: hidden;
+  box-shadow: 3px 4px 0 rgba(20,14,10,0.28); opacity: 0.95;
+}
+.sandbox-ghost-hatch { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; }
+.sandbox-ghost-lab { position: relative; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sandbox-piece, .sandbox-bin-btn, .sandbox-droptarget { transition: none; }
+}

@@ -1,0 +1,35 @@
+[   68776ms] [LOG] setting beautiful prompt @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  112672ms] [LOG] setting beautiful prompt @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  112672ms] [LOG] [ContentAPIRecommenderNav] Nav button clicked. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  112672ms] [LOG] Parent aborted, reason: The parent content was aborted. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  112672ms] [LOG] trip ended @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  112802ms] [LOG] [rootStore] cleaning up @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  112804ms] [LOG] [rootStore] stopping all sounds @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  112804ms] [LOG] [rootStore] Lesson ended with reason: {
+  "name": "SwitchToExploration",
+  "lessonUrlName": "content",
+  "launchContext": null
+} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  112807ms] [LOG] [startExplorationAccessCheck] pathname: /, sessionUser: [object Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  113195ms] [LOG] [rootStore] Running lesson entry for content @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  113197ms] [LOG] [rootStore] created the store and set the api. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  113197ms] [LOG] starting @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  113342ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  113687ms] [INFO] {checkpointData: null} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  113772ms] [INFO] {checkpointData: null} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  113773ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  149392ms] [LOG] trip ended @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  149516ms] [LOG] [rootStore] cleaning up @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  149518ms] [LOG] [rootStore] stopping all sounds @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  149518ms] [LOG] [rootStore] Lesson ended with reason: {
+  "name": "SwitchToExploration",
+  "lessonUrlName": "share_the_cookies",
+  "launchContext": null
+} @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  149520ms] [LOG] [startExplorationAccessCheck] pathname: /exploration/share_the_cookies, sessionUser: [object Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  149958ms] [LOG] [rootStore] Running lesson entry for Share the Cookies @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  149958ms] [LOG] [rootStore] created the store and set the api. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  149958ms] [LOG] starting @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  150132ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  150134ms] [LOG] [rootStore] getAPIContext: Proxy(Object) @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  543162ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3

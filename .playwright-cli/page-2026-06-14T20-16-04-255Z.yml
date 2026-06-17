@@ -1,0 +1,38 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - generic [ref=e1208]:
+        - navigation [ref=e1209]:
+          - button [ref=e1212] [cursor=pointer]:
+            - img [ref=e1213]
+        - paragraph [ref=e1680]: Slice the last cookie into 4 pieces and give each person a piece.
+      - generic [ref=e1220]:
+        - generic [ref=e1620]:
+          - generic [ref=e1622]:
+            - button [ref=e1623] [cursor=pointer]:
+              - img [ref=e1624]
+            - button "🔪" [ref=e1626] [cursor=pointer]:
+              - generic [ref=e1627]: 🔪
+          - generic [ref=e1628]:
+            - generic [ref=e1631]:
+              - button [ref=e1693] [cursor=pointer]
+              - button [ref=e1685] [cursor=pointer]
+              - button [ref=e1686] [cursor=pointer]
+              - button [ref=e1687] [cursor=pointer]
+              - button [ref=e1688] [cursor=pointer]
+              - button [ref=e1689] [cursor=pointer]
+              - button [ref=e1690] [cursor=pointer]
+              - button [ref=e1691] [cursor=pointer]
+              - button [ref=e1692] [cursor=pointer]
+            - generic [ref=e1637]:
+              - generic:
+                - img "Character 1" [ref=e1640] [cursor=pointer]
+                - img "Character 2" [ref=e1643] [cursor=pointer]
+                - img "Character 3" [ref=e1646] [cursor=pointer]
+                - img "Character 4" [ref=e1649] [cursor=pointer]
+              - generic [ref=e1652]:
+                - button [ref=e1660] [cursor=pointer]
+                - button [ref=e1662] [cursor=pointer]
+        - status [ref=e1240]
+  - alert [ref=e11]

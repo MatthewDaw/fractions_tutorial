@@ -46,6 +46,7 @@ import FitStage from "./components/FitStage.jsx";
 import { LessonShell, LessonBoard, AnswerBar, TutorRibbon, HintRail, LessonGoal } from "./components/lesson";
 import GenPracticeBoard from "./components/GenPracticeBoard.jsx";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
+import { useLessonIdentity } from "./lessons/useLessonIdentity.js";
 import { denomColor, denomTextColor, denomTone, denomHatch, denomHatchSize } from "./denominatorColors.js";
 import "./styles/r1.css";
 
@@ -63,25 +64,28 @@ const RULER_TICKS = answerWholes * DEN;
 
 const NODE = "ADD_SAME_DEN";
 
-// The seven stages, in order. `key` matches the orchestrator's stage ids.
+// The seven stages, in order — LOGIC ONLY. Identity/copy (tab name, sub, badge)
+// now live in the registry (web/src/lessons/r1.js); this array carries only what
+// the component's interaction logic needs: the stage VALUE `n` (the render
+// branches + engine compare against it) and the scaffold/orchestrator `key`.
+// The DISPLAY strip (tab name / sub / badge) is mapped from the registry below.
 // Arc (lesson-stage-arc-expansion): Manipulate, Bind, Fade, Workbench, Numbers,
-// Applied, Words. Workbench (4) = the shared <BlockSandbox>; Applied (6) = an
-// applied sentence with a REQUIRED word→math setup gate (<ExpressionSlate>).
+// Applied, Show Work, Words, Practice. Order here MUST match LESSONS.r1.tabs.
 const STAGES = [
-  { n: 1, key: "1-manipulate", tab: "Manipulate", sub: "drag & count blocks" },
-  { n: 2, key: "2-bind",       tab: "Bind",       sub: "blocks + write 5/7" },
-  { n: 3, key: "3-fade",       tab: "Fade",       sub: "blocks dim, write" },
-  { n: 4, key: "4-workbench",  tab: "Workbench",  sub: "build it from the bin" },
-  { n: 5, key: "5-numbers",    tab: "Numbers",    sub: "bare 2/7 + 3/7 = ?" },
-  { n: 6, key: "6-applied",    tab: "Applied",    sub: "write the sum, then total" },
+  { n: 1, key: "1-manipulate" },
+  { n: 2, key: "2-bind" },
+  { n: 3, key: "3-fade" },
+  { n: 4, key: "4-workbench" },
+  { n: 5, key: "5-numbers" },
+  { n: 6, key: "6-applied" },
   // String-keyed mandatory step (does NOT renumber the lesson). scaffoldMap maps
   // "showwork" -> level 3; the slate is ungraded — advancing is gated only on ink.
-  { n: "sw", key: "showwork",  tab: "Show Work",  sub: "show your work" },
-  { n: 7, key: "7-words",      tab: "Words",      sub: "story problem" },
+  { n: "sw", key: "showwork" },
+  { n: 7, key: "7-words" },
   // Auto-generated, estimator-paced practice: the engine mints fresh ADD_SAME_DEN
   // variations, re-rolls on a correct answer, fades to harder problems on a clean
   // streak, and probes transfer. Purely additive — no teaching stage is touched.
-  { n: "practice", key: "practice", tab: "Practice", sub: "Fresh problems — paced to your mastery", badge: "★" },
+  { n: "practice", key: "practice" },
 ];
 
 // ---- the merged stack (all a+b pieces, one locked denominator) --------------
@@ -114,6 +118,15 @@ function Combined({ a, b, den, reveal, dim = false }) {
 
 // ---------------- main ----------------
 export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage, stumpingRecipe = null, onReturnToKitchen }) {
+  // Identity + tab strip come from the central registry (web/src/lessons/r1.js).
+  // The component no longer hardcodes tag/title or its own tab display copy.
+  // `id.stages` is the registry strip in order; we re-key each strip item to this
+  // component's stage `key` (same order) so curKey/toStageVal/onSelect logic —
+  // which is keyed on the orchestrator stage keys — keeps working unchanged.
+  const id = useLessonIdentity("r1");
+  const shellNo = no ?? id.no;
+  const shellTitle = title ?? id.title;
+  const stripStages = id.stages.map((t, i) => ({ ...t, key: STAGES[i].key }));
   // Which arc stage we're on. initialStage lets the orchestrator deep-link. The
   // stage VALUE is the STAGES `n` (1..7, or the string "sw" for the inserted
   // mandatory show-work step — so the numeric stages never renumber).
@@ -852,14 +865,14 @@ export default function AppR1({ no, title, onBack, onRewatchIntro, initialStage,
 
   return (
     <LessonShell
-      no={no}
-      tag="Adding Fractions"
-      title={title}
+      no={shellNo}
+      tag={id.tag.replace(/^Lesson \d+ · /, "")}
+      title={shellTitle}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={reset}
       tabs={{
-        stages: STAGES.map((s) => ({ key: s.key, badge: s.badge ?? s.n, title: s.tab, sub: s.sub })),
+        stages: stripStages,
         current: curKey,
         onSelect: (key) => goStage(toStageVal(key)),
       }}

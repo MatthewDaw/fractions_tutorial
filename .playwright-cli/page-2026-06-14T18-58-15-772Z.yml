@@ -1,0 +1,5 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - img "Synthesis Logo Animated" [ref=e6]
+    - generic [ref=e10]: Loading...
+  - alert [ref=e11]: Synthesis Tutor

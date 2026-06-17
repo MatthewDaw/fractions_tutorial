@@ -1,0 +1,33 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e2004]:
+      - generic [ref=e2005]:
+        - navigation [ref=e2006]:
+          - button [ref=e2009] [cursor=pointer]:
+            - img [ref=e2010]
+        - generic [ref=e2081]:
+          - paragraph [ref=e2083]:
+            - generic [ref=e2084]: But how about 5 cookies
+            - generic [ref=e2086]:
+              - math [ref=e2088]:
+                - generic [ref=e2091]: ÷
+              - generic [ref=e2093]: ÷
+            - text: 2 people? Try giving each person the same amount.
+          - generic:
+            - button [disabled]:
+              - img
+      - generic [ref=e2017]:
+        - generic [ref=e2095]:
+          - generic [ref=e2098]:
+            - button [ref=e2099] [cursor=pointer]
+            - button [ref=e2100] [cursor=pointer]
+            - button [ref=e2101] [cursor=pointer]
+            - button [ref=e2102] [cursor=pointer]
+            - button [ref=e2103] [cursor=pointer]
+          - generic [ref=e2104]:
+            - generic:
+              - img "Character 1" [ref=e2107] [cursor=pointer]
+              - img "Character 2" [ref=e2110] [cursor=pointer]
+        - status [ref=e2037]: Picked up draggable item whole-0-1781468380298-0.8314466304844269.
+  - alert [ref=e11]

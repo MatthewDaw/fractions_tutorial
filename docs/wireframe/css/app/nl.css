@@ -1,0 +1,52 @@
+/* nl.css — Room `nl` "On the Number Line" (FRACTION_ON_LINE) room-specific styles.
+   Reuses lesson.css / lesson-board.css classes by name (.panel, .pick-title,
+   .hint, .lbar, .nline/.ntick/.nlab, .check) — only NEW, namespaced .nl-* rules
+   live here. The house look (paper, ink, red, serif/display) comes from
+   lesson.css; the number-line itself is the shared <NumberLine> component, which
+   paints the .nline/.ntick/.nlab classes already defined in lesson.css. These
+   rules add only what this lesson needs: the line's canvas frame, the placement
+   caption, and the answer-row composition. */
+
+/* the interaction area: a centered band that seats the 0→1 (or 0→2) ruler with
+   room above for the draggable point marker and below for the labels + caption.
+   The <NumberLine> draws with absolute ORIGIN-based geometry on a 720-wide field,
+   matching R5's canvas convention, so we give the wrapper that fixed footprint
+   and let FitStage downscale it to the flexible stage zone. */
+.nl-canvas {
+  width: 720px; margin: 0 auto; position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding-top: 18px;
+}
+.nl-line-wrap { position: relative; width: 720px; height: 220px; }
+
+/* the small italic caption under the ruler — echoes the .r4-s-cap / .r5 hint tone */
+.nl-cap {
+  font-family: var(--serif); font-style: italic; font-size: 14px;
+  color: var(--ink-mute); text-align: center;
+}
+
+/* ── the hint-rail mini fraction card (mirrors .r4-card / .r5-card spacing) ── */
+.nl-mini {
+  margin-top: 14px; display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; border: 1.5px solid var(--ink-soft);
+  background: rgba(28,22,18,0.02); border-radius: 2px;
+}
+.nl-mini-frac { display: inline-flex; }
+.nl-mini-note {
+  font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
+}
+
+/* ── the answer row (inside the shared <AnswerBar>'s .lbar-eq) ──────────────── */
+.nl-ans-eqrow { display: flex; align-items: center; gap: 14px; min-height: 64px; }
+.nl-ans-lead {
+  font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink-mute);
+}
+.nl-ans-frac { display: inline-flex; }
+.nl-ans-eq { font-family: var(--display); font-size: 26px; color: var(--ink); }
+.nl-ans-amt {
+  font-family: var(--display); font-size: 17px; letter-spacing: .02em; color: var(--red);
+}
+.nl-ans-slate { display: inline-flex; }
+
+/* FitStage wrapper — let the board breathe and downscale on short viewports */
+.nl-board-fit { width: 100%; }

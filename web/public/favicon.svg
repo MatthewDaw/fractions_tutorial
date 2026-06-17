@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Favicon: the tutor's head (Babushka the cook), cropped from src/components/Cook.jsx.
+     CSS variables resolved to literal brand tokens (src/styles/tokens.css) so it renders
+     standalone. Muted Soviet-red roundel so the paper toque/face pop at 16px. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 2 136 136" width="136" height="136">
+  <!-- brand-red squircle background -->
+  <rect x="30" y="2" width="136" height="136" rx="30" fill="#a32a22"/>
+
+  <!-- ears / kerchief sides -->
+  <g fill="#6e1c16" stroke="#1c1612" stroke-width="2">
+    <path d="M58 92 Q50 104 56 116 Q62 108 66 110 Z"/>
+    <path d="M138 92 Q146 104 140 116 Q134 108 130 110 Z"/>
+  </g>
+
+  <!-- face -->
+  <circle cx="98" cy="92" r="40" fill="#ede2c8" stroke="#1c1612" stroke-width="2.6"/>
+
+  <!-- cheeks -->
+  <circle cx="74" cy="100" r="7" fill="#c46a5f" opacity="0.7"/>
+  <circle cx="122" cy="100" r="7" fill="#c46a5f" opacity="0.7"/>
+
+  <!-- eyes -->
+  <circle cx="83" cy="87" r="3.6" fill="#1c1612"/>
+  <circle cx="113" cy="87" r="3.6" fill="#1c1612"/>
+
+  <!-- nose -->
+  <path d="M98 92 Q102 99 97 101" stroke="#1c1612" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- smile -->
+  <path d="M84 108 Q98 120 112 108" stroke="#1c1612" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+  <!-- toque (chef hat) -->
+  <g stroke="#1c1612" stroke-width="2.6" stroke-linejoin="round">
+    <rect x="64" y="52" width="68" height="16" rx="3" fill="#e3d4b1"/>
+    <path d="M64 56 Q50 52 52 36 Q40 30 50 18 Q58 6 76 12 Q86 0 104 8 Q124 2 130 18 Q150 22 144 38 Q152 52 132 56 Q132 40 120 44 Q120 30 104 34 Q104 22 88 28 Q84 40 72 38 Q74 52 64 56 Z" fill="#ede2c8"/>
+  </g>
+</svg>

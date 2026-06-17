@@ -1,0 +1,38 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - navigation [ref=e269]:
+          - button [ref=e272] [cursor=pointer]:
+            - img [ref=e596]
+        - generic [ref=e308]:
+          - generic [ref=e850]:
+            - paragraph [ref=e852]: Now see if you can divide up that last cookie.
+            - generic:
+              - button [disabled]:
+                - img
+          - button "🖐️" [ref=e854] [cursor=pointer]:
+            - generic [ref=e855]: 🖐️
+      - generic [ref=e280]:
+        - generic [ref=e800]:
+          - generic [ref=e802]:
+            - button [active] [ref=e803] [cursor=pointer]:
+              - img [ref=e804]
+            - button "🔪" [ref=e806] [cursor=pointer]:
+              - generic [ref=e807]: 🔪
+          - generic [ref=e808]:
+            - button [ref=e816] [cursor=pointer]
+            - generic [ref=e817]:
+              - generic:
+                - img "Character 1" [ref=e820] [cursor=pointer]
+                - img "Character 2" [ref=e823] [cursor=pointer]
+                - img "Character 3" [ref=e826] [cursor=pointer]
+                - img "Character 4" [ref=e829] [cursor=pointer]
+              - generic [ref=e832]:
+                - button [ref=e838] [cursor=pointer]
+                - button [ref=e840] [cursor=pointer]
+                - button [ref=e842] [cursor=pointer]
+                - button [ref=e848] [cursor=pointer]
+        - status [ref=e300]: Draggable item whole-0-1781464999410-0.926525223452933 was dropped.
+  - alert [ref=e11]

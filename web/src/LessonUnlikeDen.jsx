@@ -14,7 +14,7 @@ import BigFrac from "./components/BigFrac.jsx";
 import InkPad from "./components/InkPad.jsx";
 import Slate from "./components/Slate.jsx";
 import WordProblem from "./components/WordProblem.jsx";
-import BlockSandbox from "./components/BlockSandbox.jsx";
+// BlockSandbox removed — Workbench (LW) beat replaced by Simplify (SMP) in r2 arc
 import QuestionBand from "./components/QuestionBand.jsx";
 import ExpressionSlate from "./components/ExpressionSlate.jsx";
 import BlankSlate from "./components/BlankSlate.jsx";
@@ -24,7 +24,31 @@ import { denomColor, denomTextColor, denomTone } from "./denominatorColors.js";
 import { lcd, exactSum, commonDenChoices, multipliersFor, verify, generateProblem, crossMultiply } from "./unlikeDenMath.js";
 import { useLessonScaffold } from "./runtime/useLessonScaffold.js";
 import { toScaffoldLevel } from "./runtime/scaffoldMap.js";
+import { LESSONS } from "./lessons/index.js";
 import "./styles/lesson-unlike.css";
+
+// ---------------------------------------------------------------------------
+// Beat → tab-strip wiring (DATA-vs-LOGIC split, PLAN §F)
+// ---------------------------------------------------------------------------
+// The beat KEYS + the `writes` flag are COMPONENT-OWNED interaction logic (they
+// drive NEXT_BEAT, the render branches, and the ✎ stylus marker). The display
+// chrome for each tab (badge glyph, title, tooltip `sub`) is DATA and lives in
+// the registry (web/src/lessons/<id>.js `tabs`). This table maps the registry's
+// ordered tabs onto the component's beat keys (1:1, same order) and records
+// which beats use the WRITE channel. The badge/title/sub are filled from the
+// registry at render time so the strip stays single-sourced.
+const BEAT_WIRING = [
+  { key: "L0", writes: false },
+  { key: "L2", writes: true },
+  { key: "L4", writes: true },
+  { key: "L5", writes: true },
+  { key: "L6", writes: true },
+  { key: "SMP", writes: true },
+  { key: "LA", writes: true },
+  { key: "SW", writes: false },
+  { key: "L7", writes: true },
+  { key: "practice", writes: true },
+];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -140,14 +164,14 @@ function Combined({ countA, countB, D, unit }) {
 // ---------------- main ----------------
 // The ladder order — after solving a level, "Next" climbs to the next rung
 // (one question per level). L6 has no successor (terminal).
-// Arc order (lesson-stage-arc-expansion): … Fade(L4) → Workbench(LW) → ghost(L5)
-// → Numbers(L6) → Applied(LA) → Words(L7). LW = block sandbox; LA = applied
-// sentence with a required setup gate.
+// Arc order (lesson-stage-arc-expansion): … Fade(L4) → Ghost(L5) → Numbers(L6)
+// → Simplify(SMP) → Applied(LA) → Words(L7). SMP = GCF-reduce the sum;
+// LA = applied sentence with a required setup gate.
 // SW = "Show your work": a MANDATORY free-form blank-slate step between Applied
 // (LA) and Words (L7). The child must put ink down before advancing; it is
 // ungraded (no answer, never judged by the engine). String-keyed so it slots in
 // without renumbering anything; scaffoldMap maps "showwork" → L3.
-const NEXT_BEAT = { L0: "L2", L2: "L4", L4: "LW", LW: "L5", L5: "L6", L6: "LA", LA: "SW", SW: "L7", L7: "practice" };
+const NEXT_BEAT = { L0: "L2", L2: "L4", L4: "L5", L5: "L6", L6: "SMP", SMP: "LA", LA: "SW", SW: "L7", L7: "practice" };
 
 export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIntro }) {
   // Pedagogical beat. The ladder is one click each for the demo (topbar selector).
@@ -164,6 +188,12 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   // Derive stable ids so the hook receives consistent values on every render.
   const engineNodeId  = nodeIdFromLesson(lesson);
   const engineLessonId = lessonIdFromLesson(lesson);
+  // Identity + tab-strip DATA come from the central registry (web/src/lessons/<id>.js).
+  // The component no longer hardcodes its tag/title/tab chrome — only the beat
+  // navigation LOGIC stays here. `no`/`title` from props (rooms.js) win when set,
+  // so the in-room header keeps matching the world map; registry is the fallback +
+  // the source for tag + the ordered tab strip.
+  const L = LESSONS[engineLessonId];
   // PARTIAL adoption of the shared controller backbone: LessonUnlikeDen keeps its
   // OWN bespoke beat navigation (clearForBeat / setBeatLevel / NEXT_BEAT / reset /
   // lastDecisionRef + the deferred-on-"Next" RaiseScaffold semantics) and its OWN
@@ -204,7 +234,7 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   const isL5 = beat === "L5";
   const isL6 = beat === "L6";
   const isL7 = beat === "L7"; // word problem: prose only, solved with the stylus
-  const isLW = beat === "LW"; // Workbench: the free block sandbox (own render branch)
+  const isSMP = beat === "SMP"; // Simplify: reduce the sum by the GCF (own render branch)
   const isLA = beat === "LA"; // Applied: worded question, numerals shown, setup gate
   const isSW = beat === "SW"; // Show your work: a mandatory blank-slate step (own branch)
   const isPractice = beat === "practice"; // auto-generated, engine-paced practice (own branch)
@@ -212,11 +242,11 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   const usesPicker = isL2 || isL4;
   // Strips faded to outlines whenever the blocks are no longer the lead actor.
   const stripsFaded = isL2 || isL4;
-  // No canvas strips at all on L6/L7/LA; ghost (dim, non-interactive) backdrop on L5.
-  const noBars = isL6 || isL7 || isLA;
+  // No canvas strips at all on L6/L7/LA/SMP; ghost (dim, non-interactive) backdrop on L5.
+  const noBars = isL6 || isL7 || isLA || isSMP;
   const ghostBars = isL5;
-  // L5/L6/L7/LA: the child writes the whole answer directly (no slice/join gating).
-  const bareEntry = isL5 || isL6 || isL7 || isLA;
+  // L5/L6/L7/LA/SMP: the child writes the whole answer directly (no slice/join gating).
+  const bareEntry = isL5 || isL6 || isL7 || isLA || isSMP;
 
   // ---- per-lesson framing (Scale One renames ONE; Cross-Multiply renames BOTH)
   const framing = lesson.framing || {};
@@ -367,6 +397,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     // mints the first variation and tracks the engine-paced level. (clearForBeat
     // is for LU's own anchor/bank beats and would emit a duplicate present.)
     if (b === "practice") { goStage("practice"); return; }
+    // SMP (Simplify) is a static demonstration beat — no answer entry, no engine
+    // decision. Just show the stage and allow advancing to Applied.
     clearForBeat(b);
   }
 
@@ -391,9 +423,9 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     if (b === "L0") setStatus({ tone: "normal", text: "Two strips, different block sizes. Grab a knife and slice, povaryonok." });
     else if (b === "L2") setStatus({ tone: "normal", text: "Pick the common block size, watch each fraction scale, then join the strips." });
     else if (b === "L4") setStatus({ tone: "normal", text: "A new pair. Find a common size, then add — same move, new dress." });
-    else if (b === "LW") setStatus({ tone: "normal", text: "The Workbench. Pull blocks from the bin and build the answer out of same-size pieces, then count them up." });
     else if (b === "L5") setStatus({ tone: "normal", text: "Just the numbers. The bars are only a memory now — write the whole answer." });
     else if (b === "L6") setStatus({ tone: "normal", text: "Bare slate. Find the common denominator, scale, and add — write it all." });
+    else if (b === "SMP") setStatus({ tone: "normal", text: "Fourteen over thirty isn't finished — both divide by two, so simplify to seven fifteenths. Always reduce your answer to lowest terms." });
     else if (b === "LA") setStatus({ tone: "normal", text: "A question in words — the fractions are right there. Write them as a sum first, then give the answer." });
     else if (b === "SW") setStatus({ tone: "normal", text: "Show your work, povaryonok — write out how you'd solve it on the blank slate, then press Next." });
     else if (b === "L7") setStatus({ tone: "normal", text: "A recipe! Read it, work out the two fractions yourself, and write the total." });
@@ -682,6 +714,8 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
 
   const onlyDigits = (s) => s.replace(/[^0-9]/g, "").slice(0, 2);
   const checkLabel = !solved ? "Check" : (NEXT_BEAT[beat] ? "Next ▸" : (isL7 ? "New recipe ▸" : "New strips"));
+  // SMP is a static demonstration beat; the only action is to advance.
+  const smpNextLabel = "Next ▸";
 
   // ---- shared <Slate> wiring (the stylus WRITE channel from Stage 2 on) ----
   // The Slate is a controlled fraction surface: slot "num" over slot "den".
@@ -739,18 +773,6 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
   const answerReady = !solved && blocksReady && numStr !== "" && denStr !== ""
     && (!isLA || setupOk);
 
-  // ---- Workbench (LW): the block sandbox, configured from the live problem ----
-  // The bin offers the two addends' sizes plus their common size (the LCD), so the
-  // child can lay the originals, see they don't line up, then rebuild from one size.
-  const sandboxBin = Array.from(new Set([aDen, bDen, PLCD]));
-  const sandboxTarget = sum.num / sum.den;            // the value a correct row reaches
-  function onSandboxSolve({ num, den }) {
-    if (solvedRef.current) return;
-    setNumStr(String(num)); setDenStr(String(den));
-    const res = verify(problemRef.current, num, den);
-    finishSolved(res.ok ? res.stars : 3, num, den);
-  }
-
   // ---- Applied (LA): the worded question (numerals shown) + the setup gate ------
   const appliedSentence = lesson.applied
     || `Babushka needs ${aNum}/${aDen} + ${bNum}/${bDen} cups — how many cups is that?`;
@@ -782,34 +804,31 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
     else setSetupB((s) => ({ ...s, [key]: v }));
   }
 
-  // ---- shared <StageTabs> config (replaces the old inline .beat-select) -------
-  // Same beat keys, glyph badges and ✎-on-write-stage marker as before; the
-  // tooltip copy moves into `sub`. ✎ renders via the existing .lu-stylus class.
+  // ---- shared <StageTabs> config (DATA from the registry) ---------------------
+  // The tab strip's display chrome (badge glyph, title, tooltip `sub`) comes from
+  // the per-family registry (LESSONS[r2/r3].tabs), zipped onto the component-owned
+  // beat KEYS + `writes` flags in BEAT_WIRING. Beat-transition LOGIC (NEXT_BEAT,
+  // setBeatLevel, the render branches) stays component-owned. The ✎ stylus marker
+  // renders via the existing .lu-stylus class on write beats when handwriting is on.
   const stylusMark = <span className="lu-stylus" aria-hidden="true">✎</span>;
-  const BEATS = [
-    { key: "L0", badge: "1",  title: "Manipulate", sub: "the blocks ARE the problem; drag & slice by touch",       writes: false },
-    { key: "L2", badge: "2",  title: "Bind",       sub: "blocks + the written fraction; copy the numeral",         writes: true  },
-    { key: "L4", badge: "3",  title: "Fade",       sub: "blocks dim to a check; the equation leads",               writes: true  },
-    { key: "LW", badge: "W",  title: "Workbench",  sub: "pull blocks from the bin and build the answer",           writes: false },
-    { key: "L5", badge: "3·", title: "Ghost",      sub: "blocks a faded ghost behind; write the whole answer",     writes: true  },
-    { key: "L6", badge: "4",  title: "Numbers",    sub: "a bare equation; write the whole solution",               writes: true  },
-    { key: "LA", badge: "A",  title: "Applied",    sub: "a worded question with the fractions shown; write the sum", writes: true },
-    { key: "SW", badge: "✎",  title: "Show Work",  sub: "write out how you'd solve it on a blank slate",           writes: false },
-    { key: "L7", badge: "5",  title: "Words",      sub: "a plain-language word problem; read it and solve",        writes: true  },
-    { key: "practice", badge: "★", title: "Practice", sub: "fresh problems — paced to your mastery",               writes: true  },
-  ];
   const tabs = {
-    stages: BEATS.map((s) => ({
-      key: s.key, badge: s.badge, title: s.title, sub: s.sub,
-      suffix: s.writes && lesson.handwriting ? stylusMark : null,
-    })),
+    stages: BEAT_WIRING.map((w, i) => {
+      const t = (L && L.tabs && L.tabs[i]) || {};
+      return {
+        key: w.key,
+        badge: t.n,
+        title: t.name,
+        sub: t.sub,
+        suffix: w.writes && lesson.handwriting ? stylusMark : null,
+      };
+    }),
     current: beat,
     onSelect: (b) => setBeatLevel(b),
     label: "interaction-arc stage",
   };
 
-  // ---- the shared full-width QuestionBand (every stage EXCEPT Words/L7/Practice)
-  const Band = !isL7 && !isPractice ? (
+  // ---- the shared full-width QuestionBand (every stage EXCEPT Words/L7/SMP/Practice)
+  const Band = !isL7 && !isPractice && !isSMP ? (
     <QuestionBand
       lead="solve"
       expr={<>{aNum}/{aDen} <span className="qb-op">+</span> {bNum}/{bDen}</>}
@@ -826,7 +845,9 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
         Read aloud
       </button>
       <div className="goal-text" data-vox-speaker="mom">{
-        isLW ? <>Build <b>{aNum}/{aDen} + {bNum}/{bDen}</b> on the Workbench — pick blocks, make them all the same size, and count them up.</>
+        isSMP ? (showCross
+          ? <>Over a common bottom of <b>30</b>, the sum is <b>14/30</b> — but that isn't in <b>lowest terms</b>. Find the <b>greatest common factor</b> of <b>14</b> and <b>30</b> — it's <b>2</b> — and divide both: <b>7/15</b>. <b>Always simplify your answer.</b></>
+          : <>You added and got <b>3/6</b> — but a fraction isn't finished until it's in <b>lowest terms</b>. <b>3</b> and <b>6</b> both divide by <b>3</b>, so bundle <b>÷3</b> to reach <b>1/2</b>. <b>Always simplify your answer.</b></>)
         : isLA ? <>A question in words, with the fractions shown. Write what it's asking as a <b>sum</b> first, then give the answer.</>
         : isSW ? <>Show your work. Write out — any way you like — how you'd add <b>{aNum}/{aDen} + {bNum}/{bDen}</b>, then press Next.</>
         : isL7 ? "Read the recipe, work out the two fractions yourself, and write the total."
@@ -839,9 +860,9 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
 
   return (
     <LessonShell
-      no={no}
-      tag="Adding Fractions"
-      title={title}
+      no={no != null ? no : String((L && L.num) || "").replace("№", "")}
+      tag={(L && L.tag) || "Adding Fractions"}
+      title={title != null ? title : (L && L.title)}
       onBack={onBack}
       onRewatchIntro={onRewatchIntro}
       onReset={() => { setProbIndex(0); clearForBeat(beat); }}
@@ -852,29 +873,96 @@ export default function LessonUnlikeDen({ no, title, lesson, onBack, onRewatchIn
       {isPractice ? (
         /* PRACTICE — auto-generated unlike-denominator variations, engine-paced. */
         <GenPracticeBoard skill={engineNodeId} scaffold={sc} />
-      ) : isLW ? (
-        /* WORKBENCH — the free block sandbox replaces the strips entirely. */
+      ) : isSMP ? (
+        /* SIMPLIFY — static demonstration of reducing a sum to lowest terms.
+           r2 (showCross=true, crossMultiply): 3/10 + 1/6 = 14/30 → ÷2 → 7/15.
+           r3 (showCross=false, scaleOne):     1/6 + 1/3 = 3/6  → ÷3 → 1/2. */
         <>
-          <BlockSandbox
-            bin={sandboxBin}
-            targetValue={sandboxTarget}
-            targetLabel={eqLead}
-            rulerWholes={answerWholes}
-            solved={solved}
-            onSolve={onSandboxSolve}
-            onPlace={() => { selfCorrRef.current += 1; engineEmit({ type: "place_block", payload: { node_id: engineNodeId } }); }}
-            onRemove={() => { selfCorrRef.current += 1; engineEmit({ type: "remove_block", payload: { node_id: engineNodeId } }); }}
+          <LessonBoard
+            variant="split"
+            footHeight={150}
+            railWidth={360}
+            stage={
+              showCross ? (
+                <div className="eq-stage" style={{ flexDirection: "column", gap: 22 }}>
+                  <div className="eq-stage" style={{ padding: 0, gap: 20 }}>
+                    <div className="bignum" style={{ fontSize: 48 }}><span className="n" style={{ color: "var(--red)" }}>3</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">10</span></div>
+                    <span className="eq-eq" style={{ fontStyle: "normal" }}>+</span>
+                    <div className="bignum" style={{ fontSize: 48 }}><span className="n" style={{ color: "var(--red)" }}>1</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">6</span></div>
+                    <span className="eq-eq" style={{ fontStyle: "normal" }}>=</span>
+                    <div className="bignum" style={{ fontSize: 48 }}><span className="n" style={{ color: "var(--red)" }}>14</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">30</span></div>
+                  </div>
+                  <div className="eq-eq">÷2 ↓</div>
+                  <div className="bignum" style={{ fontSize: 64 }}><span className="n" style={{ color: "var(--red)" }}>7</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">15</span></div>
+                  <div className="eq-cap">14 and 30 share the factor <b>2</b> — divide both to reach <b>7/15</b></div>
+                </div>
+              ) : (
+                <div className="eq-stage" style={{ flexDirection: "column", gap: 22 }}>
+                  <div className="eq-stage" style={{ padding: 0, gap: 20 }}>
+                    <div className="bignum" style={{ fontSize: 48 }}><span className="n" style={{ color: "var(--red)" }}>1</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">6</span></div>
+                    <span className="eq-eq" style={{ fontStyle: "normal" }}>+</span>
+                    <div className="bignum" style={{ fontSize: 48 }}><span className="n" style={{ color: "var(--red)" }}>1</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">3</span></div>
+                    <span className="eq-eq" style={{ fontStyle: "normal" }}>=</span>
+                    <div className="bignum" style={{ fontSize: 48 }}><span className="n" style={{ color: "var(--red)" }}>3</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">6</span></div>
+                  </div>
+                  <div className="eq-eq">÷3 ↓</div>
+                  <div className="bignum" style={{ fontSize: 64 }}><span className="n" style={{ color: "var(--red)" }}>1</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">2</span></div>
+                  <div className="eq-cap">3 and 6 share the factor <b>3</b> — divide both to reach <b>1/2</b></div>
+                </div>
+              )
+            }
+            rail={
+              <div className="panel">
+                <h3 className="pick-title">Now Simplify the Answer</h3>
+                <div className="hint">
+                  {showCross ? (
+                    <>Over a common bottom of <b>30</b>, the sum is <b>14/30</b> — but that isn't
+                    in <b>lowest terms</b>. Find the <b>greatest common factor</b> of <b>14</b>
+                    and <b>30</b> — it's <b>2</b> — and divide both: <b>7/15</b>. <b>Always
+                    simplify your answer.</b></>
+                  ) : (
+                    <>You added and got <b>3/6</b> — but a fraction isn't finished until it's
+                    in <b>lowest terms</b>. 3 and 6 both divide by 3, so bundle ÷3 to reach <b>1/2</b>.
+                    Always simplify your answer.</>
+                  )}
+                </div>
+              </div>
+            }
+            answer={
+              <div className="lbar">
+                <div className="lbar-eq">
+                  {showCross ? (
+                    <>
+                      <span className="bignum"><span className="n" style={{ color: "var(--red)" }}>14</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">30</span></span>
+                      <span className="nl-ans-eq">=</span>
+                      <span className="nl-ans-amt">simplest answer:</span>
+                      <span className="den-choices">
+                        <span className="den-choice is-on">7/15</span>
+                        <span className="den-choice">14/30</span>
+                        <span className="den-choice">7/30</span>
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="bignum"><span className="n" style={{ color: "var(--red)" }}>3</span><span className="bar" style={{ background: "var(--ink)" }}></span><span className="d">6</span></span>
+                      <span className="nl-ans-eq">=</span>
+                      <span className="nl-ans-amt">simplest answer:</span>
+                      <span className="den-choices">
+                        <span className="den-choice is-on">1/2</span>
+                        <span className="den-choice">3/6</span>
+                        <span className="den-choice">2/6</span>
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="lbar-cap">{showCross ? "add, then reduce by the GCF — 14/30 = 7/15" : "add, then reduce by the GCF — 3/6 = 1/2"}</div>
+                <div className="lbar-marks">
+                  <button className="check" onClick={() => { _setBeat("LA"); clearForBeat("LA"); }}>Next ▸</button>
+                </div>
+              </div>
+            }
+            tutor={<TutorRibbon cook={cook} status={status} />}
           />
-          <div className="hud">
-            <div className="cook-zone">
-              <div className="cook-stage"><Cook expr={cook} width={118} /></div>
-              <div className={"ribbon" + (status.tone === "warn" ? " warn" : "")}>{status.text}</div>
-            </div>
-            <div className="marks">
-              {solved && <Rosette count={stars} />}
-              <button className={"check" + (solved ? " done" : "")} onClick={reset} disabled={!solved}>{solved ? checkLabel : "Build it ▸"}</button>
-            </div>
-          </div>
         </>
       ) : isLA ? (
         /* APPLIED — a worded question (fractions shown) with the required setup gate:

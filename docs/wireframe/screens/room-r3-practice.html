@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!--
+  HIGH-FIDELITY wireframe — Babushka's Fractions · №7 Scale One · Practice (#/r3).
+  Rendered by web/src/LessonUnlikeDen.jsx (beat "practice") + lessons/r3-nonunit.js.
+  Practice branch: <GenPracticeBoard skill="ADD_UNLIKE_NESTED"> rendered directly as
+  the LessonShell body (no LessonBoard). QuestionBand is HIDDEN. Auto-generated,
+  estimator-paced fraction problems with a Slate answer + hint ladder + its own ribbon.
+  Real shell DOM + child SVG (Slate hint glyph) inlined; nav controls are <a href>.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>№7 Scale One · Practice · #/r3</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/lesson-unlike.css" />
+  <link rel="stylesheet" href="../css/app/lesson-board.css" />
+  <link rel="stylesheet" href="../css/app/stagetabs.css" />
+  <link rel="stylesheet" href="../css/app/questionband.css" />
+  <link rel="stylesheet" href="../css/app/slate.css" />
+  <link rel="stylesheet" href="../css/app/gen-practice.css" />
+  <link rel="stylesheet" href="../css/app/sandbox.css" />
+  <link rel="stylesheet" href="../css/app/fitstage.css" />
+  <link rel="stylesheet" href="../css/app/blankslate.css" />
+  <link rel="stylesheet" href="../css/app/engine-surfaces.css" />
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">№7 Scale One · Practice <small>· #/r3</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage" style="width:1280px;height:800px;position:relative;">
+
+    <div class="page" data-vox-speaker="cook">
+      <div class="foxing"></div>
+
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span class="num-mark">№7</span>
+          <div>
+            <div class="puzzle-tag">Lesson 7 · Adding Fractions</div>
+            <div class="puzzle-title">Scale One</div>
+          </div>
+        </div>
+        <div aria-hidden="true"></div>
+        <div class="controls">
+          <a class="ctrl-btn" href="world.html" title="Back to the lesson map">←</a>
+          <a class="ctrl-btn" href="intro.html" title="Rewatch the intro video" aria-label="Rewatch the intro video">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor" /></svg>
+          </a>
+          <a class="ctrl-btn" href="settings.html" title="Settings" aria-label="Settings">
+            <img src="../assets/settings-gear.png" width="18" height="18" alt="" aria-hidden="true" style="display:block;object-fit:contain;" />
+          </a>
+          <button class="ctrl-btn" title="Start over">⟲</button>
+        </div>
+      </div>
+
+      <div class="stage-tabs" role="tablist" aria-label="interaction-arc stage">
+        <a class="stage-tab is-done" role="tab" href="room-r3.html" title="the blocks ARE the problem; drag & slice by touch"><span class="stage-tab-n">1</span><span class="stage-tab-tx"><span class="stage-tab-name">Manipulate</span><span class="stage-tab-sub">the blocks ARE the problem; drag &amp; slice by touch</span></span></a>
+        <a class="stage-tab is-done" role="tab" href="room-r3-2-bind.html" title="blocks + the written fraction; copy the numeral"><span class="stage-tab-n">2</span><span class="stage-tab-tx"><span class="stage-tab-name">Bind</span><span class="stage-tab-sub">blocks + the written fraction; copy the numeral</span></span><span class="lu-stylus" aria-hidden="true">✎</span></a>
+        <a class="stage-tab is-done" role="tab" href="room-r3-3-fade.html" title="blocks dim to a check; the equation leads"><span class="stage-tab-n">3</span><span class="stage-tab-tx"><span class="stage-tab-name">Fade</span><span class="stage-tab-sub">blocks dim to a check; the equation leads</span></span><span class="lu-stylus" aria-hidden="true">✎</span></a>
+        <a class="stage-tab is-done" role="tab" href="room-r3-w-workbench.html" title="pull blocks from the bin and build the answer"><span class="stage-tab-n">W</span><span class="stage-tab-tx"><span class="stage-tab-name">Workbench</span><span class="stage-tab-sub">pull blocks from the bin and build the answer</span></span></a>
+        <a class="stage-tab is-done" role="tab" href="room-r3-5-ghost.html" title="blocks a faded ghost behind; write the whole answer"><span class="stage-tab-n">3·</span><span class="stage-tab-tx"><span class="stage-tab-name">Ghost</span><span class="stage-tab-sub">blocks a faded ghost behind; write the whole answer</span></span><span class="lu-stylus" aria-hidden="true">✎</span></a>
+        <a class="stage-tab is-done" role="tab" href="room-r3-6-numbers.html" title="a bare equation; write the whole solution"><span class="stage-tab-n">4</span><span class="stage-tab-tx"><span class="stage-tab-name">Numbers</span><span class="stage-tab-sub">a bare equation; write the whole solution</span></span><span class="lu-stylus" aria-hidden="true">✎</span></a>
+        <a class="stage-tab is-done" role="tab" href="room-r3-a-applied.html" title="a worded question with the fractions shown; write the sum"><span class="stage-tab-n">A</span><span class="stage-tab-tx"><span class="stage-tab-name">Applied</span><span class="stage-tab-sub">a worded question with the fractions shown; write the sum</span></span><span class="lu-stylus" aria-hidden="true">✎</span></a>
+        <a class="stage-tab is-done" role="tab" href="room-r3-sw-showwork.html" title="write out how you'd solve it on a blank slate"><span class="stage-tab-n">✎</span><span class="stage-tab-tx"><span class="stage-tab-name">Show Work</span><span class="stage-tab-sub">write out how you'd solve it on a blank slate</span></span></a>
+        <a class="stage-tab is-done" role="tab" href="room-r3-7-words.html" title="a plain-language word problem; read it and solve"><span class="stage-tab-n">5</span><span class="stage-tab-tx"><span class="stage-tab-name">Words</span><span class="stage-tab-sub">a plain-language word problem; read it and solve</span></span><span class="lu-stylus" aria-hidden="true">✎</span></a>
+        <a class="stage-tab is-active" role="tab" aria-selected="true" href="room-r3-practice.html" title="fresh problems — paced to your mastery"><span class="stage-tab-n">★</span><span class="stage-tab-tx"><span class="stage-tab-name">Practice</span><span class="stage-tab-sub">fresh problems — paced to your mastery</span></span><span class="lu-stylus" aria-hidden="true">✎</span></a>
+      </div>
+
+      <!-- QuestionBand is HIDDEN on Practice (band === null) -->
+
+      <div class="goal">
+        <button class="speaker">
+          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none" /></svg>
+          Read aloud
+        </button>
+        <div class="goal-text" data-vox-speaker="mom">Babushka needs <b>3/8</b> of a dough strip and <b>1/4</b> of a strip — add them together.</div>
+      </div>
+
+      <!-- Practice branch: GenPracticeBoard (ADD_UNLIKE_NESTED, fraction shape) -->
+      <div class="gen-practice">
+        <div class="gen-practice__q">
+          <span class="gen-practice__prompt">2/3 + 3/4 = ?</span>
+        </div>
+        <div class="gen-practice__answer">
+          <!-- fraction-shape Slate: write the answer as a fraction -->
+          <div class="slate slate-fraction" role="group" aria-label="write your answer as a fraction">
+            <div class="slate-slot"><div class="slate-cell"><span class="slate-ph" aria-hidden="true">✎</span></div></div>
+            <span class="slate-bar" style="background:#1c1612;" aria-hidden="true"></span>
+            <div class="slate-slot"><div class="slate-cell"><span class="slate-ph" aria-hidden="true"></span></div></div>
+          </div>
+        </div>
+        <button type="button" class="check">Check</button>
+        <div class="gen-practice__hints">
+          <button type="button" class="gen-practice__hint-btn">Need a hint?</button>
+        </div>
+        <div class="ribbon ribbon--normal">Fresh problems — paced to your mastery. Find a common size, then add.</div>
+      </div>
+
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

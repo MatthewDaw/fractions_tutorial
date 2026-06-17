@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - navigation [ref=e1209]:
+        - button [ref=e1212] [cursor=pointer]:
+          - img [ref=e1213]
+      - generic [ref=e1220]:
+        - generic [ref=e1222]:
+          - generic [ref=e1225]:
+            - button [ref=e1226] [cursor=pointer]
+            - button [ref=e1227] [cursor=pointer]
+            - button [ref=e1228] [cursor=pointer]
+            - button [ref=e1229] [cursor=pointer]
+          - generic [ref=e1230]:
+            - generic:
+              - img "Character 1" [ref=e1233] [cursor=pointer]
+              - img "Character 2" [ref=e1236] [cursor=pointer]
+        - status [ref=e1240]
+  - alert [ref=e11]

@@ -1,7 +1,9 @@
-/* momsroom.css — Babushka's Room (story / word problems). Layers on top of the shared
-   lesson chrome; only the room-specific bits live here. Includes the prop motion
-   keyframes ported from the design contact sheet (the anim-* classes the SVG
-   props use), so the snap / pop / merge / lid-close beats read on solve. */
+/* momsroom.css — Babushka's Kitchen (story / word problems). Layers on top of the
+   shared lesson chrome. Layout matches the wireframe KitchenScreen:
+   - No top question-band; story lives in the right rail.
+   - kq two-column: kq-main (scratch + answer) left, kq-rail (question + cast + tutor) right.
+   - StageTabs strip below topbar for per-skill navigation.
+   Includes prop motion keyframes for the anim-* SVG beats. */
 
 .momsroom .mr-heart { color: var(--red); font-size: 22px; line-height: 1; }
 
@@ -11,121 +13,108 @@
 .mr-pip.done { background: var(--ink); opacity: 0.5; }
 .mr-pip.on { background: var(--red); border-color: var(--red-deep); opacity: 1; box-shadow: 0 0 0 2px rgba(163,42,34,0.18); }
 
-/* the story prop sits centred over its built-in ruler */
-.mr-stage { flex: 1 1 auto; display: grid; place-items: center; min-height: 0; padding: 6px 0 2px; }
-.mr-stage > svg { width: 100%; max-width: 520px; height: auto; max-height: 280px; }
-
 /* ════════════════════════════════════════════════════════════════════════════
-   DETERMINISTIC FIXED-ZONE LAYOUT — Babushka's Kitchen (mirrors .r1-s1).
-   Four absolutely-positioned, fixed-size rectangles. The prop/story zone is
-   pinned TOP; the answer card + tutor are pinned BOTTOM with a guaranteed gap
-   between them. No zone's size depends on text content (everything is clamped),
-   so a longer caption / a different character / a different font can never grow
-   a zone into its neighbour (the bug where the prop area covered the answer).
+   KQ TWO-COLUMN LAYOUT (matches wireframe KitchenScreen)
+   Left: kq-main — scratch/prop zone + answer card pinned to bottom.
+   Right: kq-rail — question panel + cook portrait + tutor.
    ════════════════════════════════════════════════════════════════════════════ */
-.mr-s { position: relative; flex: 1 1 auto; min-height: 0; margin-top: 8px; }
+.kitchen .kq {
+  flex: 1 1 auto; min-height: 0; margin-top: 8px;
+  display: grid; grid-template-columns: 1fr 360px; gap: 20px; align-items: stretch;
+  padding: 0 20px 12px;
+}
 
-/* PROP / STORY + SCRATCH zone — top-left, fixed; clipped so the prop + scratch ink
-   can NEVER paint past the zone onto the answer card below. This is the child's
-   big "show your work" drawing surface (the ScratchCanvas fills it). */
-.mr-s-stage {
-  position: absolute; left: 0; top: 0;
-  /* generous, full-width scratch slate (the QuestionBand above is gone, so this
-     zone reclaims that vertical room). ~800w × ~344h: well past the M3 ~756×246
-     reference and comfortably tall for a child to show their work with a stylus. */
-  width: 800px; height: 344px;
-  border: 2px solid #1a0f08;
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18), inset 0 2px 10px rgba(20,12,6,0.18);
-  background: radial-gradient(ellipse at 50% 24%, rgba(255,245,220,0.5), transparent 70%), var(--paper-1);
-  overflow: hidden;
-  box-sizing: border-box;
-  padding: 8px 18px 6px;
+/* LEFT column — prop/scratch area fills available height, answer card fixed below */
+.kitchen .kq-main { display: flex; flex-direction: column; min-width: 0; gap: 14px; }
+
+/* play zone — the prop SVG + scratch canvas layer, fills available space */
+.kitchen .kq-play {
+  position: relative; flex: 1 1 auto; min-height: 180px;
   display: flex; flex-direction: column;
 }
-/* the prop area fills the zone (its own ruler / motion live inside the SVG) */
-.mr-s-stage .mr-stage { flex: 1 1 auto; min-height: 0; }
 
-/* RAIL — top-right, fixed; two stacked panels (asker + skill). */
-.mr-s-rail {
-  position: absolute; right: 0; top: 0;
-  width: 396px; height: 344px;
-  box-sizing: border-box;
-  display: flex; flex-direction: column; gap: 12px;
-}
-.mr-s-rail .panel { box-sizing: border-box; overflow: hidden; }
-.mr-s-rail .mr-asker { flex: 0 0 auto; }
-.mr-s-rail .mr-asker-art { height: 132px; }
-.mr-s-rail .mr-skill-panel { flex: 1 1 auto; min-height: 0; }
-/* clamp the skill blurb so a longer label/blurb can't grow the rail */
-.mr-s-rail .mr-skill-panel .hint {
-  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
-}
+/* the story prop sits centred over its built-in ruler */
+.mr-stage { flex: 1 1 auto; display: grid; place-items: center; min-height: 0; padding: 6px 0 2px; }
+.mr-stage > svg { width: 100%; max-width: 520px; height: auto; max-height: 260px; }
 
-/* ANSWER CARD — write area + Check as ONE bordered unit, pinned to the bottom of
-   the play region, clearly BELOW the prop zone (guaranteed gap). The Slate sits
-   on the left; the Check button is IMMEDIATELY to its right. Fixed height; text
-   is clamped, so a longer caption can never grow the card. */
-.mr-s-answer {
-  position: absolute; left: 0; bottom: 0;
-  width: 800px; height: 226px;
-  box-sizing: border-box;
+/* ════════════════════════════════════════════════════════════════════════════
+   KQ ANSWER CARD — write area + Check as ONE bordered unit, pinned at the
+   bottom of kq-main. The Slate sits on the left; marks + Check on the right.
+   ════════════════════════════════════════════════════════════════════════════ */
+.kitchen .kq-answer {
+  position: relative; flex: 0 0 auto;
+  display: flex; align-items: center; gap: 24px;
   border: 2px solid var(--ink);
   background: repeating-linear-gradient(90deg, rgba(28,22,18,0.02) 0 2px, transparent 2px 8px), var(--paper-2);
   box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
-  /* the write area + Check read as ONE tight group, left-aligned, so the Check
-     button sits IMMEDIATELY to the right of where the child writes (not spread to
-     the far edge). */
-  display: flex; align-items: center; gap: 28px;
-  padding: 10px 28px;
+  padding: 10px 24px;
 }
-.mr-s-write {
+.kitchen .kq-write {
   flex: 0 0 auto; min-width: 0;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
+/* Slate cells in the kitchen answer card */
+.kitchen .kq-slate { display: inline-flex; align-items: center; gap: 16px; }
+.kitchen .kq-slate.mr-bad .slate-cell { border-color: var(--red); animation: shakeX .42s ease-in-out; }
+.kitchen .kq-slate .frinput { display: inline-flex; flex-direction: column; align-items: center; }
+.kitchen .kq-slate .slate-fraction .slate-cell { width: 96px; height: 84px; }
+.kitchen .kq-slate .slate-fraction .slate-bar { width: 96px; }
+.kitchen .kq-slate .slate-fraction .slate-fixed { font-size: 42px; }
+.kitchen .kq-slate .slate-fraction .slate-committed-digit { font-size: 48px; }
+.kitchen .kq-slate .slate-fraction .slate-ph { font-size: 28px; }
+.kitchen .kq-slate.is-mixed .slate-row .slate-cell { width: 86px; height: 84px; }
+.kitchen .kq-slate .mr-and { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-mute); }
+.kitchen .kq-slate .slate-fraction { position: relative; }
+.kitchen .kq-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; z-index: 6; }
+
+/* also keep bare mr-s-slate alias for backward compat (used on the same element) */
 .mr-s-slate { display: inline-flex; align-items: center; gap: 16px; }
 .mr-s-slate.mr-bad .slate-cell { border-color: var(--red); animation: shakeX .42s ease-in-out; }
 .mr-s-slate .frinput { display: inline-flex; flex-direction: column; align-items: center; }
-/* handwriting cells — GENEROUSLY large now that the card grew and the question
-   moved to the band above (more room, comfortable stylus target for a child). */
-.mr-s-slate .slate-fraction .slate-cell { width: 108px; height: 96px; }
-.mr-s-slate .slate-fraction .slate-bar { width: 108px; }
-.mr-s-slate .slate-fraction .slate-fixed { font-size: 46px; }
-.mr-s-slate .slate-fraction .slate-committed-digit { font-size: 52px; }
-.mr-s-slate .slate-fraction .slate-ph { font-size: 30px; }
-/* the row (whole) cell of a mixed answer */
-.mr-s-slate.is-mixed .slate-row .slate-cell { width: 96px; height: 96px; }
-.mr-s-slate .mr-and { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-mute); }
-/* the recognizer guess chip floats so it can't change the row's height */
 .mr-s-slate .slate-fraction { position: relative; }
 .mr-s-slate .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; z-index: 6; }
 
 .mr-s-cap {
   font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
-  /* clamp: a longer ask string can never grow the card */
-  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 460px;
+  height: 18px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 360px;
 }
-.mr-s-marks {
-  flex: 0 0 auto;
+
+.kitchen .kq-answer-marks {
+  margin-left: auto; flex: 0 0 auto;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
 }
-.mr-s-marks .check { min-width: 168px; height: 60px; }
-.mr-s-marks .mr-wallbtn { height: 56px; }
+.kitchen .kq-answer-marks .check { min-width: 150px; height: 52px; }
+.kitchen .kq-answer-marks .mr-wallbtn { height: 48px; justify-content: center; }
 
-/* TUTOR zone — speaking character + ribbon, fixed rect bottom-right; ribbon text
-   is clamped so a longer status string can never change the zone height. */
-.mr-s-tutor {
-  position: absolute; right: 0; bottom: 0;
-  width: 396px; height: 226px;
-  box-sizing: border-box;
-  display: flex; align-items: flex-end; gap: 10px;
+/* ════════════════════════════════════════════════════════════════════════════
+   KQ RIGHT RAIL — question panel + cook portrait + tutor
+   ════════════════════════════════════════════════════════════════════════════ */
+.kitchen .kq-rail { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.kitchen .kq-rail .panel { box-sizing: border-box; }
+
+/* question panel: story text (words-first, bold key terms in red-deep) */
+.kitchen .kq-question-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
-.mr-s-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 118px; flex: 0 0 auto; pointer-events: none; }
-.mr-s-tutor .ribbon {
-  margin-left: 0; margin-bottom: 16px; max-width: 196px; flex: 1 1 auto;
-  /* clamp to 5 lines so font/length never reflows the zone */
-  height: 100px; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+.kitchen .kq-question-head .speaker { flex: 0 0 auto; }
+.kitchen .kq-story {
+  margin-top: 8px;
+  font-family: var(--serif); font-weight: 500; font-size: 17px; line-height: 1.42; color: var(--ink);
 }
+.kitchen .kq-story b { color: var(--red-deep); }
+.kitchen .kq-recipe {
+  margin-top: 10px;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* cook portrait box — portrait only, no caption */
+.kitchen .kq-rail .mr-asker { display: flex; justify-content: center; }
+.kitchen .kq-rail .mr-asker-art { height: 150px; display: grid; place-items: end center; overflow: visible; }
+
+/* tutor — Babushka portrait + ribbon, at the bottom of the rail */
+.kitchen .kq-tutor { margin-top: auto; display: flex; align-items: flex-end; gap: 12px; }
+.kitchen .kq-tutor .cook-stage { position: relative; left: 0; bottom: 0; width: 110px; flex: 0 0 auto; pointer-events: none; }
+.kitchen .kq-tutor .ribbon { position: relative; margin: 0 0 14px; max-width: none; flex: 1 1 auto; }
 
 /* rail — who's asking */
 .mr-asker { display: flex; flex-direction: column; align-items: center; text-align: center; }
@@ -182,32 +171,9 @@
 .mr-stage-tag.mr-peek { background: var(--paper-1); border-color: var(--red); }
 .mr-stage-tag.mr-peek .g { color: var(--red); }
 
-/* ════════════════════════════════════════════════════════════════════════════
-   WORDS-ONLY QUESTION PLACEMENT — this room is word-problems throughout, so there
-   is NO bare recipe equation: the prose story IS the question and the child must
-   read it and extract the math. The shared full-width <QuestionBand> (and its
-   .mr-qb-* inline-fraction styling) is no longer rendered. The goal band is now
-   the PRIMARY question — larger, darker, full-bleed serif story copy — and the
-   prop/scratch slate below gives a generous place to work it out.
-   ════════════════════════════════════════════════════════════════════════════ */
-
-/* goal band — now the PRIMARY question: the full prose story, read first. Taller,
-   darker, larger serif so the words carry the question on their own. */
-.momsroom .goal.mr-goal-primary { height: 72px; gap: 16px; align-items: center; margin-top: 6px; }
-.momsroom .goal.mr-goal-primary .goal-text {
-  font-family: var(--serif); font-weight: 500; font-size: 19px; line-height: 1.3;
-  color: var(--ink); letter-spacing: 0;
-  /* clamp to 2 lines so a long story can never grow the band */
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-
 /* "Write your answer" eyebrow over the answer boxes. */
 .mr-final-label { font-family: var(--display); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--ink-mute); margin-bottom: 2px; }
-
-/* the write column packs the eyebrow + (enlarged) slate + cap into the card. */
-.mr-s-write { gap: 6px; }
-.mr-s-answer { padding-top: 12px; padding-bottom: 12px; }
 
 /* mixed-number answer entry (wholes "and" leftover) */
 .hud-eq .mr-and { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--ink-mute); }

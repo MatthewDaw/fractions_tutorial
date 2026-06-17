@@ -1,0 +1,8 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e72]:
+      - heading "Can you hear the music?" [level=1] [ref=e81]
+      - button "Yes" [ref=e82] [cursor=pointer]
+      - button "Not working?" [ref=e84] [cursor=pointer]
+  - alert [ref=e11]: Synthesis Tutor

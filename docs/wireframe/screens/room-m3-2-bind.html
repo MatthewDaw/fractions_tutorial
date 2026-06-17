@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<!--
+  HIGH-FIDELITY rebuild of AppM3.jsx, STAGE 2 · BIND. The full jar (7 groups of 8)
+  sits beside a printed skip-count ribbon (8,16,24,32,40,48 given; the last term is
+  the "?" blank that lands on 56), and the child writes the product 56 on the Slate.
+  Unsolved snapshot: ribbon last term blank, empty product Slate, Check inert.
+  Real markup mirrored from LessonShell / StageTabs / QuestionBand / LessonGoal /
+  LessonBoard / HintRail / AnswerBar / TutorRibbon (Cook SVG) / SkipJar (full).
+  Nav: back → world.html ; rewatch → intro.html ; return → kitchen.html.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>№2 Times Facts · Bind · #/m3</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Stardos+Stencil:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/app/tokens.css" />
+  <link rel="stylesheet" href="../css/app/lesson.css" />
+  <link rel="stylesheet" href="../css/app/world.css" />
+  <link rel="stylesheet" href="../css/app/lesson-board.css" />
+  <link rel="stylesheet" href="../css/app/stagetabs.css" />
+  <link rel="stylesheet" href="../css/app/questionband.css" />
+  <link rel="stylesheet" href="../css/app/slate.css" />
+  <link rel="stylesheet" href="../css/app/gen-practice.css" />
+  <link rel="stylesheet" href="../css/app/sandbox.css" />
+  <link rel="stylesheet" href="../css/app/fitstage.css" />
+  <link rel="stylesheet" href="../css/app/blankslate.css" />
+  <link rel="stylesheet" href="../css/app/engine-surfaces.css" />
+  <link rel="stylesheet" href="../css/app/m3.css" />
+
+  <link rel="stylesheet" href="../css/wf-shell.css" />
+</head>
+<body>
+  <nav class="wf-toolbar">
+    <a href="../index.html">⌂ All screens</a>
+    <span class="wf-tb-title">№2 Times Facts · Bind <small>· #/m3</small></span>
+    <span class="wf-tb-spacer"></span>
+    <span class="wf-tb-badge">WIREFRAME</span>
+  </nav>
+
+  <div id="fit"><div id="stage">
+
+    <div class="page" data-vox-speaker="cook">
+      <div class="foxing"></div>
+
+      <div class="topbar">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="num-mark">№2</span>
+          <div>
+            <div class="puzzle-tag">Lesson 2 · Times Facts</div>
+            <div class="puzzle-title">Times Facts</div>
+          </div>
+        </div>
+        <div aria-hidden="true"></div>
+        <div class="controls">
+          <a class="ctrl-btn" href="world.html" title="Back to the lesson map">←</a>
+          <a class="ctrl-btn" href="intro.html" title="Rewatch the intro video" aria-label="Rewatch the intro video">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M10 8.4 L16 12 L10 15.6 Z" fill="currentColor"></path></svg>
+          </a>
+          <span class="ctrl-btn" title="Settings">⚙</span>
+          <span class="ctrl-btn" title="Start over">⟲</span>
+          <a class="ctrl-btn" href="kitchen.html" title="Return to kitchen">▸</a>
+        </div>
+      </div>
+
+      <div class="stage-tabs" role="tablist" aria-label="Lesson stages">
+        <a role="tab" class="stage-tab is-done" href="room-m3.html">
+          <span class="stage-tab-n">1</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Manipulate</span><span class="stage-tab-sub">scoop &amp; read the jar</span></span>
+        </a>
+        <button type="button" role="tab" aria-selected="true" class="stage-tab is-active">
+          <span class="stage-tab-n">2</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Bind</span><span class="stage-tab-sub">jar + write 56</span></span>
+        </button>
+        <a role="tab" class="stage-tab" href="room-m3-3-fade.html">
+          <span class="stage-tab-n">3</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Fade</span><span class="stage-tab-sub">fill the skip-line</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m3-4-workbench.html">
+          <span class="stage-tab-n">4</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Workbench</span><span class="stage-tab-sub">build 7 groups of 8</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m3-5-numbers.html">
+          <span class="stage-tab-n">5</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Numbers</span><span class="stage-tab-sub">bare 7 × 8 = ?</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m3-6-applied.html">
+          <span class="stage-tab-n">6</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Applied</span><span class="stage-tab-sub">write the setup, then total</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m3-sw-showwork.html">
+          <span class="stage-tab-n">sw</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Show Work</span><span class="stage-tab-sub">show your work</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m3-7-words.html">
+          <span class="stage-tab-n">7</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Words</span><span class="stage-tab-sub">story problem</span></span>
+        </a>
+        <a role="tab" class="stage-tab" href="room-m3-practice.html">
+          <span class="stage-tab-n">★</span>
+          <span class="stage-tab-tx"><span class="stage-tab-name">Practice</span><span class="stage-tab-sub">Fresh problems — paced to your mastery</span></span>
+        </a>
+      </div>
+
+      <div class="goal">
+        <button class="speaker">
+          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)"></path><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none"></path></svg>
+          Read aloud
+        </button>
+        <div class="goal-text" data-vox-speaker="mom">
+          Babushka has <b>7</b> jars and scoops <b>8</b> mushrooms into each — skip-count to the total, then learn the fact by heart: <b>7 × 8</b>.
+        </div>
+      </div>
+
+      <div class="lboard" style="--lboard-foot-h:158px; --lboard-rail-w:360px; --lboard-row-gap:10px; --lboard-mt:6px;">
+
+        <!-- ── STAGE: full jar + printed skip-count ribbon ───────────────── -->
+        <div class="lboard-stage">
+          <div class="fit-stage canvas m3-fz-canvas" id="m3canvas">
+            <div class="fit-stage-content" style="transform:scale(0.62);">
+              <div class="m3-bind">
+                <div class="m3-bind-jar">
+                  <div class="m3-jarwrap">
+                    <div class="m3-jar" aria-label="jar holding 7 groups of 8 — 56 cubes">
+                      <div class="m3-jar-neck" aria-hidden="true"></div>
+                      <div class="m3-jar-body">
+                        <div class="m3-jar-cubes">
+                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
+                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
+                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
+                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
+                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
+                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
+                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
+                        </div>
+                      </div>
+                      <div class="m3-jar-tally">
+                        <span class="m3-jar-tally-n">56</span>
+                        <span class="m3-jar-tally-cap">cubes (7 groups of 8)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="m3-ribbon" aria-label="skip-count ribbon">
+                  <span class="m3-ribbon-lead">count by 8s</span>
+                  <span class="m3-ribbon-term" data-step="8">8</span>
+                  <span class="m3-ribbon-term" data-step="8">16</span>
+                  <span class="m3-ribbon-term" data-step="8">24</span>
+                  <span class="m3-ribbon-term" data-step="8">32</span>
+                  <span class="m3-ribbon-term" data-step="8">40</span>
+                  <span class="m3-ribbon-term" data-step="8">48</span>
+                  <span class="m3-ribbon-term is-blank" data-step="8">?</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lboard-rail">
+          <div class="panel">
+            <h3>Write the Product</h3>
+            <div class="hint">The ribbon counts 8, 16, 24, 32, 40, 48… one more 8 lands on the answer. Write the final number on the Slate.</div>
+            <div class="m3-factcard">
+              <span class="m3-factcard-eq">7 × 8 = ?</span>
+              <div class="m3-factcard-note">count by 8</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lboard-answer">
+          <div class="lbar">
+            <div class="lbar-eq">
+              <span class="m3-fz-fact">7 × 8</span>
+              <span class="m3-fz-op">=</span>
+              <span class="m3-fz-slate">
+                <div class="slate slate-row" role="group" aria-label="write the product">
+                  <div class="slate-slot">
+                    <div class="slate-cell">
+                      <canvas class="slate-canvas" role="img" aria-label="write the product digit"></canvas>
+                      <span class="slate-ph" aria-hidden="true">✎</span>
+                    </div>
+                  </div>
+                </div>
+              </span>
+            </div>
+            <div class="lbar-cap">write the final number on the Slate, then Check</div>
+            <div class="lbar-marks">
+              <button class="check">Check</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="lboard-tutor">
+          <div class="ltutor">
+            <div class="cook-stage">
+              <svg width="118" height="156.5" viewBox="0 0 196 260" style="display:block; overflow:visible;" aria-hidden="true">
+                <defs>
+                  <pattern id="ck-hatch" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="0.7" opacity="0.5"></line></pattern>
+                  <pattern id="ck-hatch-r" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--red-deep)" stroke-width="0.8" opacity="0.45"></line></pattern>
+                </defs>
+                <g stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+                  <path d="M44 258 Q40 188 58 168 Q72 154 98 154 Q124 154 138 168 Q156 188 152 258 Z" fill="var(--paper-1)"></path>
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="var(--red)"></path>
+                  <path d="M74 168 Q98 178 122 168 L130 258 L66 258 Z" fill="url(#ck-hatch-r)" stroke="none"></path>
+                  <path d="M98 156 L98 258" stroke="var(--ink)" stroke-width="1.4" opacity="0.5" fill="none"></path>
+                  <path d="M44 258 Q40 200 54 176 L70 258 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.7"></path>
+                  <path d="M58 172 Q34 186 30 214" fill="none"></path>
+                  <path d="M138 172 Q162 186 166 214" fill="none"></path>
+                </g>
+                <circle cx="98" cy="182" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4"></circle>
+                <circle cx="98" cy="200" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4"></circle>
+                <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4"></circle>
+                <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4"></circle>
+                <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4"></circle>
+                <g transform="rotate(6 168 218)">
+                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round"></line>
+                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)"></ellipse>
+                </g>
+                <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4"></rect>
+                <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"></path>
+                <g fill="var(--red-deep)" stroke="var(--ink)" stroke-width="2">
+                  <path d="M58 92 Q50 104 56 116 Q62 108 66 110 Z"></path>
+                  <path d="M138 92 Q146 104 140 116 Q134 108 130 110 Z"></path>
+                </g>
+                <circle cx="98" cy="92" r="40" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.6"></circle>
+                <path d="M122 78 A40 40 0 0 1 124 116 Q112 120 110 96 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.55"></path>
+                <circle cx="74" cy="100" r="7" fill="var(--red-soft)" opacity="0.7"></circle>
+                <circle cx="122" cy="100" r="7" fill="var(--red-soft)" opacity="0.7"></circle>
+                <g>
+                  <circle cx="83" cy="87" r="3.6" fill="var(--ink)"></circle>
+                  <circle cx="113" cy="87" r="3.6" fill="var(--ink)"></circle>
+                </g>
+                <path d="M98 92 Q102 99 97 101" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round"></path>
+                <path d="M84 108 Q98 120 112 108" stroke="var(--ink)" stroke-width="2.6" fill="none" stroke-linecap="round"></path>
+                <g stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round">
+                  <rect x="64" y="52" width="68" height="16" rx="3" fill="var(--paper-2)"></rect>
+                  <path d="M64 56 Q50 52 52 36 Q40 30 50 18 Q58 6 76 12 Q86 0 104 8 Q124 2 130 18 Q150 22 144 38 Q152 52 132 56 Q132 40 120 44 Q120 30 104 34 Q104 22 88 28 Q84 40 72 38 Q74 52 64 56 Z" fill="var(--paper-1)"></path>
+                </g>
+                <path d="M120 44 Q132 40 132 56 L120 56 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.5"></path>
+              </svg>
+            </div>
+            <div class="ribbon">The ribbon already counts 8, 16, 24, 32, 40, 48… — one more 8 lands on the answer. Write the product.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div></div>
+
+  <script src="../js/fit.js"></script>
+</body>
+</html>

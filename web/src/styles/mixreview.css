@@ -38,6 +38,19 @@
 .mixreview__choice:hover { background: var(--red-deep, #6e1c16); color: var(--paper-1, #f7efdd); }
 .mixreview__solve { min-height: 110px; display: flex; align-items: center; }
 .mixreview__rels { display: flex; gap: 12px; }
+/* Empty-state exit — shared PrimaryButton (.st-back) styled into this palette,
+   since the settings stylesheet that normally paints .st-back isn't loaded here. */
+.mixreview__exit.st-back {
+  background: var(--red-deep, #6e1c16);
+  color: var(--paper-1, #f7efdd);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font: 700 17px/1.1 var(--serif, Georgia, serif);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
+}
+.mixreview__exit.st-back:hover { background: var(--ink, #1c1612); }
 .mixreview .ribbon { font-size: 17px; text-align: center; max-width: 560px; }
 .mixreview .ribbon--ok { color: #2c5a2c; }
 .mixreview .ribbon--warn { color: var(--red-deep, #6e1c16); }

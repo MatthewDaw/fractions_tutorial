@@ -1,0 +1,31 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e21]:
+      - heading "Synthesis Tutor" [level=1] [ref=e22]:
+        - img [ref=e23]
+        - generic [ref=e26]: Synthesis
+        - text: Tutor
+      - generic [ref=e48]:
+        - heading "Confirm your identity" [level=1] [ref=e49]
+        - generic [ref=e50]:
+          - paragraph [ref=e51]:
+            - generic [ref=e52]: Please enter the code sent to
+            - generic [ref=e53]: mattdaw7@gmail.com to log in.
+          - generic [ref=e54]:
+            - textbox [active] [ref=e55]
+            - paragraph [ref=e56]: This field is required
+          - button "Verify" [ref=e57] [cursor=pointer]:
+            - generic [ref=e58]: Verify
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e61]: Didn't get the email?
+            - link "Sign up" [ref=e62] [cursor=pointer]:
+              - /url: /signup?
+            - generic [ref=e63]: or
+            - generic [ref=e64]: Try again
+          - generic [ref=e66]:
+            - text: Trying to log in to your school account?
+            - link "Log in here" [ref=e68] [cursor=pointer]:
+              - /url: /organization/signin
+  - alert [ref=e11]: Synthesis Tutor

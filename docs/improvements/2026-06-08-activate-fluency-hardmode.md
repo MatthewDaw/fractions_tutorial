@@ -1,6 +1,6 @@
 ---
 title: "Calibrate + flip fluencyHardMode (and the answer_value/denominator proxy fallbacks) — close the leniency trap"
-status: in-progress
+status: open
 priority: P2
 category: tech-debt
 source_uid: "002/U1 (R2, R3); leniency-vs-value risk"
@@ -47,55 +47,3 @@ but uncalled" one indirection later. Likewise the independence/transfer proxies 
 - Independence/transfer never fall back to the proxy in production (emission guard green).
 - Harness `fluencyOk-always-true` finding flips to resolved on held-out.
 - A scheduled flip/calibration task exists (no permanent lenient default).
-
----
-
-## Progress (T08 — gap-build-260609, work/T08)
-
-The CAPABILITY is now built, calibrated, and routed; the DEFAULT stays the reversible
-rollback (gated-three). Landed:
-
-- **Calibrated the age band.** `PARAMS.fluencyLatencyTargetMs` 15_000 → **8_000ms** (a plausible
-  upper bound on an 8–11yo's median fraction-compute latency for the M1 skills), and added
-  `PARAMS.fluencyPlausibleFloorMs` = **1_500ms** — a STRICTER lower bound than the too-fast-correct
-  `latencyFloorMs` (1_200). Hard-mode `fluencyOk` is now a TWO-SIDED band: an over-target latency
-  fails (too slow = not fluent yet) AND an implausibly-fast median fails (too fast = a guess /
-  UI-did-it stream, not genuine fluency). This is what actually closes the leniency trap — the old
-  ceiling-only check waved a 200ms spoof median straight through even in hard mode.
-- **Routed + kept reversible (gated-three).** `PARAMS.fluencyHardMode` stays `false` by default so
-  the rollback is a no-op and the verify-first positive control (which pins the soft/default engine)
-  stays valid. Flipping the flag to `true` — or passing `{ fluencyHardMode: true }` through the
-  harness flag overlay — activates the calibrated hard band engine-wide with no other code change.
-- **Emission guard.** `auditEmissionGuard(observations)` (pure, deterministic, in `dimensions.ts`)
-  flags any gate-relevant correct that would fall back to the spoofable `answer_value` /
-  denominator proxy because it is missing `problem_id` / `surface_form`. The runtime emits both
-  today; the guard makes a future regression (a lesson that stops emitting them) loud instead of
-  silent.
-- **Harness finding resolvable.** `fluencyOk-always-true` now flips present→resolved when run with
-  `fluencyHardMode: true` (tape gate no longer opens at the implausible latency AND the raw 200ms
-  spoof stat fails), and returns to present under the default-off rollback. (`expectedFindings.js`
-  now threads the flag state into its tape run so the gate is computed under the same PARAMS the
-  audit reasons about.)
-
-Remaining before this item closes (status → done): flip the DEFAULT to hard mode product-wide
-after the observed-sessions trigger below fires, and refresh the verify-first positive control to
-pin the gated engine instead of the soft default once that flip lands.
-
-## Age-band latency calibration schedule (the scheduled flip commitment)
-
-Per plan 002 Scope Boundaries ("Age-band fluency calibration … ship lenient, tune with real data …
-This deferral carries an explicit flip commitment: a scheduled calibration task with a trigger
-condition"):
-
-- **Trigger condition:** the first **N = 30** clean observed tablet sessions per M1 skill
-  (ADD_SAME_DEN first), captured with `fluencyHardMode` OFF so the band is measured, not assumed.
-- **Calibration method:** set `fluencyLatencyTargetMs` to the **75th percentile** of the observed
-  per-skill median correct-latency distribution, and confirm `fluencyPlausibleFloorMs` (currently
-  1_500) sits at/above the observed implausible-fast tail (guess/UI-did-it cluster). Both remain
-  PARAMS-tunable.
-- **Flip:** once calibrated, set `PARAMS.fluencyHardMode = true` as the default in a single reviewed
-  change; keep the flag for one-line rollback. Re-run the harness `fluencyOk-always-true`
-  expected-finding to confirm present(flag-off)→resolved(flag-on) still holds on the calibrated band.
-- **Owner / when:** M1 felt-loop checkpoint (plan 002 "Delivery Sequencing & Observation") — the same
-  observed-run gate that releases M2. Until then the lenient default is intentional and reversible,
-  not a dormant accident.

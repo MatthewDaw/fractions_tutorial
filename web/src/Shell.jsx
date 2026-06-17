@@ -21,9 +21,11 @@ import RoomIntro from "./RoomIntro.jsx";
 import LessonUnlikeDen from "./LessonUnlikeDen.jsx";
 import AppR1 from "./AppR1.jsx";
 import AppR4 from "./AppR4.jsx";
+import AppSimp from "./AppSimp.jsx";
 import AppR5 from "./AppR5.jsx";
 import AppM1 from "./AppM1.jsx";
-import AppM2 from "./AppM2.jsx";
+import AppDen from "./AppDen.jsx";
+import AppNum from "./AppNum.jsx";
 import AppM3 from "./AppM3.jsx";
 import AppNumberLine from "./AppNumberLine.jsx";
 import AppSubtract from "./AppSubtract.jsx";
@@ -182,7 +184,9 @@ export default function Shell() {
     screen = <ConceptMap onBack={closeConcepts} />;
   } else if (route === "title") {
     // Title / intro screen — the app's landing. START drops into the world map.
-    screen = <TitleScreen onStart={() => go("world")} />;
+    // The title screen renders its own FabBar (matching the wireframe), so we
+    // pass the same programmatic concept/settings handlers Shell uses elsewhere.
+    screen = <TitleScreen onStart={() => go("world")} onConcepts={openConcepts} onSettings={openSettings} />;
   } else if (route === "mom") {
     // Babushka's Room (the central kitchen): story / word problems. Not a ROOMS
     // entry — it's the hub itself, opened from the kitchen medallion on the map.
@@ -192,7 +196,7 @@ export default function Shell() {
     screen = <MixedReview skills={eligibleMixSkills(masteryMap)} onExit={toWorld} />;
   } else if (!room) {
     // World map (home) for the 'world' route / anything unrecognised.
-    screen = <WorldMap onOpen={(id) => go(id)} masteryMap={masteryMap} />;
+    screen = <WorldMap onOpen={(id) => go(id)} onConcepts={openConcepts} onSettings={openSettings} masteryMap={masteryMap} />;
   } else if (room.intro && !seenIntros.has(room.id)) {
     // First time entering a room that has an intro: play it before the room.
     showingIntro = true;
@@ -235,13 +239,15 @@ export default function Shell() {
     else if (room.id === "r2") screen = <LessonUnlikeDen {...p} lesson={r2Unit} />;
     else if (room.id === "r3") screen = <LessonUnlikeDen {...p} lesson={r3NonUnit} />;
     else if (room.id === "r4") screen = <AppR4 {...p} />;
+    else if (room.id === "simp") screen = <AppSimp {...p} />;
     else if (room.id === "r5") screen = <AppR5 {...p} />;
     else if (room.id === "m1") screen = <AppM1 {...p} />;
-    else if (room.id === "m2") screen = <AppM2 {...p} />;
     else if (room.id === "m3") screen = <AppM3 {...p} />;
     else if (room.id === "nl") screen = <AppNumberLine {...p} />;
     else if (room.id === "s1") screen = <AppSubtract {...p} initialStage={initialBeat} />;
     else if (room.id === "cmp") screen = <AppCompare {...p} />;
+    else if (room.id === "den") screen = <AppDen {...p} />;
+    else if (room.id === "num") screen = <AppNum {...p} />;
     else screen = <EmptyRoom room={room} onBack={toWorld} />;
   }
 
@@ -261,26 +267,8 @@ export default function Shell() {
         fallbackMasteryMap={masteryMap}
       />
       <BackgroundMusic scene={sceneFor(route, showingIntro)} />
-      {(route === "title" || route === "world") && (
-        <div className="fab-bar">
-          <button className="settings-fab concepts-fab" onClick={openConcepts} title="Concept Mastery Map" aria-label="Concepts">
-            <span className="settings-fab-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
-                <rect x="2" y="3" width="20" height="6" rx="1" fill="none" stroke="#1c1612" strokeWidth="2" />
-                <rect x="5" y="13" width="14" height="5" rx="1" fill="none" stroke="#a32a22" strokeWidth="2" />
-                <rect x="8" y="20" width="8" height="3" rx="1" fill="#a32a22" />
-              </svg>
-            </span>
-            <span className="settings-fab-label">Concepts</span>
-          </button>
-          <button className="settings-fab" onClick={openSettings} title="Settings" aria-label="Settings">
-            <span className="settings-fab-icon">
-              <img src="/settings-gear.png" width="20" height="20" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
-            </span>
-            <span className="settings-fab-label">Settings</span>
-          </button>
-        </div>
-      )}
+      {/* The title screen and the world map each render their OWN FabBar now
+          (shared <FabBar> chrome), so Shell no longer overlays it. */}
     </>
   );
 }

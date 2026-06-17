@@ -1,0 +1,10 @@
+[  179877ms] [LOG] === Cookie Debug === @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  179877ms] [LOG] Pieces: [Object, Object, Object, Object, Object, Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  179877ms] [LOG] People totals: [Object, Object] @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  179877ms] [LOG] Y_THRESHOLD: 150, spread: 150 @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  659905ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[  992170ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1045316ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1103473ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1122795ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3
+[ 1295082ms] [ERROR] audio play failed NotSupportedError: Failed to load because no supported source was found. @ https://fullstory.dev.compute.synthesis.is/s/fs.js:3

@@ -10,6 +10,11 @@
 // the lessons are grouped into three contiguous-curriculum strands (see
 // STRANDS in rooms.js). The recipe-trail aesthetic and per-lesson card are kept.
 //
+// Shared chrome (this pass): the map now composes the extracted scene chrome —
+// <FabBar>, <CardNode>, <MasteryBadge>, <TrailSVG>/<TrailSpoke> — instead of
+// inlining its own card/badge/trail markup. WorldMap also OWNS its FabBar (it is
+// no longer overlaid by Shell), so the landing surfaces render the same way.
+//
 // U11 behaviour preserved:
 //   • Per-room mastery status comes from the engine via masteryStatusFor().
 //   • The engine's SUGGESTED next room is highlighted — and its shelf carries a
@@ -17,26 +22,16 @@
 //   • masteryMap is optional: absent → original "no engine data" rendering.
 import { useState } from "react";
 import Mom from "./components/Mom.jsx";
+import FabBar from "./components/scene/FabBar.jsx";
+import CardNode from "./components/scene/CardNode.jsx";
+import MasteryBadge from "./components/scene/MasteryBadge.jsx";
+import TrailSVG from "./components/scene/TrailSVG.jsx";
 import { ROOMS, STRANDS, CENTER, KITCHEN } from "./rooms.js";
 import { masteryStatusFor, suggestedNextRoom } from "./kitchenProgress.js";
 
 // ---------------------------------------------------------------------------
-// Status → display helpers
+// Layout helpers (pure)
 // ---------------------------------------------------------------------------
-
-/**
- * Map a mastery status to a CSS class suffix and a short label.
- * @param {'not-started'|'in-progress'|'mastered'|'needs-review'} status
- */
-function statusMeta(status) {
-  switch (status) {
-    case 'mastered':      return { cls: 'mastered',     label: 'Mastered' };
-    case 'in-progress':   return { cls: 'in-progress',  label: 'In progress' };
-    case 'needs-review':  return { cls: 'needs-review', label: 'Cook again' };
-    case 'not-started':
-    default:              return { cls: 'not-started',  label: null };
-  }
-}
 
 // Resolve a strand's lesson ids to the real ROOMS objects, in strand order.
 function strandRooms(strand) {
@@ -52,61 +47,6 @@ function submenuPositions(n) {
   return Array.from({ length: n }, (_, i) => ({ x: startCx + i * (CARD_W + GAP), y: Y }));
 }
 
-// A soft quadratic "recipe trail" path between two points (used for both the
-// kitchen→shelf spokes and the lesson→lesson chain inside a strand).
-function trailPath(ax, ay, bx, by, lift = 28) {
-  const mx = (ax + bx) / 2;
-  const my = (ay + by) / 2 - lift;
-  return `M ${ax} ${ay} Q ${mx} ${my} ${bx} ${by}`;
-}
-
-// ---------------------------------------------------------------------------
-// Lesson card (shared by the submenu)
-// ---------------------------------------------------------------------------
-
-function LessonCard({ r, pos, status, isSuggested, onOpen }) {
-  const { cls: statusCls, label: statusLabel } = statusMeta(status);
-  const classNames = [
-    'wcard',
-    !r.built && 'soon',
-    statusCls !== 'not-started' && `wcard--${statusCls}`,
-    isSuggested && 'wcard--suggested',
-  ].filter(Boolean).join(' ');
-
-  return (
-    <button
-      className={classNames}
-      style={{ left: pos.x, top: pos.y }}
-      onClick={() => onOpen(r.id)}
-      title={r.built ? `Open Lesson ${r.no}` : `Lesson ${r.no} (not built yet)`}
-      data-mastery-status={status}
-      data-suggested={isSuggested || undefined}
-    >
-      <div className="whead">
-        <span className="wno">№{r.no}</span>
-        {statusLabel ? (
-          <span className={`wtag ${statusCls}`}>{statusLabel}</span>
-        ) : (
-          <span className={"wtag " + (r.built ? "ready" : "soon")}>
-            {r.built ? "Ready" : "Coming soon"}
-          </span>
-        )}
-        {isSuggested && (
-          <span className="wtag suggested" aria-label="Suggested next lesson">Next</span>
-        )}
-      </div>
-      <h2>{r.title}</h2>
-      <p>{r.concept}</p>
-      {r.example && (
-        <div className="wex">
-          <span className="wex-label">{r.verb || "Example"}</span>
-          <span className="wex-frac">{r.example}</span>
-        </div>
-      )}
-    </button>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -114,17 +54,30 @@ function LessonCard({ r, pos, status, isSuggested, onOpen }) {
 /**
  * WorldMap
  *
- * @param {{ onOpen: (id: string) => void, masteryMap?: Record<string, import('./engine/types.js').MasteryEstimate> | null }} props
+ * @param {{
+ *   onOpen: (id: string) => void,
+ *   onConcepts?: () => void,
+ *   onSettings?: () => void,
+ *   masteryMap?: Record<string, import('./engine/types.js').MasteryEstimate> | null,
+ * }} props
  */
-export default function WorldMap({ onOpen, masteryMap = null }) {
+export default function WorldMap({ onOpen, onConcepts, onSettings, masteryMap = null }) {
   const [openStrandId, setOpenStrandId] = useState(null);
   const suggestedRoomId = suggestedNextRoom(masteryMap);
   const openStrand = STRANDS.find((s) => s.id === openStrandId) || null;
+
+  // The FabBar (Concepts + Settings) is part of the world map's own chrome now.
+  // When the host doesn't pass handlers (e.g. unit tests), it is simply omitted.
+  const fab = (onConcepts || onSettings)
+    ? <FabBar onConcepts={onConcepts} onSettings={onSettings} />
+    : null;
 
   // ---- SUBMENU: one strand's lessons -------------------------------------
   if (openStrand) {
     const rooms = strandRooms(openStrand);
     const positions = submenuPositions(rooms.length);
+    // chain trail linking the strand's lessons left→right (under the cards)
+    const segments = positions.slice(0, -1).map((p, i) => ({ a: p, b: positions[i + 1] }));
 
     return (
       <div className="world world--submenu">
@@ -140,22 +93,10 @@ export default function WorldMap({ onOpen, masteryMap = null }) {
           <div className="sub">{openStrand.blurb}</div>
         </div>
 
-        {/* chain trail linking the strand's lessons left→right (under the cards) */}
-        <svg className="wedges" viewBox="0 0 1280 800" preserveAspectRatio="none" aria-hidden="true">
-          {positions.slice(0, -1).map((p, i) => {
-            const q = positions[i + 1];
-            const d = trailPath(p.x, p.y, q.x, q.y, 22);
-            return (
-              <g key={i}>
-                <path d={d} fill="none" stroke="var(--ink)" strokeWidth="2.4" strokeLinecap="round" opacity="0.75" />
-                <path d={d} fill="none" stroke="var(--red)" strokeWidth="1.3" strokeDasharray="1 8" strokeLinecap="round" opacity="0.8" />
-              </g>
-            );
-          })}
-        </svg>
+        <TrailSVG segments={segments} lift={22} inkOpacity={0.75} redOpacity={0.8} />
 
         {rooms.map((r, i) => (
-          <LessonCard
+          <CardNode
             key={r.id}
             r={r}
             pos={positions[i]}
@@ -166,11 +107,15 @@ export default function WorldMap({ onOpen, masteryMap = null }) {
         ))}
 
         <div className="world-foot">Tap a lesson to begin — or go back to pick another shelf.</div>
+
+        {fab}
       </div>
     );
   }
 
   // ---- TOP LEVEL: the three shelves around the kitchen --------------------
+  const spokes = STRANDS.map((s) => ({ a: CENTER, b: s.pos }));
+
   return (
     <div className="world">
       <div className="foxing" />
@@ -178,28 +123,10 @@ export default function WorldMap({ onOpen, masteryMap = null }) {
       <div className="world-head">
         <div className="tag">Lesson Map</div>
         <h1>Babushka's Fractions</h1>
-        <button
-          className="mixbasket-btn"
-          onClick={() => onOpen("review")}
-          title="Mixed basket — practice all your recipes together"
-        >
-          🧺 Mixed Basket ▸
-        </button>
       </div>
 
       {/* recipe trails from the kitchen to each shelf (under the nodes) */}
-      <svg className="wedges" viewBox="0 0 1280 800" preserveAspectRatio="none" aria-hidden="true">
-        {STRANDS.map((s) => {
-          const d = trailPath(CENTER.x, CENTER.y, s.pos.x, s.pos.y);
-          return (
-            <g key={s.id}>
-              <path d={d} fill="none" stroke="var(--ink)" strokeWidth="2.4" strokeLinecap="round" opacity="0.8" />
-              <path d={d} fill="none" stroke="var(--red)" strokeWidth="1.3" strokeDasharray="1 8" strokeLinecap="round" opacity="0.85" />
-            </g>
-          );
-        })}
-        <circle cx={CENTER.x} cy={CENTER.y} r="5" fill="var(--ink)" />
-      </svg>
+      <TrailSVG segments={spokes} lift={28} inkOpacity={0.8} redOpacity={0.85} hub={CENTER} />
 
       {/* central kitchen — tap to enter Babushka's Room (story / word problems) */}
       <button
@@ -232,8 +159,8 @@ export default function WorldMap({ onOpen, masteryMap = null }) {
           >
             <div className="shelf-head">
               <span className="shelf-range">№{rooms[0]?.no}–{rooms[rooms.length - 1]?.no}</span>
-              {hasSuggested && <span className="wtag suggested">Next</span>}
-              {allMastered && <span className="wtag mastered">Done</span>}
+              {hasSuggested && <MasteryBadge variant="suggested" label="Next" />}
+              {allMastered && <MasteryBadge variant="mastered" label="Done" />}
             </div>
             <h2 className="shelf-title">{s.title}</h2>
             <p className="shelf-blurb">{s.blurb}</p>
@@ -246,6 +173,8 @@ export default function WorldMap({ onOpen, masteryMap = null }) {
       })}
 
       <div className="world-foot">Three shelves, ten lessons, in order — start at the kitchen, or open any shelf.</div>
+
+      {fab}
     </div>
   );
 }

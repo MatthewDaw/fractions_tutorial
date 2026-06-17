@@ -1,0 +1,32 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - text: ctrl −
+    - generic [ref=e1207]:
+      - generic [ref=e1208]:
+        - navigation [ref=e1209]:
+          - button [ref=e1212] [cursor=pointer]:
+            - img [ref=e1213]
+        - generic [ref=e1216]:
+          - generic [ref=e1243]:
+            - paragraph [ref=e1244]: Share 4 cookies.
+            - button "🖐️" [ref=e1246] [cursor=pointer]:
+              - generic [ref=e1247]: 🖐️
+          - generic [ref=e1250]:
+            - paragraph [ref=e1252]: See if you can divide these cookies evenly.
+            - generic:
+              - button [disabled]:
+                - img
+      - generic [ref=e1220]:
+        - generic [ref=e1222]:
+          - generic [ref=e1225]:
+            - button [active] [ref=e1228] [cursor=pointer]
+            - button [ref=e1229] [cursor=pointer]
+          - generic [ref=e1230]:
+            - generic:
+              - img "Character 1" [ref=e1233] [cursor=pointer]
+              - img "Character 2" [ref=e1236] [cursor=pointer]
+            - generic [ref=e1253]:
+              - button [ref=e1254] [cursor=pointer]
+              - button [ref=e1255] [cursor=pointer]
+        - status [ref=e1240]
+  - alert [ref=e11]
