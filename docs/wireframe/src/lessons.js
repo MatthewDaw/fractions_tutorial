@@ -12,8 +12,9 @@
 
 const nl = {
   id: "nl",
-  num: "№3",
-  tag: "Lesson 3 · On the Number Line",
+  backHref: "shelf-build.html",
+  num: "№6",
+  tag: "Lesson 6 · Same Denominators",
   title: "Same Denominators",
   route: "#/nl",
   tabs: [
@@ -22,8 +23,8 @@ const nl = {
     { n: "3", name: "Manipulate", sub: "drag & count blocks", href: "room-r1.html" },
     { n: "4", name: "Numbers", sub: "bare 2/7 + 3/7 = ?", href: "room-r1-5-numbers.html" },
     { n: "5", name: "Applied", sub: "write the sum, then total", href: "room-r1-6-applied.html" },
-    { n: "sw", name: "Show Work", sub: "show your work", href: "room-r1-sw-showwork.html" },
-    { n: "6", name: "Words", sub: "story problem", href: "room-r1-7-words.html" },
+    { n: "6", name: "Show Work", sub: "show your work", href: "room-r1-sw-showwork.html" },
+    { n: "7", name: "Words", sub: "story problem", href: "room-r1-7-words.html" },
     { n: "★", name: "Practice", sub: "fresh problems — paced to your mastery", href: "room-r1-practice.html" },
   ],
 };

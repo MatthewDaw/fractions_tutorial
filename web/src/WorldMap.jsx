@@ -123,13 +123,6 @@ export default function WorldMap({ onOpen, onConcepts, onSettings, masteryMap = 
       <div className="world-head">
         <div className="tag">Lesson Map</div>
         <h1>Babushka's Fractions</h1>
-        <button
-          className="mixbasket-btn"
-          onClick={() => onOpen("review")}
-          title="Mixed basket — practice all your recipes together"
-        >
-          🧺 Mixed Basket ▸
-        </button>
       </div>
 
       {/* recipe trails from the kitchen to each shelf (under the nodes) */}

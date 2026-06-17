@@ -1,13 +1,13 @@
-/* room-den-4-numbers — №3 The Bottom Number · Stage 4 "Numbers".
+/* room-den-4-numbers — №3 The Bottom Number · Stage 5 "Numbers".
    The rulers are gone — now reason from the NUMBER alone. Given 1/4 and 1/9,
    which is smaller? (No picture; the child applies "bigger bottom ⇒ smaller
-   piece".) Snapshot: 1/9 chosen as the smaller. */
+   piece".) Snapshot: 1/9 chosen as the smaller (is-on). */
 import { tutor } from "../cookSvg.js";
 
 const frac = (d, on) => `
-      <div class="den-bare-card${on ? " is-on" : ""}">
+      <button class="den-bare-card${on ? " is-on" : ""}">
         <div class="bignum"><span class="n">1</span><span class="bar" style="background:var(--ink)"></span><span class="d">${d}</span></div>
-      </div>`;
+      </button>`;
 
 export default {
   kind: "lesson",
@@ -34,7 +34,7 @@ export default {
   answerHTML: `
     <div class="lbar">
       <div class="lbar-eq">
-        <span class="nl-ans-amt">smaller fraction:</span>
+        <span class="den-ans-amt">smaller fraction:</span>
         <span class="den-choices">
           <span class="den-choice">1/4</span>
           <span class="den-choice is-on">1/9</span>
@@ -42,7 +42,7 @@ export default {
       </div>
       <div class="lbar-cap">9 &gt; 4, so the ninth is the smaller piece — 1/9 &lt; 1/4</div>
       <div class="lbar-marks">
-        <button class="check" disabled>Check</button>
+        <button class="check" disabled>Next stage ▸</button>
       </div>
     </div>`,
 

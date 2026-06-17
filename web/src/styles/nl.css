@@ -107,6 +107,14 @@
   font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute);
 }
 
+/* bridge panel shown when a merged r1 tab is selected in AppNumberLine */
+.nl-r1-bridge {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; padding: 48px 24px;
+  font-family: var(--serif); font-size: 18px; color: var(--ink-mute);
+  text-align: center;
+}
+
 /* the floating drag ghost following the pointer (fixed overlay, click-through) */
 .nl-drag-ghost {
   position: fixed; z-index: 9999; pointer-events: none;

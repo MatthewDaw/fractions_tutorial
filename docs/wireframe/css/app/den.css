@@ -87,6 +87,23 @@
   max-width: var(--den-ruler-w, 560px);
 }
 
+/* numbered cells under the ruler — count the pieces out (1 … n) */
+.den-ruler-nums { width: var(--den-ruler-w, 560px); display: flex; }
+.den-ruler-num {
+  flex: 1 1 0; text-align: center; padding: 4px 0; border-right: 1.5px solid var(--ink);
+  font-family: var(--type); font-size: 13px; color: var(--ink-mute);
+}
+.den-ruler-num:last-child { border-right: none; }
+
+/* the highlight / unhighlight tool above the ruler */
+.den-paint-row { display: flex; justify-content: center; margin-bottom: 16px; }
+.den-paint-tool {
+  all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border: 2px solid var(--ink); background: var(--paper-1);
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.04em; color: var(--ink);
+}
+.den-paint-tool:hover { background: var(--paper-2); }
+
 /* ── compare layout: two stacked rulers, each tagged with its 1/N ───────────── */
 .den-compare { display: flex; flex-direction: column; gap: 22px; align-items: center; height: 100%; justify-content: center; }
 .den-row { display: flex; align-items: center; gap: 20px; }
@@ -137,8 +154,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 30px;
-  padding: 6px 10px;
+  gap: 28px;
+  padding: 12px 44px;
 }
 /* ONE set of numbers. The child taps a number (it lifts/highlights), then taps
    the TOP or BOTTOM slot of the fraction to drop it there. The single column
@@ -173,37 +190,31 @@
   text-transform: uppercase; color: var(--ink-mute);
 }
 
-/* the box: a square split into a grid. Ink shows through 2px gaps as grid lines. */
-.sq-box {
-  width: 196px; height: 196px;
-  display: grid; gap: 2px; padding: 2px;
-  background: var(--ink);
-  border: 2.5px solid var(--ink); border-radius: 7px;
-  box-shadow: inset 0 2px 8px rgba(20,12,6,0.18), 0 3px 0 var(--shade);
-}
-.sq-box.is-sm { width: 150px; height: 150px; }
-.sq-box.is-target { box-shadow: 0 0 0 2px var(--red), 0 3px 0 var(--shade); }
-.sq-box.is-empty { background: var(--paper-3); }  /* un-split: one blank panel */
+/* YOUR + TARGET rulers, STACKED VERTICALLY (a ruler is wide, so the two won't
+   sit side-by-side). Each ruler reuses the den lesson's .den-ruler / .den-seg so
+   the whole build game reads in the SAME ruler vocabulary as the rest of the
+   lesson — no separate "square" object. */
+.sq-rulers { display: flex; flex-direction: column; gap: 18px; }
+.sq-rulerrow { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+/* the TARGET ruler gets a red frame so the child knows which one to match */
+.den-ruler.is-target { box-shadow: 0 0 0 2px var(--red), inset 0 2px 8px rgba(20,12,6,0.18); }
 
-.sq-cell { background: var(--paper-1); position: relative; }
-.sq-cell.is-fill { background: var(--red); }
-.sq-cell.is-fill::after {
-  content: ""; position: absolute; inset: 0; opacity: 0.5;
-  background-image:
-    repeating-linear-gradient(45deg, rgba(237,226,200,0.40) 0 1px, transparent 1px 7px),
-    repeating-linear-gradient(-45deg, rgba(237,226,200,0.40) 0 1px, transparent 1px 7px);
-}
-
-/* the fraction glyph that sits between the pickers and YOUR box */
+/* the fraction glyph that sits between the picker and the rulers */
 .sq-frac .bignum { font-size: 44px; }
-.sq-match {
-  font-family: var(--serif); font-style: italic; font-size: 22px;
-  color: var(--ink-mute); align-self: center;
-}
 
-/* ── paint game: one box, a little FILL tool card, paint K/N of it red ─────── */
+/* ── paint game: divide the strip first (a button per cut), then paint K/N red ── */
 .sq-paint { gap: 44px; }
-.sq-box.is-paint .sq-cell { cursor: pointer; }
+.den-ruler.is-paint .den-seg { cursor: pointer; }
+/* the "cut the strip into N" buttons — the child must divide before painting */
+.sq-divide { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+.sq-divide-lab { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+.sq-divbtn {
+  min-width: 36px; height: 36px; padding: 0 10px; cursor: pointer;
+  font-family: var(--display); font-size: 16px; color: var(--ink);
+  background: var(--paper-1); border: 2px solid var(--ink); border-radius: 9px;
+  box-shadow: 0 2px 0 var(--shade);
+}
+.sq-divbtn.is-on { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); box-shadow: 0 2px 0 var(--red-deep); }
 .sq-tool {
   display: flex; flex-direction: column; gap: 10px; align-items: stretch;
   padding: 12px 14px; border: 2px solid var(--ink); border-radius: 12px;

@@ -1,4 +1,4 @@
-/* room-r1-practice — lesson step of №3 (rendered by LessonScreen).
+/* room-r1-practice — lesson step of №6 (rendered by LessonScreen).
    Centralized chrome: toolbar + the shared <StageTabs> (see lessons.js) come from
    the component; this module declares only its identity and the markup BELOW the
    tabs (belowHTML), so it carries no copy of the tab strip. */

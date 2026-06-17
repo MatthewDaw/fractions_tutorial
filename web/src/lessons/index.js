@@ -29,8 +29,12 @@ import den from "./den.js";
 import num from "./num.js";
 import mom from "./mom.js";
 import review from "./review.js";
+import simp from "./simp.js";
 
-const DEFS = [m1, m3, nl, r1, r2, r3, r4, r5, s1, cmp, den, num, mom, review];
+// Teaching sequence order (mirrors wireframe shelf numbers):
+//   m1=1, m3=2, den=3, num=4, cmp=5, nl=6, s1=7, r4=8, simp=9, r3=10, r2=11, r5=12
+//   r1 (null no) is merged into nl; mom + review are meta-lessons at the end.
+const DEFS = [m1, m3, den, num, cmp, nl, s1, r4, simp, r3, r2, r5, r1, mom, review];
 
 export const LESSONS = {};
 for (const def of DEFS) {

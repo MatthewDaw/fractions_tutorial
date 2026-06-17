@@ -1,4 +1,4 @@
-/* room-s1-practice — №4 Taking Away · Practice (AppSubtract, #/s1 stage ★).
+/* room-s1-practice — №7 Taking Away · Practice (AppSubtract, #/s1 stage ★).
    Data-only module consumed by <LessonScreen>. The chrome (toolbar, topbar,
    tabs, board grid) is the shared component; the practice frame does not map
    onto the 4-zone board, so it rides the belowHTML escape hatch. Interactive

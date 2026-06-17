@@ -1,5 +1,6 @@
 /* room-m1-3-fade — №1 Equal Groups · Fade (Stage 3, #/m1).
    Data-only module consumed by <LessonScreen>. */
+import { jar, rep } from "../manip.js";
 export default {
   kind: "lesson",
   lesson: "m1",
@@ -10,50 +11,15 @@ export default {
   goalHTML: `Babushka has <b>3 plates</b>, and she wants the <b>same 4 pelmeni</b> on every plate — add the group again and again, or multiply.`,
 
   stageHTML: `
-          <div class="canvas m1-canvas m1-faded">
+          <div class="canvas m1-canvas m1-faded" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
             <div class="m1-fadecheck" aria-hidden="true"><span class="m1-fadecheck-mark">✓</span> plates checked — let the numbers lead</div>
-
-            <div class="mg-fit">
-              <div class="mg-plates mg-ghost" role="group" aria-label="3 plates" style="--mg-plate:92px; --mg-piece:24px;">
-                <div class="mg-group mg-plate is-equal-ok">
-                  <button type="button" class="mg-vessel is-equal-ok" style="border-color:#2a9d8f; box-shadow:0 0 0 2px #2a9d8f22;" disabled title="4 on plate 1" aria-label="plate 1: 4 of 4">
-                    <span class="mg-vessel-pieces">
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                    </span>
-                    <span class="mg-tick" aria-hidden="true">✓</span>
-                  </button>
-                  <div class="mg-count" style="color:#2a9d8f;">4</div>
-                </div>
-                <div class="mg-group mg-plate is-equal-ok">
-                  <button type="button" class="mg-vessel is-equal-ok" style="border-color:#2a9d8f; box-shadow:0 0 0 2px #2a9d8f22;" disabled title="4 on plate 2" aria-label="plate 2: 4 of 4">
-                    <span class="mg-vessel-pieces">
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                    </span>
-                    <span class="mg-tick" aria-hidden="true">✓</span>
-                  </button>
-                  <div class="mg-count" style="color:#2a9d8f;">4</div>
-                </div>
-                <div class="mg-group mg-plate is-equal-ok">
-                  <button type="button" class="mg-vessel is-equal-ok" style="border-color:#2a9d8f; box-shadow:0 0 0 2px #2a9d8f22;" disabled title="4 on plate 3" aria-label="plate 3: 4 of 4">
-                    <span class="mg-vessel-pieces">
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                      <span class="mg-piece-slot"><svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true" class="mg-pelmeni"><path d="M3 15 Q3 7 13 7 Q23 7 23 15 Q23 21 13 21 Q3 21 3 15 Z" fill="#c9a36b" stroke="#9a7740" stroke-width="1.6" /><path d="M5 13 Q13 9 21 13" fill="none" stroke="#9a7740" stroke-width="1.1" opacity="0.7" /></svg></span>
-                    </span>
-                    <span class="mg-tick" aria-hidden="true">✓</span>
-                  </button>
-                  <div class="mg-count" style="color:#2a9d8f;">4</div>
-                </div>
-              </div>
+            <div class="kq-jars" style="gap:26px; opacity:0.5;">
+              ${rep(3, () => `
+                <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+                  ${jar(4)}
+                  <span style="font-family:var(--display); font-size:18px; color:#2a9d8f;">4</span>
+                </div>`)}
             </div>
-
             <div class="m1-collapse-row">
               <span class="m1-addstrip-lead">4 + 4 + 4</span>
               <button type="button" class="m1-collapse-btn">▸ collapse to 3 × 4</button>
@@ -114,9 +80,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />

@@ -1,4 +1,4 @@
-/* room-r2-a-applied — №7 Cross-Multiply · Applied (#/r2).
+/* room-r2-a-applied — №11 Cross-Multiply · Applied (#/r2).
    Data-only module consumed by <LessonScreen>. The chrome (toolbar, topbar,
    tabs, board grid) is the shared component; only the unique content below
    lives here. Word-problem restructured onto the 4 zones: the story + hint
@@ -14,13 +14,17 @@ export default {
 
   railHTML: `
           <div class="panel">
-            <h3>Babushka's kitchen</h3>
-            <div class="hint">Babushka needs 1/2 + 1/3 cups — how many cups is that? Write what it's asking as a <b>sum</b> first, then give the answer.</div>
+            <h3>Applied</h3>
+            <div class="hint">A question in words, with the fractions shown. Write what it's asking as a <b>sum</b> first, then give the answer.</div>
           </div>`,
 
   stageHTML: `
           <div class="wp-setup">
-            <span class="wp-setup-lead">First, write the question as a sum</span>
+            <div class="wp-story">
+              <span class="wp-tag">Babushka's kitchen</span>
+              <p class="wp-caption">Babushka needs <b>1/2</b> + <b>1/3</b> cups — how many cups is that?</p>
+            </div>
+            <div class="wp-setup-lead">First, write the question as a sum</div>
             <div class="wp-setup-row">
               <div class="expr-slate" role="group" aria-label="write the question in math symbols">
                 <!-- fraction A: [_/_] -->
@@ -47,11 +51,11 @@ export default {
               </div>
               <button type="button" class="wp-check">Check the sum</button>
             </div>
+            <div class="wp-answer-lead">Now write the total</div>
           </div>`,
 
   answerHTML: `
           <div class="wp-answer">
-            <span class="wp-answer-lead">Now write the total</span>
             <div class="wp-answer-row">
               <div class="slate slate-fraction is-disabled" role="group" aria-label="write the total">
                 <div class="slate-slot is-disabled">
@@ -88,9 +92,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />

@@ -21,6 +21,7 @@ import RoomIntro from "./RoomIntro.jsx";
 import LessonUnlikeDen from "./LessonUnlikeDen.jsx";
 import AppR1 from "./AppR1.jsx";
 import AppR4 from "./AppR4.jsx";
+import AppSimp from "./AppSimp.jsx";
 import AppR5 from "./AppR5.jsx";
 import AppM1 from "./AppM1.jsx";
 import AppDen from "./AppDen.jsx";
@@ -238,6 +239,7 @@ export default function Shell() {
     else if (room.id === "r2") screen = <LessonUnlikeDen {...p} lesson={r2Unit} />;
     else if (room.id === "r3") screen = <LessonUnlikeDen {...p} lesson={r3NonUnit} />;
     else if (room.id === "r4") screen = <AppR4 {...p} />;
+    else if (room.id === "simp") screen = <AppSimp {...p} />;
     else if (room.id === "r5") screen = <AppR5 {...p} />;
     else if (room.id === "m1") screen = <AppM1 {...p} />;
     else if (room.id === "m3") screen = <AppM3 {...p} />;

@@ -1,116 +1,119 @@
-/* r5.css — Room R5 "Whole Units" (IMPROPER_TO_MIXED) room-specific styles.
-   Reuses lesson.css classes by name; only NEW, namespaced .r5-* rules live here.
-   The house look (paper, ink, red, engraved blocks) comes from lesson.css +
-   denominatorColors.js. These rules add only what R5 needs: the whole-unit frame
-   that the child fills, the leftover tray, and the mixed-number write slots. */
+/* r5.css — Room R5 "Mixed Numbers" (IMPROPER_TO_MIXED) room-specific styles.
+   Redesigned for the number-line strip arc (Identify / Fill a Whole / Read /
+   How Many Wholes / The Other Way / Numbers / Practice).
+   Reuses lesson.css classes by name; only NEW, namespaced .r5-* rules live here. */
 
-/* the canvas wants a touch more height than R1's 346 to seat the tall overflow
-   stack, the whole-unit frame, and the ruler without crowding. */
-.r5-canvas { width: 720px; height: 348px; position: relative; margin: 6px auto 0; }
-
-/* a single 1/den block in the overflow column / frame / tray. The fill + hatch
-   are applied inline from denominatorColors so every block matches its size. */
-.r5-block {
-  position: relative; box-sizing: border-box; display: grid; place-items: center;
-  border: 1.5px solid var(--ink); height: 30px; cursor: grab; touch-action: none;
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 -3px 6px rgba(20,12,6,0.18);
-}
-.r5-block.is-grabbing { cursor: grabbing; }
-.r5-block.is-locked { cursor: default; }
-.r5-block .r5-hatch { position: absolute; inset: 0; pointer-events: none; }
-.r5-block .r5-lab {
-  position: relative; z-index: 2; font-family: var(--display); font-size: 12px;
-  pointer-events: none; text-shadow: 0 1px 0 rgba(255,250,235,.25);
-}
-
-/* the standing overflow column (the improper stack), every piece visible. */
-.r5-overflow { position: absolute; }
-.r5-overflow .r5-col-tag {
-  position: absolute; left: 50%; transform: translateX(-50%); top: -52px; white-space: nowrap;
-}
-.r5-overflow .r5-block { width: 100px; height: 32px; }
-
-/* the WHOLE-UNIT FRAME — the target the child fills. It holds exactly `den`
-   blocks; the moment it is full it LOCKS (a snap) and reads as "1 whole". */
-.r5-frame {
-  position: absolute; box-sizing: border-box; border: 2px dashed var(--ink-soft);
-  background: rgba(28,22,18,0.025); transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
-}
-.r5-frame.is-hot { border-color: var(--red); box-shadow: 0 0 0 3px rgba(163,42,34,0.16); background: rgba(163,42,34,0.05); }
-.r5-frame.is-locked {
-  border: 2px solid var(--ink); border-style: solid; background: rgba(28,22,18,0.02);
-  animation: r5Snap .42s cubic-bezier(.34,1.7,.5,1);
-  box-shadow: inset 0 0 0 1px rgba(255,200,140,0.18);
-}
-@keyframes r5Snap { 0%{ transform: scale(1) } 40%{ transform: scale(1.05) } 100%{ transform: scale(1) } }
-.r5-frame .r5-frame-fill { position: absolute; inset: 0; display: flex; }
-.r5-frame .r5-frame-fill .r5-block { flex: 1 1 0; border-right: none; }
-.r5-frame .r5-frame-fill .r5-block + .r5-block { border-left: 1.5px solid var(--ink); }
-.r5-frame .r5-frame-lab {
-  position: absolute; left: 0; right: 0; top: -50px; text-align: center; white-space: nowrap;
-}
-/* the small "1 whole" stamp that lands when the frame locks */
-.r5-whole-stamp {
-  display: inline-flex; align-items: center; gap: 6px; font-family: var(--display);
-  font-size: 15px; letter-spacing: .03em; color: var(--paper-1); background: var(--red);
-  border: 1.5px solid var(--red-deep); padding: 3px 12px; box-shadow: 1px 1px 0 rgba(110,28,22,.3);
-  animation: stampIn .45s cubic-bezier(.34,1.56,.64,1);
-}
-.r5-frame-hint { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
-
-/* the LEFTOVER TRAY — what's left after the whole locks (the fraction part). */
-.r5-tray {
-  position: absolute; box-sizing: border-box; border: 1.5px dashed var(--paper-3);
-  background: rgba(28,22,18,0.015); display: flex; align-items: flex-end; padding: 4px;
-}
-.r5-tray.is-hot { border-color: var(--red); border-style: solid; box-shadow: 0 0 0 2px rgba(163,42,34,0.14); }
-.r5-tray .r5-tray-lab { position: absolute; left: 0; right: 0; top: -34px; text-align: center; white-space: nowrap; }
-.r5-tray-fill { display: flex; gap: 0; }
-.r5-tray-fill .r5-block { width: 60px; cursor: default; }
-.r5-tray-fill .r5-block + .r5-block { border-left: none; }
-
-/* a faint "drop here" call-out used on the frame while the child still has blocks
-   to place. */
-.r5-dropcue {
-  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
-  text-align: center; font-family: var(--display); font-size: 12px; letter-spacing: .04em;
-  color: var(--ink-mute); pointer-events: none; opacity: .8;
-}
-
-/* ════════════════════════════════════════════════════════════════════════════
-   STAGES 1–4 of the sweep (Manipulate / Bind / Fade / Numbers) now use the
-   SHARED <LessonBoard variant="split"> (lesson-board.css): stage + rail in row 1,
-   answer (<AnswerBar>) + tutor (<TutorRibbon>) in row 2, as SEPARATE grid tracks
-   — so the tall mixed-number composer can never overlap the board. The old
-   per-lesson absolutely-positioned zone rectangles (.r5-stage, .r5-z-board /
-   -rail / -answer / -tutor, .r5-ans-cap / -marks) are GONE; the LessonBoard grid
-   and AnswerBar's .lbar card provide all that chrome.
-
-   What remains below is R5-OWNED CONTENT styling for what lives INSIDE those
-   shared zones: the FitStage wrapper around the canvas, and the equation +
-   mixed-number-composer sizing inside the AnswerBar (.lbar) card.
-   ════════════════════════════════════════════════════════════════════════════ */
-
-/* FitStage wrapper inside the LessonBoard stage zone: it fills the zone and
-   auto-downscales the canvas so the tallest improper-fraction stack (9/7's
-   column, future 11/4) shrinks to fit instead of clipping. The canvas keeps its
-   fixed geometry; we drop its top margin so FitStage's center-origin scale stays
-   vertically even. */
+/* ── FitStage wrapper ────────────────────────────────────────────────────────── */
 .r5-board-fit { width: 100%; height: 100%; }
-.r5-board-fit .r5-canvas { margin: 0 auto; }
 
-/* the equation prefix + composer — ONE row, all terms vertically centered on a
-   single midline (EQUATION ALIGNMENT rule). Lives in AnswerBar's .lbar-eq slot. */
+/* ── Stage canvas ────────────────────────────────────────────────────────────── */
+.r5-stage-canvas {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 28px;
+  width: 800px; min-height: 280px; padding: 24px 0; box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/* Stages 1–4: digit-grid row layout */
+.r5-stage-row {
+  display: flex; flex-direction: row; align-items: center; gap: 34px;
+}
+.r5-stage-col {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 18px;
+}
+
+/* Inline equation below the ruler */
+.r5-stage-eq {
+  display: inline-flex; align-items: center; gap: 16px;
+}
+.r5-stage-eq.bad { animation: shakeX .42s ease-in-out; }
+
+/* Slate sizing inside r5-stage-eq (stage canvas area, stages 1–4) */
+.r5-stage-eq .slate-fraction .slate-cell { width: 76px; height: 64px; }
+.r5-stage-eq .slate-fraction .slate-bar { width: 76px; }
+.r5-stage-eq .slate-row .slate-cell { width: 76px; height: 64px; }
+.r5-stage-eq .slate-fraction .slate-fixed,
+.r5-stage-eq .slate-row .slate-fixed { font-size: 36px; }
+.r5-stage-eq .slate-fraction .slate-committed-digit,
+.r5-stage-eq .slate-row .slate-committed-digit { font-size: 40px; }
+.r5-stage-eq .slate-fraction .slate-ph,
+.r5-stage-eq .slate-row .slate-ph { font-size: 22px; }
+.r5-stage-eq .slate-fraction,
+.r5-stage-eq .slate-row { position: relative; }
+.r5-stage-eq .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }
+
+/* ── MixRuler ────────────────────────────────────────────────────────────────── */
+/* A horizontal number-line strip: each segment is one 1/den piece; shaded
+   pieces are filled in red; whole boundaries get a heavier right border.
+   Labels 0,1,2… sit below each whole-boundary position. */
+.r5-ruler-wrap {
+  display: flex; flex-direction: column; gap: 0; position: relative;
+}
+.r5-ruler {
+  display: flex; height: 52px; border: 2px solid var(--ink);
+  overflow: hidden; box-sizing: border-box;
+}
+.r5-seg {
+  flex: 1 1 0; box-sizing: border-box; height: 100%;
+  background: var(--paper-2);
+  border-right: 1px solid rgba(28,22,18,0.25);
+  transition: background .18s ease;
+}
+.r5-seg:last-child { border-right: none; }
+.r5-seg.is-on { background: var(--red); }
+/* whole boundaries: a heavier divider every den pieces */
+.r5-seg.whole-end { border-right: 2.5px solid var(--ink); }
+
+.r5-ruler-labels {
+  position: relative; height: 22px; margin-top: 4px;
+}
+.r5-ruler-labels span {
+  position: absolute; transform: translateX(-50%);
+  font-family: var(--display); font-size: 13px; color: var(--ink-mute);
+}
+
+/* ── BigFracDisplay ─────────────────────────────────────────────────────────── */
+.r5-bigfrac {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 0;
+  font-family: var(--display); line-height: 1; vertical-align: middle;
+}
+.r5-bf-n { color: var(--red); }
+.r5-bf-bar {
+  display: block; height: 2.5px; background: var(--ink);
+  width: 100%; margin: 2px 0;
+}
+.r5-bf-d { color: var(--ink); }
+
+/* ── MixedNumDisplay ────────────────────────────────────────────────────────── */
+.r5-mixnum {
+  display: inline-flex; align-items: flex-start; gap: 4px;
+  font-family: var(--display); vertical-align: middle;
+}
+.r5-mn-whole { font-size: 1em; color: var(--ink); line-height: 1; align-self: center; }
+.r5-mn-frac {
+  display: inline-flex; flex-direction: column; align-items: center;
+  font-size: 0.52em; line-height: 1; gap: 1px;
+}
+.r5-mn-n { color: var(--red); border-bottom: 1.5px solid var(--ink); padding-bottom: 1px; min-width: 1.2em; text-align: center; }
+.r5-mn-d { color: var(--ink); min-width: 1.2em; text-align: center; }
+
+/* ── Answer bar equation row ─────────────────────────────────────────────────── */
 .r5-ans-eqrow {
   display: inline-flex; align-items: center; gap: 16px;
 }
-.r5-ans-frac { font-family: var(--display); font-size: 46px; color: var(--ink); }
+.r5-ans-eqrow.bad { animation: shakeX .42s ease-in-out; }
+.r5-ans-label { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-mute); max-width: 160px; }
 .r5-ans-op { font-family: var(--display); font-size: 40px; color: var(--ink-mute); }
-/* the mixed-number composer (whole / "and" / leftover fraction) stays centered on
-   the equation midline so the "=", the whole box and the fraction bar all align. */
-.lbar .r5-write { align-items: center; gap: 14px; }
-/* the handwriting cells stay comfortably large for a child's digit. The leftover
-   fraction is a stacked slate; the whole-number is a single-cell row slate. */
+.r5-ans-eq { font-family: var(--display); font-size: 28px; color: var(--ink); }
+.r5-ans-note { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-mute); }
+
+/* ── Mixed-number write composer (whole + "and" + fraction slate) ────────────── */
+.r5-write { display: inline-flex; align-items: center; gap: 14px; }
+.r5-write.bad { animation: shakeX .42s ease-in-out; }
+.r5-write .r5-and { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); }
+.r5-write .r5-write-whole, .r5-write .r5-write-frac { display: inline-flex; }
+
+/* Size the Slate cells in the AnswerBar composer */
 .lbar .r5-write .slate-fraction .slate-cell { width: 92px; height: 76px; }
 .lbar .r5-write .slate-fraction .slate-bar { width: 92px; }
 .lbar .r5-write .slate-row .slate-cell { width: 92px; height: 76px; }
@@ -120,156 +123,67 @@
 .lbar .r5-write .slate-row .slate-committed-digit { font-size: 48px; }
 .lbar .r5-write .slate-fraction .slate-ph,
 .lbar .r5-write .slate-row .slate-ph { font-size: 28px; }
-/* the verifier guess chip floats so it can't change the row height */
 .lbar .r5-write .slate-fraction,
 .lbar .r5-write .slate-row { position: relative; }
 .lbar .r5-write .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }
-.lbar .r5-write .r5-and { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); }
-/* the no-writing (Manipulate) read-only cue sits on the same midline */
-.lbar .r5-mixed { display: inline-flex; align-items: center; }
 
-/* ════════════════════════════════════════════════════════════════════════════
-   QUESTION BAND — R5 now mounts the SHARED <QuestionBand> (questionband.css)
-   directly under the stage-selector tabs on every stage. The old ad-hoc
-   .r5-question band (and the in-canvas .eqstate float that overlapped the board)
-   were removed. The only R5-owned rule left here makes the goal/story copy that
-   FOLLOWS the shared band read as clearly SECONDARY helper text. Scoped to R5's
-   exact sibling markup (.question-band immediately followed by .goal) so it never
-   touches other lessons or the shared stylesheet. */
-.question-band + .goal { height: 46px; }
-.question-band + .goal .goal-text { font-size: 15px; color: var(--ink-mute); }
-.question-band + .goal .goal-text b { color: var(--ink); font-weight: 600; }
+/* Fraction Slate sizing for isIdentify / isFill / isBack in the AnswerBar */
+.lbar .r5-ans-eqrow .slate-fraction .slate-cell { width: 92px; height: 76px; }
+.lbar .r5-ans-eqrow .slate-fraction .slate-bar { width: 92px; }
+.lbar .r5-ans-eqrow .slate-row .slate-cell { width: 92px; height: 76px; }
+.lbar .r5-ans-eqrow .slate-fraction .slate-fixed,
+.lbar .r5-ans-eqrow .slate-row .slate-fixed { font-size: 44px; }
+.lbar .r5-ans-eqrow .slate-fraction .slate-committed-digit,
+.lbar .r5-ans-eqrow .slate-row .slate-committed-digit { font-size: 48px; }
+.lbar .r5-ans-eqrow .slate-fraction .slate-ph,
+.lbar .r5-ans-eqrow .slate-row .slate-ph { font-size: 28px; }
 
-/* the drag ghost block that follows the pointer */
-.r5-ghost { position: fixed; z-index: 60; pointer-events: none; opacity: 0.92;
-  box-shadow: 2px 4px 6px rgba(20,12,6,.35); }
-
-/* ---- rail card: "Group into wholes" (R5's analogue of R1's lockcard) ---- */
-.r5-card { display: grid; gap: 8px; margin-top: 10px; padding: 10px 14px; border: 1.5px dashed var(--paper-3); background: rgba(28,22,18,0.02); }
-.r5-card .r5-card-row { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 14px; color: var(--ink); }
-.r5-card .r5-card-row .r5-mini-frame { display: inline-flex; border: 1.5px solid var(--ink); }
-.r5-card .r5-card-row .r5-mini-block { width: 11px; height: 18px; border-right: 1px solid var(--ink); }
-.r5-card .r5-card-row .r5-mini-block:last-child { border-right: none; }
-.r5-card .r5-card-note { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--ink-mute); line-height: 1.35; }
-
-/* ---- the MIXED-NUMBER write slots in the HUD ---- */
-/* whole-number slot sits to the LEFT of the fraction, big like the HUD inputs. */
-.r5-mixed { display: inline-flex; align-items: center; gap: 18px; }
-.r5-mixed .r5-and { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--ink-mute); }
-.r5-mixed .r5-whole-input {
-  width: 88px; height: 82px; box-sizing: border-box; text-align: center;
-  font-family: var(--display); font-size: 48px; color: var(--ink);
-  background: var(--paper-1); border: 3px solid var(--ink); outline: none; caret-color: var(--red);
+/* ── Stage 5 equation row (in the stage canvas, below the ruler) ────────────── */
+.r5-stage-eq {
+  display: inline-flex; align-items: center; gap: 18px;
 }
-.r5-mixed .r5-whole-input:focus { border-color: var(--red); background: #fff8ea; box-shadow: 0 0 0 4px rgba(163,42,34,.16); }
-.r5-mixed .r5-whole-input:disabled { opacity: 0.4; background: var(--paper-2); cursor: not-allowed; }
-.r5-mixed .r5-whole-input.bad { border-color: var(--red); animation: shakeX .42s ease-in-out; }
-.r5-mixed .r5-whole-input.want { border-color: var(--red); background: #fff8ea; animation: wantPulse 1.05s ease-in-out infinite; }
-.r5-whole-cap { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); margin-top: 5px; text-align: center; }
+/* Size the Slate cells for the stage-canvas equation in Stage 5 */
+.r5-stage-eq .r5-write .slate-fraction .slate-cell { width: 92px; height: 96px; }
+.r5-stage-eq .r5-write .slate-fraction .slate-bar { width: 92px; }
+.r5-stage-eq .r5-write .slate-fraction .slate-fixed { font-size: 44px; }
+.r5-stage-eq .r5-write .slate-fraction .slate-committed-digit { font-size: 52px; }
+.r5-stage-eq .r5-write .slate-fraction .slate-ph { font-size: 28px; }
+.r5-stage-eq .r5-write .slate-fraction { position: relative; }
+.r5-stage-eq .r5-write .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }
 
-/* the denominator under the leftover numerator is LOCKED (size never changes). */
-.r5-mixed .r5-lockden {
-  width: 88px; height: 82px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 4px; position: relative;
-  font-family: var(--display); font-size: 48px; color: var(--ink-mute);
-  background: repeating-linear-gradient(45deg, rgba(28,22,18,0.05) 0 3px, transparent 3px 8px), var(--paper-2);
-  border: 3px solid var(--ink-mute);
+/* ── Stage 6 "Numbers" panel ─────────────────────────────────────────────────── */
+.r5-numbers-panel {
+  display: flex; flex-direction: column; gap: 28px; padding: 8px 0;
+  width: 100%; max-width: 680px;
 }
-.r5-mixed .r5-lockden svg { position: absolute; top: 6px; right: 6px; }
-
-/* ==========================================================================
-   THE INTERACTION ARC — stage-specific scaffolding (R5-owned).
-   The block channel shrinks (ghost board → bare → gone); the stylus channel
-   grows (touch-only cue → Slate mixed number).
-   ========================================================================== */
-
-/* Stage 3 "Fade": the whole manipulative board dims to a faint, non-interactive
-   check behind the leading equation + choice. */
-.r5-ghost-board { opacity: 0.34; filter: grayscale(0.4); pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .r5-ghost-board { filter: none; } }
-
-/* Stages 4–5 "Numbers / Words": no board — a bare equation or a story card sit
-   centered in the canvas frame. */
-/* NUMBERS stage — the bare "14/7 = ?" leads. It must FILL the board, not sit as a
-   tiny box in a big empty area. The canvas stretches to the full FitStage and the
-   equation grows to a commanding size; FitStage then scales the whole thing to fit
-   so it reads large on the tablet. */
-.r5-bare {
-  width: 720px; height: 348px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 30px;
+.r5-numbers-row {
+  display: flex; flex-direction: column; gap: 8px;
 }
-.r5-bare-eq {
-  display: flex; align-items: center; gap: 34px;
-  font-family: var(--display); font-size: 132px; line-height: 1; color: var(--ink);
+.r5-numbers-lab {
+  font-family: var(--display); font-size: 13px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-mute);
 }
-.r5-bare-eq .qop { color: var(--ink-mute); font-size: 96px; }
-.r5-bare-eq .slate-blank {
-  color: var(--red); display: inline-grid; place-items: center;
-  min-width: 132px; height: 150px;
-  border: 4px dashed var(--paper-3); background: rgba(163,42,34,0.04);
+.r5-numbers-eq {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
 }
-.r5-bare-eq .r5-bare-frac { letter-spacing: .01em; }
-.r5-bare-note { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--ink-mute); text-align: center; max-width: 620px; }
-
-/* Stage 3 rail: pick how many WHOLES fit (symbolic choice, no manipulation). */
-.r5-pick { display: flex; gap: 10px; margin: 12px 0 8px; }
-.r5-pick-btn {
-  all: unset; cursor: pointer; box-sizing: border-box; width: 52px; height: 52px;
-  display: inline-grid; place-items: center; font-family: var(--display); font-size: 26px;
-  color: var(--ink); background: var(--paper-1); border: 2px solid var(--ink);
+.r5-eq-arrow {
+  font-family: var(--display); font-size: 32px; color: var(--ink-mute);
 }
-.r5-pick-btn:hover:not(:disabled) { background: var(--paper-2); }
-.r5-pick-btn.ok { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); box-shadow: 1px 1px 0 rgba(110,28,22,.3); }
-.r5-pick-btn.bad { border-color: var(--red); animation: shakeX .42s ease-in-out; }
-.r5-pick-btn:disabled { opacity: 0.4; cursor: default; }
-
-/* The STYLUS write channel in the HUD: the whole-number Slate, an "and", then the
-   leftover fraction Slate (numerator over the LOCKED denominator). */
-.r5-write { display: inline-flex; align-items: center; gap: 16px; }
-.r5-write.bad { animation: shakeX .42s ease-in-out; }
-.r5-write .r5-and { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--ink-mute); }
-.r5-write .r5-write-whole, .r5-write .r5-write-frac { display: inline-flex; }
-
-/* Stage 1 has NO writing — the blocks ARE the answer. A small read-only cue shows
-   what the grouped blocks spell out. */
-.r5-touch-cue {
-  font-family: var(--display); font-size: 30px; color: var(--ink);
-  padding: 6px 16px; border: 2px dashed var(--paper-3); background: rgba(28,22,18,0.02);
+.r5-numbers-cap {
+  font-family: var(--serif); font-style: italic; font-size: 13px;
+  color: var(--ink-mute);
 }
 
-/* ==========================================================================
-   ARC EXPANSION — Workbench, Applied, and the Words scratch (R5-owned).
-   Workbench reuses the shared <BlockSandbox> (sandbox.css) verbatim, so it needs
-   no rules here. Applied + Words mount the shared <WordProblem> (slate.css) and
-   only need the room-local wrappers + the word→math setup surface below.
-   ========================================================================== */
-
-/* APPLIED — the worded question + required setup gate. The <WordProblem> owns its
-   own card/answer chrome (slate.css); .r5-applied-play just lets it fill the play
-   area. The setup + answer composer get bigger, tablet-comfortable handwriting
-   cells (principle: larger writing areas) — the only room-local lever here, since
-   the WordProblem card's own column/centering is shared-component-owned. */
-.r5-applied-play { display: block; }
-.r5-applied-play .r5-setup-row .slate-cell,
-.r5-wp-mount .r5-setup-row .slate-cell { width: 84px; height: 70px; }
-.r5-applied-play .r5-write .slate-cell,
-.r5-wp-mount .r5-write .slate-cell { width: 84px; height: 70px; }
-
-/* WORDS — the shared <WordProblem> mount (story + optional scratch + answer). */
-.r5-wp-mount { display: block; width: 100%; }
-
-/* The optional "show your work" scratch on the Words stage is GENEROUSLY large —
-   a full-width slate (~740×300, consistent with M3's ~756×246 reference) so a
-   child can actually sketch the grouping / division, not squeeze it into a sliver.
-   The JSX sets the explicit 740×300 box; this floors the height and lets the slate
-   shrink to the centered .wp column on narrow widths without collapsing. */
-.r5-scratch-surface { min-height: 300px; width: 100%; max-width: 740px; }
-
-/* The word→math SETUP surface (Applied gate + Words scratch): a single improper
-   fraction written on a small Slate, with its Check button / confirmation beside
-   it. On Applied a wrong write shakes (.bad); on Words it never gates. */
-.r5-setup-row { display: inline-flex; align-items: center; gap: 14px; }
-.r5-setup-row.bad { animation: shakeX .42s ease-in-out; }
-.r5-setup-ok {
-  font-family: var(--display); font-size: 13px; color: var(--red-deep); align-self: center;
-}
+/* Size slates inside the Numbers stage (in the stage canvas area) */
+.r5-numbers-eq .r5-write .slate-fraction .slate-cell { width: 76px; height: 64px; }
+.r5-numbers-eq .r5-write .slate-fraction .slate-bar { width: 76px; }
+.r5-numbers-eq .r5-write .slate-row .slate-cell { width: 76px; height: 64px; }
+.r5-numbers-eq .r5-write .slate-fraction .slate-fixed,
+.r5-numbers-eq .r5-write .slate-row .slate-fixed { font-size: 36px; }
+.r5-numbers-eq .r5-write .slate-fraction .slate-committed-digit,
+.r5-numbers-eq .r5-write .slate-row .slate-committed-digit { font-size: 40px; }
+.r5-numbers-eq .r5-write .slate-fraction .slate-ph,
+.r5-numbers-eq .r5-write .slate-row .slate-ph { font-size: 22px; }
+.r5-numbers-eq .r5-write .slate-fraction,
+.r5-numbers-eq .r5-write .slate-row { position: relative; }
+.r5-numbers-eq .r5-write .slate-guess { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; z-index: 5; }

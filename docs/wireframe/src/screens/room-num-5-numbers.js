@@ -1,33 +1,41 @@
-/* room-num-5-numbers — №4 The Top Number · Stage 5 "Numbers" (raw symbols).
-   No picture — do the math from the symbols alone. Same bottom number, so the
-   one with MORE on top has more shaded ⇒ it is bigger. Snapshot: 3/5 vs 1/5,
-   3/5 chosen as the bigger. */
+/* room-num-5-numbers — №4 The Top Number · Stage 7 "Numbers".
+   No picture — reason from bare symbols. Both fractions share the same
+   denominator (5ths); the bigger top number is bigger. Snapshot: 3/5 vs 1/5,
+   child taps 3/5 as the bigger fraction. */
 import { tutor } from "../cookSvg.js";
-
-const frac = (nTop, d, on) => `
-      <div class="den-bare-card${on ? " is-on" : ""}">
-        <div class="bignum"><span class="n" style="color:var(--red)">${nTop}</span><span class="bar" style="background:var(--ink)"></span><span class="d">${d}</span></div>
-      </div>`;
 
 export default {
   kind: "lesson",
   lesson: "num",
 
   stageHTML: `
-    <div class="den-bare">
-      ${frac(3, 5, true)}
-      <span class="den-bare-vs">vs</span>
-      ${frac(1, 5, false)}
+    <div class="den-play">
+      <div class="den-bare">
+        <button type="button" class="den-bare-card is-on" aria-pressed="true">
+          <div class="bignum" style="font-size:52px">
+            <span class="n" style="color:var(--red)">3</span>
+            <span class="bar" style="background:var(--ink)"></span>
+            <span class="d">5</span>
+          </div>
+        </button>
+        <span class="den-bare-vs">vs</span>
+        <button type="button" class="den-bare-card" aria-pressed="false">
+          <div class="bignum" style="font-size:52px">
+            <span class="n" style="color:var(--red)">1</span>
+            <span class="bar" style="background:var(--ink)"></span>
+            <span class="d">5</span>
+          </div>
+        </button>
+      </div>
     </div>`,
 
   railHTML: `
     <div class="panel">
       <h3 class="pick-title">Just the Numbers</h3>
       <div class="hint">
-        No picture this time. The <b>bottom numbers are the same</b> (fifths), so
-        the pieces are the same size — the fraction with <b>more on top</b> has
-        <b>more pieces shaded</b>, so it is <b>bigger</b>. Which is bigger,
-        <b>3/5</b> or <b>1/5</b>?
+        No picture. The <b>bottoms are the same</b> (5ths), so the pieces
+        are the same size — the fraction with <b>more on top</b> is
+        <b>bigger</b>. Tap the bigger fraction.
       </div>
     </div>`,
 
@@ -44,5 +52,5 @@ export default {
       <div class="lbar-marks"><button class="check" disabled>Check</button></div>
     </div>`,
 
-  tutorHTML: tutor("Same bottom number means same-size pieces — so more on top is bigger. 3/5 is more than 1/5."),
+  tutorHTML: tutor("Same bottom number, so the pieces are the same size. More on top means more of them — 3/5 is bigger than 1/5."),
 };

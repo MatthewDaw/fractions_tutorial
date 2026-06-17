@@ -42,7 +42,7 @@ export const CONCEPTS = [
     id: "multiplication",
     title: "Multiplication",
     blurb: "Equal groups, arrays, and times facts — the groundwork the fraction work leans on.",
-    nodes: ["MULT_EQUAL_GROUPS", "MULT_ARRAYS", "MULT_FACTS"],
+    nodes: ["MULT_EQUAL_GROUPS", "MULT_FACTS"],
   },
   {
     id: "fraction-as-number",

@@ -1,4 +1,4 @@
-// AppNumberLine.jsx — Lesson No.3 "On the Number Line" (room `nl`,
+// AppNumberLine.jsx — Lesson No.6 "Same Denominators" (room `nl`,
 // FRACTION_ON_LINE). CCSS 3.NF.A.2: a fraction is a NUMBER located on the number
 // line, found by cutting 0→1 into `den` equal parts and counting `num` of them
 // from 0. The whole lesson is built on the shared <NumberLine> ruler so the SAME
@@ -48,7 +48,13 @@ const L = LESSONS.nl;
 const STAGE_BY_BADGE = {
   "1": "1-place",
   "2": "2-write",
-  "3": "3-numbers",
+  // tabs 3–7 and ★ come from the merged r1 family (wireframe nl+r1 merge);
+  // they are navigated by the shared StageTabs but live in AppR1's route.
+  "3": "r1-manipulate",
+  "4": "r1-numbers",
+  "5": "r1-applied",
+  "6": "r1-showwork",
+  "7": "r1-words",
   "★": "practice",
 };
 const STAGES = L.tabs.map((t) => ({
@@ -137,9 +143,9 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
     const p = probFor(s);
     switch (s) {
       case "1-place":
-        return { tone: "normal", text: `A fraction grows from equal pieces. The line from 0 to 1 is cut into ${p.den} equal parts. Drag the 1/${p.den} block onto the line again and again — grow the bar to ${fracWords(p.num, p.den)}.` };
+        return { tone: "normal", text: `Drag the 1/${p.den} block onto the line — 1/${p.den}, 2/${p.den}, 3/${p.den}. Stop when you reach ${fracWords(p.num, p.den)}.` };
       case "2-write":
-        return { tone: "normal", text: `The point is already placed at ${fracWords(p.num, p.den)}. ${p.den} equal parts from 0 to 1, the dot sits ${ONES[p.num]} of them along. Write that fraction on the Slate — top, then bottom.` };
+        return { tone: "normal", text: `Count the 1/${p.den} pieces sitting on the line from 0 — that's the top number; the part size ${p.den} is the bottom. Write it on the Slate.` };
       case "3-numbers":
         return { tone: "normal", text: `Fractions don't stop at 1! ${fracWords(p.num, p.den)} is more than one whole. Each whole is cut into ${p.den} parts — drag the point past 1 to the ${ONES[p.num]}th tick.` };
       default:
@@ -258,6 +264,9 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
   const isPlace = stage === "1-place";
   const isWrite = stage === "2-write";
   const isNumbers = stage === "3-numbers";
+  // r1-family stages (Manipulate, Numbers, Applied, Show Work, Words) are part
+  // of the merged nl+r1 wireframe lesson; in the real app they live in AppR1.
+  const isR1Stage = stage && stage.startsWith("r1-");
   const pointVal = isWrite ? P.num / P.den : pointK / P.den; // Stage 3 marker value in wholes
   const slateFilled = slate.n !== "" && slate.d !== "";
   const answerReady = !solved && (
@@ -399,14 +408,9 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
       ) : (
         <>
           <div className="hint">
-            Cut the line from <b>0</b> to <b>1</b> into <b>{P.den}</b> equal parts. The
-            <b> bottom</b> ({P.den}) is the size of one part; the <b>top</b> counts how many you
-            step from 0. {fracWords(P.num, P.den)} is <b>{P.num}</b> steps of <b>1/{P.den}</b>.
-            {P.wholes > 1 && <> Past <b>1</b>, the parts just keep going — a fraction can be bigger than a whole.</>}
-          </div>
-          <div className="nl-mini">
-            <span className="nl-mini-frac"><BigFrac num={P.num} den={P.den} /></span>
-            <span className="nl-mini-note">{P.num} part{P.num === 1 ? "" : "s"} of size 1/{P.den}</span>
+            Each piece on the line is <b>1/{P.den}</b> — one of the {P.den} equal parts from
+            <b> 0</b> to <b>1</b>. Count the pieces; that count goes on <b>top</b>, the
+            part size <b>{P.den}</b> on the bottom. {P.num} pieces is <b>{P.num}/{P.den}</b>.
           </div>
         </>
       )}
@@ -501,6 +505,15 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
   if (stage === "practice") {
     // PRACTICE — auto-generated FRACTION_ON_LINE variations, paced by the engine.
     body = <GenPracticeBoard skill="FRACTION_ON_LINE" scaffold={sc} />;
+  } else if (isR1Stage) {
+    // r1-family stages (Manipulate · Numbers · Applied · Show Work · Words) are
+    // part of the merged nl+r1 wireframe lesson; the real app serves them via the
+    // separate #/r1 route (AppR1). Show a lightweight bridge panel.
+    body = (
+      <div className="nl-r1-bridge">
+        <p>This stage continues in the <b>Adding Fractions</b> lesson.</p>
+      </div>
+    );
   } else {
     body = (
       <LessonBoard
@@ -556,9 +569,9 @@ export default function AppNumberLine({ no, title, onBack, onRewatchIntro }) {
 function stageGoal(stage, P) {
   switch (stage) {
     case "1-place":
-      return (<>A fraction grows from equal pieces. The whole from <b>0</b> to <b>1</b> is cut into <b>{P.den}</b> equal parts. <b>Drag the 1/{P.den} block</b> onto the line again and again — grow the bar to {fracWords(P.num, P.den)}.</>);
+      return (<>Grow a fraction from unit pieces. <b>Drag the 1/{P.den} block</b> onto the line again and again — the bar grows <b>1/{P.den}</b>, <b>2/{P.den}</b>, <b>3/{P.den}</b> — stop at {fracWords(P.num, P.den)}.</>);
     case "2-write":
-      return (<>The point is marked at {fracWords(P.num, P.den)}. The line has <b>{P.den}</b> equal parts; the dot is <b>{ONES[P.num]}</b> of them along. <b>Write</b> that fraction — the count on top, the part size on the bottom.</>);
+      return (<>The bar is built from <b>1/{P.den}</b> pieces. Count how many sit on the line from <b>0</b>, and <b>write</b> that fraction — the count on top, the part size ({P.den}) on the bottom.</>);
     case "3-numbers":
       return (<>Fractions don't stop at 1! <b>{P.num}/{P.den}</b> is {fracWords(P.num, P.den)} — <b>bigger than one whole</b>. Each whole is still cut into <b>{P.den}</b> parts. <b>Drag the point past 1</b> to place it.</>);
     default:

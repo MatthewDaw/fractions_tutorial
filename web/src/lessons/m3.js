@@ -14,8 +14,8 @@ export default {
     { n: "4", name: "Workbench", sub: "build 7 groups of 8", href: "room-m3-4-workbench.html", title: "build 7 groups of 8" },
     { n: "5", name: "Numbers", sub: "bare 7 × 8 = ?", href: "room-m3-5-numbers.html", title: "bare 7 × 8 = ?" },
     { n: "6", name: "Applied", sub: "write the setup, then total", href: "room-m3-6-applied.html", title: "write the setup, then total" },
-    { n: "sw", name: "Show Work", sub: "show your work", href: "room-m3-sw-showwork.html", title: "show your work" },
-    { n: "7", name: "Words", sub: "story problem", href: "room-m3-7-words.html", title: "story problem" },
+    { n: "7", name: "Show Work", sub: "show your work", href: "room-m3-sw-showwork.html", title: "show your work" },
+    { n: "8", name: "Words", sub: "story problem", href: "room-m3-7-words.html", title: "story problem" },
     { n: "★", name: "Practice", sub: "Fresh problems — paced to your mastery", href: "room-m3-practice.html", title: "Fresh problems — paced to your mastery" },
   ],
 };

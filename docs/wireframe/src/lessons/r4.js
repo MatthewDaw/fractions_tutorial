@@ -1,20 +1,23 @@
-/* lessons/r4.js — identity + step strip for Lesson №8 "Simplify" (#/r4).
-   The single source of truth: each r4 step page declares only `lesson: "r4"`
-   and pulls № / tag / title / route + this tab strip from here. */
+/* lessons/r4.js — identity + step strip for the "Equivalent Fractions" room
+   (#/r4). Refactored from the old Simplify lesson: equivalence on a SQUARE (not
+   the ruler). Doubling and tripling are two phases of the SAME lesson — the child
+   sees 1/3, doubles it (×2 → 2/6), triples it (×3 → 3/9), learns to raise the
+   bottom to a target, then hunts every equivalent (pick the numbers, then numbers
+   alone). Each step page declares only `lesson: "r4"`. */
 export default {
   id: "r4",
+  backHref: "shelf-combine.html",
   num: "№8",
-  tag: "Lesson 8 · Simplifying",
-  title: "Simplify",
-  route: "#/r4",
+  tag: "Lesson 8 · Equivalent Fractions",
+  title: "Equivalent Fractions",
+  route: "#/r4-2-bind",
   tabs: [
-    { n: "1", name: "Group", sub: "Drag a group size — bundle equal cells", href: "room-r4.html", title: "Drag a group size — bundle equal cells" },
-    { n: "2", name: "Bind", sub: "Group, then write the equivalent name", href: "room-r4-2-bind.html", title: "Group, then write the equivalent name" },
-    { n: "3", name: "Fade", sub: "Pick the shared factor, then write", href: "room-r4-3-fade.html", title: "Pick the shared factor, then write" },
-    { n: "4", name: "Numbers", sub: "Bare 8/12 — write lowest terms", href: "room-r4-4-numbers.html", title: "Bare 8/12 — write lowest terms" },
-    { n: "5", name: "Applied", sub: "Write the fraction, then its simplest name", href: "room-r4-5-applied.html", title: "Write the fraction, then its simplest name" },
-    { n: "SW", name: "Show Work", sub: "Show your work on a blank slate", href: "room-r4-sw-showwork.html", title: "Show your work on a blank slate" },
-    { n: "6", name: "Words", sub: "Read the recipe, write the simplest name", href: "room-r4-6-words.html", title: "Read the recipe, write the simplest name" },
+    { n: "1", name: "Double", sub: "cut each cell in two — 1/3 = 2/6, same amount", href: "room-r4-2-bind.html", title: "cut each cell in two — 1/3 = 2/6, same amount" },
+    { n: "2", name: "Triple", sub: "cut each cell in three — 1/3 = 3/9, same amount", href: "room-r4-3-fade.html", title: "cut each cell in three — 1/3 = 3/9, same amount" },
+    { n: "3", name: "Raise", sub: "pick the tool that makes the bottom number N", href: "room-r4-4-numbers.html", title: "pick the tool that makes the bottom number N" },
+    { n: "4", name: "Find · Pick", sub: "choose top & bottom, watch the box cut to match", href: "room-r4-5-applied.html", title: "choose top & bottom, watch the box cut to match" },
+    { n: "5", name: "Find · All", sub: "match the 1/3 target — find every equivalent", href: "room-r4-6-words.html", title: "match the 1/3 target — find every equivalent" },
+    { n: "6", name: "Sort", sub: "drag each fraction to the bin it matches", href: "room-r4-7-sort.html", title: "drag each fraction to the bin it matches" },
     { n: "★", name: "Practice", sub: "Fresh problems — paced to your mastery", href: "room-r4-practice.html", title: "Fresh problems — paced to your mastery" },
   ],
 };

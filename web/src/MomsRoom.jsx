@@ -29,6 +29,13 @@
 //   masteryFor(nodeId)                — current MasteryEstimate for a node
 //   decision.kind === 'RouteToRoom'   — wall fires: route to decision.node
 //   decision.kind === 'ReturnToKitchen' — mastery confirmed: re-pose stumping recipe
+//
+// LAYOUT (updated to match wireframe KitchenScreen.jsx):
+//   • No top goal band — the question (q.caption) lives in the right rail's
+//     question panel, under "[Cook]'s Order" heading + read-aloud button.
+//   • StageTabs strip below topbar — one tab per CURRICULUM room, tappable.
+//   • kq two-column layout: kq-main (scratch pad + answer card) left,
+//     kq-rail (question panel + cook portrait + tutor) right.
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Mom from "./components/Mom.jsx";
@@ -37,6 +44,7 @@ import Slate from "./components/Slate.jsx";
 import { CAST } from "./components/momsroom/cast.jsx";
 import { PROPS } from "./components/momsroom/props.jsx";
 import ScratchCanvas from "./components/momsroom/ScratchCanvas.jsx";
+import StageTabs from "./components/StageTabs.jsx";
 import SettingsButton from "./SettingsButton.jsx";
 import { useVoice } from "./voice.js";
 import { LINES, speakerOf, MEOW_SFX } from "./voiceLines.js";
@@ -46,7 +54,6 @@ import {
 } from "./momsProblems.js";
 import { loadMastered, saveMastered, resetProgress } from "./kitchenProgress.js";
 import { useLessonEngine } from "./runtime/useLessonEngine.js";
-import LessonBoard from "./components/lesson/LessonBoard.jsx";
 import { LESSONS } from "./lessons/index.js";
 import "./styles/momsroom.css";
 
@@ -94,7 +101,7 @@ export function slipToErrorSignature(slip, q) {
 }
 
 // ---------------------------------------------------------------------------
-// Portrait sub-component (unchanged from original)
+// Portrait sub-component
 // ---------------------------------------------------------------------------
 
 function Portrait({ who, mood, width = 116 }) {
@@ -106,6 +113,20 @@ function Portrait({ who, mood, width = 116 }) {
 }
 
 const lineDelay = (text) => Math.min(5200, Math.max(2200, (text || "").length * 46 + 1100));
+
+// ---------------------------------------------------------------------------
+// Build CURRICULUM stage-tabs — one tab per CURRICULUM room, showing the
+// skill number and label. Used for navigating between kitchen questions.
+// ---------------------------------------------------------------------------
+const KITCHEN_STAGES = CURRICULUM.map((roomId) => {
+  const sk = ROOM_SKILL[roomId];
+  return {
+    key: roomId,
+    badge: String(sk.no),
+    title: sk.label,
+    sub: "story problem",
+  };
+});
 
 // ---------------------------------------------------------------------------
 // MomsRoom — main component
@@ -362,11 +383,28 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
     // wallNodeId is the engine-chosen binding node from the RouteToRoom decision.
     // Fall back to the current task's room if no engine choice was recorded.
     const targetNodeId = wallNodeId ?? currentNodeId;
-    const targetRoomId = NODE_TO_ROOM[targetNodeId] ?? task.roomId;
+    let targetRoomId = NODE_TO_ROOM[targetNodeId] ?? task.roomId;
+    // simp questions share the SIMPLIFY engine node with r4 but belong to the simp
+    // lesson room. When the stumping recipe lives in BANK.simp, route to "simp".
+    if (targetRoomId === "r4" && stumpingRecipeId && BANK.simp) {
+      const simpMirror = BANK.simp.mirror ?? [];
+      const simpCombine = BANK.simp.combine ?? [];
+      const inSimp = [...simpMirror, ...simpCombine].some((q) => q.id === stumpingRecipeId);
+      if (inSimp) targetRoomId = "simp";
+    }
     // U3: stash the stumping recipe id across the (stateless) hash route so the
     // routed lesson can make ReturnToKitchen legal — Shell reads it once on entry.
     try { sessionStorage.setItem("stumpingRecipeId", String(stumpingRecipeId ?? "")); } catch { /* no sessionStorage */ }
     onOpenRoom && onOpenRoom(targetRoomId);
+  }
+
+  // ---- jumpToSkill: navigate to a specific CURRICULUM room via the step strip --
+  function jumpToSkill(roomId) {
+    if (!roomId || !BANK[roomId]) return;
+    clearTimeout(banterTimer.current); stopVoice();
+    const m = mastered;
+    const nt = enterStage(roomId, "mirror", 0, m);
+    if (nt) setTask(nt);
   }
 
   function restart() {
@@ -381,7 +419,7 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
   const propState = q ? (solved ? q.solvedState : q.initState) : null;
   const owner = q?.owner || "mom";
   const ownerLabel = (CHARACTERS[owner] || CHARACTERS.mom).label;
-  const skillRoom = isLook ? task.lookaheadRoom : task?.roomId;
+  const skillRoom = isLook ? task?.lookaheadRoom : task?.roomId;
   const skill = skillRoom ? ROOM_SKILL[skillRoom] : null;
   const masteredCount = mastered.length;
   const stageTag = isLook ? "sneak peek" : task?.stage === "combine" ? "combo recipe" : (skill ? skill.label : "");
@@ -399,8 +437,11 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
       : (numStr !== "" && denStr !== "")
   );
 
+  // Current CURRICULUM tab key — the active room (or first room if done).
+  const activeTab = task?.roomId ?? CURRICULUM[0];
+
   return (
-    <div className="page momsroom" data-vox-speaker="mom">
+    <div className="page kitchen momsroom" data-vox-speaker="mom">
       <div className="foxing" />
 
       <div className="topbar">
@@ -425,158 +466,179 @@ export default function MomsRoom({ onBack, onOpenRoom }) {
         </div>
       </div>
 
-      {/* ── WORDS-ONLY ROOM — no bare equation. ─────────────────────────────────
-          This room is word-problems THROUGHOUT: the child must READ the prose story
-          below and extract the math themselves. Rendering the derived recipe equation
-          (e.g. na/da + nb/db) up here would give the answer's structure away, so it
-          is intentionally NOT shown. The prose story in the (now primary) goal band
-          below is the question; work is shown on the generous scratch slate; the final
-          value goes in the answer card. (bandExpr/bandAnswer kept out of the render.) ── */}
+      {/* ── STEP STRIP — one tab per CURRICULUM skill, same nav as every lesson ── */}
+      <StageTabs
+        stages={KITCHEN_STAGES}
+        current={activeTab}
+        onSelect={jumpToSkill}
+        label="Kitchen skills"
+      />
 
-      <div className="goal mr-goal-primary">
-        <button className={"speaker" + (speaking ? " speaking" : "")} onClick={() => q && say(`mr_mom_goal_${q.id}`)} disabled={!q}>
-          <svg width="16" height="14" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" /><path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" /></svg>
-          Read aloud
-        </button>
-        <div className="goal-text" data-vox={q ? `mr_mom_goal_${q.id}` : "mr_mom_finale"} data-vox-speaker="mom">{q ? q.caption : "Every recipe, solved! You are the smartest cook in this whole kitchen."}</div>
-      </div>
+      {/* ── TWO-COLUMN PLAY AREA ─────────────────────────────────────────────
+          kq-main (left): scratch pad + answer card pinned to bottom.
+          kq-rail (right): question panel + cook portrait + tutor.
+          ──────────────────────────────────────────────────────────────────── */}
+      <div className="kq">
 
-      {/* ════════════════════════════════════════════════════════════════════
-          SHARED PLAY-AREA LAYOUT via <LessonBoard variant="split"> — the kitchen's
-          four zones (prop/scratch · rail · answer · tutor) now ride the ONE shared
-          CSS-grid board (lesson-board.css), which guarantees stage and answer live
-          in SEPARATE grid tracks so the answer card can never overlap the prop /
-          scratch surface (the original bug). The room-specific content keeps its
-          .mr-s-* class hooks for the kitchen's bespoke styling (scratch slate,
-          enlarged Slate cells, skill panel), now layered on top of the board.
-          ════════════════════════════════════════════════════════════════════ */}
-      <LessonBoard
-        className="mr-board"
-        stageClassName="mr-s-stage"
-        footHeight={226}
-        stage={(
-          <>
-            {/* ── PROP / STORY ZONE (top-left) ── */}
-          {/* small, non-overlapping stage tag (the QUESTION itself now lives in the
-              full-width band up top; this is only a quiet status, pinned out of the
-              prop's way so it never covers the manipulative). */}
-          {q && (
-            <div className={"mr-stage-tag" + (isLook ? " mr-peek" : "")}>
-              <span className="g">{stageTag}</span>
-            </div>
-          )}
+        {/* ── LEFT: PROP / SCRATCH + ANSWER CARD ── */}
+        <div className="kq-main">
 
-          {q && <div className="mr-stage">{Prop ? <Prop state={propState} {...(q.propProps || {})} /> : null}</div>}
-
-          {q && !done && <ScratchCanvas key={`${task.stage}:${q.id}`} />}
-
-          {done && (
-            <div className="mr-finale">
-              <div className="mr-finale-art"><Mom expr="cheer" width={150} /></div>
-              <div className="mr-finale-text">{LINES.mr_mom_finale}</div>
-              <button className="check" onClick={restart}>▸ Play again</button>
-            </div>
-          )}
-          </>
-        )}
-        rail={(
-          <div className="mr-s-rail">
-          <div className="panel mr-asker">
-            <h3>Today's Cook</h3>
-            <div className="mr-asker-art"><Portrait who={owner} mood={solved ? "happy" : "think"} width={120} /></div>
-            <div className="mr-asker-note"><b>{ownerLabel}</b> brought this one to Babushka's counter.</div>
+          {/* play area: prop visual + scratch canvas, or the finale card */}
+          <div className="kq-play">
+            {done ? (
+              <div className="mr-finale">
+                <div className="mr-finale-art"><Mom expr="cheer" width={150} /></div>
+                <div className="mr-finale-text">{LINES.mr_mom_finale}</div>
+                <button className="check" onClick={restart}>▸ Play again</button>
+              </div>
+            ) : (
+              <>
+                {/* quiet stage tag (top-right of the prop zone) */}
+                {q && (
+                  <div className={"mr-stage-tag" + (isLook ? " mr-peek" : "")}>
+                    <span className="g">{stageTag}</span>
+                  </div>
+                )}
+                {/* prop / story visual */}
+                {q && (
+                  <div className="mr-stage">
+                    {Prop ? <Prop state={propState} {...(q.propProps || {})} /> : null}
+                  </div>
+                )}
+                {/* scratch space */}
+                {q && <ScratchCanvas key={`${task.stage}:${q.id}`} />}
+              </>
+            )}
           </div>
-          <div className="panel mr-skill-panel">
-            <h3>The Skill</h3>
+
+          {/* answer card — write area + marks + Check button */}
+          {!done && (
+            <div className="kq-answer">
+              <div className="kq-write">
+                <div className="mr-final-label">Write your answer</div>
+                <div className={"kq-slate mr-s-slate" + (bad ? " mr-bad" : "") + (isMixed ? " is-mixed" : "")}>
+                  {isMixed ? (
+                    <>
+                      <span className="frinput mr-whole">
+                        <Slate
+                          slots={[{ key: "whole", label: "wholes" }]}
+                          values={{ whole: wholeStr }}
+                          onChange={(k, v) => setWholeStr(v)}
+                          onSubmit={check}
+                          layout="row"
+                          den={denBar}
+                          disabled={solved}
+                          autoFocusKey={wholeStr === "" ? "whole" : undefined}
+                          ariaLabel="how many wholes"
+                        />
+                      </span>
+                      <span className="mr-and">and</span>
+                      <span className="frinput">
+                        <Slate
+                          slots={[{ key: "num", label: "leftover" }, { key: "den", label: "size" }]}
+                          values={{ num: numStr, den: denStr }}
+                          onChange={(k, v) => (k === "num" ? setNumStr(v) : setDenStr(v))}
+                          onSubmit={check}
+                          layout="fraction"
+                          den={denBar}
+                          disabled={solved}
+                          autoFocusKey={wholeStr !== "" && numStr === "" ? "num" : undefined}
+                          ariaLabel="leftover fraction"
+                        />
+                      </span>
+                    </>
+                  ) : (
+                    <span className="frinput">
+                      <Slate
+                        slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
+                        values={{ num: numStr, den: denStr }}
+                        onChange={(k, v) => (k === "num" ? setNumStr(v) : setDenStr(v))}
+                        onSubmit={check}
+                        layout="fraction"
+                        den={denBar}
+                        disabled={solved}
+                        autoFocusKey={!numStr ? "num" : (!denStr ? "den" : undefined)}
+                        ariaLabel="your fraction answer"
+                      />
+                    </span>
+                  )}
+                </div>
+                <div className="mr-s-cap">{q && solved ? `that's ${targetLabel(q)}` : ""}</div>
+              </div>
+
+              <div className="kq-answer-marks">
+                {solved && stars > 0 && <Rosette count={stars} />}
+                {wall && !solved && wallSkill && (
+                  <button className="mr-wallbtn" onClick={goLearn} title={`Open Lesson ${wallSkill.no}`}>
+                    ▸ Learn it: {wallSkill.label}
+                  </button>
+                )}
+                <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={check}>
+                  {solved ? (isLook ? "Continue ▸" : "Next recipe ▸") : "Check"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── RIGHT RAIL: question panel + cook portrait + tutor ── */}
+        <div className="kq-rail">
+
+          {/* question panel: "[Cook]'s Order" heading + read-aloud + story text */}
+          <div className="panel kq-question">
+            <div className="kq-question-head">
+              <h3>{ownerLabel}'s Order</h3>
+              <button
+                className={"speaker" + (speaking ? " speaking" : "")}
+                onClick={() => q && say(`mr_mom_goal_${q.id}`)}
+                disabled={!q}
+              >
+                <svg width="16" height="14" viewBox="0 0 16 14">
+                  <path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)" />
+                  <path d="M11 4 Q14 7 11 10" stroke="var(--red)" strokeWidth="1.4" fill="none" />
+                </svg>
+                Read aloud
+              </button>
+            </div>
+            <div
+              className="kq-story"
+              data-vox={q ? `mr_mom_goal_${q.id}` : "mr_mom_finale"}
+              data-vox-speaker="mom"
+            >
+              {q ? q.caption : "Every recipe, solved! You are the smartest cook in this whole kitchen."}
+            </div>
+            {/* skill blurb below the story */}
             {skill && (
-              <div className="hint">
-                {isLook ? <><b>Sneak peek:</b> this is from the next lesson — <b>{skill.label}</b>. Nail it and you can skip that room!</>
-                        : <>This recipe uses <b>Lesson {skill.no} · {skill.label}</b> — {skill.blurb}.</>}
+              <div className="kq-recipe hint">
+                {isLook
+                  ? <><b>Sneak peek:</b> this is from the next lesson — <b>{skill.label}</b>. Nail it and you can skip that room!</>
+                  : <span dangerouslySetInnerHTML={{ __html: `This recipe uses <b>Lesson ${skill.no} · ${skill.label}</b> — ${skill.blurb}.` }} />
+                }
               </div>
             )}
-            <div className="mr-recipe-row">
-              <span className="mr-recipe-no">{masteredCount}/{CURRICULUM.length}</span>
-              <span className="mr-recipe-of">skills mastered</span>
-            </div>
-          </div>
-          </div>
-        )}
-        answer={(
-          <div className="mr-s-answer">
-          <div className="mr-s-write">
-            <div className="mr-final-label">Write your answer</div>
-            <div className={"mr-s-slate" + (bad ? " mr-bad" : "") + (isMixed ? " is-mixed" : "")}>
-              {isMixed ? (
-                <>
-                  <span className="frinput mr-whole">
-                    <Slate
-                      slots={[{ key: "whole", label: "wholes" }]}
-                      values={{ whole: wholeStr }}
-                      onChange={(k, v) => setWholeStr(v)}
-                      onSubmit={check}
-                      layout="row"
-                      den={denBar}
-                      disabled={solved}
-                      autoFocusKey={wholeStr === "" ? "whole" : undefined}
-                      ariaLabel="how many wholes"
-                    />
-                  </span>
-                  <span className="mr-and">and</span>
-                  <span className="frinput">
-                    <Slate
-                      slots={[{ key: "num", label: "leftover" }, { key: "den", label: "size" }]}
-                      values={{ num: numStr, den: denStr }}
-                      onChange={(k, v) => (k === "num" ? setNumStr(v) : setDenStr(v))}
-                      onSubmit={check}
-                      layout="fraction"
-                      den={denBar}
-                      disabled={solved}
-                      autoFocusKey={wholeStr !== "" && numStr === "" ? "num" : undefined}
-                      ariaLabel="leftover fraction"
-                    />
-                  </span>
-                </>
-              ) : (
-                <span className="frinput">
-                  <Slate
-                    slots={[{ key: "num", label: "top" }, { key: "den", label: "bottom" }]}
-                    values={{ num: numStr, den: denStr }}
-                    onChange={(k, v) => (k === "num" ? setNumStr(v) : setDenStr(v))}
-                    onSubmit={check}
-                    layout="fraction"
-                    den={denBar}
-                    disabled={solved}
-                    autoFocusKey={!numStr ? "num" : (!denStr ? "den" : undefined)}
-                    ariaLabel="your fraction answer"
-                  />
-                </span>
-              )}
-            </div>
-            <div className="mr-s-cap">{q && solved ? `that's ${targetLabel(q)}` : ""}</div>
           </div>
 
-          <div className="mr-s-marks">
-            {solved && stars > 0 && <Rosette count={stars} />}
-            {wall && !solved && wallSkill && (
-              <button className="mr-wallbtn" onClick={goLearn} title={`Open Lesson ${wallSkill.no}`}>
-                ▸ Learn it: {wallSkill.label}
-              </button>
-            )}
-            {!done && (
-              <button className={"check" + (solved ? " done" : answerReady ? " ready" : "")} onClick={check}>
-                {solved ? (isLook ? "Continue ▸" : "Next recipe ▸") : "Check"}
-              </button>
-            )}
+          {/* cook portrait — only the art, no caption text */}
+          <div className="panel mr-asker">
+            <div className="mr-asker-art">
+              <Portrait who={owner} mood={solved ? "happy" : "think"} width={120} />
+            </div>
           </div>
+
+          {/* tutor: Babushka + ribbon */}
+          <div className="kq-tutor">
+            <div className="cook-stage">
+              <Portrait who={bubble.who} mood={bubble.mood} width={110} />
+            </div>
+            <div
+              className={"ribbon" + (bubble.tone === "warn" ? " warn" : "") + (bubble.meow ? " mr-meow" : "")}
+              data-vox-speaker={bubble.who}
+            >
+              {bubble.text}
+            </div>
           </div>
-        )}
-        tutor={(
-          <div className="mr-s-tutor">
-          <div className="cook-stage"><Portrait who={bubble.who} mood={bubble.mood} width={118} /></div>
-          <div className={"ribbon" + (bubble.tone === "warn" ? " warn" : "") + (bubble.meow ? " mr-meow" : "")} data-vox-speaker={bubble.who}>{bubble.text}</div>
         </div>
-        )}
-      />
+      </div>
     </div>
   );
 }

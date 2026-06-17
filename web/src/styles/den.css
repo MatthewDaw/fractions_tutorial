@@ -197,6 +197,31 @@
   cursor: pointer;
 }
 
+/* ── generic vertical column (shared with paint layout) ────────────────────── */
+.den-eq-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* ── paint game: divide the strip first (a button per cut), then paint K/N red ── */
+.den-ruler.is-paint .den-seg { cursor: pointer; }
+/* the "cut the strip into N" buttons — the child must divide before painting */
+.sq-divide { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+.sq-divide-lab { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+.sq-divbtn {
+  min-width: 36px; height: 36px; padding: 0 10px; cursor: pointer;
+  font-family: var(--display); font-size: 16px; color: var(--ink);
+  background: var(--paper-1); border: 2px solid var(--ink); border-radius: 9px;
+  box-shadow: 0 2px 0 var(--shade);
+}
+.sq-divbtn.is-on { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); box-shadow: 0 2px 0 var(--red-deep); }
+.sq-swatches { display: flex; gap: 8px; justify-content: center; }
+.sq-swatch {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--ink); box-shadow: 0 2px 0 var(--shade);
+  cursor: pointer;
+}
+.sq-swatch.is-red { background: var(--red); }
+.sq-swatch.is-ink { background: var(--ink-soft); }
+.sq-swatch.is-on { outline: 2px solid var(--red-deep); outline-offset: 2px; }
+
 /* answer-bar bits reused from the wireframe lbar copy */
 .den-ans-amt { font-family: var(--serif); font-style: italic; font-size: 17px; color: var(--ink); }
 .den-ans-eq { font-family: var(--display); font-size: 20px; color: var(--red); margin: 0 6px; }

@@ -6,16 +6,16 @@
 // number alone → practice.
 //
 // THE 7-STAGE ARC (mirrors docs/wireframe/src/screens/room-den-*.js):
-//   1 · Split    — pick a bottom number 1..9; the ruler splits into N equal
+//   1 · Paint    — paint exactly one of N cells red (build 1/N by hand).
+//   2 · Split    — pick a bottom number 1..9; the ruler splits into N equal
 //                   pieces, one unit piece (1/N) inked red. Free play; "Keep
 //                   playing" then advances. Discover smaller-with-bigger-N.
-//   2 · Match    — the ruler is already split; COUNT the pieces and pick the
+//   3 · Match    — the ruler is already split; COUNT the pieces and pick the
 //                   bottom number that made it (image → number).
-//   3 · Build    — make YOUR square match the TARGET by picking the bottom number
+//   4 · Build    — make YOUR square match the TARGET by picking the bottom number
 //                   (top fixed at 1, a unit fraction 1/N).
-//   4 · Smaller  — two rulers side by side; tap the SMALLER red piece.
-//   5 · Numbers  — no picture; reason from the number alone — which is smaller?
-//   6 · Paint    — paint exactly one of N cells red (build 1/N by hand).
+//   5 · Smaller  — two rulers side by side; tap the SMALLER red piece.
+//   6 · Numbers  — no picture; reason from the number alone — which is smaller?
 //   ★ · Practice — fresh "which is smaller" comparisons, paced locally.
 //
 // MECHANICS live HERE as React state/handlers (picks, taps, paint, compare). Only
@@ -50,12 +50,12 @@ const L = LESSONS.den;
 // (keyed by its badge `t.n`) with a stable scaffold key. We keep these HERE (they
 // are interactive wiring) and pull the TAB LABELS / SUBS / order from L.tabs.
 const STAGE_BY_BADGE = {
-  "1": { n: 1, key: "1-split" },
-  "2": { n: 2, key: "2-match" },
-  "3": { n: 3, key: "3-build" },
-  "4": { n: 4, key: "4-smaller" },
-  "5": { n: 5, key: "5-numbers" },
-  "6": { n: 6, key: "6-paint" },
+  "1": { n: 1, key: "1-paint" },
+  "2": { n: 2, key: "2-split" },
+  "3": { n: 3, key: "3-match" },
+  "4": { n: 4, key: "4-build" },
+  "5": { n: 5, key: "5-smaller" },
+  "6": { n: 6, key: "6-numbers" },
   "★": { n: "practice", key: "practice" },
 };
 const STAGES = L.tabs.map((t) => {
@@ -67,11 +67,12 @@ const STAGES = L.tabs.map((t) => {
 const NODE = "FRACTION_ON_LINE";
 
 // Fixed worked examples per teaching stage (mirror the wireframe snapshots).
-const MATCH_DEN = 6;            // stage 2 — the ruler is split into 6
-const BUILD_TARGET = 6;         // stage 3 — target square is 1/6
-const SMALLER_PAIR = [3, 8];    // stage 4 — 1/3 vs 1/8 (smaller = 8)
-const NUMBERS_PAIR = [4, 9];    // stage 5 — 1/4 vs 1/9 (smaller = 9)
-const PAINT_DEN = 4;            // stage 6 — paint 1/4
+const MATCH_DEN = 6;            // stage 3 — the ruler is split into 6
+const BUILD_TARGET = 6;         // stage 4 — target square is 1/6
+const SMALLER_PAIR = [3, 8];    // stage 5 — 1/3 vs 1/8 (smaller = 8)
+const NUMBERS_PAIR = [4, 9];    // stage 6 — 1/4 vs 1/9 (smaller = 9)
+const PAINT_DIV_OPTIONS = [2, 3, 4, 6]; // stage 1 — cut-strip divide buttons
+const PAINT_DIV_DEFAULT = 4;    // stage 1 — default cut (÷4)
 
 // The bare 1/N fraction glyph (ink bar), reused across stages.
 function UnitFrac({ d, size }) {
@@ -118,22 +119,23 @@ export default function AppDen({ onBack, onRewatchIntro }) {
   const no = L.num.replace("№", "");
   const title = L.title;
 
-  // ---- Stage 1 (Split) — chosen bottom number (free play) ----
+  // ---- Stage 2 (Split) — chosen bottom number (free play) ----
   const [splitDen, setSplitDen] = useState(4);
 
-  // ---- Stage 2 (Match) — the child's guess at the bottom number ----
+  // ---- Stage 3 (Match) — the child's guess at the bottom number ----
   const [matchPick, setMatchPick] = useState(null);
 
-  // ---- Stage 3 (Build) — chosen bottom number for YOUR square ----
+  // ---- Stage 4 (Build) — chosen bottom number for YOUR square ----
   const [buildDen, setBuildDen] = useState(2);
 
-  // ---- Stage 4 (Smaller) — which ruler's red piece is smaller ----
+  // ---- Stage 5 (Smaller) — which ruler's red piece is smaller ----
   const [smallerPick, setSmallerPick] = useState(null);
 
-  // ---- Stage 5 (Numbers) — which bare fraction is smaller ----
+  // ---- Stage 6 (Numbers) — which bare fraction is smaller ----
   const [numbersPick, setNumbersPick] = useState(null);
 
-  // ---- Stage 6 (Paint) — which cells are painted red ----
+  // ---- Stage 1 (Paint) — chosen divide count + which segments are painted ----
+  const [paintDiv, setPaintDiv] = useState(PAINT_DIV_DEFAULT);
   const [painted, setPainted] = useState([]);
 
   // ---- Practice — local re-rolling comparison game (placeholder, see note) ----
@@ -152,10 +154,11 @@ export default function AppDen({ onBack, onRewatchIntro }) {
     scaffoldKeyFor: SCAFFOLD_KEY,
     introFor: (n) => ({ tone: "normal", text: STAGE_INTRO(n) }),
     resetStage: () => {
+      setPaintDiv(PAINT_DIV_DEFAULT);
+      setPainted([]);
       setMatchPick(null);
       setSmallerPick(null);
       setNumbersPick(null);
-      setPainted([]);
       setPracPick(null);
     },
     onEnd: () => setStatus({ tone: "ok", text: "That's the whole idea — a bigger bottom number cuts the whole into more pieces, so each piece is smaller. Brilliant!" }),
@@ -175,7 +178,7 @@ export default function AppDen({ onBack, onRewatchIntro }) {
 
   function reset() { goStage(1); }
 
-  // ---- Stage 1 (Split) — free play; "Keep playing" just advances -------------
+  // ---- Stage 2 (Split) — free play; "Keep playing" just advances -------------
   function pickSplit(d) {
     if (solvedRef.current) return;
     setSplitDen(d);
@@ -185,7 +188,7 @@ export default function AppDen({ onBack, onRewatchIntro }) {
     });
   }
 
-  // ---- Stage 2 (Match) — count the pieces, pick the bottom number ------------
+  // ---- Stage 3 (Match) — count the pieces, pick the bottom number ------------
   function pickMatch(d) {
     if (solvedRef.current) return;
     setMatchPick(d);
@@ -198,7 +201,7 @@ export default function AppDen({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 3 (Build) — pick the bottom number so YOUR square matches target -
+  // ---- Stage 4 (Build) — pick the bottom number so YOUR square matches target -
   function pickBuild(d) {
     if (solvedRef.current) return;
     setBuildDen(d);
@@ -209,7 +212,7 @@ export default function AppDen({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 4 (Smaller) — tap the ruler with the smaller red piece ----------
+  // ---- Stage 5 (Smaller) — tap the ruler with the smaller red piece ----------
   function pickSmaller(d) {
     if (solvedRef.current) return;
     setSmallerPick(d);
@@ -223,7 +226,7 @@ export default function AppDen({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 5 (Numbers) — reason from the number alone ----------------------
+  // ---- Stage 6 (Numbers) — reason from the number alone ----------------------
   function pickNumbers(d) {
     if (solvedRef.current) return;
     setNumbersPick(d);
@@ -237,18 +240,23 @@ export default function AppDen({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 6 (Paint) — paint exactly one of N cells red --------------------
-  function toggleCell(i) {
+  // ---- Stage 1 (Paint) — cut strip + paint exactly one segment red ----------
+  function toggleSeg(i) {
     if (solvedRef.current) return;
     setPainted((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
+  }
+  function pickDivide(d) {
+    if (solvedRef.current) return;
+    setPaintDiv(d);
+    setPainted([]);
   }
   function checkPaint() {
     if (solved) { nextStage(); return; }
     if (painted.length === 1) {
-      award(`Painted! One piece out of ${PAINT_DEN} — that's exactly 1 over ${PAINT_DEN}.`, null, [1, PAINT_DEN]);
+      award(`Painted! One piece out of ${paintDiv} — that's exactly 1 over ${paintDiv}.`, null, [1, paintDiv]);
     } else {
       flashBad();
-      setStatus({ tone: "warn", text: painted.length === 0 ? `Tap one piece to paint it red — the top number is 1.` : `1 over ${PAINT_DEN} is just ONE piece — reset and paint exactly one.` });
+      setStatus({ tone: "warn", text: painted.length === 0 ? `Tap one piece to paint it red — the top number is 1.` : `1 over ${paintDiv} is just ONE piece — reset and paint exactly one.` });
     }
   }
 
@@ -279,14 +287,14 @@ export default function AppDen({ onBack, onRewatchIntro }) {
 
   // QuestionBand: shown on stages where the bare fraction doesn't give away the
   // answer. Suppressed on Numbers/Practice (the bare comparison IS the question).
-  const showBand = stage === 1 || stage === 2 || stage === 3 || stage === 4 || stage === 6;
+  const showBand = stage === 1 || stage === 2 || stage === 3 || stage === 4 || stage === 5;
   const Band = (() => {
     let lead = "the bottom number", expr = null, answer = null;
-    if (stage === 1) { lead = "split the ruler"; expr = <UnitFrac d={splitDen} />; answer = `${splitDen} equal pieces`; }
-    else if (stage === 2) { lead = "count the pieces"; expr = <span style={{ fontStyle: "italic", fontSize: 22 }}>how many equal pieces?</span>; answer = solved ? MATCH_DEN : "?"; }
-    else if (stage === 3) { lead = "match the target"; expr = <UnitFrac d={BUILD_TARGET} />; answer = solved ? "matched" : "?"; }
-    else if (stage === 4) { lead = "which is smaller?"; expr = <span style={{ display: "inline-flex", gap: 18, alignItems: "center" }}><UnitFrac d={SMALLER_PAIR[0]} size={34} /><span className="qb-op">vs</span><UnitFrac d={SMALLER_PAIR[1]} size={34} /></span>; answer = solved ? `1/${Math.max(...SMALLER_PAIR)}` : "?"; }
-    else if (stage === 6) { lead = "paint this fraction"; expr = <UnitFrac d={PAINT_DEN} />; answer = solved ? "painted" : "?"; }
+    if (stage === 1) { lead = "cut, then paint"; expr = <UnitFrac d={paintDiv} />; answer = solved ? "painted" : "?"; }
+    else if (stage === 2) { lead = "split the ruler"; expr = <UnitFrac d={splitDen} />; answer = `${splitDen} equal pieces`; }
+    else if (stage === 3) { lead = "count the pieces"; expr = <span style={{ fontStyle: "italic", fontSize: 22 }}>how many equal pieces?</span>; answer = solved ? MATCH_DEN : "?"; }
+    else if (stage === 4) { lead = "match the target"; expr = <UnitFrac d={BUILD_TARGET} />; answer = solved ? "matched" : "?"; }
+    else if (stage === 5) { lead = "which is smaller?"; expr = <span style={{ display: "inline-flex", gap: 18, alignItems: "center" }}><UnitFrac d={SMALLER_PAIR[0]} size={34} /><span className="qb-op">vs</span><UnitFrac d={SMALLER_PAIR[1]} size={34} /></span>; answer = solved ? `1/${Math.max(...SMALLER_PAIR)}` : "?"; }
     return <QuestionBand lead={lead} expr={expr} answer={answer} />;
   })();
 
@@ -294,7 +302,71 @@ export default function AppDen({ onBack, onRewatchIntro }) {
   let body = null;
 
   if (stage === 1) {
-    // STAGE 1 · SPLIT — pick a bottom number; the ruler splits into N equal pieces.
+    // STAGE 1 · PAINT — cut a strip with a divide button, then paint one segment.
+    // Mirrors wireframe room-den-paint.js: ruler strip + ÷N buttons + Fill tool.
+    body = (
+      <LessonBoard
+        footHeight={150}
+        railWidth={340}
+        stage={
+          <div className="canvas">
+            <div className="sq-game sq-paint">
+              <div className="den-eq-col" style={{ gap: 14 }}>
+                <span className="sq-side-lab">paint 1/{paintDiv} red</span>
+                <div className="den-ruler-wrap" style={{ gap: 6 }}>
+                  <div className="den-ruler is-paint" aria-label={`strip cut into ${paintDiv} pieces`}>
+                    {Array.from({ length: paintDiv }, (_, i) => (
+                      <div
+                        key={i}
+                        className={"den-seg" + (painted.includes(i) ? " is-unit" : "")}
+                        onClick={!solved ? () => toggleSeg(i) : undefined}
+                        style={{ cursor: solved ? "default" : "pointer" }}
+                      />
+                    ))}
+                  </div>
+                  <div className="den-ends"><span>0</span><span>1</span></div>
+                </div>
+                <div className="sq-divide">
+                  <span className="sq-divide-lab">cut the strip into:</span>
+                  {PAINT_DIV_OPTIONS.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      className={"sq-divbtn" + (d === paintDiv ? " is-on" : "")}
+                      disabled={solved}
+                      onClick={() => pickDivide(d)}
+                    >{d}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="sq-tool">
+                <div className="sq-tool-h">Fill</div>
+                <div className="sq-swatches">
+                  <span className="sq-swatch is-red is-on" />
+                  <span className="sq-swatch is-ink" />
+                </div>
+                <button type="button" className="sq-reset" onClick={() => { if (!solved) setPainted([]); }} disabled={solved}>Reset</button>
+              </div>
+            </div>
+          </div>
+        }
+        rail={<HintRail heading="Cut, Then Paint" hint={<><b>Paint 1/{paintDiv} of the strip red.</b> First, <b>cut the strip</b> — click the <b>÷{paintDiv}</b> button so the bottom number is <b>{paintDiv}</b> ({paintDiv} equal pieces). Then <b>paint 1</b> of those pieces red. Tap a piece to fill it; <b>Reset</b> to start over.</>} />}
+        answer={
+          <AnswerBar
+            eq={<><span className="den-ans-amt">cut into <b>{paintDiv}</b>, then paint</span><span className="sq-frac"><UnitFrac d={paintDiv} size={30} /></span><span className="den-ans-amt">— <b>1</b> piece of <b>{paintDiv}</b></span></>}
+            cap={solved ? `one piece of ${paintDiv} — that's 1/${paintDiv}` : "divide into the bottom number first, then paint the top"}
+            solved={solved}
+            ready={painted.length === 1 && !solved}
+            stars={stars}
+            onCheck={checkPaint}
+            checkLabel={solved ? "Next stage ▸" : "Got it"}
+          />
+        }
+        tutor={Tutor}
+      />
+    );
+  } else if (stage === 2) {
+    // STAGE 2 · SPLIT — pick a bottom number; the ruler splits into N equal pieces.
     body = (
       <LessonBoard
         footHeight={150}
@@ -322,7 +394,7 @@ export default function AppDen({ onBack, onRewatchIntro }) {
             </div>
           </div>
         }
-        rail={<HintRail heading="Split the Ruler" hint={<>Tap a number. The ruler from <b>0</b> to <b>1</b> breaks into that many <b>equal</b> pieces — one piece is <b>1 over that number</b>. Watch the pieces get <b>smaller</b> as the number gets <b>bigger</b>.</>} />}
+        rail={<HintRail heading="Split the Ruler" hint={<>Tap a number in the column. The ruler from <b>0</b> to <b>1</b> breaks into that many <b>equal</b> pieces — and one piece is <b>1 over that number</b>. Try a few: watch the pieces get <b>smaller</b> as the number gets <b>bigger</b>.</>} />}
         answer={
           <AnswerBar
             eq={<><span className="den-pick-frac"><UnitFrac d={splitDen} size={34} /></span><span className="den-ans-eq">=</span><span className="den-ans-amt">one piece of a ruler split into <b>{splitDen}</b> equal parts</span></>}
@@ -337,8 +409,8 @@ export default function AppDen({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 2) {
-    // STAGE 2 · MATCH — the ruler is already split; pick the bottom number.
+  } else if (stage === 3) {
+    // STAGE 3 · MATCH — the ruler is already split; pick the bottom number.
     body = (
       <LessonBoard
         footHeight={150}
@@ -366,7 +438,7 @@ export default function AppDen({ onBack, onRewatchIntro }) {
             </div>
           </div>
         }
-        rail={<HintRail heading="Match the Number" hint={<>This ruler is already split. <b>Count the equal pieces</b>, then tap the number that made it. The bottom number is just <b>how many equal pieces</b> the whole was cut into.</>} />}
+        rail={<HintRail heading="Match the Number" hint={<>This ruler is already split. <b>Count the equal pieces</b>, then tap the number that made it. The bottom number is just <b>how many equal pieces</b> the whole was cut into — here, <b>six</b>.</>} />}
         answer={
           <AnswerBar
             eq={<><span className="den-ans-amt">{solved ? `${MATCH_DEN} equal pieces, so one piece is` : "count the pieces, then tap the bottom number"}</span>{solved && <><span className="den-ans-eq">→</span><UnitFrac d={MATCH_DEN} size={34} /></>}</>}
@@ -382,8 +454,8 @@ export default function AppDen({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 3) {
-    // STAGE 3 · BUILD — pick the bottom number so YOUR square matches the target.
+  } else if (stage === 4) {
+    // STAGE 4 · BUILD — pick the bottom number so YOUR square matches the target.
     body = (
       <LessonBoard
         footHeight={150}
@@ -415,10 +487,10 @@ export default function AppDen({ onBack, onRewatchIntro }) {
             </div>
           </div>
         }
-        rail={<HintRail heading="Make Two Identical Squares" hint={<>The top number stays <b>1</b> — one red piece. Pick the <b>bottom number</b> so <b>your</b> square is cut into the <b>same number of equal pieces</b> as the <b>target</b>. More pieces means each piece is smaller.</>} />}
+        rail={<HintRail heading="Make Two Identical Squares" hint={<>The top number stays <b>1</b> — one red cell. Pick the <b>bottom number</b> so <b>your</b> square is cut into the <b>same number of equal cells</b> as the <b>target</b>. More cells means each cell is smaller — change the bottom number until the two squares look the same.</>} />}
         answer={
           <AnswerBar
-            eq={<><span className="sq-frac"><UnitFrac d={buildDen} size={32} /></span><span className="den-ans-eq">=</span><span className="den-ans-amt">{solved ? <><b>1</b> red piece out of <b>{BUILD_TARGET}</b> — squares match</> : `your square has ${buildDen} pieces`}</span></>}
+            eq={<><span className="sq-frac"><UnitFrac d={buildDen} size={32} /></span><span className="den-ans-eq">=</span><span className="den-ans-amt">{solved ? <><b>1</b> red cell out of <b>{BUILD_TARGET}</b> equal cells — squares match</> : `your square has ${buildDen} pieces`}</span></>}
             cap={solved ? "matched the target" : "pick the bottom number that makes your square match the target"}
             solved={solved}
             ready={false}
@@ -431,8 +503,8 @@ export default function AppDen({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 4) {
-    // STAGE 4 · SMALLER — two rulers; tap the smaller red piece.
+  } else if (stage === 5) {
+    // STAGE 5 · SMALLER — two rulers; tap the smaller red piece.
     body = (
       <LessonBoard
         footHeight={150}
@@ -452,11 +524,11 @@ export default function AppDen({ onBack, onRewatchIntro }) {
                   </div>
                 </div>
               ))}
-              <div className="den-cap">Same ruler, two bottom numbers. Tap the ruler whose red piece is smaller.</div>
+              <div className="den-cap">Same ruler, two bottom numbers. Which red piece is smaller?</div>
             </div>
           </div>
         }
-        rail={<HintRail heading="Which Piece Is Smaller?" hint={<>Both rulers go from <b>0</b> to <b>1</b> — the same whole. Cut into more pieces, each piece is <b>smaller</b>. A <b>bigger bottom number</b> means a <b>smaller</b> piece. Tap the smaller one.</>} />}
+        rail={<HintRail heading="Which Piece Is Smaller?" hint={<>Both rulers go from <b>0</b> to <b>1</b> — the same whole. The more pieces you cut it into, the <b>smaller</b> each piece must be. So a <b>bigger bottom number</b> means a <b>smaller</b> piece. Tap the smaller one.</>} />}
         answer={
           <AnswerBar
             eq={<><span className="den-ans-amt">smaller piece:</span><span className="den-choices">{SMALLER_PAIR.map((n) => (<span key={n} className={"den-choice" + (n === smallerPick ? " is-on" : "")}>1/{n}</span>))}</span></>}
@@ -472,8 +544,8 @@ export default function AppDen({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 5) {
-    // STAGE 5 · NUMBERS — no picture; reason from the number alone.
+  } else if (stage === 6) {
+    // STAGE 6 · NUMBERS — no picture; reason from the number alone.
     body = (
       <LessonBoard
         footHeight={150}
@@ -492,52 +564,17 @@ export default function AppDen({ onBack, onRewatchIntro }) {
             </div>
           </div>
         }
-        rail={<HintRail heading="Just the Numbers" hint={<>No picture this time. Both are <b>one piece</b> — so the only thing that matters is <b>how many pieces the whole was cut into</b>. The <b>bigger</b> bottom number makes the <b>smaller</b> piece. Tap the smaller fraction.</>} />}
+        rail={<HintRail heading="Just the Numbers" hint={<>No picture this time. Both are <b>one piece</b> — so the only thing that matters is <b>how many pieces the whole was cut into</b>. The <b>bigger</b> bottom number makes the <b>smaller</b> piece. Which is smaller, <b>1/{NUMBERS_PAIR[0]}</b> or <b>1/{NUMBERS_PAIR[1]}</b>?</>} />}
         answer={
           <AnswerBar
             eq={<><span className="den-ans-amt">smaller fraction:</span><span className="den-choices">{NUMBERS_PAIR.map((n) => (<span key={n} className={"den-choice" + (n === numbersPick ? " is-on" : "")}>1/{n}</span>))}</span></>}
-            cap={solved ? `${Math.max(...NUMBERS_PAIR)} > ${Math.min(...NUMBERS_PAIR)}, so 1/${Math.max(...NUMBERS_PAIR)} < 1/${Math.min(...NUMBERS_PAIR)}` : "no picture — reason from the numbers"}
+            cap={solved ? `${Math.max(...NUMBERS_PAIR)} > ${Math.min(...NUMBERS_PAIR)}, so the ninth is the smaller piece — 1/${Math.max(...NUMBERS_PAIR)} < 1/${Math.min(...NUMBERS_PAIR)}` : "no picture — reason from the numbers"}
             solved={solved}
             ready={false}
             stars={stars}
             onCheck={() => { if (solved) nextStage(); }}
             checkLabel={solved ? "Next stage ▸" : "Tap a fraction"}
             checkDisabled={!solved}
-          />
-        }
-        tutor={Tutor}
-      />
-    );
-  } else if (stage === 6) {
-    // STAGE 6 · PAINT — paint exactly one of N cells red.
-    body = (
-      <LessonBoard
-        footHeight={150}
-        railWidth={340}
-        stage={
-          <div className="canvas">
-            <div className="sq-game sq-paint">
-              <div className="sq-side">
-                <span className="sq-side-lab">paint 1/{PAINT_DEN} red</span>
-                <SquareBox n={PAINT_DEN} paint onCell={toggleCell} painted={painted} />
-              </div>
-              <div className="sq-tool">
-                <div className="sq-tool-h">Fill</div>
-                <button type="button" className="sq-reset" onClick={() => setPainted([])} disabled={solved}>Reset</button>
-              </div>
-            </div>
-          </div>
-        }
-        rail={<HintRail heading="Paint the Fraction" hint={<>This square is cut into <b>{PAINT_DEN}</b> equal pieces — that is the bottom number. <b>Paint 1/{PAINT_DEN} red</b>: the top number is <b>1</b>, so fill in exactly <b>one</b> piece. Tap a piece to fill it.</>} />}
-        answer={
-          <AnswerBar
-            eq={<><span className="den-ans-amt">Paint</span><span className="sq-frac"><UnitFrac d={PAINT_DEN} size={30} /></span><span className="den-ans-amt">of the square red — <b>1</b> piece of <b>{PAINT_DEN}</b></span></>}
-            cap={solved ? `one piece of ${PAINT_DEN} — that's 1/${PAINT_DEN}` : "fill exactly one of the pieces, then check"}
-            solved={solved}
-            ready={painted.length === 1 && !solved}
-            stars={stars}
-            onCheck={checkPaint}
-            checkLabel={solved ? "Next stage ▸" : "Got it"}
           />
         }
         tutor={Tutor}
@@ -605,12 +642,12 @@ export default function AppDen({ onBack, onRewatchIntro }) {
 // Intro line per stage (also the ribbon's initial text).
 function STAGE_INTRO(n) {
   switch (n) {
-    case 1: return "Pick a number and watch the ruler split. The bottom number says how many equal pieces the whole is cut into.";
-    case 2: return "Count the pieces in the ruler. That count is the bottom number — tap it.";
-    case 3: return "The top number stays 1. Pick the bottom number so your square has the same pieces as the target.";
-    case 4: return "Same whole, cut into more pieces — so each piece is smaller. Tap the ruler with the smaller red piece.";
-    case 5: return "No picture now. The bigger the bottom number, the smaller the piece. Which is smaller?";
-    case 6: return "One over four means one piece out of four. Paint just one of the pieces red.";
+    case 1: return "First cut the strip into four — that's the bottom number. Then paint one of the four pieces red. One over four.";
+    case 2: return "Pick a number and watch the ruler split. The bottom number says how many equal pieces the whole is cut into.";
+    case 3: return "Count the pieces in the ruler. That count is the bottom number — six pieces means the bottom number is 6.";
+    case 4: return "The top number is always 1 here — one red cell. Pick the bottom number so your square has the same number of cells as the target.";
+    case 5: return "Same whole, cut into more pieces — so each piece is smaller. A bigger bottom number means a smaller piece. 1/8 is smaller than 1/3.";
+    case 6: return "No picture needed now. The bigger the bottom number, the smaller the piece — so 1/9 is smaller than 1/4.";
     case "practice": return "Fresh ones. Bigger bottom number, smaller piece — pick the smaller fraction.";
     default: return "";
   }

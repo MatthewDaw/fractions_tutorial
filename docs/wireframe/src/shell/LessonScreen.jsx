@@ -65,7 +65,6 @@ export default function LessonScreen({ data }) {
 
   const {
     speaker = "cook",
-    backHref = "world.html",
     introHref = "intro.html",
     returnHref = "kitchen.html",
     railW = 396,
@@ -76,6 +75,8 @@ export default function LessonScreen({ data }) {
   // still override any field). The toolbar title is derived from the active step,
   // so pages don't repeat "№3 … · <Step>" either.
   const L = (data.lesson && LESSONS[data.lesson]) || {};
+  // Prefer an explicit per-screen override, then the lesson-level default, then world.
+  const backHref = data.backHref ?? L.backHref ?? "world.html";
   const num = data.num ?? L.num;
   const tag = data.tag ?? L.tag;
   const title = data.title ?? L.title;
@@ -116,7 +117,7 @@ export default function LessonScreen({ data }) {
                   {PLAY_SVG}
                 </Link>
                 <button className="ctrl-btn" title="Settings" aria-label="Settings">
-                  <img src="/assets/settings-gear.png" width="18" height="18" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
+                  <img src="/settings-gear.png" width="18" height="18" alt="" aria-hidden="true" style={{ display: "block", objectFit: "contain" }} />
                 </button>
                 <Link className="ctrl-btn" to={routeFromHref(returnHref)} title="Start this stage over">⟲</Link>
               </div>

@@ -187,6 +187,20 @@
 
 /* the answer block: prompt + the Slate the child writes into */
 .wp-answer { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* When the answer Slate sits in the fixed-height FOOT band (.lboard-answer), the
+   foot does NOT downscale like the FitStage word column does — so a STACKED
+   fraction (lead + two cells + bar) must be sized to fit the ~196px band, or the
+   bottom denominator cell spills past the band's bottom edge. Cap the fraction
+   cells here so the writing space is always fully held. (Whole-number ROW answers
+   use .slate-row, untouched, so those screens keep their larger cells.) */
+.lboard-answer .wp-answer { gap: 6px; }
+.lboard-answer .wp-answer .slate-fraction { gap: 4px; }
+.lboard-answer .wp-answer .slate-fraction .slate-cell { width: 76px; height: 56px; }
+.lboard-answer .wp-answer .slate-fraction .slate-bar { width: 76px; }
+.lboard-answer .wp-answer .slate-fraction .slate-ph { font-size: 24px; }
+.lboard-answer .wp-answer .slate-fraction .slate-fixed { font-size: 36px; }
+.lboard-answer .wp-answer .slate-fraction .slate-committed-digit { font-size: 40px; }
 .wp-answer-lead {
   font-family: var(--display); font-size: 16px; letter-spacing: 0.04em;
   color: var(--ink); text-transform: uppercase;

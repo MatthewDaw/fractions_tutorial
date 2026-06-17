@@ -7,7 +7,7 @@
 // The look-ahead probe reuses the NEXT room's mirror[0] (see MomsRoom flow).
 //
 // CURRICULUM is the teaching order (must match the room order in rooms.js):
-//   r1 Same Denominators → r3 Scale One → r2 Cross-Multiply → r4 Simplify → r5 Mixed Numbers
+//   r1 Same Denominators → r3 Scale One → r2 Cross-Multiply → r4 Simplify → simp Simplify (GCF) → r5 Mixed Numbers
 // (the room `id`s are historical; the labels here are the source of truth for the
 // kitchen's on-screen skill names.)
 
@@ -18,13 +18,14 @@
 // (none authored for nl/s1/cmp yet). enterStage/firstTask index BANK[roomId]
 // directly, so adding an id without a BANK entry would crash the flow. They live
 // on the world map and engine graph; they simply don't pose kitchen recipes.
-export const CURRICULUM = ["r1", "r3", "r2", "r4", "r5"];
+export const CURRICULUM = ["r1", "r3", "r2", "r4", "simp", "r5"];
 
 export const ROOM_SKILL = {
   r1: { no: 1, label: "Same Denominators", blurb: "add the tops, keep the bottom" },
   r3: { no: 2, label: "Scale One",         blurb: "rename one fraction so the bottoms match" },
   r2: { no: 3, label: "Cross-Multiply",    blurb: "rename both to a shared bottom" },
   r4: { no: 4, label: "Simplify",          blurb: "reduce to the fewest, biggest pieces" },
+  simp: { no: 9, label: "Simplify (GCF)", blurb: "divide top and bottom by their greatest common factor" },
   r5: { no: 5, label: "Mixed Numbers",     blurb: "whole units plus a leftover" },
 };
 
@@ -109,6 +110,14 @@ const Q = {
     nudgeKey: "mr_mom_nudge_tidy", banter: ["mr_kid_addtidy_1", "mr_mom_addtidy_2", "mr_kid_addtidy_3"],
   },
 
+  // Simp · Simplify with GCF (Lesson №9) --------------------------------------
+  dumplingtray: {
+    id: "dumplingtray", owner: "kid", prop: "Lunchbox", initState: "pieces_in", solvedState: "lid_closed",
+    caption: "The Kid filled six ninths of the dumpling tray. Babushka wants the same amount written its simplest way. Write the simplest name for six ninths.",
+    ask: "Simplest name", answerType: "fraction", op: "simplify", target: [2, 3], requireSimplified: true,
+    nudgeKey: "mr_mom_nudge_tidy", banter: ["mr_kid_lunchbox_1", "mr_mom_lunchbox_2", "mr_kid_lunchbox_3"],
+  },
+
   // R5 · Mixed Numbers ---------------------------------------------------------
   cupcakebox: {
     id: "cupcakebox", owner: "kid", prop: "Boxes", initState: "filling", solvedState: "leftover",
@@ -143,6 +152,7 @@ export const BANK = {
   r3: { mirror: [Q.doughbacon], combine: [] },
   r2: { mirror: [Q.trays, Q.candy], combine: [] },
   r4: { mirror: [Q.lunchbox, Q.carrots, Q.cookietin], combine: [Q.addtidy] },
+  simp: { mirror: [Q.dumplingtray], combine: [] },
   r5: { mirror: [Q.cupcakebox, Q.coolpie, Q.muffin], combine: [Q.halfpie] },
 };
 

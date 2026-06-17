@@ -1,49 +1,34 @@
 /* room-m1-7-words — №1 Equal Groups · Words. Data-only module consumed by
    <LessonScreen>. The chrome (toolbar, topbar, tabs, board grid) is the shared
-   component; only the unique content below lives here. Word-problem restructure
-   (spec Step 3): story → rail panel, scratch surface → stage, final answer →
-   answer, Cook → tutor. Interactive markup verbatim from the original screen. */
+   component; only the unique content below lives here. Words stage uses the wide
+   layout: story card + optional scratch in stageHTML (matches real-app AppM1
+   Words beat which uses WordProblem with BlankSlate scratch in content slot).
+   The story tab (badge 8) has no equation band — the child reads prose to find
+   the groups themselves. Cook + ribbon remain in tutorHTML. */
+import { showWork } from "../showWork.js";
 export default {
   kind: "lesson",
 
   lesson: "m1",
 
-  railHTML: `
-          <div class="panel">
-            <h3>Babushka's Recipe</h3>
-            <div class="hint">The little cook filled <b>5 bowls</b> with <b>2 cherries</b> each — and then some jumped into a mouth! How many cherries did the bowls hold?</div>
-          </div>`,
-
   stageHTML: `
-            <div class="wp-setup">
-              <span class="wp-setup-lead">Optional — show your work here</span>
-              <div class="wp-setup-row">
-                <div class="bs-surface m1-words-scratch" style="position:relative;">
-                  <canvas class="bs-canvas" aria-label="blank space to show your work"></canvas>
-                  <div class="bs-tools">
-                    <button type="button" class="bs-tool on" title="Pencil" aria-pressed="true">
-                      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15 L4 11 L12 3 L15 6 L7 14 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><line x1="11" y1="4" x2="14" y2="7" stroke="currentColor" stroke-width="1.6" /></svg>
-                    </button>
-                    <button type="button" class="bs-tool" title="Red pen" aria-pressed="false">
-                      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15 L4 11 L12 3 L15 6 L7 14 Z" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linejoin="round" /></svg>
-                    </button>
-                    <button type="button" class="bs-tool" title="Eraser" aria-pressed="false">
-                      <svg width="18" height="18" viewBox="0 0 18 18"><rect x="3" y="9" width="9" height="6" rx="1.5" transform="rotate(-32 7 12)" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
-                    </button>
-                    <span class="bs-tool-sep"></span>
-                    <button type="button" class="bs-tool" title="Undo">
-                      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M6 5 L3 8 L6 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" /><path d="M3 8 H11 a4 4 0 0 1 0 8 H7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
-                    </button>
-                    <button type="button" class="bs-tool bs-tool-clear" title="Clear all">clear</button>
-                  </div>
-                  <div class="bs-hint">optional — show your work here ✎</div>
-                </div>
-              </div>
-            </div>`,
+          <!-- WordProblem card: story only — no numbers laid out, child extracts groups themselves -->
+          <div class="wp-card" style="margin:20px 24px;border:1px solid var(--ink);border-radius:6px;padding:18px 20px;background:var(--paper-2);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <div class="wp-tag" style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.55;">Babushka's Recipe</div>
+              <button type="button" class="speaker" style="font-size:12px;display:flex;align-items:center;gap:5px;">
+                <svg width="14" height="12" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)"></path><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none"></path></svg>
+                Read aloud
+              </button>
+            </div>
+            <p class="wp-story" style="font-size:16px;line-height:1.5;margin:0;">The little cook filled <b>5 bowls</b> with <b>2 cherries</b> each — and then some jumped into a mouth! How many cherries did the bowls hold?</p>
+          </div>
+          <div style="padding:8px 24px 4px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.55;">Optional — show your work here</div>
+          ${showWork("optional — show your work here ✎")}`,
 
   answerHTML: `
-            <div class="wp-answer">
-              <span class="wp-answer-lead">Write how many in all</span>
+            <div class="wp-answer" style="padding:8px 24px 12px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.55;margin-bottom:8px;">Write how many in all</div>
               <div class="wp-answer-row">
                 <div class="slate slate-row" role="group" aria-label="write the total">
                   <div class="slate-slot">
@@ -79,9 +64,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />

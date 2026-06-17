@@ -1,4 +1,4 @@
-/* room-nl-2-write — №3 On the Number Line · Write (AppNumberLine, #/nl).
+/* room-nl-2-write — №6 Same Denominators · Write (AppNumberLine, #/nl).
    Data-only module consumed by <LessonScreen>. The chrome (toolbar, topbar,
    tabs, goal, board grid) is the shared component; only the unique content
    below lives here. Interactive markup is verbatim from the original screen. */
@@ -74,7 +74,7 @@ export default {
                     <div class="slate-slot">
                       <div class="slate-cell">
                         <canvas class="slate-canvas" role="img" aria-label="write the bottom digit"></canvas>
-                        <span class="slate-ph" aria-hidden="true"></span>
+                        <span class="slate-ph" aria-hidden="true">✎</span>
                       </div>
                     </div>
                   </div>
@@ -109,9 +109,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />

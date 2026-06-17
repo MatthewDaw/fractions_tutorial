@@ -13,7 +13,6 @@ export default {
       <div class="world-head">
         <div class="tag">Lesson Map</div>
         <h1>Babushka's Fractions</h1>
-        <a class="mixbasket-btn" href="review.html" title="Mixed basket — practice all your recipes together">🧺 Mixed Basket ▸</a>
       </div>
 
       <!-- recipe trails from the kitchen (640,420) to each shelf (under the nodes) -->
@@ -34,7 +33,7 @@ export default {
       </svg>
 
       <!-- central kitchen — tap to enter Babushka's Room (story / word problems) -->
-      <a class="kitchen-node kitchen-open" href="kitchen.html" style="left:640px;top:420px" title="Cook with Babushka — story problems">
+      <a class="kitchen-node kitchen-open" href="kitchen.html" style="left:50%;top:52.5%" title="Cook with Babushka — story problems">
         <div class="kitchen-label">
           <div class="kitchen-name">Babushka's Kitchen</div>
           <div class="kitchen-cta">▸ Cook with Babushka</div>
@@ -142,7 +141,7 @@ export default {
       </a>
 
       <!-- shelf node: found @ (326,250) -> shelf-found.html -->
-      <a class="shelf" href="shelf-found.html" style="left:326px;top:250px" title="Open Counting & Times">
+      <a class="shelf" href="shelf-found.html" style="left:25.47%;top:31.25%" title="Open Counting & Times">
         <div class="shelf-head">
           <span class="shelf-range">№1–2</span>
         </div>
@@ -155,27 +154,27 @@ export default {
       </a>
 
       <!-- shelf node: build @ (954,250) -> shelf-build.html -->
-      <a class="shelf" href="shelf-build.html" style="left:954px;top:250px" title="Open Building Fractions">
+      <a class="shelf" href="shelf-build.html" style="left:74.53%;top:31.25%" title="Open Building Fractions">
         <div class="shelf-head">
-          <span class="shelf-range">№3–6</span>
+          <span class="shelf-range">№3–7</span>
         </div>
         <h2 class="shelf-title">Building Fractions</h2>
-        <p class="shelf-blurb">What a fraction is, and adding or taking away same-size pieces.</p>
+        <p class="shelf-blurb">What the two numbers in a fraction mean, then adding or taking away same-size pieces.</p>
         <div class="shelf-foot">
-          <span class="shelf-count">0 / 4 mastered</span>
+          <span class="shelf-count">0 / 5 mastered</span>
           <span class="shelf-open">Open shelf ▸</span>
         </div>
       </a>
 
       <!-- shelf node: combine @ (640,648) -> shelf-combine.html -->
-      <a class="shelf" href="shelf-combine.html" style="left:640px;top:648px" title="Open Combining & Renaming">
+      <a class="shelf" href="shelf-combine.html" style="left:50%;top:81%" title="Open Combining & Renaming">
         <div class="shelf-head">
-          <span class="shelf-range">№7–10</span>
+          <span class="shelf-range">№8–12</span>
         </div>
         <h2 class="shelf-title">Combining &amp; Renaming</h2>
-        <p class="shelf-blurb">Unlike pieces, simplest names, and whole-and-a-bit.</p>
+        <p class="shelf-blurb">Unlike pieces, equivalent names, and whole-and-a-bit.</p>
         <div class="shelf-foot">
-          <span class="shelf-count">0 / 4 mastered</span>
+          <span class="shelf-count">0 / 5 mastered</span>
           <span class="shelf-open">Open shelf ▸</span>
         </div>
       </a>

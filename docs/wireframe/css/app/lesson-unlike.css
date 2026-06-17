@@ -70,8 +70,8 @@
 
 /* RAIL — compress the L4 worksheet + picker readouts so the whole picker (incl.
    the Slice & Check / New problem buttons) fits the rail column height. */
-.lboard-rail .panel .hint {
-  /* clamp the hint to 2 lines so a longer string never grows the panel */
+.lboard-rail .panel:has(.denpicker) .hint {
+  /* clamp the hint to 2 lines in unlike-fractions panels only, so the picker fits */
   margin-top: 4px; font-size: 12px; line-height: 1.3;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
@@ -184,7 +184,11 @@
 .lu-wp-board .wp-setup { width: 100%; margin: 0; }
 .lu-wp-board .wp-setup-lead { font-size: 12px; margin-bottom: 2px; }
 .lu-wp-board .wp-setup-row { width: 100%; }
-.lu-words-scratch { width: 100% !important; }
+/* the "show your work" scratch sheet should ALWAYS fill its stage (play area),
+   not sit at a fixed height with dead space above/below. The screen markup pins
+   an inline height (e.g. 132px) for the standalone case; override it here so the
+   surface stretches to the whole stage zone (.lboard-stage is a flex column). */
+.lu-words-scratch { width: 100% !important; height: 100% !important; }
 /* the in-column New-recipe button sits under the WordProblem card */
 .lu-words-newrecipe { align-self: center; margin-top: 2px; }
 

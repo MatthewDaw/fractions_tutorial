@@ -6,6 +6,11 @@
    Words scratch surface. Interaction state is owned by AppNum.jsx; presentation
    only here. */
 
+/* Two-column digit grid (0–4 | 5–9) used in Shade, Whole, Build, Make stages. */
+.eq-numgrid { display: flex; gap: 6px; }
+/* Column layout helper used in the Paint stage. */
+.eq-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
 /* Slate sits inline in the answer-bar equation row (write the fraction). */
 .num-slate-wrap { display: inline-flex; align-items: center; }
 .num-slate-wrap .slate.slate-fraction { margin: 0; }

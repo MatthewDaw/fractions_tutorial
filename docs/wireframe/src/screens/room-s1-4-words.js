@@ -1,30 +1,14 @@
-/* room-s1-4-words — №4 Taking Away · Words (AppSubtract, #/s1 stage 4).
+/* room-s1-4-words — №7 Taking Away · Words (AppSubtract, #/s1 stage 4).
    Data-only module consumed by <LessonScreen>. The chrome (toolbar, topbar,
    tabs, goal, board grid) is the shared component; only the unique content
    below lives here. Interactive markup is verbatim from the original screen. */
+import { showWork } from "../showWork.js";
 export default {
   kind: "lesson",
 
   lesson: "s1",
 
-  stageHTML: `
-          <div class="wp-setup">
-                  <span class="wp-setup-lead">Optional — show your work here</span>
-                  <div class="wp-setup-row">
-                    <div class="bs-surface s1-words-scratch">
-                      <canvas class="bs-canvas" aria-label="blank space to show your work"></canvas>
-                      <div class="bs-tools">
-                        <button type="button" class="bs-tool on" title="Pencil" aria-pressed="true"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15 L4 11 L12 3 L15 6 L7 14 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><line x1="11" y1="4" x2="14" y2="7" stroke="currentColor" stroke-width="1.6" /></svg></button>
-                        <button type="button" class="bs-tool" title="Red pen" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15 L4 11 L12 3 L15 6 L7 14 Z" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linejoin="round" /></svg></button>
-                        <button type="button" class="bs-tool" title="Eraser" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 18 18"><rect x="3" y="9" width="9" height="6" rx="1.5" transform="rotate(-32 7 12)" fill="none" stroke="currentColor" stroke-width="1.6" /></svg></button>
-                        <span class="bs-tool-sep"></span>
-                        <button type="button" class="bs-tool" title="Undo"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M6 5 L3 8 L6 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" /><path d="M3 8 H11 a4 4 0 0 1 0 8 H7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg></button>
-                        <button type="button" class="bs-tool bs-tool-clear" title="Clear all">clear</button>
-                      </div>
-                      <div class="bs-hint">optional — show your work here ✎</div>
-                    </div>
-                  </div>
-                </div>`,
+  stageHTML: showWork("optional — show your work here ✎"),
 
   railHTML: `
           <div class="panel">
@@ -83,9 +67,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />

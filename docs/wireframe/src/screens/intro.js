@@ -13,7 +13,7 @@ export default {
         <!-- The real component renders a same-origin <iframe class="intro-frame" src={room.intro}>.
              For the wireframe we render the player frame statically (a representative box) — no
              external iframe src is embedded. -->
-        <div class="intro-frame" role="img" aria-label="Lesson 8 — Cross-Multiply intro"
+        <div class="intro-frame" role="img" aria-label="Lesson 11 — Cross-Multiply intro"
              style="display:grid; place-items:center; text-align:center; color:var(--ink-mute); font-family:var(--serif);">
           <div>
             <div style="font-family:var(--display); letter-spacing:0.18em; text-transform:uppercase; font-size:12px; color:var(--red);">Intro video</div>
@@ -30,7 +30,7 @@ export default {
           <a class="ctrl-btn intro-pause" href="#" title="Pause" aria-label="Pause">
             <svg width="13" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="3" y="2" width="3" height="10" fill="currentColor" /><rect x="8" y="2" width="3" height="10" fill="currentColor" /></svg>
           </a>
-          <div class="intro-label">Lesson 8 · Cross-Multiply — intro</div>
+          <div class="intro-label">Lesson 11 · Cross-Multiply — intro</div>
           <!-- Skip ▸ (onContinue path) → world.html -->
           <a class="intro-continue" href="world.html">Skip ▸</a>
         </div>

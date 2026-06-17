@@ -1,4 +1,4 @@
-/* room-r3-practice — №6 Scale One · Practice. Converted to a thin
+/* room-r3-practice — №10 Scale One · Practice. Converted to a thin
    kind:"lesson" module so it flows through the shared chrome (toolbar + topbar +
    tab strip). The GenPracticeBoard frame does not map cleanly to the 4-zone
    grid, so it stays via the belowHTML escape hatch (spec Step 4). The inline

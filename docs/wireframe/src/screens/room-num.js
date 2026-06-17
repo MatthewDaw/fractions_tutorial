@@ -4,24 +4,19 @@
    (Synthesis "try some different top numbers, see what happens.") Snapshot: top
    = 3 → 3/8, three pieces red. Ruler layout, consistent with the den lesson. */
 import { tutor } from "../cookSvg.js";
+import { digitGrid } from "../eqBox.js";
 
-// top-number picker 1..max (chosen value highlighted)
-const numcol = (on, max) =>
-  Array.from({ length: max }, (_, i) => i + 1)
-    .map((k) => `<div class="den-num${k === on ? " is-on" : ""}">${k}</div>`)
-    .join("");
 
 // ruler of n equal pieces with the first k shaded (the numerator)
 const ruler = (n, k) =>
   Array.from({ length: n }, (_, i) => `<div class="den-seg${i < k ? " is-unit" : ""}"></div>`).join("");
 
-export default {
-  kind: "lesson",
+export default { kind: "lesson",
   lesson: "num",
 
   stageHTML: `
     <div class="den-play">
-      <div class="den-numcol">${numcol(3, 8)}</div>
+      ${digitGrid(3)}
       <div class="den-pick-frac"><div class="bignum"><span class="n" style="color:var(--red)">3</span><span class="bar" style="background:var(--ink)"></span><span class="d">8</span></div></div>
       <div class="den-ruler-wrap">
         <div class="den-ruler">${ruler(8, 3)}</div>
@@ -51,5 +46,4 @@ export default {
       <div class="lbar-marks"><button class="check" disabled>Keep playing</button></div>
     </div>`,
 
-  tutorHTML: tutor("Pick a top number and that many pieces shade red. The top number counts how many of the equal pieces are filled."),
-};
+  tutorHTML: tutor("Pick a top number and that many pieces shade red. The top number counts how many of the equal pieces are filled.") };

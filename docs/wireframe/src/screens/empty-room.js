@@ -4,14 +4,14 @@
 export default {
   kind: "raw",
   title: "Empty room",
-  route: "EmptyRoom",
+  route: "#/empty (EmptyRoom)",
   bodyHTML: `
 <!-- EmptyRoom.jsx root -->
     <div class="emptyroom">
       <div class="foxing"></div>
-      <div class="er-no">№11</div>
-      <div class="er-tag">Lesson 11</div>
-      <h1>Coming Soon</h1>
+      <div class="er-no">№13</div>
+      <div class="er-tag">Lesson 13</div>
+      <h1>Advanced Topics</h1>
       <div class="er-note">
         This room isn't built yet. Head back to Babushka's kitchen and pick a lesson that's ready.
       </div>

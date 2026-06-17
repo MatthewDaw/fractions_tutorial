@@ -4,9 +4,9 @@
 import { tutor } from "../cookSvg.js";
 
 const frac = (d) => `
-      <div class="den-bare-card">
+      <button class="den-bare-card">
         <div class="bignum"><span class="n">1</span><span class="bar" style="background:var(--ink)"></span><span class="d">${d}</span></div>
-      </div>`;
+      </button>`;
 
 export default {
   kind: "lesson",
@@ -31,13 +31,13 @@ export default {
   answerHTML: `
     <div class="lbar">
       <div class="lbar-eq">
-        <span class="nl-ans-amt">tap the smaller fraction:</span>
+        <span class="den-ans-amt">tap the smaller fraction:</span>
         <span class="den-choices">
           <span class="den-choice">1/6</span>
           <span class="den-choice">1/2</span>
         </span>
       </div>
-      <div class="lbar-cap">pick one, then check</div>
+      <div class="lbar-cap">pick one, then it grades itself — bigger bottom, smaller piece</div>
       <div class="lbar-marks">
         <button class="check" disabled>Check</button>
       </div>

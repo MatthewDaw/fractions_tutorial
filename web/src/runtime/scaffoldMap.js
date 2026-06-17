@@ -8,11 +8,11 @@
 //   L3 — numbers-lead / near-independent (bare equation, hint-free capable)
 //   L4 — fully independent (word problem, no cues)
 //
-// LESSONS COVERED (arc = …Fade, Workbench, Numbers, Applied, Words):
-//   LessonUnlikeDen  (lessonId "r2" and "r3")  — beats L0, L2, L4, LW, L5, L6, LA, L7
+// LESSONS COVERED (arc = …Fade, Ghost, Numbers, Simplify, Applied, Words):
+//   LessonUnlikeDen  (lessonId "r2" and "r3")  — beats L0, L2, L4, L5, L6, SMP, LA, L7
 //   AppR1            (lessonId "r1")            — stages 1..7 (4=Workbench, 6=Applied)
 //   AppR4            (lessonId "r4")            — manipulate/bind/fade/numbers/applied/words (no Workbench)
-//   AppR5            (lessonId "r5")            — 1-manipulate/2-bind/3-fade/workbench/4-numbers/applied/5-words
+//   AppR5            (lessonId "r5")            — 1-identify/2-fill/3-read/4-wholes/5-back/6-numbers/practice
 //
 // The mapping is conservative: we assign the LOWEST design level that accurately
 // describes the child's scaffold context for independence / transfer purposes.
@@ -43,25 +43,27 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
   // ---- LessonUnlikeDen (r2 = Scale One, r3 = Cross-Multiply) ---------------
   // Both use the same beat keys from NEXT_BEAT in LessonUnlikeDen.jsx.
   //
-  //   L0 — "blocks lead": drag knife, slice strips (max manipulative support)
-  //   L2 — "pick the size": blocks faded to outlines, picker + join by hand
-  //   L4 — "new dress": equation leads, blocks are only a check (auto-join)
-  //   L5 — "bare + ghost backdrop": just equation, bars linger dimmed
-  //   L6 — "bare slate": equation + inputs only, no manipulatives
-  //   L7 — "word problem": prose only, stylus answer
+  //   L0  — "blocks lead": drag knife, slice strips (max manipulative support)
+  //   L2  — "pick the size": blocks faded to outlines, picker + join by hand
+  //   L4  — "new dress": equation leads, blocks are only a check (auto-join)
+  //   L5  — "bare + ghost backdrop": just equation, bars linger dimmed
+  //   L6  — "bare slate": equation + inputs only, no manipulatives
+  //   SMP — "simplify": static demo of GCF reduction (3/10 + 1/6 = 14/30 → 7/15)
+  //   LA  — "applied": worded question, numerals shown
+  //   L7  — "word problem": prose only, stylus answer
   //
   // L1 is not a discrete beat in the UI; L0 is the entry point.
   if (id === 'r2' || id === 'r3') {
     switch (beat) {
-      case 'L0': return 0; // blocks are the problem, knife drag
-      case 'L2': return 1; // blocks faded to outlines, picker picks
-      case 'L4': return 2; // numbers lead, blocks check only
-      case 'LW': return 1; // Workbench — block sandbox (manipulative support)
-      case 'L5': return 3; // bare equation with ghost backdrop
-      case 'L6': return 3; // bare slate — numbers only (=L3)
-      case 'LA': return 3; // Applied — worded, numerals shown (numbers handed in)
-      case 'L7': return 4; // word problem — fully independent
-      default:   return 0;
+      case 'L0':  return 0; // blocks are the problem, knife drag
+      case 'L2':  return 1; // blocks faded to outlines, picker picks
+      case 'L4':  return 2; // numbers lead, blocks check only
+      case 'L5':  return 3; // bare equation with ghost backdrop
+      case 'L6':  return 3; // bare slate — numbers only (=L3)
+      case 'SMP': return 3; // simplify demo — GCF reduction, near-independent
+      case 'LA':  return 3; // Applied — worded, numerals shown (numbers handed in)
+      case 'L7':  return 4; // word problem — fully independent
+      default:    return 0;
     }
   }
 
@@ -136,21 +138,37 @@ export function toScaffoldLevel(lessonId, nativeBeat) {
   }
 
   // ---- AppR5 (r5 — IMPROPER_TO_MIXED) --------------------------------------
-  // Stage ids: "1-manipulate" | "2-bind" | "3-fade" | "4-numbers" | "5-words"
-  // or numeric 1–5.
+  // Stage ids: "1-identify" | "2-fill" | "3-read" | "4-wholes" | "5-back" |
+  // "6-numbers" | "practice"
+  // 7-stage arc: Identify(L0), Fill a Whole(L0), Read(L1), How Many Wholes(L2),
+  // The Other Way(L3), Numbers(L3), Practice(L4).
   if (id === 'r5') {
-    // 7-stage arc: 1-manipulate, 2-bind, 3-fade, workbench, 4-numbers, applied,
-    // 5-words. Workbench/applied are string keys (no leading digit).
-    if (beat === 'workbench') return 1; // block sandbox (manipulative support)
-    if (beat === 'applied')   return 3; // worded, improper fraction shown
-    const n = parseStageN(beat);
-    switch (n) {
-      case 1: return 0;
-      case 2: return 1;
-      case 3: return 2;
-      case 4: return 3;
-      case 5: return 4;
-      default: return 0;
+    switch (beat) {
+      case '1-identify': return 0;  // count strip, fill fraction
+      case '2-fill':     return 0;  // see d/d = 1 whole
+      case '3-read':     return 1;  // read mixed number off strip
+      case '4-wholes':   return 2;  // 11/4 strip, count wholes
+      case '5-back':     return 3;  // reverse: mixed → improper
+      case '6-numbers':  return 3;  // no picture, both directions
+      case 'practice':   return 4;  // auto-generated
+      default:           return 0;
+    }
+  }
+
+  // ---- AppSimp (simp — SIMPLIFY, new lesson) ---------------------------------
+  // Stage ids: identify | bundle | lowest | bigbundle | pick | numbers | practice
+  // 7-stage arc: Identify(L0), Bundle(L0), Lowest Terms(L1), Big Bundle(L2),
+  // Pick(L3), Numbers(L3), Practice(L4).
+  if (id === 'simp') {
+    switch (beat) {
+      case 'identify':   return 0; // MC naming — max support
+      case 'bundle':     return 0; // drag ÷2 one step
+      case 'lowest':     return 1; // drag to lowest terms
+      case 'bigbundle':  return 2; // pick GCF, one move
+      case 'pick':       return 3; // MC pick simplest pair
+      case 'numbers':    return 3; // bare slate, no picture
+      case 'practice':   return 4; // auto-generated
+      default:           return 0;
     }
   }
 
@@ -220,8 +238,15 @@ export function toBeatForLevel(lessonId, designLevel) {
   }
 
   if (id === 'r5') {
-    const map = ['1-manipulate', '2-bind', '3-fade', '4-numbers', '5-words'];
-    return map[level] ?? '1-manipulate';
+    // L0→Identify, L1→Read, L2→How Many Wholes, L3→Numbers, L4→Practice
+    const map = ['1-identify', '3-read', '4-wholes', '6-numbers', 'practice'];
+    return map[level] ?? '1-identify';
+  }
+
+  if (id === 'simp') {
+    // L0→identify, L1→lowest, L2→bigbundle, L3→numbers, L4→practice
+    const map = ['identify', 'lowest', 'bigbundle', 'numbers', 'practice'];
+    return map[level] ?? 'identify';
   }
 
   return '1';

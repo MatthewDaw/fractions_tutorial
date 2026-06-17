@@ -69,8 +69,8 @@ const STAGE_BY_BADGE = {
   "4": { n: 4, key: "4-workbench" },
   "5": { n: 5, key: "5-numbers" },
   "6": { n: 6, key: "6-applied" },
-  "sw": { n: "showwork", key: "showwork" },
-  "7": { n: 7, key: "7-words" },
+  "7": { n: "showwork", key: "showwork" },
+  "8": { n: 7, key: "7-words" },
   "★": { n: "practice", key: "practice" },
 };
 // Zip the registry strip (order + labels + subs) with the scaffold model above.

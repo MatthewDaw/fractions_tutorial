@@ -1,4 +1,4 @@
-/* room-r4-practice — №8 Simplify · Practice. The practice frame (GenPracticeBoard)
+/* room-r4-practice — №8 Equivalent Fractions · Practice. The practice frame (GenPracticeBoard)
    doesn't map onto the 4-zone board grid, so its body rides the `belowHTML`
    escape hatch; the shared chrome (toolbar + topbar + tab strip) still comes from
    <LessonScreen> via lesson:"r4". Interactive markup verbatim from the original. */
@@ -13,7 +13,7 @@ export default {
       <!-- ── BODY: GenPracticeBoard (skill SIMPLIFY) — the LessonShell body ─── -->
       <div class="gen-practice">
         <div class="gen-practice__q">
-          <span class="gen-practice__prompt">8/12 = ?</span>
+          <span class="gen-practice__prompt">1/3 = ?/6</span>
         </div>
         <div class="gen-practice__answer">
           <!-- fraction answer shape → stacked Slate (uncommitted write cells) -->

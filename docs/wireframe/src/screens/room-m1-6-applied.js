@@ -1,47 +1,52 @@
 /* room-m1-6-applied — №1 Equal Groups · Applied (Stage 6, #/m1).
-   Word-problem step folded onto the shared 4-zone board: story+hint in the rail,
-   the count × size setup gate as the stage, the total slate as the answer, the
-   Cook + ribbon as the tutor. Interactive markup is verbatim from the original. */
+   Word-problem step using the wide word-problem layout: story card + setup gate
+   in the stage column (matches real-app AppM1 Applied beat which uses WordProblem
+   in variant="wide" LessonBoard). The Cook + ribbon remain in the tutor slot. */
 export default {
   kind: "lesson",
   lesson: "m1",
 
-  railHTML: `
-          <div class="panel">
-            <h3>Babushka's kitchen</h3>
-            <div class="hint">The little cook set out <b>3 plates</b>, then put <b>4 pelmeni</b> on every plate. How many pelmeni in all? Write it as count × size first (3 × 4), then give the total.</div>
+  stageHTML: `
+          <!-- WordProblem card: story text + count×size setup gate (mirrors real-app Applied beat) -->
+          <div class="wp-card" style="margin:20px 24px;border:1px solid var(--ink);border-radius:6px;padding:18px 20px;background:var(--paper-2);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <div class="wp-tag" style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.55;">Babushka's Kitchen</div>
+              <button type="button" class="speaker" style="font-size:12px;display:flex;align-items:center;gap:5px;">
+                <svg width="14" height="12" viewBox="0 0 16 14"><path d="M1 5 H4 L8 1 V13 L4 9 H1 Z" fill="var(--red)"></path><path d="M11 4 Q14 7 11 10" stroke="var(--red)" stroke-width="1.4" fill="none"></path></svg>
+                Read aloud
+              </button>
+            </div>
+            <p class="wp-story" style="font-size:16px;line-height:1.5;margin:0 0 16px;">The little cook set out <b>3 plates</b>, then put <b>4 pelmeni</b> on every plate. How many pelmeni in all?</p>
+          </div>
+          <div class="wp-setup" style="padding:0 24px 12px;">
+            <div class="wp-setup-lead" style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.55;margin-bottom:8px;">First, write it as count × size</div>
+            <div class="wp-setup-row" style="display:flex;align-items:center;gap:12px;">
+              <div class="m1-setup-row">
+                <div class="slate slate-row" role="group" aria-label="how many groups">
+                  <div class="slate-slot">
+                    <div class="slate-cell">
+                      <canvas class="slate-canvas" role="img" aria-label="write the groups digit"></canvas>
+                      <span class="slate-ph" aria-hidden="true">✎</span>
+                    </div>
+                  </div>
+                </div>
+                <span class="m1-setup-times">×</span>
+                <div class="slate slate-row" role="group" aria-label="how many in each group">
+                  <div class="slate-slot">
+                    <div class="slate-cell">
+                      <canvas class="slate-canvas" role="img" aria-label="write the in each digit"></canvas>
+                      <span class="slate-ph" aria-hidden="true">✎</span>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="wp-check">Check the setup</button>
+              </div>
+            </div>
           </div>`,
 
-  stageHTML: `
-            <div class="wp-setup">
-              <span class="wp-setup-lead">First, write it as count × size</span>
-              <div class="wp-setup-row">
-                <div class="m1-setup-row">
-                  <div class="slate slate-row" role="group" aria-label="how many groups">
-                    <div class="slate-slot">
-                      <div class="slate-cell">
-                        <canvas class="slate-canvas" role="img" aria-label="write the groups digit"></canvas>
-                        <span class="slate-ph" aria-hidden="true">✎</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span class="m1-setup-times">×</span>
-                  <div class="slate slate-row" role="group" aria-label="how many in each group">
-                    <div class="slate-slot">
-                      <div class="slate-cell">
-                        <canvas class="slate-canvas" role="img" aria-label="write the in each digit"></canvas>
-                        <span class="slate-ph" aria-hidden="true"></span>
-                      </div>
-                    </div>
-                  </div>
-                  <button type="button" class="wp-check">Check the setup</button>
-                </div>
-              </div>
-            </div>`,
-
   answerHTML: `
-            <div class="wp-answer">
-              <span class="wp-answer-lead">Now write the total</span>
+            <div class="wp-answer" style="padding:8px 24px 12px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.55;margin-bottom:8px;">Now write the total</div>
               <div class="wp-answer-row">
                 <div class="slate slate-row is-disabled" role="group" aria-label="write the total">
                   <div class="slate-slot is-disabled">
@@ -77,9 +82,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />

@@ -1,0 +1,12 @@
+/* manip.css — shared kitchen-style manipulative tokens (jars / plums / trays).
+   UN-scoped on purpose so the SAME game renders identically in Babushka's Kitchen
+   AND in the lesson rooms (e.g. room-m1). Pairs with src/manip.js. */
+
+.kq-jars { display: inline-flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+.kq-jar { width: 62px; height: auto; display: block; }
+.kq-plum { width: 18px; height: 18px; border-radius: 50%; background: var(--red); border: 2px solid var(--red-deep); display: inline-block; }
+.kq-tray { display: inline-flex; flex-wrap: wrap; gap: 8px; padding: 8px 12px; margin-top: 16px;
+  border: 1.5px dashed var(--ink); align-items: center; justify-content: center; }
+
+/* a pickle — flat green capsule (SVG); shared by the kitchen tool and the m3 jar */
+.kq-pickle { width: 44px; height: auto; display: block; }

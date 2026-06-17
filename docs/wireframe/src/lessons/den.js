@@ -6,17 +6,18 @@
    in one pass later.) */
 export default {
   id: "den",
+  backHref: "shelf-build.html",
   num: "№3",
-  tag: "Lesson 3 · Building Fractions",
+  tag: "Lesson 3 · The Bottom Number",
   title: "The Bottom Number",
   route: "#/den",
   tabs: [
-    { n: "1", name: "Split",   sub: "break the ruler into equal pieces", href: "room-den.html" },
-    { n: "2", name: "Match",   sub: "match the ruler to its number",     href: "room-den-2-match.html" },
-    { n: "3", name: "Build",   sub: "make two squares match (bottom only)", href: "room-den-build.html" },
-    { n: "4", name: "Smaller", sub: "which piece is smaller?",           href: "room-den-3-smaller.html" },
-    { n: "5", name: "Numbers", sub: "smaller — just from the number",    href: "room-den-4-numbers.html" },
-    { n: "6", name: "Paint",   sub: "paint 1/N of the square red",       href: "room-den-paint.html" },
+    { n: "1", name: "Paint",   sub: "cut into N, then paint 1/N red",       href: "room-den-paint.html" },
+    { n: "2", name: "Split",   sub: "break the ruler into equal pieces",     href: "room-den.html" },
+    { n: "3", name: "Match",   sub: "match the ruler to its number",         href: "room-den-match.html" },
+    { n: "4", name: "Build",   sub: "make two squares match (bottom only)",  href: "room-den-build.html" },
+    { n: "5", name: "Smaller", sub: "which piece is smaller?",               href: "room-den-3-smaller.html" },
+    { n: "6", name: "Numbers", sub: "smaller — just from the number",        href: "room-den-4-numbers.html" },
     { n: "★", name: "Practice", sub: "fresh problems — paced to your mastery", href: "room-den-practice.html" },
   ],
 };

@@ -84,3 +84,23 @@
 
 .cmp-ans-marks { display: inline-flex; align-items: center; gap: 12px; margin-left: auto; }
 .cmp-ans-cap { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-mute); }
+
+/* ── drag-a-symbol comparison (shared by room-cmp AND the kitchen cmp answer) ──
+   A bin of < = > symbols on the LEFT; the comparison (fraction ? fraction) on the
+   right with an empty drop slot the student drags a symbol into. Un-scoped so it
+   works in the lesson board and in Babushka's Kitchen alike. */
+.cmp-drag { display: inline-flex; align-items: center; gap: 28px; }
+.cmp-symbin { display: inline-flex; gap: 8px; padding: 8px; border: 1.5px dashed var(--ink); }
+.cmp-sym {
+  all: unset; cursor: grab; box-sizing: border-box; min-width: 46px; min-height: 46px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 26px; color: var(--ink);
+  border: 2px solid var(--ink); background: var(--paper-1); box-shadow: 2px 2px 0 rgba(28,22,18,0.16);
+}
+.cmp-sym:hover { background: var(--paper-2); transform: translate(-1px,-1px); }
+.cmp-compare { display: inline-flex; align-items: center; gap: 18px; }
+.cmp-drop {
+  width: 54px; height: 54px; display: inline-flex; align-items: center; justify-content: center;
+  border: 2px dashed var(--red); border-radius: 6px; background: rgba(157,42,42,0.06);
+  font-family: var(--display); font-size: 26px; color: var(--red);
+}

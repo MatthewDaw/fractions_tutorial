@@ -9,4 +9,5 @@ export default defineConfig({
   // port so there's never any confusion about which one you're looking at.
   server: { port: 5180, strictPort: true, open: true },
   preview: { port: 5180, strictPort: true },
+  build: { chunkSizeWarningLimit: 1000 },
 });

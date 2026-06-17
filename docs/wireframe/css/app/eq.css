@@ -1,0 +1,161 @@
+/* eq.css — "Equivalent Fractions" lessons (×2 and ×3 rooms). The fraction is shown
+   as a SQUARE whose left columns are shaded (the amount), with a grid laid over it.
+   A "splitting tool" cuts every cell into more pieces: the shaded AREA never moves,
+   but the cell COUNT (top & bottom) grows — that is what makes 1/3 = 2/6 = 3/9 …
+   All classes namespaced .eq-*. Warm paper/ink palette from tokens.css. */
+
+.eq-stage {
+  height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  gap: 30px; padding: 16px 48px;
+}
+.eq-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.eq-lab {
+  font-family: var(--display); font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+
+/* ── the square ─────────────────────────────────────────────────────────────
+   A grid of cols×rows cells; the left `shaded` columns are inked red. Ink shows
+   through the 2px gaps as the cut lines. */
+.eq-box {
+  width: 232px; height: 232px;
+  display: grid; gap: 2px; padding: 2px;
+  background: var(--ink);
+  border: 2.5px solid var(--ink); border-radius: 8px;
+  box-shadow: inset 0 2px 8px rgba(20,12,6,0.18), 0 3px 0 var(--shade);
+}
+.eq-box.is-sm { width: 168px; height: 168px; }
+.eq-box.is-target { box-shadow: 0 0 0 2px var(--red), 0 3px 0 var(--shade); }
+
+.eq-cell { background: var(--paper-1); position: relative; }
+.eq-cell.is-on { background: var(--red); }
+.eq-cell.is-on::after {
+  content: ""; position: absolute; inset: 0; opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(237,226,200,0.40) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, rgba(237,226,200,0.40) 0 1px, transparent 1px 7px);
+}
+/* the fixed "amount" edge — a red guide on the boundary of the shaded columns,
+   to make it obvious the shaded AREA stays put while the cuts multiply. */
+.eq-box.is-guide { position: relative; }
+.eq-guide-edge {
+  position: absolute; top: -8px; bottom: -8px; width: 0;
+  border-left: 2px dashed var(--red); z-index: 3;
+}
+
+/* the big fraction glyph */
+.eq-frac .bignum { font-size: 56px; }
+.eq-eq { font-family: var(--serif); font-style: italic; font-size: 30px; color: var(--ink-mute); text-align: center; line-height: 1.1; }
+.eq-cap {
+  font-family: var(--serif); font-style: italic; font-size: 15px;
+  color: var(--ink-mute); text-align: center; max-width: 240px;
+}
+
+/* ── the splitting-tool rack (rail) — a knife per cut size ──────────────────── */
+.eq-tools { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.eq-tool {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 14px; cursor: pointer;
+  font-family: var(--display); font-size: 16px; color: var(--ink);
+  background: var(--paper-1); border: 2px solid var(--ink); border-radius: 10px;
+  box-shadow: 0 3px 0 var(--shade);
+}
+.eq-tool .eq-tool-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 40px; height: 30px; padding: 0 8px;
+  background: var(--red); color: var(--paper-1);
+  border: 2px solid var(--red-deep); border-radius: 7px;
+  font-size: 15px; letter-spacing: 0.02em;
+}
+.eq-tool .eq-tool-lab { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+.eq-tool.is-on { background: rgba(163,42,34,0.10); border-color: var(--red-deep); }
+.eq-tool.is-frozen { opacity: 0.5; cursor: default; }
+
+/* ── the running list of equivalents the child has found ────────────────────── */
+.eq-found { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.eq-chip {
+  font-family: var(--display); font-size: 16px;
+  padding: 6px 12px; color: var(--ink);
+  background: var(--paper-2); border: 2px solid var(--ink); border-radius: 9px;
+}
+.eq-chip.is-found { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); }
+.eq-chip.is-blank { color: var(--paper-3); border-style: dashed; }
+
+/* ── number-pick slots (the "choose top & bottom" stages) ───────────────────── */
+.eq-pickcol { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+/* a 1–12 picker is too tall for one column, so it splits into two side by side */
+.eq-numgrid { display: flex; gap: 6px; }
+.eq-numcol { display: flex; flex-direction: column; gap: 4px; }
+.eq-num {
+  width: 30px; height: 28px; flex: none; display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 15px; color: var(--ink);
+  background: var(--paper-1); border: 2px solid var(--ink); border-radius: 9px;
+  box-shadow: 0 2px 0 var(--shade);
+}
+.eq-num.is-on { background: var(--red); color: var(--paper-1); border-color: var(--red-deep); box-shadow: 0 2px 0 var(--red-deep); }
+.eq-slot-active { outline: 2px dashed var(--red); outline-offset: 3px; background: rgba(163,42,34,0.08); border-radius: 8px; }
+.eq-slot-locked { color: var(--ink-mute); }
+
+/* ── Mixed Numbers: a number-line strip marked into wholes ─────────────────── */
+.mix-ruler-wrap { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.mix-ruler {
+  width: var(--mix-w, 560px); height: 74px; display: flex;
+  border: 2.5px solid var(--ink); border-radius: 7px; overflow: hidden;
+  background: var(--paper-2);
+  box-shadow: inset 0 2px 8px rgba(20,12,6,0.18), 0 3px 0 var(--shade);
+}
+.mix-seg { flex: 1 1 0; min-width: 0; position: relative; border-right: 2px solid rgba(28,22,18,0.30); }
+.mix-seg:last-child { border-right: none; }
+.mix-seg.whole-end { border-right: 3px solid var(--ink); }  /* heavier line at a whole boundary */
+.mix-seg.is-on { background: var(--red); }
+.mix-seg.is-on::after {
+  content: ""; position: absolute; inset: 0; opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(237,226,200,0.40) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, rgba(237,226,200,0.40) 0 1px, transparent 1px 7px);
+}
+.mix-labels {
+  width: var(--mix-w, 560px); display: flex; justify-content: space-between;
+  font-family: var(--type); font-size: 15px; color: var(--ink-mute);
+}
+
+/* the mixed-number glyph: big whole + small stacked fraction (e.g. 1¾) */
+.mix-num { display: inline-flex; align-items: center; gap: 7px; }
+.mix-whole { font-family: var(--display); font-size: 60px; line-height: 1; color: var(--red); }
+.mix-frac { display: inline-flex; flex-direction: column; align-items: center; font-family: var(--display); line-height: 1; }
+.mix-n { color: var(--red); font-size: 26px; padding: 0 5px; }
+.mix-d { font-size: 26px; padding: 3px 5px 0; border-top: 3px solid var(--ink); }
+
+/* ── sort game: drag each new fraction into the bin it is equal to ──────────── */
+.eq-sort { height: 100%; display: flex; align-items: center; justify-content: center; gap: 40px; padding: 16px 36px; }
+.eq-pile { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* a draggable fraction card */
+.eq-card {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 6px 16px; cursor: grab;
+  background: var(--paper-1); border: 2px solid var(--ink); border-radius: 10px;
+  box-shadow: 0 3px 0 var(--shade);
+}
+.eq-card .bignum { font-size: 28px; }
+.eq-card.is-drag { transform: rotate(-4deg); border-color: var(--red); box-shadow: 0 6px 0 var(--shade); }
+
+/* the row of target bins */
+.eq-bins { display: flex; gap: 14px; align-items: stretch; }
+.eq-bin {
+  width: 132px; min-height: 286px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 10px 8px;
+  background: var(--paper-2); border: 2px dashed var(--ink); border-radius: 12px;
+}
+.eq-bin.is-hot { border-style: solid; border-color: var(--red); background: rgba(163,42,34,0.06); }
+.eq-bin-head {
+  width: 100%; text-align: center; padding-bottom: 6px;
+  border-bottom: 2px solid var(--paper-3);
+}
+.eq-bin-head .bignum { font-size: 32px; }
+.eq-bin-body { display: flex; flex-direction: column; gap: 7px; width: 100%; align-items: center; }
+/* cards already dropped in a bin sit a touch smaller and calmer */
+.eq-bin-body .eq-card { cursor: default; box-shadow: 0 2px 0 var(--shade); padding: 4px 12px; }
+.eq-bin-body .eq-card .bignum { font-size: 24px; }

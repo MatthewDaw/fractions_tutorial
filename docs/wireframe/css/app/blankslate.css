@@ -56,3 +56,15 @@
   box-shadow: 4px 4px 0 rgba(28,22,18,0.16);
   overflow: hidden;
 }
+
+/* The shared "show your work" sheet (showWork.js) IS the stage. It fills the whole
+   play area with ZERO margin: the stage drops its own border / inset / padding and
+   the sheet becomes the single bordered surface, edge to edge. One rule, every
+   show-work step — identical everywhere. */
+.lboard-stage:has(.showwork-sheet) {
+  padding: 0; border: none; box-shadow: none; background: none;
+}
+.showwork-sheet {
+  width: 100% !important; height: 100% !important;
+  margin: 0 !important; box-shadow: none !important;
+}

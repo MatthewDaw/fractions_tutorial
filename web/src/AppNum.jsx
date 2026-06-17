@@ -2,9 +2,9 @@
 // shell (LessonShell + LessonBoard) from day one, with identity + tab strip pulled
 // from the central registry (web/src/lessons/num.js). Taught on the same 0→1 RULER
 // (and 2-D square) as den: the TOP number COUNTS how many of the equal pieces are
-// shaded. Arc: explore top numbers (Shade) → read a shaded picture (Count) → fill
-// every piece, n/n = 1 (Whole) → match two squares by the top (Build) → rebuild
-// both numbers (Make) → reason from bare symbols (Numbers) → paint K/N (Paint) →
+// shaded. Arc: paint K/N (Paint) → explore top numbers (Shade) → read a shaded
+// picture (Count) → fill every piece, n/n = 1 (Whole) → match two squares by the
+// top (Build) → rebuild both numbers (Make) → reason from bare symbols (Numbers) →
 // a word problem with the numbers in it (Story) → a plain story problem (Words) →
 // generated-feel practice (★).
 //
@@ -40,13 +40,13 @@ const NODE = "FRACTION_ON_LINE";
 // (keyed by its badge `t.n`) with a stable scaffold key + stage number. Tab
 // LABELS / SUBS / order come from L.tabs; the wiring stays HERE.
 const STAGE_BY_BADGE = {
-  "1": { n: 1, key: "1-shade" },
-  "2": { n: 2, key: "2-count" },
-  "3": { n: 3, key: "3-whole" },
-  "4": { n: 4, key: "4-build" },
-  "5": { n: 5, key: "5-make" },
-  "6": { n: 6, key: "6-numbers" },
-  "7": { n: 7, key: "7-paint" },
+  "1": { n: 1, key: "1-paint" },
+  "2": { n: 2, key: "2-shade" },
+  "3": { n: 3, key: "3-count" },
+  "4": { n: 4, key: "4-whole" },
+  "5": { n: 5, key: "5-build" },
+  "6": { n: 6, key: "6-make" },
+  "7": { n: 7, key: "7-numbers" },
   "8": { n: 8, key: "8-story" },
   "9": { n: 9, key: "9-words" },
   "★": { n: "practice", key: "practice" },
@@ -57,17 +57,17 @@ const STAGES = L.tabs.map((t) => {
 });
 
 // Fixed worked examples per teaching stage (mirror the wireframe snapshots).
-const SHADE_DEN = 8;           // stage 1 — ruler split into 8; pick the top
-const COUNT_DEN = 8;           // stage 2 — read the picture
-const COUNT_TOP = 6;           //           6 of 8 shaded → top number 6
-const WHOLE_DEN = 7;           // stage 3 — pick top = 7 to fill all → 7/7 = 1
-const BUILD_DEN = 6;           // stage 4 — bottom fixed at 6
-const BUILD_TARGET = 4;        //           target top = 4 → 4/6
-const MAKE_TARGET = [8, 9];    // stage 5 — target [top, bottom] = 8/9
-const NUMBERS_PAIR = [3, 1];   // stage 6 — 3/5 vs 1/5 (bigger top wins → 3/5)
-const NUMBERS_DEN = 5;
-const PAINT_DEN = 4;           // stage 7 — paint 3/4
+const PAINT_DEN = 4;           // stage 1 — paint 3/4
 const PAINT_TOP = 3;
+const SHADE_DEN = 8;           // stage 2 — ruler split into 8; pick the top
+const COUNT_DEN = 8;           // stage 3 — read the picture
+const COUNT_TOP = 6;           //           6 of 8 shaded → top number 6
+const WHOLE_DEN = 7;           // stage 4 — pick top = 7 to fill all → 7/7 = 1
+const BUILD_DEN = 6;           // stage 5 — bottom fixed at 6
+const BUILD_TARGET = 4;        //           target top = 4 → 4/6
+const MAKE_TARGET = [5, 8];    // stage 6 — target [top, bottom] = 5/8
+const NUMBERS_PAIR = [3, 1];   // stage 7 — 3/5 vs 1/5 (bigger top wins → 3/5)
+const NUMBERS_DEN = 5;
 const STORY_ANS = [5, 8];      // stage 8 — Babushka's tray: 5/8
 const WORDS_ANS = [4, 6];      // stage 9 — six pieces, jam on four: 4/6
 
@@ -125,34 +125,57 @@ function makePractice(seed) {
   return { d: D, k };
 }
 
-const numcol = (max) => Array.from({ length: max }, (_, i) => i + 1);
+// Two-column 0–9 digit grid (matches wireframe digitGrid helper).
+function DigitGrid({ on, onPick, disabled }) {
+  const col = (s, e) =>
+    Array.from({ length: e - s + 1 }, (_, i) => s + i).map((k) => (
+      <button
+        key={k}
+        type="button"
+        className={"den-num" + (k === on ? " is-on" : "")}
+        aria-pressed={k === on}
+        disabled={disabled}
+        onClick={() => onPick(k)}
+      >
+        {k}
+      </button>
+    ));
+  return (
+    <div className="eq-numgrid">
+      <div className="den-numcol">{col(0, 4)}</div>
+      <div className="den-numcol">{col(5, 9)}</div>
+    </div>
+  );
+}
 
 export default function AppNum({ onBack, onRewatchIntro }) {
   const no = L.num.replace("№", "");
   const title = L.title;
 
-  // ---- Stage 1 (Shade) — chosen top number (free play) ----
+  // ---- Stage 1 (Paint) — divide button chosen + painted segment indices ----
+  const [paintDiv, setPaintDiv] = useState(PAINT_DEN); // which ÷N button is active
+  const [paintColor, setPaintColor] = useState("red"); // "red" | "ink"
+  const [painted, setPainted] = useState([]);
+
+  // ---- Stage 2 (Shade) — chosen top number (free play) ----
   const [shadeTop, setShadeTop] = useState(3);
 
-  // ---- Stage 2 (Count) — slate value for the top number ----
+  // ---- Stage 3 (Count) — slate value for the top number ----
   const [countVal, setCountVal] = useState({});
 
-  // ---- Stage 3 (Whole) — chosen top number for the 7-piece ruler ----
+  // ---- Stage 4 (Whole) — chosen top number for the 7-piece ruler ----
   const [wholeTop, setWholeTop] = useState(3);
 
-  // ---- Stage 4 (Build) — chosen top number (bottom fixed at 6) ----
+  // ---- Stage 5 (Build) — chosen top number (bottom fixed at 6) ----
   const [buildTop, setBuildTop] = useState(2);
 
-  // ---- Stage 5 (Make) — chosen top + bottom, plus which slot is being set ----
+  // ---- Stage 6 (Make) — chosen top + bottom, plus which slot is being set ----
   const [makeTop, setMakeTop] = useState(2);
   const [makeDen, setMakeDen] = useState(2);
   const [makeSlot, setMakeSlot] = useState("top"); // which slot a number-tap fills
 
-  // ---- Stage 6 (Numbers) — which bare fraction is bigger ----
+  // ---- Stage 7 (Numbers) — which bare fraction is bigger ----
   const [numbersPick, setNumbersPick] = useState(null);
-
-  // ---- Stage 7 (Paint) — which cells are painted red ----
-  const [painted, setPainted] = useState([]);
 
   // ---- Stages 8/9/★ (Story / Words / Practice) — slate fraction values ----
   const [storyVal, setStoryVal] = useState({});
@@ -162,7 +185,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
   const prac = makePractice(pracSeed);
 
   // ---- shared controller backbone (engine wiring + stage nav + outcome state) --
-  const SCAFFOLD_KEY = (key) => STAGES.find((s) => s.n === key || s.key === key)?.key ?? "1-shade";
+  const SCAFFOLD_KEY = (key) => STAGES.find((s) => s.n === key || s.key === key)?.key ?? "1-paint";
   const sc = useLessonScaffold({
     nodeId: NODE,
     lessonId: "num",
@@ -174,6 +197,8 @@ export default function AppNum({ onBack, onRewatchIntro }) {
     resetStage: () => {
       setCountVal({});
       setNumbersPick(null);
+      setPaintDiv(PAINT_DEN);
+      setPaintColor("red");
       setPainted([]);
       setStoryVal({});
       setWordsVal({});
@@ -196,7 +221,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
 
   function reset() { goStage(1); }
 
-  // ---- Stage 1 (Shade) — free play; pick a top number ------------------------
+  // ---- Stage 2 (Shade) — free play; pick a top number ------------------------
   function pickShade(k) {
     if (solvedRef.current) return;
     setShadeTop(k);
@@ -206,7 +231,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
     });
   }
 
-  // ---- Stage 2 (Count) — write the top number ---------------------------------
+  // ---- Stage 3 (Count) — write the top number ---------------------------------
   function checkCount() {
     if (solved) { nextStage(); return; }
     const t = parseInt(countVal.top, 10);
@@ -219,7 +244,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 3 (Whole) — pick top so EVERY piece fills -------------------------
+  // ---- Stage 4 (Whole) — pick top so EVERY piece fills -------------------------
   function pickWhole(k) {
     if (solvedRef.current) return;
     setWholeTop(k);
@@ -230,7 +255,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 4 (Build) — pick top so YOUR square matches the target ----------
+  // ---- Stage 5 (Build) — pick top so YOUR square matches the target ----------
   function pickBuild(k) {
     if (solvedRef.current) return;
     setBuildTop(k);
@@ -241,7 +266,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 5 (Make) — set BOTH numbers to rebuild the target ----------------
+  // ---- Stage 6 (Make) — set BOTH numbers to rebuild the target ----------------
   function pickMake(k) {
     if (solvedRef.current) return;
     if (makeSlot === "top") setMakeTop(k); else setMakeDen(k);
@@ -257,7 +282,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 6 (Numbers) — reason from the bare symbols ----------------------
+  // ---- Stage 7 (Numbers) — reason from the bare symbols ----------------------
   function pickNumbers(top) {
     if (solvedRef.current) return;
     setNumbersPick(top);
@@ -271,13 +296,18 @@ export default function AppNum({ onBack, onRewatchIntro }) {
     }
   }
 
-  // ---- Stage 7 (Paint) — paint exactly K of N cells red ----------------------
+  // ---- Stage 1 (Paint) — paint exactly K of N cells red ----------------------
   function toggleCell(i) {
     if (solvedRef.current) return;
     setPainted((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
   }
   function checkPaint() {
     if (solved) { nextStage(); return; }
+    if (paintDiv !== PAINT_DEN) {
+      flashBad();
+      setStatus({ tone: "warn", text: `First cut the strip into ${PAINT_DEN} — click the ÷${PAINT_DEN} button. Then paint ${PAINT_TOP} pieces.` });
+      return;
+    }
     if (painted.length === PAINT_TOP) {
       award(`Painted! ${PAINT_TOP} pieces out of ${PAINT_DEN} red — that's exactly ${PAINT_TOP}/${PAINT_DEN}.`, null, [PAINT_TOP, PAINT_DEN]);
     } else {
@@ -341,15 +371,15 @@ export default function AppNum({ onBack, onRewatchIntro }) {
 
   // QuestionBand: shown on most stages; HIDDEN on Words (the prose IS the prompt,
   // showing the digits would give it away) and on Numbers/Practice.
-  const showBand = stage === 1 || stage === 2 || stage === 3 || stage === 4 || stage === 5 || stage === 7 || stage === 8;
+  const showBand = stage === 1 || stage === 2 || stage === 3 || stage === 4 || stage === 5 || stage === 6 || stage === 8;
   const Band = (() => {
     let lead = "the top number", expr = null, answer = null;
-    if (stage === 1) { lead = "shade the pieces"; expr = <Frac top={shadeTop} d={SHADE_DEN} />; answer = `${shadeTop} of ${SHADE_DEN} shaded`; }
-    else if (stage === 2) { lead = "count the red"; expr = <Frac top="?" d={COUNT_DEN} />; answer = solved ? COUNT_TOP : "?"; }
-    else if (stage === 3) { lead = "make it whole"; expr = <Frac top={wholeTop} d={WHOLE_DEN} />; answer = solved ? "1 whole" : "?"; }
-    else if (stage === 4) { lead = "match the target"; expr = <Frac top={BUILD_TARGET} d={BUILD_DEN} />; answer = solved ? "matched" : "?"; }
-    else if (stage === 5) { lead = "rebuild both"; expr = <Frac top={MAKE_TARGET[0]} d={MAKE_TARGET[1]} />; answer = solved ? "matched" : "?"; }
-    else if (stage === 7) { lead = "paint this fraction"; expr = <Frac top={PAINT_TOP} d={PAINT_DEN} />; answer = solved ? "painted" : "?"; }
+    if (stage === 1) { lead = "paint this fraction"; expr = <Frac top={PAINT_TOP} d={PAINT_DEN} />; answer = solved ? "painted" : "?"; }
+    else if (stage === 2) { lead = "shade the pieces"; expr = <Frac top={shadeTop} d={SHADE_DEN} />; answer = `${shadeTop} of ${SHADE_DEN} shaded`; }
+    else if (stage === 3) { lead = "count the red"; expr = <Frac top="?" d={COUNT_DEN} />; answer = solved ? COUNT_TOP : "?"; }
+    else if (stage === 4) { lead = "make it whole"; expr = <Frac top={wholeTop} d={WHOLE_DEN} />; answer = solved ? "1 whole" : "?"; }
+    else if (stage === 5) { lead = "match the target"; expr = <Frac top={BUILD_TARGET} d={BUILD_DEN} />; answer = solved ? "matched" : "?"; }
+    else if (stage === 6) { lead = "rebuild both"; expr = <Frac top={MAKE_TARGET[0]} d={MAKE_TARGET[1]} />; answer = solved ? "matched" : "?"; }
     else if (stage === 8) { lead = "what fraction is filled?"; expr = <span style={{ fontStyle: "italic", fontSize: 22 }}>5 of 8 slices</span>; answer = solved ? `${STORY_ANS[0]}/${STORY_ANS[1]}` : "?"; }
     return <QuestionBand lead={lead} expr={expr} answer={answer} />;
   })();
@@ -358,7 +388,82 @@ export default function AppNum({ onBack, onRewatchIntro }) {
   let body = null;
 
   if (stage === 1) {
-    // STAGE 1 · SHADE — pick a top number; that many pieces shade red (den=8).
+    // STAGE 1 · PAINT — cut the strip with a divide button, then paint K of N pieces red.
+    const divOptions = [2, 3, 4, 6];
+    body = (
+      <LessonBoard
+        footHeight={150}
+        railWidth={340}
+        stage={
+          <div className="canvas">
+            <div className="sq-game sq-paint">
+              <div className="eq-col" style={{ gap: 14 }}>
+                <span className="sq-side-lab">paint {PAINT_TOP}/{PAINT_DEN} red</span>
+                <div className="den-ruler-wrap" style={{ gap: 6 }}>
+                  <div
+                    className="den-ruler is-paint"
+                    style={{ "--den-ruler-w": "460px" }}
+                    aria-label={`ruler of ${paintDiv} pieces`}
+                  >
+                    {Array.from({ length: paintDiv }, (_, i) => (
+                      <div
+                        key={i}
+                        className={"den-seg" + (painted.includes(i) ? " is-unit" : "")}
+                        onClick={!solved ? () => toggleCell(i) : undefined}
+                      />
+                    ))}
+                  </div>
+                  <div className="den-ends" style={{ "--den-ruler-w": "460px" }}><span>0</span><span>1</span></div>
+                </div>
+                <div className="sq-divide">
+                  <span className="sq-divide-lab">cut the strip into:</span>
+                  {divOptions.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      className={"sq-divbtn" + (d === paintDiv ? " is-on" : "")}
+                      disabled={solved}
+                      onClick={() => { setPaintDiv(d); setPainted([]); }}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="sq-tool">
+                <div className="sq-tool-h">Fill</div>
+                <div className="sq-swatches">
+                  <span
+                    className={"sq-swatch is-red" + (paintColor === "red" ? " is-on" : "")}
+                    onClick={() => setPaintColor("red")}
+                  />
+                  <span
+                    className={"sq-swatch is-ink" + (paintColor === "ink" ? " is-on" : "")}
+                    onClick={() => setPaintColor("ink")}
+                  />
+                </div>
+                <button type="button" className="sq-reset" onClick={() => setPainted([])} disabled={solved}>Reset</button>
+              </div>
+            </div>
+          </div>
+        }
+        rail={<HintRail heading="Cut, Then Paint" hint={<><b>Paint {PAINT_TOP}/{PAINT_DEN} of the strip red.</b> First, <b>cut the strip</b> — click the <b>÷{PAINT_DEN}</b> button so the bottom number is <b>{PAINT_DEN}</b> (four equal pieces). Then <b>paint {PAINT_TOP}</b> of those pieces red — the top number says how many. Tap pieces to fill them; <b>Reset</b> to start over.</>} />}
+        answer={
+          <AnswerBar
+            eq={<><span className="den-ans-amt">cut into <b>{PAINT_DEN}</b>, then paint</span><span className="sq-frac"><Frac top={PAINT_TOP} d={PAINT_DEN} size={30} /></span><span className="den-ans-amt">— <b>{PAINT_TOP}</b> pieces of <b>{PAINT_DEN}</b></span></>}
+            cap={solved ? `${PAINT_TOP} pieces of ${PAINT_DEN} — that's ${PAINT_TOP}/${PAINT_DEN}` : "divide into the bottom number first, then paint the top"}
+            solved={solved}
+            ready={painted.length === PAINT_TOP && paintDiv === PAINT_DEN && !solved}
+            stars={stars}
+            onCheck={checkPaint}
+            checkLabel={solved ? "Next stage ▸" : "Got it"}
+          />
+        }
+        tutor={Tutor}
+      />
+    );
+  } else if (stage === 2) {
+    // STAGE 2 · SHADE — pick a top number; that many pieces shade red (den=8).
     body = (
       <LessonBoard
         footHeight={150}
@@ -366,11 +471,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         stage={
           <div className="canvas">
             <div className="den-play">
-              <div className="den-numcol" role="group" aria-label="pick a top number">
-                {numcol(SHADE_DEN).map((k) => (
-                  <button key={k} type="button" className={"den-num" + (k === shadeTop ? " is-on" : "")} aria-pressed={k === shadeTop} onClick={() => pickShade(k)}>{k}</button>
-                ))}
-              </div>
+              <DigitGrid on={shadeTop} onPick={pickShade} />
               <div className="den-pick-frac"><Frac top={shadeTop} d={SHADE_DEN} /></div>
               <Ruler n={SHADE_DEN} k={shadeTop} cap={`Bottom number is ${SHADE_DEN} — eight equal pieces. The top number says how many to shade.`} />
             </div>
@@ -391,8 +492,8 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 2) {
-    // STAGE 2 · COUNT — the ruler is shaded; write the top number (bottom locked).
+  } else if (stage === 3) {
+    // STAGE 3 · COUNT — the ruler is shaded; write the top number (bottom locked).
     body = (
       <LessonBoard
         footHeight={150}
@@ -420,8 +521,8 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 3) {
-    // STAGE 3 · WHOLE — pick the top number that fills every piece (n/n = 1).
+  } else if (stage === 4) {
+    // STAGE 4 · WHOLE — pick the top number that fills every piece (n/n = 1).
     body = (
       <LessonBoard
         footHeight={150}
@@ -429,11 +530,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         stage={
           <div className="canvas">
             <div className="den-play">
-              <div className="den-numcol" role="group" aria-label="pick a top number">
-                {numcol(WHOLE_DEN).map((k) => (
-                  <button key={k} type="button" className={"den-num" + (k === wholeTop ? " is-on" : "")} aria-pressed={k === wholeTop} disabled={solved} onClick={() => pickWhole(k)}>{k}</button>
-                ))}
-              </div>
+              <DigitGrid on={wholeTop} onPick={pickWhole} disabled={solved} />
               <div className="den-pick-frac"><Frac top={wholeTop} d={WHOLE_DEN} /></div>
               <Ruler n={WHOLE_DEN} k={Math.min(wholeTop, WHOLE_DEN)} cap={solved ? `Every one of the ${WHOLE_DEN} pieces is red — the whole ruler is filled.` : "Pick a top number that shades every piece."} />
             </div>
@@ -455,8 +552,8 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 4) {
-    // STAGE 4 · BUILD — pick the top number so YOUR square matches (bottom = 6).
+  } else if (stage === 5) {
+    // STAGE 5 · BUILD — pick the top number so YOUR square matches (bottom = 6).
     body = (
       <LessonBoard
         footHeight={150}
@@ -464,14 +561,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         stage={
           <div className="canvas">
             <div className="sq-game">
-              <div className="sq-pickcol">
-                <span className="num-tag">numbers</span>
-                <div className="den-numcol" role="group" aria-label="pick the top number">
-                  {numcol(BUILD_DEN).map((k) => (
-                    <button key={k} type="button" className={"den-num" + (k === buildTop ? " is-on" : "")} aria-pressed={k === buildTop} disabled={solved} onClick={() => pickBuild(k)}>{k}</button>
-                  ))}
-                </div>
-              </div>
+              <DigitGrid on={buildTop} onPick={pickBuild} disabled={solved} />
               <div className="sq-frac-pick">
                 <div className="bignum" style={{ fontSize: 48 }}><span className="n sq-slot-active" style={{ color: "var(--red)" }}>{buildTop}</span><span className="bar" style={{ background: "var(--ink)" }} /><span className="d sq-slot-locked">{BUILD_DEN}</span></div>
                 <div className="sq-frac-hint">bottom is fixed — pick the top number</div>
@@ -504,8 +594,8 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 5) {
-    // STAGE 5 · MAKE — set BOTH numbers to rebuild the target square.
+  } else if (stage === 6) {
+    // STAGE 6 · MAKE — set BOTH numbers to rebuild the target square.
     body = (
       <LessonBoard
         footHeight={150}
@@ -513,14 +603,7 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         stage={
           <div className="canvas">
             <div className="sq-game">
-              <div className="sq-pickcol">
-                <span className="num-tag">numbers</span>
-                <div className="den-numcol" role="group" aria-label="pick a number">
-                  {numcol(9).map((k) => (
-                    <button key={k} type="button" className={"den-num" + (k === (makeSlot === "top" ? makeTop : makeDen) ? " is-on" : "")} disabled={solved} onClick={() => pickMake(k)}>{k}</button>
-                  ))}
-                </div>
-              </div>
+              <DigitGrid on={makeSlot === "top" ? makeTop : makeDen} onPick={pickMake} disabled={solved} />
               <div className="sq-frac-pick">
                 <div className="bignum" style={{ fontSize: 48 }}>
                   <button type="button" className={"n num-slot-btn" + (makeSlot === "top" ? " sq-slot-active" : "")} style={{ color: "var(--red)" }} onClick={() => setMakeSlot("top")}>{makeTop}</button>
@@ -557,8 +640,8 @@ export default function AppNum({ onBack, onRewatchIntro }) {
         tutor={Tutor}
       />
     );
-  } else if (stage === 6) {
-    // STAGE 6 · NUMBERS — bare symbols; more on top is bigger (same bottom).
+  } else if (stage === 7) {
+    // STAGE 7 · NUMBERS — bare symbols; more on top is bigger (same bottom).
     body = (
       <LessonBoard
         footHeight={150}
@@ -588,41 +671,6 @@ export default function AppNum({ onBack, onRewatchIntro }) {
             onCheck={() => { if (solved) nextStage(); }}
             checkLabel={solved ? "Next stage ▸" : "Tap a fraction"}
             checkDisabled={!solved}
-          />
-        }
-        tutor={Tutor}
-      />
-    );
-  } else if (stage === 7) {
-    // STAGE 7 · PAINT — paint exactly K of N cells red.
-    body = (
-      <LessonBoard
-        footHeight={150}
-        railWidth={340}
-        stage={
-          <div className="canvas">
-            <div className="sq-game sq-paint">
-              <div className="sq-side">
-                <span className="sq-side-lab">paint {PAINT_TOP}/{PAINT_DEN} red</span>
-                <SquareBox n={PAINT_DEN} paint onCell={toggleCell} painted={painted} />
-              </div>
-              <div className="sq-tool">
-                <div className="sq-tool-h">Fill</div>
-                <button type="button" className="sq-reset" onClick={() => setPainted([])} disabled={solved}>Reset</button>
-              </div>
-            </div>
-          </div>
-        }
-        rail={<HintRail heading="Paint the Fraction" hint={<>This square is cut into <b>{PAINT_DEN}</b> equal pieces. <b>Paint {PAINT_TOP}/{PAINT_DEN} red</b>: the top number is <b>{PAINT_TOP}</b>, so fill in <b>{PAINT_TOP}</b> of the pieces. Tap a piece to fill it.</>} />}
-        answer={
-          <AnswerBar
-            eq={<><span className="den-ans-amt">Paint</span><span className="sq-frac"><Frac top={PAINT_TOP} d={PAINT_DEN} size={30} /></span><span className="den-ans-amt">of the square red — <b>{PAINT_TOP}</b> pieces of <b>{PAINT_DEN}</b></span></>}
-            cap={solved ? `${PAINT_TOP} pieces of ${PAINT_DEN} — that's ${PAINT_TOP}/${PAINT_DEN}` : `fill exactly ${PAINT_TOP} of the pieces, then check`}
-            solved={solved}
-            ready={painted.length === PAINT_TOP && !solved}
-            stars={stars}
-            onCheck={checkPaint}
-            checkLabel={solved ? "Next stage ▸" : "Got it"}
           />
         }
         tutor={Tutor}
@@ -738,13 +786,13 @@ export default function AppNum({ onBack, onRewatchIntro }) {
 // Intro line per stage (also the ribbon's initial text).
 function STAGE_INTRO(n) {
   switch (n) {
-    case 1: return "Pick a top number and watch the pieces shade red. The top number counts how many of the equal pieces are filled.";
-    case 2: return "Count the red pieces in the ruler. That count is the top number — write it in.";
-    case 3: return "Pick a top number that shades EVERY piece. When the top equals the bottom, the fraction is one whole.";
-    case 4: return "The bottom is fixed. Pick the top number so your square has as many red pieces as the target.";
-    case 5: return "Nothing is fixed now. Set the bottom (all pieces) and the top (red pieces) to rebuild the target.";
-    case 6: return "No picture. Same bottom number, so more on top is bigger. Which fraction is bigger?";
-    case 7: return "Three over four means three pieces out of four. Paint three of the four pieces red.";
+    case 1: return "Three over four means three pieces out of four. Paint three of the four pieces red.";
+    case 2: return "Pick a top number and watch the pieces shade red. The top number counts how many of the equal pieces are filled.";
+    case 3: return "Count the red pieces in the ruler. That count is the top number — write it in.";
+    case 4: return "Pick a top number that shades EVERY piece. When the top equals the bottom, the fraction is one whole.";
+    case 5: return "The bottom is fixed. Pick the top number so your square has as many red pieces as the target.";
+    case 6: return "Nothing is fixed now. Set the bottom (all pieces) and the top (red pieces) to rebuild the target.";
+    case 7: return "No picture. Same bottom number, so more on top is bigger. Which fraction is bigger?";
     case 8: return "Eight slices, five filled. The top is what's filled, the bottom is the total — write the fraction.";
     case 9: return "Read the story: six pieces in all, jam on four. Find both numbers and write the fraction.";
     case "practice": return "Fresh ones. Count the pieces, count the red, and name the shaded fraction.";

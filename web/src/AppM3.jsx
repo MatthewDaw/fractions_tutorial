@@ -76,8 +76,8 @@ const STAGE_BY_BADGE = {
   // String-keyed mandatory "show your work" step (between Applied and Words). A
   // non-numeric `n` keeps the numeric stages 1..7 from renumbering; the selector
   // and goStage route by `key`. scaffoldMap returns L3 for "showwork".
-  "sw": { n: "showwork", key: "showwork" },
-  "7": { n: 7, key: "7-words" },
+  "7": { n: "showwork", key: "showwork" },
+  "8": { n: 7, key: "7-words" },
   // Auto-generated, estimator-paced practice: the engine mints fresh MULT_FACTS
   // variations, re-rolls on a correct answer, fades to harder problems on a clean
   // streak, and probes transfer. Purely additive — no teaching stage is touched.
@@ -505,13 +505,14 @@ export default function AppM3({ onBack, onRewatchIntro, initialBeat }) {
             <div className="m3-bind">
               <div className="m3-bind-jar"><SkipJar groupSize={SIZE} groups={GROUPS} filled={GROUPS} onScoop={() => {}} /></div>
               <div className="m3-ribbon" aria-label="skip-count ribbon">
-                <span className="m3-ribbon-lead">count by {SIZE}s</span>
+                <span className="m3-ribbon-lead"><b>rows</b> · count by {SIZE}s</span>
                 {SEQUENCE.map((v, i) => (
                   <span
                     key={i}
                     className={"m3-ribbon-term" + (i === SEQUENCE.length - 1 ? " is-blank" : "")}
                     data-step={SIZE}
                   >
+                    <span className="m3-ribbon-row" aria-label={`${i + 1} row${i + 1 === 1 ? "" : "s"}`}>{i + 1}</span>
                     {i === SEQUENCE.length - 1 ? "?" : v}
                   </span>
                 ))}

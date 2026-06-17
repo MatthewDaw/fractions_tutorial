@@ -12,27 +12,22 @@ export default {
 
   stageHTML: `
           <div class="fit-stage canvas m3-fz-canvas" id="m3canvas">
-            <div class="fit-stage-content" style="transform:scale(0.78);">
+            <div class="fit-stage-content">
               <div class="m3-fade">
-                <!-- ghost jar: a faint confirmation chip (scaled 0.42 by CSS) -->
+                <!-- ghost jar: small faded confirmation above the number line -->
                 <div class="m3-fade-jar">
                   <div class="m3-jarwrap is-ghost">
-                    <div class="m3-jar" aria-label="jar holding 7 groups of 8 — 56 cubes">
-                      <div class="m3-jar-neck" aria-hidden="true"></div>
-                      <div class="m3-jar-body">
-                        <div class="m3-jar-cubes">
-                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
-                          <div class="m3-cluster" style="grid-template-columns:repeat(2,1fr);"><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span><span class="m3-cube" style="background:#d1495b; border-color:rgba(237,226,200,0.6);"><span class="m3-cube-hatch" style="background-image:repeating-linear-gradient(90deg, rgba(237,226,200,0.34) 0 1px, transparent 1px 6px); background-size:6px 6px;"></span></span></div>
+                    <div class="m3-jar">
+                      <div class="m3-jar-neck"></div>
+                      <div class="m3-jar-body" style="height:120px; width:120px;">
+                        <div class="m3-jar-cubes" style="gap:2px; padding:4px;">
+                          <div class="m3-cluster" style="grid-template-columns:repeat(8,1fr); opacity:0.6;"><span class="m3-cube" style="background:#d1495b;"></span><span class="m3-cube" style="background:#d1495b;"></span><span class="m3-cube" style="background:#d1495b;"></span><span class="m3-cube" style="background:#d1495b;"></span><span class="m3-cube" style="background:#d1495b;"></span><span class="m3-cube" style="background:#d1495b;"></span><span class="m3-cube" style="background:#d1495b;"></span><span class="m3-cube" style="background:#d1495b;"></span></div>
                         </div>
                       </div>
-                      <div class="m3-jar-tally">
-                        <span class="m3-jar-tally-n">56</span>
-                        <span class="m3-jar-tally-cap">cubes (7 groups of 8)</span>
-                      </div>
+                      <div class="m3-jar-tally"><span class="m3-jar-tally-n" style="font-size:18px;">56</span><span class="m3-jar-tally-cap">total</span></div>
                     </div>
                   </div>
                 </div>
-
                 <!-- SkipLine: 8,16,[?],32,[?],48,56 — blanks at 24 and 40 -->
                 <div class="m3-skipline">
                   <div class="m3-skipline-track" aria-label="skip-count number line">
@@ -112,9 +107,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4"></circle>
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4"></circle>
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4"></circle>
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round"></line>
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)"></ellipse>
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round"></line>
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)"></ellipse>
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4"></rect>
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"></path>

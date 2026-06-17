@@ -1,6 +1,7 @@
 /* room-m3-6-applied — №2 Times Facts · Applied (#/m3). Word-problem step folded
-   onto the shared <LessonScreen> 4-zone grid. Interactive markup is verbatim
-   from the original screen. */
+   onto the shared 4-zone board: story+hint in the rail, the groups × size setup
+   gate as the stage, the product slate as the answer, the Cook + ribbon as the
+   tutor. Interactive markup is verbatim from the original screen. */
 export default {
   kind: "lesson",
 
@@ -9,12 +10,11 @@ export default {
   railHTML: `
           <div class="panel">
             <h3>Babushka's kitchen</h3>
-            <div class="hint">Babushka fills <b>7</b> jars with mushrooms, <b>8</b> in each jar — how many mushrooms in all?</div>
+            <div class="hint">Babushka fills <b>7</b> jars with mushrooms, <b>8</b> in each jar — how many mushrooms in all? Write it as groups × size first (7 × 8), then give the product.</div>
           </div>`,
 
   stageHTML: `
             <div class="wp-setup">
-              <span class="wp-setup-lead">First, write it as groups × size</span>
               <div class="wp-setup-row">
                 <div class="m3-setup-row">
                   <div class="slate slate-row" role="group" aria-label="how many groups">
@@ -30,23 +30,22 @@ export default {
                     <div class="slate-slot">
                       <div class="slate-cell">
                         <canvas class="slate-canvas" role="img" aria-label="write the size digit"></canvas>
-                        <span class="slate-ph" aria-hidden="true"></span>
+                        <span class="slate-ph" aria-hidden="true">✎</span>
                       </div>
                     </div>
                   </div>
+                  <button type="button" class="wp-check">Check the setup</button>
                 </div>
-                <button type="button" class="wp-check">Check the setup</button>
               </div>
             </div>`,
 
   answerHTML: `
             <div class="wp-answer">
-              <span class="wp-answer-lead">Now write the product</span>
               <div class="wp-answer-row">
                 <div class="slate slate-row is-disabled" role="group" aria-label="write the product">
                   <div class="slate-slot is-disabled">
                     <div class="slate-cell">
-                      <canvas class="slate-canvas" role="img" aria-label="write a digit"></canvas>
+                      <canvas class="slate-canvas" role="img" aria-label="write the product digit"></canvas>
                       <span class="slate-ph" aria-hidden="true"></span>
                     </div>
                   </div>
@@ -77,9 +76,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />
@@ -101,6 +100,6 @@ export default {
                 <path d="M120 44 Q132 40 132 56 L120 56 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.5" />
               </svg>
             </div>
-            <div class="ribbon">That's the setup. Now write the product.</div>
+            <div class="ribbon">A question in words, with the numbers shown. Write it as groups × size first (7 × 8), then give the product.</div>
           </div>`,
 };

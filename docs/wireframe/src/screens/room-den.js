@@ -4,12 +4,8 @@
    watch the pieces get smaller as the number grows. Snapshot: 4 is picked → 1/4,
    ruler in four equal pieces. Ruler layout (not a 2-D box). */
 import { tutor } from "../cookSvg.js";
+import { digitGrid } from "../eqBox.js";
 
-// number column 1–9 (the chosen denominator is highlighted)
-const numcol = (on) =>
-  Array.from({ length: 9 }, (_, i) => i + 1)
-    .map((k) => `<div class="den-num${k === on ? " is-on" : ""}">${k}</div>`)
-    .join("");
 
 // a ruler split into n equal pieces; the first piece is the red unit 1/n
 const ruler = (n, unit) =>
@@ -17,13 +13,12 @@ const ruler = (n, unit) =>
     `<div class="den-seg${i === 0 ? " is-unit" : ""}">${i === 0 ? `<span class="den-seg-lab">${unit}</span>` : ""}</div>`
   ).join("");
 
-export default {
-  kind: "lesson",
+export default { kind: "lesson",
   lesson: "den",
 
   stageHTML: `
     <div class="den-play">
-      <div class="den-numcol">${numcol(4)}</div>
+      ${digitGrid(4)}
       <div class="den-pick-frac"><div class="bignum"><span class="n">1</span><span class="bar" style="background:var(--ink)"></span><span class="d">4</span></div></div>
       <div class="den-ruler-wrap">
         <div class="den-ruler">${ruler(4, "1/4")}</div>
@@ -55,5 +50,4 @@ export default {
       </div>
     </div>`,
 
-  tutorHTML: tutor("Pick a number and watch the ruler split. The bottom number says how many equal pieces the whole is cut into."),
-};
+  tutorHTML: tutor("Pick a number and watch the ruler split. The bottom number says how many equal pieces the whole is cut into.") };

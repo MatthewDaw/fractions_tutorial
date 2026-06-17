@@ -27,7 +27,7 @@ export default {
         </g>
       </svg>
 
-      <a class="wcard" href="room-m1.html" style="left:494px;top:438px;" title="Open Lesson 1" data-mastery-status="not-started">
+      <a class="wcard" href="room-m1.html" style="left:38.59%;top:54.75%;" title="Open Lesson 1" data-mastery-status="not-started">
         <div class="whead">
           <span class="wno">№1</span>
           <span class="wtag ready">Ready</span>
@@ -40,7 +40,7 @@ export default {
         </div>
       </a>
 
-      <a class="wcard" href="room-m3.html" style="left:786px;top:438px;" title="Open Lesson 2" data-mastery-status="not-started">
+      <a class="wcard" href="room-m3.html" style="left:61.41%;top:54.75%;" title="Open Lesson 2" data-mastery-status="not-started">
         <div class="whead">
           <span class="wno">№2</span>
           <span class="wtag ready">Ready</span>

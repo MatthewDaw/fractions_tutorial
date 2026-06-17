@@ -78,18 +78,6 @@
    back to the kitchen, not a red failure stamp. */
 .wtag.needs-review { background: rgba(196,140,46,0.16); color: #8a5a16; border-color: #b8862f; }
 
-/* U8: "Mixed Basket" entry — interleaved practice across introduced recipes. */
-.mixbasket-btn {
-  margin-top: 8px;
-  background: var(--paper-2, #f3e7cf);
-  border: 2px solid var(--red-deep, #6e1c16);
-  border-radius: 999px;
-  padding: 6px 16px;
-  font: 600 15px/1 var(--serif, Georgia, serif);
-  color: var(--red-deep, #6e1c16);
-  cursor: pointer;
-}
-.mixbasket-btn:hover { background: var(--red-deep, #6e1c16); color: var(--paper-1, #f7efdd); }
 .wcard--suggested { box-shadow: 4px 4px 0 rgba(28,22,18,0.22), 0 0 0 2px var(--red) inset; }
 
 /* shelf nodes — the map's top level (one per strand). Centre-anchored like the

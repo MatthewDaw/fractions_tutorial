@@ -1,20 +1,23 @@
-/* r5 — №9 Mixed Numbers (AppR5, #/r5). Centralized identity + step strip for
-   the whole family; every room-r5-*.js page declares only `lesson: "r5"`. */
+/* lessons/r5.js — identity + step strip for the rebuilt "Mixed Numbers" room
+   (#/r5, №12). Taught on a NUMBER-LINE STRIP that runs past 1: a value like 7/4
+   is "more than one whole", and the same amount repackaged as whole units + a
+   leftover is the mixed number 1¾. Both directions in one room — improper→mixed
+   (fill whole units, keep the leftover) and mixed→improper (break the wholes back
+   into pieces). Each step page declares only `lesson: "r5"`. */
 export default {
   id: "r5",
-  num: "№9",
-  tag: "Lesson 9 · Mixed Numbers",
+  backHref: "shelf-combine.html",
+  num: "№12",
+  tag: "Lesson 12 · Mixed Numbers",
   title: "Mixed Numbers",
   route: "#/r5",
   tabs: [
-    { n: "1", name: "Manipulate", sub: "Group every 7 into a whole — by touch, no writing.", href: "room-r5.html", title: "Group every 7 into a whole — by touch, no writing." },
-    { n: "2", name: "Bind", sub: "Group the whole, then WRITE the mixed number on the Slate.", href: "room-r5-2-bind.html", title: "Group the whole, then WRITE the mixed number on the Slate." },
-    { n: "3", name: "Fade", sub: "Blocks dim — choose how many wholes fit, then write.", href: "room-r5-3-fade.html", title: "Blocks dim — choose how many wholes fit, then write." },
-    { n: "W", name: "Workbench", sub: "Build the improper fraction from the bin, then count it.", href: "room-r5-workbench.html", title: "Build the improper fraction from the bin, then count it." },
-    { n: "4", name: "Numbers", sub: "Bare 9/7 = ? — write the whole mixed number.", href: "room-r5-4-numbers.html", title: "Bare 9/7 = ? — write the whole mixed number." },
-    { n: "A", name: "Applied", sub: "A worded question — write the improper fraction, then the answer.", href: "room-r5-applied.html", title: "A worded question — write the improper fraction, then the answer." },
-    { n: "✎", name: "Show Work", sub: "Show your work on a blank slate.", href: "room-r5-sw-showwork.html", title: "Show your work on a blank slate." },
-    { n: "5", name: "Words", sub: "A recipe story — read it, write the mixed number.", href: "room-r5-5-words.html", title: "A recipe story — read it, write the mixed number." },
+    { n: "1", name: "Identify", sub: "count the pieces — it runs past the 1 mark", href: "room-r5.html", title: "count the pieces — it runs past the 1 mark" },
+    { n: "2", name: "Fill a Whole", sub: "a full strip of d pieces is one whole — d/d = 1", href: "room-r5-2-fill.html", title: "a full strip of d pieces is one whole — d/d = 1" },
+    { n: "3", name: "Read", sub: "1 whole + 3/4 leftover — write 1¾", href: "room-r5-3-read.html", title: "1 whole + 3/4 leftover — write 1¾" },
+    { n: "4", name: "How Many Wholes", sub: "how many wholes fill, and what's left over", href: "room-r5-4-wholes.html", title: "how many wholes fill, and what's left over" },
+    { n: "5", name: "The Other Way", sub: "break the wholes back into pieces — 2¾ = 11/4", href: "room-r5-5-back.html", title: "break the wholes back into pieces — 2¾ = 11/4" },
+    { n: "6", name: "Numbers", sub: "no picture — convert both ways from the symbols", href: "room-r5-6-numbers.html", title: "no picture — convert both ways from the symbols" },
     { n: "★", name: "Practice", sub: "Fresh problems — paced to your mastery", href: "room-r5-practice.html", title: "Fresh problems — paced to your mastery" },
   ],
 };

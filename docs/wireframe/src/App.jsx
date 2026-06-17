@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route, useNavigate, useParams, Navigate, Link } from "react-router-dom";
 import LessonScreen from "./shell/LessonScreen.jsx";
 import RawScreen from "./shell/RawScreen.jsx";
+import KitchenScreen from "./shell/KitchenScreen.jsx";
 import Navigator from "./Navigator.jsx";
 import { routeFromHref } from "./shell/routeFromHref.js";
 
@@ -33,7 +34,9 @@ function Screen() {
   const { name } = useParams();
   const data = SCREENS[name];
   if (!data) return <NotConverted name={name} />;
-  return data.kind === "lesson" ? <LessonScreen data={data} /> : <RawScreen data={data} />;
+  if (data.kind === "lesson") return <LessonScreen data={data} />;
+  if (data.kind === "kitchen") return <KitchenScreen data={data} />;
+  return <RawScreen data={data} />;
 }
 
 /* Anchor interceptor — legacy markup inside raw-HTML slots still contains

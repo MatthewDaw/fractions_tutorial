@@ -2,43 +2,40 @@
    additions ONLY. The shared look comes from lesson.css + tokens.css + the lesson
    library (LessonShell/LessonBoard/TutorRibbon); everything here is namespaced
    .cmp-… so it cannot collide with another room. This room reuses the shared
-   .panel/.hint/.pick-title/.canvas/.lbar/.check shells and the number-line
-   classes (.nline/.ntick/.nlab) that NumberLine renders, and adds: the stacked
-   two-line compare canvas, the benchmark/reason canvases, and the choice-button
-   answer card (< = > / 0·½·1 / less·about·more). */
+   .panel/.hint/.pick-title/.canvas/.lbar/.check shells and adds: the boxes stage,
+   the square→ruler mapping stage, the stacked-rulers stages, the numbers stage,
+   and the choice-button answer card (< = >). */
 
-/* ── the canvas. NumberLine renders ABSOLUTELY-positioned children (.nline /
-   .ntick / .nlab / the point dot) into this positioned box, exactly as AppR5
-   does; the fraction tags, the sum equation, and the helper note are absolutely
-   placed too. The shared .canvas already supplies position:relative + 720×346. ── */
-.cmp-canvas { /* absolute children; the shared .canvas frame supplies the box */ }
+/* ── the canvas — shared shell ─────────────────────────────────────────────── */
+.cmp-canvas { display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%; }
 
-/* the small fraction label that names each line, parked at its left edge */
-.cmp-line-tag { position: absolute; display: inline-flex; align-items: center; justify-content: center;
-  min-width: 50px; padding: 2px 8px; border: 1.5px solid var(--ink); background: var(--paper-1);
-  box-shadow: 2px 2px 0 rgba(28,22,18,0.14); z-index: 4; }
-.cmp-line-tag.big { transform: scale(1.12); }
+/* ── Stage 1 · Boxes ─────────────────────────────────────────────────────── */
+.cmp-boxes-stage { display: flex; align-items: center; gap: 32px; }
+.cmp-boxes-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.cmp-boxes-label { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-mute); }
+.cmp-boxes-q { font-family: var(--display); font-size: 36px; color: var(--red); }
 
-/* the item-progress dots for Stage 1 (two comparison items) — bottom-center */
-.cmp-itemdots { position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; display: flex; gap: 8px; }
-.cmp-itemdot { width: 10px; height: 10px; border: 1.5px solid var(--ink); background: var(--paper-1); }
-.cmp-itemdot.on { background: var(--red); border-color: var(--red-deep); }
-.cmp-itemdot.done { background: var(--ink); border-color: var(--ink); }
+/* ── Stage 2 · Box → Ruler ───────────────────────────────────────────────── */
+.cmp-map-stage { display: flex; align-items: center; gap: 40px; }
+.cmp-map-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.cmp-map-arrow { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
 
-/* ── the reasonableness canvas: the bare sum on top, two lines below, each vs ½ ── */
-.cmp-reason-eq { position: absolute; left: 50%; transform: translateX(-50%); top: 22px;
-  display: inline-flex; align-items: center; gap: 14px;
-  font-family: var(--display); font-size: 22px; color: var(--ink); white-space: nowrap; }
-.cmp-reason-op { color: var(--red); font-size: 24px; }
-.cmp-reason-q { color: var(--red); font-family: var(--display); letter-spacing: .03em; }
-.cmp-reason-note { position: absolute; left: 50%; transform: translateX(-50%); bottom: 12px;
-  font-family: var(--serif); font-style: italic; font-size: 12.5px;
-  color: var(--red-deep); text-align: center; max-width: 600px; line-height: 1.3; }
+/* ── Stages 3 & 4 · Rulers ───────────────────────────────────────────────── */
+.cmp-rulers-stage { display: flex; flex-direction: column; gap: 22px; width: 100%; padding: 0 20px; box-sizing: border-box; }
+.cmp-ruler-row { display: flex; align-items: center; gap: 20px; }
 
-/* ── the question-band inner pieces (compare sign / sum operator) ── */
-.cmp-band-cmp, .cmp-band-sum { display: inline-flex; align-items: center; gap: 14px; }
-.cmp-band-q { color: var(--red); font-family: var(--display); font-size: 0.9em; }
-.cmp-band-op { color: var(--red); font-family: var(--display); }
+/* ── Stage 5 · Numbers ───────────────────────────────────────────────────── */
+.cmp-numbers-stage { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.cmp-numbers-top { display: flex; align-items: center; gap: 22px; }
+.cmp-numbers-arrow { font-family: var(--serif); font-style: italic; color: var(--ink-mute); font-size: 15px; }
+.cmp-numbers-bottom { display: flex; align-items: center; gap: 20px; }
+.cmp-numbers-rel { font-family: var(--display); font-size: 32px; color: var(--red); }
+.cmp-numbers-cap { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-mute); }
+
+/* ── SVG components (CellBox, RulerStrip) ───────────────────────────────── */
+.cmp-cellbox { border: 1.5px solid var(--ink); }
+.cmp-ruler { border-radius: 3px; }
 
 /* ── the CHOICE-BUTTON answer card (replaces the Slate; plain buttons) ── */
 .cmp-answer { display: flex; flex-direction: column; gap: 8px; justify-content: center; }

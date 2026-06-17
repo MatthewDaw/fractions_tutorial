@@ -81,7 +81,10 @@
   flex-direction: column;
   gap: 13px;
 }
-.lboard-rail .panel { height: 100%; box-sizing: border-box; overflow: hidden; }
+/* A dense instruction panel (worksheet + picker + readouts, e.g. r3 "Scale & Add")
+   can be taller than the fixed rail column. Scroll within the panel instead of
+   clipping, so every instruction stays reachable rather than being cut off. */
+.lboard-rail .panel { height: 100%; box-sizing: border-box; overflow-y: auto; }
 /* multiple stacked panels keep their natural heights and share the column */
 .lboard-rail.is-stack .panel { height: auto; }
 

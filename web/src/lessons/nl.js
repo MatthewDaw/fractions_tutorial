@@ -1,24 +1,26 @@
-/* lessons/nl.js — identity + step strip for Lesson №3 "On the Number Line"
-   (locate a fraction as a single POINT on the 0→1 ruler), route #/nl.
+/* lessons/nl.js — identity + step strip for Lesson №6 "On the Number Line"
+   (merged nl + r1 lesson), route #/nl.
 
-   AUTHORED for the real-app refactor: the wireframe has no lessons/nl.js (its
-   nl entry is kept inline in docs/wireframe/src/lessons.js as the merged №3
-   nl+r1 lesson). This registry entry is reconciled with the real-app
-   AppNumberLine.jsx STAGES (Place · Write · Numbers · ★Practice) — the three
-   focused teaching stages plus estimator-paced practice.
+   The wireframe source of truth: docs/wireframe/src/lessons.js keeps nl inline
+   as the merged №6 nl+r1 lesson. This registry entry is reconciled with the
+   real-app AppNumberLine.jsx STAGES.
 
    The single source of truth: AppNumberLine declares only `lesson: "nl"` and
    pulls № / tag / title / route + this tab strip from here. */
 export default {
   id: "nl",
-  num: "№3",
-  tag: "Lesson 3 · On the Number Line",
+  num: "№6",
+  tag: "Lesson 6 · On the Number Line",
   title: "Same Denominators",
   route: "#/nl",
   tabs: [
-    { n: "1", name: "Place", sub: "drag the point to the fraction", href: "room-nl.html", title: "drag the point to the fraction" },
+    { n: "1", name: "Place", sub: "grow the fraction from 1/4 blocks", href: "room-nl.html", title: "grow the fraction from 1/4 blocks" },
     { n: "2", name: "Write", sub: "name the marked point", href: "room-nl-2-write.html", title: "name the marked point" },
-    { n: "3", name: "Numbers", sub: "past 1 — place a fraction bigger than a whole", href: "room-nl-3-numbers.html", title: "past 1 — place a fraction bigger than a whole" },
-    { n: "★", name: "Practice", sub: "Fresh problems — paced to your mastery", href: "room-nl-practice.html", title: "Fresh problems — paced to your mastery" },
+    { n: "3", name: "Manipulate", sub: "drag & count blocks", href: "room-r1.html", title: "drag & count blocks" },
+    { n: "4", name: "Numbers", sub: "bare 2/7 + 3/7 = ?", href: "room-r1-5-numbers.html", title: "bare 2/7 + 3/7 = ?" },
+    { n: "5", name: "Applied", sub: "write the sum, then total", href: "room-r1-6-applied.html", title: "write the sum, then total" },
+    { n: "6", name: "Show Work", sub: "show your work", href: "room-r1-sw-showwork.html", title: "show your work" },
+    { n: "7", name: "Words", sub: "story problem", href: "room-r1-7-words.html", title: "story problem" },
+    { n: "★", name: "Practice", sub: "fresh problems — paced to your mastery", href: "room-r1-practice.html", title: "fresh problems — paced to your mastery" },
   ],
 };

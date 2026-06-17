@@ -1,44 +1,29 @@
 /* room-m1-sw-showwork — №1 Equal Groups · Show Work. Data-only module consumed
    by <LessonScreen>. The chrome (toolbar, topbar, tabs, board grid) is the
-   shared component; only the unique content below lives here. Word-problem /
-   show-work restructure (spec Step 3): instruction → rail panel, blank slate →
-   stage, Next → answer, Cook → tutor. Interactive markup verbatim. */
+   shared component; only the unique content below lives here. Show-work step
+   uses the wide layout: heading+instruction inline in stageHTML (matches the
+   real-app AppM1 showwork beat which uses a panel + BlankSlate in content slot),
+   Next button in answerHTML. Cook + ribbon remain in tutorHTML. */
+import { showWork } from "../showWork.js";
 export default {
   kind: "lesson",
 
   lesson: "m1",
 
-  railHTML: `
-          <div class="panel">
-            <h3>Show Your Work</h3>
-            <div class="hint">Before the last story problem — show how you'd count 3 groups of 4 on a blank slate. Write anything you like; this one isn't graded.</div>
-          </div>`,
-
   stageHTML: `
-          <div class="bs-surface m1-showwork-slate" style="position:relative;">
-            <canvas class="bs-canvas" aria-label="show your work on a blank slate"></canvas>
-            <div class="bs-tools">
-              <button type="button" class="bs-tool on" title="Pencil" aria-pressed="true">
-                <svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15 L4 11 L12 3 L15 6 L7 14 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><line x1="11" y1="4" x2="14" y2="7" stroke="currentColor" stroke-width="1.6" /></svg>
-              </button>
-              <button type="button" class="bs-tool" title="Red pen" aria-pressed="false">
-                <svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15 L4 11 L12 3 L15 6 L7 14 Z" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linejoin="round" /></svg>
-              </button>
-              <button type="button" class="bs-tool" title="Eraser" aria-pressed="false">
-                <svg width="18" height="18" viewBox="0 0 18 18"><rect x="3" y="9" width="9" height="6" rx="1.5" transform="rotate(-32 7 12)" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
-              </button>
-              <span class="bs-tool-sep"></span>
-              <button type="button" class="bs-tool" title="Undo">
-                <svg width="18" height="18" viewBox="0 0 18 18"><path d="M6 5 L3 8 L6 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" /><path d="M3 8 H11 a4 4 0 0 1 0 8 H7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
-              </button>
-              <button type="button" class="bs-tool bs-tool-clear" title="Clear all">clear</button>
-            </div>
-            <div class="bs-hint">show your work here — write anything you like ✎</div>
-          </div>`,
+          <div class="panel" style="margin:20px 24px 12px;padding:16px 20px;border:1px solid var(--ink);border-radius:6px;background:var(--paper-2);">
+            <h3 style="margin:0 0 6px;font-size:15px;">Show Your Work</h3>
+            <div class="hint" style="font-size:14px;line-height:1.5;">Before the last story problem — show how you'd count 3 groups of 4 on a blank slate. Write anything you like; this one isn't graded.</div>
+          </div>
+          ${showWork()}`,
 
   answerHTML: `
-          <div class="lbar-marks" style="margin-top:12px;">
-            <button class="check" disabled>Next ▸</button>
+          <div class="lbar">
+            <div class="wp-answer">
+              <div class="wp-answer-row">
+                <button class="check" disabled>Next ▸</button>
+              </div>
+            </div>
           </div>`,
 
   tutorHTML: `
@@ -63,9 +48,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />

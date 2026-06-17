@@ -19,13 +19,21 @@ export const roomToNode = {
   r3: "ADD_UNLIKE_NESTED",
   r2: "ADD_UNLIKE_COPRIME",
   r4: "SIMPLIFY",
+  simp: "SIMPLIFY",
   r5: "IMPROPER_TO_MIXED",
 };
 
-/** Engine SkillNode id → room id (inverse of roomToNode). */
-export const nodeToRoom = Object.fromEntries(
-  Object.entries(roomToNode).map(([room, node]) => [node, room])
-);
+/** Engine SkillNode id → room id (inverse of roomToNode).
+ *  When multiple rooms share a node (r4 and simp both → SIMPLIFY),
+ *  the kitchen's goLearn() routes to r4 by default; simp questions
+ *  override this via stumpingRecipe room tracking in MomsRoom. */
+export const nodeToRoom = {
+  ADD_SAME_DEN: "r1",
+  ADD_UNLIKE_NESTED: "r3",
+  ADD_UNLIKE_COPRIME: "r2",
+  SIMPLIFY: "r4",
+  IMPROPER_TO_MIXED: "r5",
+};
 
 export default {
   id: "mom",

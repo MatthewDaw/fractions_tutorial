@@ -1,4 +1,4 @@
-/* room-r2-2-bind — №8 Cross-Multiply · Bind (LessonUnlikeDen, beat L2, #/r2).
+/* room-r2-2-bind — №11 Cross-Multiply · Bind (LessonUnlikeDen, beat L2, #/r2).
    Data-only module consumed by <LessonScreen>. The chrome (toolbar, topbar,
    tabs, goal, board grid) is the shared component; only the unique content
    below lives here. Interactive markup is verbatim from the original screen. */
@@ -121,12 +121,12 @@ export default {
                   <div class="slate slate-fraction" role="group" aria-label="write the total fraction">
                     <div class="slate-slot is-disabled"><div class="slate-cell"></div></div>
                     <span class="slate-bar" style="background:#caa300;" aria-hidden="true"></span>
-                    <div class="slate-slot"><div class="slate-cell"><span class="slate-ph" aria-hidden="true">✎</span></div></div>
+                    <div class="slate-slot is-locked"><div class="slate-cell slate-digit">6</div></div>
                   </div>
                 </span>
               </span>
             </div>
-            <div class="lbar-cap">write the bottom number — how big is each block?</div>
+            <div class="lbar-cap">slice both strips to match — then join them and write the top number</div>
             <div class="lbar-marks">
               <button class="check">Check</button>
             </div>
@@ -154,9 +154,9 @@ export default {
                 <circle cx="98" cy="218" r="2.6" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="1.4" />
                 <circle cx="28" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <circle cx="168" cy="218" r="9" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
-                <g transform="rotate(6 168 218)">
-                  <line x1="168" y1="216" x2="186" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
-                  <ellipse cx="188" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(18 188 170)" />
+                <g transform="rotate(-6 168 218)">
+                  <line x1="168" y1="216" x2="150" y2="176" stroke="var(--red-deep)" stroke-width="4" stroke-linecap="round" />
+                  <ellipse cx="148" cy="170" rx="8" ry="11" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2.2" transform="rotate(-18 148 170)" />
                 </g>
                 <rect x="86" y="138" width="24" height="22" fill="var(--paper-1)" stroke="var(--ink)" stroke-width="2.4" />
                 <path d="M78 150 Q98 166 118 150 L112 138 Q98 146 84 138 Z" fill="var(--red)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round" />
@@ -181,6 +181,6 @@ export default {
                 <path d="M120 44 Q132 40 132 56 L120 56 Z" fill="url(#ck-hatch)" stroke="none" opacity="0.5" />
               </svg>
             </div>
-            <div class="ribbon">Same-size blocks now! Write the bottom number: how big is each block?</div>
+            <div class="ribbon">Same-size blocks now! Drag the strips together to join them.</div>
           </div>`,
 };

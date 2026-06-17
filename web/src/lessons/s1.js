@@ -1,12 +1,10 @@
-/* lessons/s1.js — identity + step strip for Lesson №5 "Taking Away" (#/s1).
+/* lessons/s1.js — identity + step strip for Lesson №7 "Taking Away" (#/s1).
    The single source of truth: each s1 step page declares only `lesson: "s1"`
-   and pulls № / tag / title / route + this tab strip from here.
-   (№5 matches rooms.js `no:5`, the world-map ordering, and the wireframe README;
-   the earlier №4 was a stale port.) */
+   and pulls № / tag / title / route + this tab strip from here. */
 export default {
   id: "s1",
-  num: "№5",
-  tag: "Lesson 5 · Taking Away",
+  num: "№7",
+  tag: "Lesson 7 · Taking Away",
   title: "Taking Away",
   route: "#/s1",
   tabs: [

@@ -3,8 +3,9 @@
    and pulls № / tag / title / route + this tab strip from here. */
 export default {
   id: "s1",
-  num: "№4",
-  tag: "Lesson 4 · Taking Away",
+  backHref: "shelf-build.html",
+  num: "№7",
+  tag: "Lesson 7 · Taking Away",
   title: "Taking Away",
   route: "#/s1",
   tabs: [
